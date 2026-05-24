@@ -1,0 +1,2898 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReparAuto - Loja de Carros Usados & Seminovos em Portugal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f4f8',
+                            100: '#d9e2ec',
+                            200: '#bcccdc',
+                            300: '#9fb3c8',
+                            400: '#829ab1',
+                            500: '#627d98',
+                            600: '#486581',
+                            700: '#334e68',
+                            800: '#243b53',
+                            900: '#2B3A4E',
+                        },
+                        accent: {
+                            DEFAULT: '#E55B2B',
+                            hover: '#C44A1F',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        :root {
+            --accent: #E55B2B;
+            --accent-hover: #C44A1F;
+            --brand-900: #2B3A4E;
+        }
+        * {
+            scroll-behavior: smooth;
+        }
+        /* Estilos de foco visível para acessibilidade */
+        button:focus-visible, 
+        input:focus-visible, 
+        select:focus-visible, 
+        textarea:focus-visible,
+        a:focus-visible {
+            outline: 3px solid #E55B2B !important;
+            outline-offset: 2px !important;
+        }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f0f4f8;
+            color: #243b53;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1;
+            padding-bottom: 80px;
+        }
+        .card-car:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+            transition: all 0.25s ease;
+        }
+        .card-car {
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-top: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 12px;
+            z-index: 50;
+            box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+        }
+        .bottom-nav button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: #627d98;
+            transition: all 0.2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .bottom-nav button.active {
+            color: #E55B2B;
+            font-weight: 700;
+        }
+        .bottom-nav button i {
+            font-size: 1.3rem;
+        }
+        .chip-active {
+            background: #E55B2B !important;
+            color: #fff !important;
+            border-color: #E55B2B !important;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .step-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #627d98;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            transition: all 0.3s;
+        }
+        .step-dot.active-step {
+            background: #E55B2B;
+            color: #fff;
+        }
+        .step-dot.done-step {
+            background: #10B981;
+            color: #fff;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .active-pecas-chip {
+            background-color: #E55B2B !important;
+            color: #fff !important;
+            border-color: #E55B2B !important;
+        }
+        @media (min-width: 768px) {
+            body {
+                padding-bottom: 0;
+            }
+            .bottom-nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Header fixo -->
+    <header class="sticky top-0 z-40 bg-brand-900 text-white shadow-lg">
+        <!-- Row 1 -->
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2 cursor-pointer flex-shrink-0" onclick="navegar('home')">
+                <i class="fa-solid fa-wrench text-accent text-2xl"></i>
+                <span class="font-extrabold text-xl tracking-tight">Repar<span class="text-accent">Auto</span></span>
+                <span class="text-xs bg-accent text-white px-2 py-0.5 rounded-full font-semibold hidden sm:inline">PT</span>
+            </div>
+            
+            <!-- Links de Navegação Desktop & Tablet -->
+            <nav class="hidden md:flex items-center gap-5 text-xs font-bold uppercase tracking-wider ml-4 flex-shrink-0" id="headerNav">
+                <button onclick="navegar('home')" class="header-nav-btn hover:text-accent transition flex items-center gap-1 text-accent" data-header-page="home"><i class="fa-solid fa-car"></i> Anúncios</button>
+                <button onclick="navegar('anunciar')" class="header-nav-btn hover:text-accent transition flex items-center gap-1 text-white" data-header-page="anunciar"><i class="fa-solid fa-circle-plus"></i> Vender</button>
+                <button onclick="navegar('pecas')" class="header-nav-btn hover:text-accent transition flex items-center gap-1 text-white" data-header-page="pecas"><i class="fa-solid fa-gears"></i> Peças & Desmonte</button>
+            </nav>
+            
+            <!-- Search Bar (Desktop apenas) -->
+            <div class="flex-1 max-w-md mx-4 hidden lg:block">
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="globalSearch" placeholder="Ex: Renault Clio, Peugeot 206..."
+                        class="w-full pl-10 pr-4 py-2 rounded-full bg-white/15 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:bg-white/25 focus:border-accent transition text-sm">
+                    </div>
+                    <button onclick="toggleAdvancedSearch()" class="bg-white/10 hover:bg-white/25 border border-white/20 text-white px-3 py-2 rounded-full transition flex items-center justify-center gap-1 text-xs font-semibold flex-shrink-0">
+                        <i class="fa-solid fa-sliders"></i> Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botões de Ação Direito -->
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <button onclick="toggleFavoritos()" class="relative text-white hover:text-accent transition" aria-label="Favoritos">
+                    <i class="fa-solid fa-heart text-xl"></i>
+                    <span id="favCount" class="absolute -top-2 -right-2 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold hidden">0</span>
+                </button>
+                <button onclick="navegar('perfil')" id="headerUserBtn" class="text-xs border border-white/30 px-3 py-1.5 rounded-full hover:bg-white/10 transition">
+                    <i class="fa-solid fa-user mr-1"></i> Entrar
+                </button>
+            </div>
+        </div>
+
+        <!-- Row 2: Search Bar (Visible on Mobile & Tablet, hidden on Desktop) -->
+        <div class="lg:hidden max-w-6xl mx-auto px-4 pb-3 flex flex-wrap items-center gap-2">
+            <!-- Search Bar Mobile/Tablet -->
+            <div class="flex-1 min-w-[200px]">
+                <div class="relative flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" id="globalSearchMobile" placeholder="Ex: Renault Clio, Peugeot 206..."
+                        class="w-full pl-10 pr-4 py-2 rounded-full bg-white/15 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:bg-white/25 focus:border-accent transition text-sm">
+                    </div>
+                    <button onclick="toggleAdvancedSearch()" class="bg-white/10 hover:bg-white/25 border border-white/20 text-white px-3 py-2 rounded-full transition flex items-center justify-center gap-1 text-xs font-semibold flex-shrink-0">
+                        <i class="fa-solid fa-sliders"></i> Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel de Filtros Avançados (Colapsável) -->
+        <div id="advancedSearchPanel" class="hidden max-w-6xl mx-auto px-4 pb-3 pt-1 border-t border-white/10 text-white">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-brand-800/90 backdrop-blur-md rounded-2xl p-4 border border-white/10 shadow-lg">
+                <!-- Filtros de Preço -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1">Preço Mínimo (€)</label>
+                    <input type="number" id="filterPriceMin" placeholder="Mínimo" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1">Preço Máximo (€)</label>
+                    <input type="number" id="filterPriceMax" placeholder="Máximo" class="w-full bg-white/10 border border-white/20 rounded-xl px-3 py-1.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent">
+                </div>
+                <!-- Filtro de Localização -->
+                <div>
+                    <label class="block text-xs font-bold text-gray-300 mb-1">Localização (Concelho)</label>
+                    <div class="flex gap-1.5">
+                        <div class="relative flex-1">
+                            <input type="text" id="filterLocation" list="concelhos-list" placeholder="Escrever concelho..." class="w-full bg-white/10 border border-white/20 rounded-xl pl-3 pr-8 py-1.5 text-xs text-white placeholder-gray-400 focus:outline-none focus:border-accent">
+                            <datalist id="concelhos-list">
+                                <option value="Braga"></option>
+                                <option value="Coimbra"></option>
+                                <option value="Faro"></option>
+                                <option value="Leiria"></option>
+                                <option value="Lisboa"></option>
+                                <option value="Porto"></option>
+                            </datalist>
+                            <i class="fa-solid fa-location-dot absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        </div>
+                        <button onclick="buscarLocalizacaoGPS()" class="bg-accent hover:bg-accent-hover text-white text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1 flex-shrink-0" title="Buscar minha localização">
+                            <i class="fa-solid fa-location-arrow"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+                <!-- Ordenação -->
+                <div class="sm:col-span-3 flex flex-wrap items-center gap-2 pt-2 border-t border-white/10 text-xs">
+                    <span class="block text-xs font-bold text-gray-300 mr-2">Ordenar por preço:</span>
+                    <button type="button" id="btnSortLow" onclick="ordenarPorPreco('crescente')" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Preço mais baixo
+                    </button>
+                    <button type="button" id="btnSortHigh" onclick="ordenarPorPreco('decrescente')" class="bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-trend-down"></i> Preço mais caro
+                    </button>
+                </div>
+                <!-- Botões de Ação do Filtro -->
+                <div class="sm:col-span-3 flex justify-between items-center gap-2 pt-2 border-t border-white/10 text-xs">
+                    <button onclick="limparFiltrosAvancados()" class="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 rounded-xl transition">Limpar</button>
+                    <button onclick="aplicarFiltrosAvancados()" class="bg-accent hover:bg-accent-hover text-white font-bold px-4 py-2 rounded-xl transition">Aplicar Filtros</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chips de filtro rápido -->
+        <div class="max-w-6xl mx-auto px-4 pb-2 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide" id="chipContainer">
+            <button class="chip-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white border border-white/20 hover:bg-white/25 transition chip-active" data-chip="lowcost">Destaques Low-Cost</button>
+            <button class="chip-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white border border-white/20 hover:bg-white/25 transition" data-chip="500">Até 500€</button>
+            <button class="chip-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white border border-white/20 hover:bg-white/25 transition" data-chip="1000">Até 1.000€</button>
+            <button class="chip-filter px-3 py-1.5 rounded-full text-xs font-semibold bg-white/15 text-white border border-white/20 hover:bg-white/25 transition" data-chip="qualquer">Qualquer Valor</button>
+        </div>
+    </header>
+
+    <!-- Conteúdo principal -->
+    <main class="max-w-6xl mx-auto px-4 py-5 w-full">
+
+        <!-- PÁGINA HOME -->
+        <section id="page-home" class="page active">
+            <!-- Hero -->
+            <div class="bg-gradient-to-br from-brand-800 to-brand-900 rounded-2xl p-5 sm:p-8 text-white mb-6 shadow-xl relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold leading-tight">O teu próximo carro está aqui.<br>Classificados de Carros em Portugal.</h1>
+                        <p class="mt-2 text-gray-300 text-sm sm:text-base">Carros low‑cost, viaturas para reparações e uma aba exclusiva de valor livre.</p>
+                        <button onclick="scrollToOfertas()" class="mt-4 bg-accent hover:bg-accent-hover text-white font-bold px-5 py-2.5 rounded-full transition text-sm sm:text-base shadow-md">
+                            Ver Oportunidades <i class="fa-solid fa-arrow-down ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+                <i class="fa-solid fa-car absolute right-[-20px] bottom-[-20px] text-white/5 text-[15rem] pointer-events-none transform -rotate-12"></i>
+            </div>
+
+            <!-- Oportunidades do Dia -->
+            <h2 id="ofertas" class="text-xl font-bold text-brand-900 mb-3 flex items-center justify-between">
+                <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-accent"></i> Oportunidades</span>
+                <span id="filtroLabel" class="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-medium">Destaques Low-Cost (Até 2.000€)</span>
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" id="carGrid">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- PÁGINA DETALHES -->
+        <section id="page-detalhes" class="page">
+            <button onclick="voltarHome()" class="mb-3 text-brand-700 hover:text-accent font-semibold text-sm flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i> Voltar
+            </button>
+            <div id="detalhesContent" class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                <!-- Preenchido dinamicamente -->
+            </div>
+        </section>
+
+        <!-- PÁGINA ANUNCIAR (Vendedor) -->
+        <section id="page-anunciar" class="page">
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8">
+                <h2 class="text-2xl font-extrabold text-brand-900 mb-1">Anunciar Carro</h2>
+                <p class="text-gray-500 text-sm mb-5">3 passos simples • Grátis</p>
+                <!-- Steps -->
+                <div class="flex items-center justify-between mb-6" id="stepIndicators">
+                    <div class="step-dot active-step" id="dot1">1</div><div class="h-0.5 flex-1 bg-gray-200 mx-1" id="line1"></div>
+                    <div class="step-dot" id="dot2">2</div><div class="h-0.5 flex-1 bg-gray-200 mx-1" id="line2"></div>
+                    <div class="step-dot" id="dot3">3</div>
+                </div>
+                <!-- Step 1: Fotos -->
+                <div id="step1" class="step-content">
+                    <h3 class="font-bold text-lg mb-3">📸 Fotos do carro</h3>
+                    <p class="text-sm text-gray-500 mb-4">Carregue ou adicione fotos reais para mostrar o estado do veículo (máximo 6 fotos, mínimo 1).</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                        <label for="anuncioFotosInput" class="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-3 rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2 border-dashed">
+                            <i class="fa-solid fa-upload"></i> Carregar Imagens Reais
+                            <input type="file" id="anuncioFotosInput" accept="image/*" class="hidden" multiple onchange="processarFotosCarro(this)">
+                        </label>
+                        <button type="button" onclick="adicionarEmojiCarro()" class="bg-white hover:bg-slate-50 text-slate-600 font-medium px-4 py-3 rounded-xl text-xs transition border border-slate-200 flex items-center justify-center gap-2">
+                            🎲 Adicionar Emoji Rápido
+                        </button>
+                    </div>
+                    
+                    <span class="text-xs text-red-500 hidden mb-4 block" id="err_step1_fotos">Por favor, adicione pelo menos 1 foto do veículo (ficheiro real ou emoji rápido).</span>
+                    
+                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-6" id="fotoPreviewContainer">
+                        <!-- Preenchido dinamicamente via JS -->
+                    </div>
+                    
+                    <button onclick="nextStep(2)" class="w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 rounded-xl transition">Continuar</button>
+                </div>
+                <!-- Step 2: Dados Técnicos do Carro -->
+                <div id="step2" class="step-content hidden">
+                    <h3 class="font-bold text-lg mb-3">📋 Dados do Veículo</h3>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label for="anuncioMarca" class="block text-xs font-semibold text-slate-500 mb-1">Marca <span class="text-red-500">*</span></label>
+                            <input type="text" id="anuncioMarca" placeholder="Ex: Renault" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioMarca">A marca é obrigatória.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioModelo" class="block text-xs font-semibold text-slate-500 mb-1">Modelo <span class="text-red-500">*</span></label>
+                            <input type="text" id="anuncioModelo" placeholder="Ex: Clio" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioModelo">O modelo é obrigatório.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioAnoFabricacao" class="block text-xs font-semibold text-slate-500 mb-1">Ano de Fabricação <span class="text-red-500">*</span></label>
+                            <input type="number" id="anuncioAnoFabricacao" placeholder="Ex: 2007" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioAnoFabricacao">O ano de fabricação é obrigatório.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioAnoModelo" class="block text-xs font-semibold text-slate-500 mb-1">Ano Modelo <span class="text-red-500">*</span></label>
+                            <input type="number" id="anuncioAnoModelo" placeholder="Ex: 2008" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioAnoModelo">O ano modelo é obrigatório.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioKm" class="block text-xs font-semibold text-slate-500 mb-1">Quilómetros <span class="text-red-500">*</span></label>
+                            <input type="number" id="anuncioKm" placeholder="Ex: 210000" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioKm">Os quilómetros são obrigatórios.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioCor" class="block text-xs font-semibold text-slate-500 mb-1">Cor <span class="text-red-500">*</span></label>
+                            <input type="text" id="anuncioCor" placeholder="Ex: Cinzento" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioCor">A cor é obrigatória.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioCombustivel" class="block text-xs font-semibold text-slate-500 mb-1">Combustível <span class="text-red-500">*</span></label>
+                            <select id="anuncioCombustivel" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                                <option value="Gasolina">Gasolina</option>
+                                <option value="Etanol">Etanol</option>
+                                <option value="Flex">Flex</option>
+                                <option value="Diesel">Diesel</option>
+                                <option value="Elétrico">Elétrico</option>
+                                <option value="Híbrido">Híbrido</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="anuncioCambio" class="block text-xs font-semibold text-slate-500 mb-1">Câmbio <span class="text-red-500">*</span></label>
+                            <select id="anuncioCambio" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                                <option value="Manual">Manual</option>
+                                <option value="Automático">Automático</option>
+                                <option value="CVT">CVT</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="anuncioPortas" class="block text-xs font-semibold text-slate-500 mb-1">Número de Portas <span class="text-red-500">*</span></label>
+                            <input type="number" id="anuncioPortas" placeholder="Ex: 5" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                            <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioPortas">O número de portas é obrigatório.</span>
+                        </div>
+                        <div>
+                            <label for="anuncioLocal" class="block text-xs font-semibold text-slate-500 mb-1">Concelho <span class="text-red-500">*</span></label>
+                            <select id="anuncioLocal" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                                <option>Braga</option><option>Porto</option><option>Lisboa</option><option>Coimbra</option><option>Faro</option><option>Leiria</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="nextStep(3)" class="w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 rounded-xl transition">Continuar</button>
+                </div>
+                <!-- Step 3: Preço, Descrição & Estado do Veículo -->
+                <div id="step3" class="step-content hidden">
+                    <h3 class="font-bold text-lg mb-3">💰 Preço, Descrição & Estado</h3>
+                    
+                    <!-- Preço -->
+                    <div class="mb-4">
+                        <label for="precoInput" class="block text-sm font-semibold text-brand-900 mb-1">Preço (€) <span class="text-red-500">*</span></label>
+                        <input type="number" id="precoInput" placeholder="Ex: 950 ou 15000" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent font-bold text-lg" oninput="sugerirNegocio(this.value)" required>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_precoInput">O preço deve ser superior a 0.</span>
+                        <p class="text-xs text-gray-400 mt-1" id="sugestaoPreco">Pode anunciar carros de qualquer valor (baixo custo ou premium).</p>
+                    </div>
+
+                    <!-- Descrição com Destaque Visual e Barra de Formatação -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="anuncioDescricao" class="block text-sm font-semibold text-brand-900">Descrição do Carro <span class="text-red-500">*</span></label>
+                            <div class="flex gap-1.5">
+                                <button type="button" onclick="inserirFormatacao('bold')" class="text-xs bg-slate-100 hover:bg-slate-200 border px-2 py-1 rounded text-slate-700 font-bold transition"><b>B</b> Negrito</button>
+                                <button type="button" onclick="inserirFormatacao('list')" class="text-xs bg-slate-100 hover:bg-slate-200 border px-2 py-1 rounded text-slate-700 transition"><i class="fa-solid fa-list-ul"></i> Lista</button>
+                            </div>
+                        </div>
+                        <textarea id="anuncioDescricao" rows="6" placeholder="Descreva os detalhes do veículo... Use a barra acima para formatar em negrito ou criar listas." class="w-full border-2 border-slate-200 focus:border-accent rounded-xl p-3.5 text-sm focus:outline-none transition leading-relaxed shadow-inner" required></textarea>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_anuncioDescricao">A descrição do carro é obrigatória.</span>
+                    </div>
+
+                    <!-- Estado do Veículo -->
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+                        <span class="block text-sm font-bold text-brand-900 mb-2">Estado do Veículo <span class="text-red-500">*</span></span>
+                        <div class="flex gap-4 mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+                                <input type="radio" name="estadoVeiculo" value="pronto" checked onchange="toggleEstadoVeiculoFields(this.value)" class="text-accent focus:ring-accent w-4 h-4">
+                                Pronto para rodar
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+                                <input type="radio" name="estadoVeiculo" value="manutencao" onchange="toggleEstadoVeiculoFields(this.value)" class="text-accent focus:ring-accent w-4 h-4">
+                                Precisa de manutenção / reparos
+                            </label>
+                        </div>
+
+                        <!-- Subcampos se precisa de manutenção -->
+                        <div id="manutencaoFields" class="hidden mt-3 pt-3 border-t border-slate-200 space-y-4">
+                            <!-- Estado de Circulação e Inspeção (IPO) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white border border-slate-200 rounded-xl p-3 shadow-inner">
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-road mr-1 text-slate-400"></i> Estado de Circulação <span class="text-red-500">*</span></span>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                                            <input type="radio" name="anuncioRodando" value="sim" checked class="text-accent focus:ring-accent w-4 h-4">
+                                            Sim (A rodar)
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                                            <input type="radio" name="anuncioRodando" value="nao" class="text-accent focus:ring-accent w-4 h-4">
+                                            Não (Parado)
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-file-invoice mr-1 text-slate-400"></i> Inspeção Periódica (IPO) <span class="text-red-500">*</span></span>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                                            <input type="radio" name="anuncioInspecao" value="sim" checked class="text-accent focus:ring-accent w-4 h-4">
+                                            Com Inspeção
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                                            <input type="radio" name="anuncioInspecao" value="nao" class="text-accent focus:ring-accent w-4 h-4">
+                                            Sem Inspeção
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="block text-xs font-bold text-slate-500 mb-2">Tipo de manutenção necessária (múltipla escolha)</span>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Mecânica" class="rounded text-accent focus:ring-accent">
+                                        Mecânica
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Elétrica" class="rounded text-accent focus:ring-accent">
+                                        Elétrica
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Eletrônica" class="rounded text-accent focus:ring-accent">
+                                        Eletrônica
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Pintura e funilaria" class="rounded text-accent focus:ring-accent">
+                                        Pintura/Funilaria
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Lataria / amassados" class="rounded text-accent focus:ring-accent">
+                                        Lataria/Amassados
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Estofamento / interno" class="rounded text-accent focus:ring-accent">
+                                        Estofamento/Interno
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" name="tipoManutencao" value="Ar-condicionado" class="rounded text-accent focus:ring-accent">
+                                        Ar-condicionado
+                                    </label>
+                                    <label class="flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition">
+                                        <input type="checkbox" id="manutencaoOutroCheck" value="Outro" onchange="toggleOutroManutencaoInput(this.checked)" class="rounded text-accent focus:ring-accent">
+                                        Outro
+                                    </label>
+                                </div>
+                                <input type="text" id="manutencaoOutroTexto" placeholder="Especifique o problema..." class="hidden w-full border border-gray-300 rounded-xl p-2 mt-2 text-xs focus:outline-none focus:border-accent">
+                                <span class="text-xs text-red-500 hidden mt-1 block" id="err_tipoManutencao">Selecione pelo menos um tipo de manutenção ou especifique em 'Outro'.</span>
+                            </div>
+
+                            <!-- Orçamento preexistente -->
+                            <div class="bg-white border border-slate-200 rounded-lg p-3">
+                                <span class="block text-xs font-bold text-slate-500 mb-1.5">Orçamento preexistente (opcional)</span>
+                                <textarea id="orcamentoTexto" rows="3" placeholder="Cole aqui os detalhes ou valores do orçamento que já possui..." class="w-full border border-slate-200 focus:border-accent rounded-lg p-2 text-xs focus:outline-none transition"></textarea>
+                                
+                                <div class="flex flex-col sm:flex-row gap-3 mt-2 text-xs">
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                                        <input type="checkbox" id="incluirMecanicoNome" onchange="toggleMecanicoNomeInput(this.checked)" class="rounded text-accent focus:ring-accent">
+                                        Incluir nome do mecânico / oficina
+                                    </label>
+                                    <label class="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                                        <input type="checkbox" id="incluirMecanicoTelefone" onchange="toggleMecanicoTelefoneInput(this.checked)" class="rounded text-accent focus:ring-accent">
+                                        Incluir telefone do mecânico / oficina
+                                    </label>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <input type="text" id="mecanicoNome" placeholder="Nome da oficina/mecânico" class="hidden w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent">
+                                    <input type="tel" id="mecanicoTelefone" placeholder="Telefone do mecânico" class="hidden w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="publicarAnuncio()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition">✅ Publicar Anúncio</button>
+                </div>
+                <div id="sucessoAnuncio" class="hidden text-center py-6">
+                    <i class="fa-solid fa-circle-check text-green-500 text-5xl mb-3"></i>
+                    <h3 class="text-xl font-extrabold text-brand-900">Anúncio publicado!</h3>
+                    <p class="text-gray-500 text-sm">O seu anúncio já está disponível para visualização e busca local.</p>
+                    <button onclick="resetAnuncio()" class="mt-4 bg-brand-900 text-white font-bold px-6 py-2 rounded-full">Anunciar outro</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- PÁGINA PEÇAS & DESMONTE -->
+        <section id="page-pecas" class="page">
+            <!-- Hero Peças -->
+            <div class="bg-gradient-to-br from-brand-800 to-brand-900 rounded-2xl p-5 sm:p-8 text-white mb-6 shadow-xl relative overflow-hidden">
+                <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold leading-tight">Mercado de Peças & Desmonte</h1>
+                        <p class="mt-2 text-gray-300 text-sm sm:text-base">Compra, venda e procura de peças automóveis ou veículos completos para desmantelamento.</p>
+                        <button onclick="abrirCriarPecaModal()" class="mt-4 bg-accent hover:bg-accent-hover text-white font-bold px-5 py-2.5 rounded-full transition text-sm sm:text-base shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-circle-plus"></i> Publicar Peça ou Pedido
+                        </button>
+                    </div>
+                </div>
+                <i class="fa-solid fa-gears absolute right-[-20px] bottom-[-20px] text-white/5 text-[15rem] pointer-events-none transform -rotate-12"></i>
+            </div>
+
+            <!-- Filtros Rápidos de Peças -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div class="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide py-1 w-full sm:w-auto" id="pecasFilterContainer">
+                    <button class="chip-pecas-filter px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition active-pecas-chip" data-pecas-filter="todos">Todos os Anúncios</button>
+                    <button class="chip-pecas-filter px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-pecas-filter="venda">Venda de Peças</button>
+                    <button class="chip-pecas-filter px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-pecas-filter="desmonte">Carros p/ Desmonte</button>
+                    <button class="chip-pecas-filter px-4 py-2 rounded-full text-xs font-bold bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 transition" data-pecas-filter="procura">Procura de Peças</button>
+                </div>
+                <div class="text-xs bg-slate-200 text-slate-700 px-3 py-1.5 rounded-full font-medium self-end sm:self-auto" id="pecasCountLabel">
+                    Carregando anúncios...
+                </div>
+            </div>
+
+            <!-- Grid de Peças -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8" id="pecasGrid">
+                <!-- Preenchido via JS -->
+            </div>
+        </section>
+
+        <!-- PÁGINA PERFIL (Autenticação Local com LocalStorage) -->
+        <section id="page-perfil" class="page">
+            <!-- Estado Não Logado -->
+            <div id="perfil-deslogado" class="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-circle-user text-6xl text-brand-300 mb-3"></i>
+                <h2 class="text-xl font-extrabold text-brand-900">Área do Utilizador</h2>
+                <p class="text-gray-500 text-sm mb-5">Faça login para gerir os seus anúncios e consultar favoritos de forma persistente.</p>
+                <button onclick="abrirLoginModal()" class="w-full bg-brand-900 hover:bg-brand-800 text-white font-bold py-3 rounded-xl mb-3 transition">
+                    <i class="fa-brands fa-google mr-2"></i> Entrar com Conta Simulado
+                </button>
+                <p class="text-xs text-gray-400">Ao entrar, concorda com os Termos da ReparAuto.</p>
+            </div>
+
+            <!-- Estado Logado -->
+            <div id="perfil-logado" class="hidden max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
+                <div class="flex items-center justify-between border-b pb-4 mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-white text-xl font-bold" id="userAvatar">U</div>
+                        <div>
+                            <h3 class="font-bold text-brand-900" id="userNome">Nome do Utilizador</h3>
+                            <p class="text-xs text-gray-500" id="userEmail">email@provedor.com</p>
+                        </div>
+                    </div>
+                    <button onclick="efetuarLogout()" class="text-xs text-red-500 hover:text-red-700 font-semibold border border-red-200 px-3 py-1.5 rounded-full">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> Sair
+                    </button>
+                </div>
+
+                <h4 class="font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-accent"></i> Os Seus Carros Anunciados
+                </h4>
+                <div id="meusAnunciosList" class="space-y-3 mb-6">
+                    <!-- Lista de anúncios do usuário preenchida via JS -->
+                </div>
+
+                <h4 class="font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-gears text-accent"></i> As Suas Peças & Pedidos
+                </h4>
+                <div id="meusAnunciosPecasList" class="space-y-3">
+                    <!-- Lista de anúncios de peças do usuário preenchida via JS -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Rodapé com Links de Políticas -->
+    <footer class="bg-brand-900 text-slate-400 py-8 px-4 border-t border-slate-800 text-sm text-center">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-wrench text-accent text-xl"></i>
+                <span class="font-bold text-white">Repar<span class="text-accent">Auto</span></span>
+                <span class="text-xs">© 2026</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-6 text-xs font-semibold">
+                <a href="#" onclick="abrirPolitica('termos')" class="hover:text-white transition">Termos de Utilização</a>
+                <a href="#" onclick="abrirPolitica('privacidade')" class="hover:text-white transition">Política de Privacidade</a>
+                <a href="#" onclick="abrirPolitica('cookies')" class="hover:text-white transition">Política de Cookies</a>
+                <a href="#" onclick="abrirPolitica('seguranca')" class="hover:text-white transition">Segurança</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Navegação inferior mobile -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button onclick="navegar('home')" class="active" data-page="home"><i class="fa-solid fa-magnifying-glass"></i> Pesquisar</button>
+        <button onclick="navegar('anunciar')" data-page="anunciar"><i class="fa-solid fa-plus-circle"></i> Anunciar</button>
+        <button onclick="navegar('pecas')" data-page="pecas"><i class="fa-solid fa-gears"></i> Peças</button>
+        <button onclick="navegar('perfil')" data-page="perfil"><i class="fa-solid fa-user"></i> Perfil</button>
+    </nav>
+
+    <!-- Modal galeria de fotos -->
+    <div id="galeriaModal" class="modal-overlay" onclick="fecharGaleria()" role="dialog" aria-modal="true" aria-label="Galeria de fotos do veículo">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 p-4 relative" onclick="event.stopPropagation()">
+            <button onclick="fecharGaleria()" class="absolute top-3 right-3 text-gray-500 hover:text-accent text-2xl" aria-label="Fechar galeria">&times;</button>
+            <img id="galeriaImg" src="" alt="Foto do carro" class="w-full h-64 sm:h-96 object-cover rounded-xl mb-3">
+            <div class="flex gap-2 overflow-x-auto" id="galeriaThumbs"></div>
+        </div>
+    </div>
+
+    <!-- Modal Login Simulado -->
+    <div id="loginModal" class="modal-overlay" onclick="fecharLoginModal()" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+        <div class="bg-white rounded-2xl max-w-md w-full mx-4 p-6 relative" onclick="event.stopPropagation()">
+            <button onclick="fecharLoginModal()" class="absolute top-3 right-3 text-gray-500 hover:text-accent text-2xl" aria-label="Fechar Login">&times;</button>
+            <h3 id="loginModalTitle" class="font-extrabold text-xl text-brand-900 mb-4">Entrar na Plataforma</h3>
+            <div class="space-y-4">
+                <div>
+                    <label for="loginNome" class="block text-xs font-semibold text-slate-500 mb-1">Nome Completo</label>
+                    <input type="text" id="loginNome" placeholder="Ex: Carlos Santos" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label for="loginEmail" class="block text-xs font-semibold text-slate-500 mb-1">Endereço de E-mail</label>
+                    <input type="email" id="loginEmail" placeholder="Ex: carlos@email.com" class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent">
+                </div>
+                <button onclick="confirmarLogin()" class="w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 rounded-xl transition">
+                    Entrar Agora (Simulação Segura)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Criar Anúncio de Peça -->
+    <div id="criarPecaModal" class="modal-overlay" onclick="fecharCriarPecaModal()" role="dialog" aria-modal="true" aria-labelledby="criarPecaModalTitle">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 p-6 relative flex flex-col max-h-[90vh]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 flex-shrink-0">
+                <h3 id="criarPecaModalTitle" class="font-extrabold text-xl text-brand-900">Anunciar Peça / Desmonte / Pedido</h3>
+                <button onclick="fecharCriarPecaModal()" class="text-gray-500 hover:text-accent text-2xl" aria-label="Fechar Anúncio Peça">&times;</button>
+            </div>
+            
+            <div class="overflow-y-auto py-4 space-y-4 pr-1 scrollbar-hide flex-1">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2">O QUE PRETENDE ANUNCIAR? <span class="text-red-500">*</span></label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-xl hover:border-accent cursor-pointer transition text-center select-none bg-slate-50 [&:has(input:checked)]:border-accent [&:has(input:checked)]:bg-orange-50/30">
+                            <input type="radio" name="pecaTipo" value="venda" checked class="hidden" onchange="atualizarCamposFormPeca(this.value)">
+                            <i class="fa-solid fa-gears text-lg text-slate-500 mb-1"></i>
+                            <span class="text-xs font-bold text-slate-700">Venda de Peça</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-xl hover:border-accent cursor-pointer transition text-center select-none bg-slate-50 [&:has(input:checked)]:border-accent [&:has(input:checked)]:bg-orange-50/30">
+                            <input type="radio" name="pecaTipo" value="desmonte" class="hidden" onchange="atualizarCamposFormPeca(this.value)">
+                            <i class="fa-solid fa-car text-lg text-slate-500 mb-1"></i>
+                            <span class="text-xs font-bold text-slate-700">Desmonte</span>
+                        </label>
+                        <label class="flex flex-col items-center justify-center p-3 border-2 border-slate-200 rounded-xl hover:border-accent cursor-pointer transition text-center select-none bg-slate-50 [&:has(input:checked)]:border-accent [&:has(input:checked)]:bg-orange-50/30">
+                            <input type="radio" name="pecaTipo" value="procura" class="hidden" onchange="atualizarCamposFormPeca(this.value)">
+                            <i class="fa-solid fa-magnifying-glass text-lg text-slate-500 mb-1"></i>
+                            <span class="text-xs font-bold text-slate-700">Procura-se</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="pecaTitulo" class="block text-xs font-bold text-slate-500 mb-1">Título do Anúncio <span class="text-red-500">*</span></label>
+                    <input type="text" id="pecaTitulo" placeholder="Ex: Motor 1.9 TDI ASZ, Farol BMW E90, etc." class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                    <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaTitulo">O título é obrigatório.</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="pecaCategoria" class="block text-xs font-bold text-slate-500 mb-1">Categoria <span class="text-red-500">*</span></label>
+                        <select id="pecaCategoria" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                            <option value="Motor e Transmissão">Motor e Transmissão</option>
+                            <option value="Carroçaria e Chaparia">Carroçaria e Chaparia</option>
+                            <option value="Iluminação e Óticas">Iluminação e Óticas</option>
+                            <option value="Interior e Bancos">Interior e Bancos</option>
+                            <option value="Suspensão e Travões">Suspensão e Travões</option>
+                            <option value="Eletrónica e Sensores">Eletrónica e Sensores</option>
+                            <option value="Carro Completo p/ Desmonte">Carro Completo p/ Desmonte</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label id="lblPecaEstado" for="pecaEstado" class="block text-xs font-bold text-slate-500 mb-1">Estado da Peça <span class="text-red-500">*</span></label>
+                        <select id="pecaEstado" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                            <option value="Usado">Usado (Segunda Mão)</option>
+                            <option value="Novo">Novo (Em caixa)</option>
+                            <option value="Reconstruído">Reconstruído / Recondicionado</option>
+                            <option value="Indiferente">Indiferente (Procura)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="pecaMarcaCarro" class="block text-xs font-bold text-slate-500 mb-1">Marca do Carro Compatível <span class="text-red-500">*</span></label>
+                        <input type="text" id="pecaMarcaCarro" placeholder="Ex: Seat, Peugeot, BMW" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaMarcaCarro">A marca é obrigatória.</span>
+                    </div>
+
+                    <div>
+                        <label for="pecaModeloCarro" class="block text-xs font-bold text-slate-500 mb-1">Modelo do Carro Compatível <span class="text-red-500">*</span></label>
+                        <input type="text" id="pecaModeloCarro" placeholder="Ex: Ibiza, 206, Série 3" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaModeloCarro">O modelo é obrigatório.</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-1" id="containerPecaPreco">
+                        <label id="lblPecaPreco" for="pecaPreco" class="block text-xs font-bold text-slate-500 mb-1">Preço (€) <span class="text-red-500">*</span></label>
+                        <input type="number" id="pecaPreco" placeholder="Ex: 50" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent font-bold" required>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaPreco">O preço deve ser maior que 0.</span>
+                    </div>
+
+                    <div class="sm:col-span-1">
+                        <label for="pecaLocal" class="block text-xs font-bold text-slate-500 mb-1">Concelho <span class="text-red-500">*</span></label>
+                        <select id="pecaLocal" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent">
+                            <option>Braga</option><option>Porto</option><option>Lisboa</option><option>Coimbra</option><option>Faro</option><option>Leiria</option>
+                        </select>
+                    </div>
+
+                    <div class="sm:col-span-1">
+                        <label for="pecaContacto" class="block text-xs font-bold text-slate-500 mb-1">Contacto Telefónico <span class="text-red-500">*</span></label>
+                        <input type="tel" id="pecaContacto" placeholder="Ex: 912345678" class="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent" required>
+                        <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaContacto">O contacto é obrigatório.</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label id="lblPecaFoto" class="block text-xs font-bold text-slate-500 mb-2">📸 FOTO DO ANÚNCIO <span class="text-red-500">*</span></label>
+                    <div class="flex flex-col sm:flex-row gap-3 mb-2">
+                        <label for="pecaFotoInput" class="flex-1 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-semibold px-4 py-3 rounded-xl text-xs cursor-pointer transition flex items-center justify-center gap-2 border-dashed">
+                            <i class="fa-solid fa-upload"></i> Carregar Imagem
+                            <input type="file" id="pecaFotoInput" accept="image/*" class="hidden" onchange="processarFotoPeca(this)">
+                        </label>
+                        <button type="button" onclick="adicionarEmojiPeca()" class="bg-white hover:bg-slate-50 text-slate-600 font-medium px-4 py-3 rounded-xl text-xs transition border border-slate-200 flex items-center justify-center gap-2">
+                            🎲 Adicionar Emoji Temático
+                        </button>
+                    </div>
+                    <span class="text-xs text-red-500 hidden mb-2 block" id="err_pecaFoto">A imagem ou emoji do anúncio é obrigatória para venda ou desmonte.</span>
+                    <div class="flex items-center justify-center bg-slate-100 border rounded-xl p-2 h-24 w-24 mx-auto hidden" id="pecaFotoPreviewContainer">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="pecaDescricao" class="block text-xs font-bold text-slate-500 mb-1">Descrição do Anúncio <span class="text-red-500">*</span></label>
+                    <textarea id="pecaDescricao" rows="4" placeholder="Descreva os detalhes da peça, condições, problemas ou especificações do veículo..." class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent leading-relaxed shadow-inner" required></textarea>
+                    <span class="text-xs text-red-500 hidden mt-1 block" id="err_pecaDescricao">A descrição é obrigatória.</span>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-100 flex gap-3 flex-shrink-0">
+                <button type="button" onclick="fecharCriarPecaModal()" class="flex-1 border border-slate-200 text-slate-600 font-bold py-2.5 rounded-xl transition hover:bg-slate-50">Cancelar</button>
+                <button type="button" onclick="publicarPeca()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-xl transition">Publicar Anúncio</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes de Peça -->
+    <div id="detalhesPecaModal" class="modal-overlay" onclick="fecharDetalhesPecaModal()" role="dialog" aria-modal="true" aria-labelledby="detalhesPecaTitle">
+        <div class="bg-white rounded-2xl max-w-2xl w-full mx-4 p-6 relative flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 flex-shrink-0">
+                <span id="detalhesPecaBadge" class="bg-accent text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm"></span>
+                <button onclick="fecharDetalhesPecaModal()" class="text-gray-500 hover:text-accent text-2xl" aria-label="Fechar Detalhes Peça">&times;</button>
+            </div>
+            
+            <div class="overflow-y-auto py-4 space-y-5 pr-1 scrollbar-hide flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="aspect-square bg-gradient-to-br from-brand-100 to-brand-200 rounded-2xl flex items-center justify-center text-7xl overflow-hidden shadow-inner border border-slate-200" id="detalhesPecaFotoContainer">
+                    </div>
+                    
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <h2 id="detalhesPecaTitle" class="text-2xl font-extrabold text-brand-900 tracking-tight leading-tight"></h2>
+                            <div class="mt-2 text-accent font-extrabold text-3xl" id="detalhesPecaPreco"></div>
+                            
+                            <div class="mt-4 space-y-2 text-xs">
+                                <div class="flex justify-between border-b pb-1.5">
+                                    <span class="text-slate-500 font-medium">Categoria</span>
+                                    <span class="font-bold text-brand-900" id="detalhesPecaCategoria"></span>
+                                </div>
+                                <div class="flex justify-between border-b pb-1.5">
+                                    <span class="text-slate-500 font-medium">Compatibilidade</span>
+                                    <span class="font-bold text-brand-900" id="detalhesPecaCompatibilidade"></span>
+                                </div>
+                                <div class="flex justify-between border-b pb-1.5">
+                                    <span class="text-slate-500 font-medium">Estado</span>
+                                    <span class="font-bold text-brand-900" id="detalhesPecaEstado"></span>
+                                </div>
+                                <div class="flex justify-between border-b pb-1.5">
+                                    <span class="text-slate-500 font-medium">Concelho</span>
+                                    <span class="font-bold text-brand-900" id="detalhesPecaLocal"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 space-y-2">
+                            <a id="btnPecaWhatsapp" href="" target="_blank" rel="noopener" class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-brands fa-whatsapp text-lg"></i> Falar no WhatsApp
+                            </a>
+                            <a id="btnPecaTelefone" href="" class="w-full text-center border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm">
+                                <i class="fa-solid fa-phone"></i> Ligar diretamente
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="font-bold text-brand-900 text-sm mb-2 uppercase tracking-wider">Descrição Detalhada</h3>
+                    <div id="detalhesPecaDescricao" class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed whitespace-pre-line shadow-inner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Políticas do Rodapé -->
+    <div id="politicasModal" class="modal-overlay" onclick="fecharPoliticasModal()" role="dialog" aria-modal="true" aria-labelledby="politicaModalTitulo">
+        <div class="bg-white rounded-2xl max-w-3xl w-full mx-4 p-6 relative flex flex-col max-h-[85vh]" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center pb-3 border-b border-slate-100 flex-shrink-0">
+                <h3 id="politicaModalTitulo" class="font-extrabold text-xl text-brand-900"></h3>
+                <button onclick="fecharPoliticasModal()" class="text-gray-500 hover:text-accent text-2xl font-bold" aria-label="Fechar políticas">&times;</button>
+            </div>
+            <div class="overflow-y-auto py-4 pr-1 text-sm text-slate-700 leading-relaxed space-y-4 flex-1 scrollbar-hide" id="politicaModalConteudo">
+                <!-- Conteúdo dinâmico preenchido via JS -->
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-end flex-shrink-0">
+                <button onclick="fecharPoliticasModal()" class="bg-brand-900 hover:bg-brand-800 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ BASE DE DADOS E MOCK DATA ============
+        const defaultCarros = [
+            { id: 1, marca: 'Renault', modelo: 'Clio 1.5 dCi', anoFabricacao: 2007, anoModelo: 2008, preco: 600, km: 210000, combustivel: 'Diesel',
+                cambio: 'Manual', cor: 'Cinzento', portas: 5, local: 'Braga', 
+                descricao: 'Viatura comercial com alguns problemas de motor. **Motor de arranque avariado.**\nIdeal para quem quer reparar.\n\n* Direção assistida\n* Fecho centralizado\n* Vidros elétricos',
+                estadoVeiculo: 'manutencao', tiposManutencao: ['Mecânica', 'Elétrica'], manutencaoOutro: '',
+                temOrcamento: true, orcamentoTexto: 'Diagnóstico elétrico e motor de arranque novo: 250€ com mão de obra incluída.',
+                incluirMecanicoNome: true, mecanicoNome: 'Auto Oficina Rapidez', incluirMecanicoTelefone: true, mecanicoTelefone: '912345678',
+                fotos: ['images/clio.png', '🔧', '⚠️'], criador: 'admin@reparauto.pt',
+                rodando: false, inspecao: false,
+                // Retrocompatibilidade
+                ano: 2007, caixa: 'Manual', estado: 'Manutenção', avarias: ['Mecânica', 'Elétrica'], negociável: true, motivo: 'Problema no arranque'
+            },
+            { id: 2, marca: 'Peugeot', modelo: '206 1.1', anoFabricacao: 2004, anoModelo: 2004, preco: 450, km: 195000, combustivel: 'Gasolina',
+                cambio: 'Manual', cor: 'Azul', portas: 3, local: 'Porto',
+                descricao: 'Peugeot 206 sinistrado na parte frontal. Ideal para peças ou reparação profunda.\n\n* Motor arranca mas radiador está partido\n* Interiores em bom estado\n* Farol esquerdo partido',
+                estadoVeiculo: 'manutencao', tiposManutencao: ['Mecânica', 'Pintura e funilaria', 'Lataria / amassados'], manutencaoOutro: 'Radiador partido',
+                temOrcamento: false, orcamentoTexto: '',
+                incluirMecanicoNome: false, mecanicoNome: '', incluirMecanicoTelefone: false, mecanicoTelefone: '',
+                fotos: ['images/peugeot206.png', '🛠️', '📦'], criador: 'admin@reparauto.pt',
+                rodando: false, inspecao: false,
+                ano: 2004, caixa: 'Manual', estado: 'Manutenção', avarias: ['Sinistro', 'Não trava bem'], negociável: true, motivo: 'Sinistro'
+            },
+            { id: 3, marca: 'Volkswagen', modelo: 'Golf IV 1.9 TDI', anoFabricacao: 2003, anoModelo: 2003, preco: 900, km: 280000, combustivel: 'Diesel',
+                cambio: 'Manual', cor: 'Preto', portas: 5, local: 'Coimbra',
+                descricao: 'Excelente motor 1.9 TDI de 110cv. Anda diariamente mas precisa de pastilhas e discos novos urgentemente.\n\n* Revisão feita há 5.000 km\n* AC a funcionar\n* Interiores desgastados',
+                estadoVeiculo: 'manutencao', tiposManutencao: ['Mecânica'], manutencaoOutro: '',
+                temOrcamento: true, orcamentoTexto: 'Substituição de discos e pastilhas frontais e traseiras: 180€ com mão de obra',
+                incluirMecanicoNome: true, mecanicoNome: 'Mecânica do Zé', incluirMecanicoTelefone: false, mecanicoTelefone: '',
+                fotos: ['images/golf4.png', '✅', '🔩'], criador: 'admin@reparauto.pt',
+                rodando: true, inspecao: true,
+                ano: 2003, caixa: 'Manual', estado: 'Manutenção', avarias: ['Travões a fazer'], negociável: false, motivo: 'Travões'
+            },
+            { id: 4, marca: 'BMW', modelo: '320d Coupé (Valor Livre)', anoFabricacao: 2011, anoModelo: 2012, preco: 12400, km: 185000, combustivel: 'Diesel',
+                cambio: 'Manual', cor: 'Branco', portas: 3, local: 'Lisboa',
+                descricao: 'BMW 320d Coupé em excelente estado de conservação. Quilómetros reais e comprovados.\n\n* Estofos em pele\n* Faróis Bi-Xénon\n* Sensores de estacionamento\n* Jantes de liga leve',
+                estadoVeiculo: 'pronto', tiposManutencao: [], manutencaoOutro: '',
+                temOrcamento: false, orcamentoTexto: '',
+                incluirMecanicoNome: false, mecanicoNome: '', incluirMecanicoTelefone: false, mecanicoTelefone: '',
+                fotos: ['images/bmw320d.png', '✨', '💎'], criador: 'admin@reparauto.pt',
+                ano: 2011, caixa: 'Manual', estado: 'Pronto', avarias: [], negociável: true, motivo: 'Upgrade'
+            },
+            { id: 5, marca: 'Opel', modelo: 'Corsa B 1.2', anoFabricacao: 1999, anoModelo: 1999, preco: 350, km: 165000, combustivel: 'Gasolina',
+                cambio: 'Manual', cor: 'Verde', portas: 5, local: 'Lisboa',
+                descricao: 'Carro parado há 2 anos numa garagem. Não pega, provavelmente bateria ou bomba de combustível avariada.\nTem alguma ferrugem na porta do condutor.\n\n* Pintura queimada do sol\n* Pneus ressequidos',
+                estadoVeiculo: 'manutencao', tiposManutencao: ['Mecânica', 'Elétrica', 'Pintura e funilaria', 'Lataria / amassados'], manutencaoOutro: 'Parado há muito tempo',
+                temOrcamento: false, orcamentoTexto: '',
+                incluirMecanicoNome: false, mecanicoNome: '', incluirMecanicoTelefone: false, mecanicoTelefone: '',
+                fotos: ['🚐', '⏳', '🕸️'], criador: 'admin@reparauto.pt',
+                rodando: false, inspecao: false,
+                ano: 1999, caixa: 'Manual', estado: 'Manutenção', avarias: ['Ferrugem', 'Motor não pega'], negociável: true, motivo: 'Parado'
+            },
+            { id: 6, marca: 'Mercedes-Benz', modelo: 'C220 CDI (Valor Livre)', anoFabricacao: 2009, anoModelo: 2009, preco: 8900, km: 250000, combustivel: 'Diesel',
+                cambio: 'Automático', cor: 'Preto', portas: 4, local: 'Porto',
+                descricao: 'Mercedes C220 CDI nacional, caixa automática. Anda diariamente sem qualquer problema.\n\n* GPS e Bluetooth\n* Tecto de abrir\n* Bancos elétricos com memória',
+                estadoVeiculo: 'pronto', tiposManutencao: [], manutencaoOutro: '',
+                temOrcamento: false, orcamentoTexto: '',
+                incluirMecanicoNome: false, mecanicoNome: '', incluirMecanicoTelefone: false, mecanicoTelefone: '',
+                fotos: ['images/mercedes.png', '🚗', '⚙️'], criador: 'admin@reparauto.pt',
+                ano: 2009, caixa: 'Automática', estado: 'Pronto', avarias: [], negociável: false, motivo: 'Troca de frota'
+            },
+            { id: 7, marca: 'Seat', modelo: 'Ibiza 1.4', anoFabricacao: 2006, anoModelo: 2006, preco: 750, km: 230000, combustivel: 'Gasolina',
+                cambio: 'Manual', cor: 'Vermelho', portas: 5, local: 'Faro',
+                descricao: 'Seat Ibiza 1.4 a gasolina. Anda diariamente mas apresenta luz de erro de motor no painel (EGR ou sonda lambda) e o ar condicionado não arrefece.\n\n* Jantes especiais\n* Vidros elétricos à frente\n* Fecho central',
+                estadoVeiculo: 'manutencao', tiposManutencao: ['Eletrônica', 'Ar-condicionado'], manutencaoOutro: '',
+                temOrcamento: true, orcamentoTexto: 'Diagnóstico de erro EGR + carregamento de AC: 120€',
+                incluirMecanicoNome: false, mecanicoNome: '', incluirMecanicoTelefone: true, mecanicoTelefone: '933567890',
+                fotos: ['🚗', '⚡', '🔌'], criador: 'admin@reparauto.pt',
+                rodando: true, inspecao: true,
+                ano: 2006, caixa: 'Manual', estado: 'Manutenção', avarias: ['Luzes erro painel'], negociável: true, motivo: 'Elétrica'
+            }
+        ];
+
+        const defaultPecas = [
+            { id: 1, tipo: 'venda', titulo: 'Motor 1.9 TDI ASZ 130cv', categoria: 'Motor e Transmissão', marcaCarro: 'Seat', modeloCarro: 'Ibiza 6L', preco: 450, estado: 'Usado', local: 'Braga', contacto: '912345678', foto: '⚙️', criador: 'admin@reparauto.pt', descricao: 'Motor em excelente estado de funcionamento. Retirado de veículo acidentado na traseira. Tem cerca de 210.000 km. Vendido completo com turbo original.' },
+            { id: 2, tipo: 'desmonte', titulo: 'Peugeot 206 1.1 para desmonte completo', categoria: 'Carro Completo p/ Desmonte', marcaCarro: 'Peugeot', modeloCarro: '206', preco: 300, estado: 'Usado', local: 'Porto', contacto: '933567890', foto: '🚗', criador: 'carlos@email.com', descricao: 'Carro completo para peças. Chaparia em bom estado, interiores impecáveis. Motor parado. Vendo peças individuais ou o conjunto.' },
+            { id: 3, tipo: 'procura', titulo: 'Procuro Farol Frontal Esquerdo Halogéneo', categoria: 'Iluminação e Óticas', marcaCarro: 'Renault', modeloCarro: 'Clio III', preco: 0, estado: 'Usado', local: 'Lisboa', contacto: '922456789', foto: '🔍', criador: 'admin@reparauto.pt', descricao: 'Procuro farol esquerdo (lado condutor) original e em bom estado para Renault Clio de 2007 (Fase 1).' }
+        ];
+
+        // Lógica de migração de cache
+        const cacheVersaoKey = 'reparauto_db_version';
+        const versaoAtual = '2.2';
+
+        if (localStorage.getItem(cacheVersaoKey) !== versaoAtual || !localStorage.getItem('carros_reparauto') || !localStorage.getItem('pecas_reparauto')) {
+            localStorage.setItem('carros_reparauto', JSON.stringify(defaultCarros));
+            localStorage.setItem('pecas_reparauto', JSON.stringify(defaultPecas));
+            localStorage.setItem(cacheVersaoKey, versaoAtual);
+            localStorage.removeItem('oficinas_reparauto');
+        }
+
+        function getCarros() {
+            return JSON.parse(localStorage.getItem('carros_reparauto')) || [];
+        }
+
+        function setCarros(lista) {
+            localStorage.setItem('carros_reparauto', JSON.stringify(lista));
+        }
+
+        function getPecas() {
+            return JSON.parse(localStorage.getItem('pecas_reparauto')) || [];
+        }
+
+        function setPecas(lista) {
+            localStorage.setItem('pecas_reparauto', JSON.stringify(lista));
+        }
+
+        // Helper para renderizar foto ou emoji
+        function renderFoto(foto, classes = "w-full h-full object-cover") {
+            if (foto && (foto.startsWith('data:image/') || foto.startsWith('blob:') || foto.endsWith('.png') || foto.endsWith('.jpg') || foto.endsWith('.jpeg') || foto.includes('images/'))) {
+                return `<img src="${foto}" class="${classes}">`;
+            }
+            const emoji = foto || '🚗';
+            return `<span class="text-5xl">${emoji}</span>`;
+        }
+
+        let favoritos = JSON.parse(localStorage.getItem('favs_reparauto')) || [];
+        let paginaAtual = 'home';
+        let stepAtual = 1;
+        let filtroAtivo = 'lowcost';
+        let pecasFiltroAtivo = 'todos';
+        let pecaFotoSelecionada = '';
+        let anuncioFotos = [];
+        let advPriceMin = null;
+        let advPriceMax = null;
+        let advLocation = '';
+        let sortOrdem = null;
+
+        // ============ TEXTOS DAS POLÍTICAS ============
+        const textosPoliticas = {
+            termos: {
+                titulo: "Termos de Utilização - ReparAuto",
+                corpo: `
+                    <p class='font-bold text-slate-800 mb-2'>1. Introdução</p>
+                    <p class='mb-4'>Bem-vindo(a) à <strong>ReparAuto</strong>. Ao aceder e utilizar a ReparAuto, o utilizador concorda em submeter-se aos presentes Termos de Utilização. Se não concordo com estes termos, não deverá utilizar a plataforma.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>2. Natureza do Serviço</p>
+                    <p class='mb-4'>A ReparAuto é um marketplace que atua exclusivamente como intermediário tecnológico. Disponibilizamos uma plataforma online para que Vendedores e Compradores possam interagir com fins de compra e venda de veículos e peças. A ReparAuto não é proprietária dos itens anunciados, não assumindo qualquer responsabilidade pelas transações celebradas entre as partes.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>3. Direitos e Deveres do Vendedor</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Veracidade das Informações:</strong> O Vendedor compromete-se a fornecer informações rigorosas, completas e atualizadas sobre o veículo ou peça, incluindo o estado real de conservação e avarias conhecidas.</li>
+                      <li><strong>Responsabilidade Legal:</strong> O Vendedor garante ter capacidade legal e legitimidade para a venda do item.</li>
+                      <li><strong>Transparência em Viaturas com Avarias:</strong> Nos casos de veículos com necessidade de reparação, o Vendedor deve explicitar as deficiências e custos conhecidos.</li>
+                    </ul>
+
+                    <p class='font-bold text-slate-800 mb-2'>4. Direitos e Deveres do Comprador</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Due Diligence:</strong> É da inteira responsabilidade do Comprador verificar o estado do veículo ou peça presencialmente antes de realizar qualquer pagamento.</li>
+                      <li><strong>Consciência do Risco:</strong> O Comprador reconhece que veículos ou peças low-cost acarretam risco inerente superior de anomalias adicionais.</li>
+                    </ul>
+                `
+            },
+            privacidade: {
+                titulo: "Política de Privacidade (RGPD) - ReparAuto",
+                corpo: `
+                    <p class='font-bold text-slate-800 mb-2'>1. Enquadramento e Responsável pelo Tratamento</p>
+                    <p class='mb-4'>No estrito cumprimento do Regulamento Geral sobre a Proteção de Dados (RGPD - Regulamento (UE) 2016/679), a ReparAuto compromete-se a proteger a privacidade dos seus utilizadores.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>2. Dados Recolhidos</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Dados de Identificação e Contacto:</strong> Nome, endereço de email, número de telefone.</li>
+                      <li><strong>Dados de Localização:</strong> Recolhemos apenas a indicação geográfica geral (concelho) fornecida pelo utilizador para associar aos anúncios. Não recolhemos coordenadas GPS exatas.</li>
+                      <li><strong>Dados de Registo:</strong> Endereço IP, tipo de browser, logs de acesso.</li>
+                    </ul>
+
+                    <p class='font-bold text-slate-800 mb-2'>3. Finalidades do Tratamento</p>
+                    <p class='mb-4'>Os dados são tratados para criação e gestão de conta, publicação de anúncios, facilitação do contacto direto entre comprador e vendedor, e melhorias de segurança.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>4. Retenção e Partilha de Dados</p>
+                    <p class='mb-4'>Os anúncios e dados associados são guardados para assegurar a correta exibição e eliminados permanentemente se o utilizador optar por apagar o anúncio. Nunca vendemos dados a terceiros para marketing.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>5. Direitos dos Titulares</p>
+                    <p class='mb-4'>O utilizador tem o direito de solicitar o acesso, retificação, apagamento (direito ao esquecimento), ou oposição ao tratamento dos seus dados pessoais.</p>
+                `
+            },
+            cookies: {
+                titulo: "Política de Cookies - ReparAuto",
+                corpo: `
+                    <p class='font-bold text-slate-800 mb-2'>1. O que são Cookies?</p>
+                    <p class='mb-4'>Cookies são pequenos ficheiros de texto descarregados para o seu dispositivo quando visita um website.</p>
+
+                    <p class='font-bold text-slate-800 mb-2'>2. Categorias de Cookies Utilizados</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Estritamente Necessários:</strong> Essenciais para a navegação segura, tokens de sessão e guardar preferências de consentimento. Não podem ser desativados.</li>
+                      <li><strong>Analíticos / Desempenho:</strong> Permitem-nos contabilizar visitas e medir a performance da ReparAuto de forma anonimizada.</li>
+                      <li><strong>Funcionais:</strong> Usados para memorizar escolhas, como filtros de pesquisa recentes e lista de favoritos local.</li>
+                    </ul>
+
+                    <p class='font-bold text-slate-800 mb-2'>3. Gestão de Consentimento</p>
+                    <p class='mb-4'>A ReparAuto implementa um modelo de consentimento granular. Pode gerir livremente as suas preferências de consentimento a qualquer momento.</p>
+                `
+            },
+            seguranca: {
+                titulo: "Política de Segurança da Plataforma",
+                corpo: `
+                    <p class='font-bold text-slate-800 mb-2'>1. Stack Tecnológica e Segurança Perimetral</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>HTTPS e HSTS Estrito:</strong> Todo o tráfego é servido via TLS 1.3 com HTTP Strict Transport Security (HSTS) estrito.</li>
+                      <li><strong>Proteção Contra Vulnerabilidades (OWASP):</strong> Prevenção contra SQL Injection (consultas parametrizadas), Cross-Site Scripting (XSS - sanitização estrita e CSP moderna), e CSRF (Tokens anti-CSRF).</li>
+                      <li><strong>Limitação de Tráfego:</strong> Rate Limiting por IP para impedir ataques de Brute Force e Scraping.</li>
+                    </ul>
+
+                    <p class='font-bold text-slate-800 mb-2'>2. Autenticação e Gestão de Sessão</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Autenticação Moderna:</strong> Suporte para OAuth 2.0 (Google, Apple) e Magic Links passwordless.</li>
+                      <li><strong>Controlo de Acesso:</strong> Perfis divididos via Role-Based Access Control (RBAC) com validação de tokens em endpoints de API.</li>
+                    </ul>
+
+                    <p class='font-bold text-slate-800 mb-2'>3. Proteção e Encriptação de Dados</p>
+                    <ul class='list-disc pl-5 mb-4 space-y-1'>
+                      <li><strong>Criptografia em Repouso:</strong> Discos de base de dados e backups utilizam encriptação AES-256 no nível de armazenamento.</li>
+                      <li><strong>Minimização de Dados:</strong> Apenas armazenamos dados de contacto estritamente necessários e geolocalização limitada (ao nível do concelho).</li>
+                    </ul>
+                `
+            }
+        };
+
+        // ============ SISTEMA DE NOTIFICAÇÕES TOAST ============
+        function mostrarToast(mensagem, tipo = 'success') {
+            const existingToasts = document.querySelectorAll('.custom-toast');
+            existingToasts.forEach(t => t.remove());
+
+            const toast = document.createElement('div');
+            toast.className = `custom-toast fixed top-4 left-1/2 -translate-x-1/2 md:left-auto md:right-4 md:translate-x-0 z-[150] max-w-sm w-[90%] md:w-auto px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold text-white transition-all transform duration-300 -translate-y-4 opacity-0 flex items-center gap-3 backdrop-blur-md border ${
+                tipo === 'success' ? 'bg-emerald-600/95 border-emerald-500/30' : 
+                tipo === 'warning' ? 'bg-amber-500/95 border-amber-400/30' : 
+                'bg-rose-600/95 border-rose-500/30'
+            }`;
+            
+            const icon = tipo === 'success' ? 'fa-circle-check text-green-200' : 
+                         tipo === 'warning' ? 'fa-triangle-exclamation text-amber-200' : 
+                         'fa-circle-xmark text-rose-200';
+                         
+            toast.innerHTML = `<i class="fa-solid ${icon} text-base flex-shrink-0"></i> <span class="leading-snug">${mensagem}</span>`;
+            
+            document.body.appendChild(toast);
+            
+            toast.offsetHeight; // trigger reflow
+            
+            toast.classList.remove('-translate-y-4', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-4', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // ============ FOCUS TRAP PARA ACESSIBILIDADE DE MODAIS ============
+        let focusAntesDoModal = null;
+
+        function toggleFocusTrap(modalId, show) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+
+            if (show) {
+                focusAntesDoModal = document.activeElement;
+                
+                // Encontrar elementos focáveis no modal
+                const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (focusableElements.length > 0) {
+                    // Colocar o foco no primeiro elemento focável
+                    setTimeout(() => {
+                        focusableElements[0].focus();
+                    }, 50);
+                }
+
+                // Adicionar listener de teclado para prender o foco
+                modal.addEventListener('keydown', trapFocusHandler);
+            } else {
+                modal.removeEventListener('keydown', trapFocusHandler);
+                if (focusAntesDoModal && typeof focusAntesDoModal.focus === 'function') {
+                    focusAntesDoModal.focus();
+                }
+            }
+        }
+
+        function trapFocusHandler(e) {
+            if (e.key !== 'Tab') return;
+
+            const modal = e.currentTarget;
+            // Procurar elementos focáveis visíveis e habilitados
+            const focusableElements = Array.from(modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+                .filter(el => !el.disabled && el.offsetParent !== null);
+
+            if (focusableElements.length === 0) return;
+
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (e.shiftKey) { // Shift + Tab
+                if (document.activeElement === firstElement) {
+                    lastElement.focus();
+                    e.preventDefault();
+                }
+            } else { // Tab
+                if (document.activeElement === lastElement) {
+                    firstElement.focus();
+                    e.preventDefault();
+                }
+            }
+        }
+
+        // ============ NAVEGAÇÃO ============
+        function navegar(pagina) {
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.remove('active');
+                p.setAttribute('aria-hidden', 'true');
+            });
+            const activePage = document.getElementById('page-' + pagina);
+            if (activePage) {
+                activePage.classList.add('active');
+                activePage.setAttribute('aria-hidden', 'false');
+            }
+            
+            // Bottom Nav Active State
+            document.querySelectorAll('#bottomNav button').forEach(b => {
+                b.classList.remove('active');
+                b.removeAttribute('aria-current');
+            });
+            const bottomNavBtn = document.querySelector(`#bottomNav button[data-page="${pagina}"]`);
+            if (bottomNavBtn) {
+                bottomNavBtn.classList.add('active');
+                bottomNavBtn.setAttribute('aria-current', 'page');
+            }
+
+            // Header Nav Active State (Desktop)
+            document.querySelectorAll('#headerNav .header-nav-btn').forEach(b => {
+                b.classList.remove('text-accent');
+                b.classList.add('text-white');
+            });
+            const headerNavBtn = document.querySelector(`#headerNav .header-nav-btn[data-header-page="${pagina}"]`);
+            if (headerNavBtn) {
+                headerNavBtn.classList.remove('text-white');
+                headerNavBtn.classList.add('text-accent');
+            }
+            
+            paginaAtual = pagina;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (pagina === 'home') renderizarCarros();
+            if (pagina === 'pecas') renderizarPecas();
+            if (pagina === 'perfil') atualizarPerfilUI();
+        }
+
+        function voltarHome() {
+            navegar('home');
+        }
+
+        // ============ RENDERIZAR CARROS ============
+        function renderizarCarros(filtro = null) {
+            if (filtro) {
+                filtroAtivo = filtro;
+            }
+            const grid = document.getElementById('carGrid');
+            const label = document.getElementById('filtroLabel');
+            let cs = getCarros();
+
+            if (filtroAtivo === 'lowcost') {
+                cs = cs.filter(c => c.preco <= 2000);
+                label.textContent = "Destaques Low-Cost (Até 2.000€)";
+            } else if (filtroAtivo === 'qualquer') {
+                label.textContent = "Aba Livre (Qualquer Preço)";
+            } else if (filtroAtivo === '500') {
+                cs = cs.filter(c => c.preco <= 500);
+                label.textContent = "Até 500€";
+            } else if (filtroAtivo === '1000') {
+                cs = cs.filter(c => c.preco <= 1000);
+                label.textContent = "Até 1.000€";
+            } else if (filtroAtivo === 'reparar') {
+                cs = cs.filter(c => c.estadoVeiculo === 'manutencao');
+                label.textContent = "Precisam de Reparos";
+            }
+
+            // Pesquisa Global Textual
+            const searchInput = document.getElementById('globalSearch');
+            const searchInputMobile = document.getElementById('globalSearchMobile');
+            const searchVal = ((searchInput && searchInput.value) || (searchInputMobile && searchInputMobile.value) || '').toLowerCase().trim();
+            if (searchVal) {
+                cs = cs.filter(c => 
+                    c.marca.toLowerCase().includes(searchVal) || 
+                    c.modelo.toLowerCase().includes(searchVal) || 
+                    c.local.toLowerCase().includes(searchVal)
+                );
+            }
+
+            // Filtros Avançados (Preço Mínimo, Preço Máximo, Localização)
+            if (advPriceMin !== null && !isNaN(advPriceMin)) {
+                cs = cs.filter(c => c.preco >= advPriceMin);
+            }
+            if (advPriceMax !== null && !isNaN(advPriceMax)) {
+                cs = cs.filter(c => c.preco <= advPriceMax);
+            }
+            if (advLocation) {
+                const locVal = advLocation.toLowerCase().trim();
+                cs = cs.filter(c => c.local.toLowerCase().includes(locVal));
+            }
+
+            // Ordenação por preço
+            if (sortOrdem === 'crescente') {
+                cs.sort((a, b) => a.preco - b.preco);
+            } else if (sortOrdem === 'decrescente') {
+                cs.sort((a, b) => b.preco - a.preco);
+            }
+
+            if (cs.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8 bg-white rounded-2xl border border-dashed border-slate-300">
+                        <i class="fa-solid fa-car-side text-slate-300 text-4xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-500">Nenhum veículo encontrado com estes critérios.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = cs.map(c => {
+                const anoStr = c.anoFabricacao || c.ano || '';
+                let estadoBadge = '';
+                if (c.estadoVeiculo === 'manutencao') {
+                    const isRodando = c.rodando !== false;
+                    const rodandoText = isRodando ? 'Rodando' : 'Não roda';
+                    const rodandoIcon = isRodando ? 'fa-circle-play text-green-400' : 'fa-circle-stop text-red-400';
+                    
+                    const temInspecao = c.inspecao !== false;
+                    const inspecaoText = temInspecao ? 'Com Inspeção' : 'Sem Inspeção';
+                    const inspecaoIcon = temInspecao ? 'fa-file-shield text-green-400' : 'fa-file-circle-xmark text-red-400';
+
+                    estadoBadge = `
+                        <div class="absolute top-2 left-2 flex flex-col gap-1 z-10 items-start pointer-events-none">
+                            <span class="bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid fa-wrench text-[8px]"></i> Reparos</span>
+                            <span class="bg-slate-950/85 backdrop-blur-sm text-white text-[8px] font-semibold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid ${rodandoIcon} text-[8px]"></i> ${rodandoText}</span>
+                            <span class="bg-slate-950/85 backdrop-blur-sm text-white text-[8px] font-semibold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid ${inspecaoIcon} text-[8px]"></i> ${inspecaoText}</span>
+                        </div>
+                    `;
+                } else {
+                    estadoBadge = `
+                        <div class="absolute top-2 left-2 flex flex-col gap-1 z-10 items-start pointer-events-none">
+                            <span class="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1"><i class="fa-solid fa-circle-check text-[8px]"></i> Pronto</span>
+                        </div>
+                    `;
+                }
+                
+                const isFav = favoritos.includes(c.id);
+                const heartClass = isFav ? 'fa-solid fa-heart text-red-500' : 'fa-regular fa-heart text-slate-400';
+
+                return `
+                <div class="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between" onclick="verDetalhes(${c.id})">
+                  <div>
+                      <div class="h-40 bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-5xl relative overflow-hidden">
+                        ${renderFoto(c.fotos[0])}
+                        ${estadoBadge}
+                        ${c.preco > 2000 ? '<span class="absolute top-2 right-2 bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-star"></i> Aba Livre</span>' : ''}
+                        ${c.negociável ? '<span class="absolute bottom-2 left-2 bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">Negociável</span>' : ''}
+                      </div>
+                      <div class="p-3">
+                        <h3 class="font-bold text-brand-900 text-sm line-clamp-1">${c.marca} ${c.modelo} – ${anoStr}</h3>
+                        <div class="flex items-center justify-between mt-1">
+                            <p class="text-accent font-extrabold text-xl">${c.preco.toLocaleString('pt-PT')} €</p>
+                            <button onclick="toggleFavoritoCard(event, ${c.id})" class="fav-card-btn hover:scale-110 transition p-1 text-lg flex items-center justify-center" data-car-id="${c.id}" aria-label="Favoritar">
+                                <i class="${heartClass}"></i>
+                            </button>
+                        </div>
+                      </div>
+                  </div>
+                  <div class="p-3 pt-0 border-t border-slate-100">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mt-2">
+                      <span>${c.km.toLocaleString('pt-PT')} km</span>
+                      <span>•</span>
+                      <span>${c.combustivel}</span>
+                      <span>•</span>
+                      <span class="font-semibold text-brand-700">${c.local}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+        }
+
+
+        // ============ AUTENTICAÇÃO SIMULADA ============
+        function abrirLoginModal() {
+            document.getElementById('loginModal').classList.add('show');
+            toggleFocusTrap('loginModal', true);
+        }
+
+        function fecharLoginModal() {
+            document.getElementById('loginModal').classList.remove('show');
+            toggleFocusTrap('loginModal', false);
+        }
+
+        function confirmarLogin() {
+            const nome = document.getElementById('loginNome').value.trim();
+            const email = document.getElementById('loginEmail').value.trim();
+
+            if (!nome || !email) {
+                mostrarToast("Por favor, preencha todos os campos.", 'warning');
+                return;
+            }
+
+            const user = { name: nome, email: email };
+            localStorage.setItem('loggedUser_reparauto', JSON.stringify(user));
+            fecharLoginModal();
+            atualizarPerfilUI();
+            
+            // Alterar botão no header
+            document.getElementById('headerUserBtn').innerHTML = `<i class="fa-solid fa-user-check text-green-400"></i> ${nome.split(' ')[0]}`;
+        }
+
+        function efetuarLogout() {
+            localStorage.removeItem('loggedUser_reparauto');
+            atualizarPerfilUI();
+            document.getElementById('headerUserBtn').innerHTML = `<i class="fa-solid fa-user mr-1"></i> Entrar`;
+        }
+
+        function verificarLoginInicial() {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            if (user) {
+                document.getElementById('headerUserBtn').innerHTML = `<i class="fa-solid fa-user-check text-green-400"></i> ${user.name.split(' ')[0]}`;
+            }
+        }
+
+        function atualizarPerfilUI() {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            const deslogado = document.getElementById('perfil-deslogado');
+            const logado = document.getElementById('perfil-logado');
+
+            if (user) {
+                deslogado.classList.add('hidden');
+                logado.classList.remove('hidden');
+
+                document.getElementById('userNome').textContent = user.name;
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userAvatar').textContent = user.name.charAt(0).toUpperCase();
+
+                // Listar anúncios do próprio utilizador
+                const meusCarros = getCarros().filter(c => c.criador === user.email);
+                const container = document.getElementById('meusAnunciosList');
+
+                if (meusCarros.length === 0) {
+                    container.innerHTML = `
+                        <p class="text-xs text-gray-500 py-3 italic">Ainda não publicou nenhum anúncio de veículo.</p>
+                    `;
+                } else {
+                    container.innerHTML = meusCarros.map(c => `
+                        <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-2">
+                                <div class="w-12 h-12 flex items-center justify-center overflow-hidden rounded bg-slate-200">
+                                    ${renderFoto(c.fotos[0], "w-full h-full object-cover")}
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-slate-800 text-xs">${c.marca} ${c.modelo}</h5>
+                                    <p class="text-[10px] text-accent font-extrabold">${c.preco} €</p>
+                                </div>
+                            </div>
+                            <button onclick="eliminarAnuncio(${c.id})" class="text-xs text-red-500 hover:text-red-700 font-bold px-3 py-1 rounded-full bg-red-50 hover:bg-red-100 transition">
+                                <i class="fa-solid fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    `).join('');
+                }
+
+                // Listar anúncios de peças do próprio utilizador
+                const minhasPecas = getPecas().filter(p => p.criador === user.email);
+                const containerPecas = document.getElementById('meusAnunciosPecasList');
+
+                if (minhasPecas.length === 0) {
+                    containerPecas.innerHTML = `
+                        <p class="text-xs text-gray-500 py-3 italic">Ainda não publicou nenhum anúncio de peças ou pedidos.</p>
+                    `;
+                } else {
+                    containerPecas.innerHTML = minhasPecas.map(p => {
+                        const precoStr = p.tipo === 'procura' ? 'Procura-se' : `${p.preco} €`;
+                        let badgeStr = '';
+                        if (p.tipo === 'venda') badgeStr = 'Peça';
+                        else if (p.tipo === 'desmonte') badgeStr = 'Desmonte';
+                        else badgeStr = 'Procura';
+                        
+                        return `
+                        <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
+                            <div class="flex items-center gap-2">
+                                <div class="w-12 h-12 flex items-center justify-center overflow-hidden rounded bg-slate-200">
+                                    ${renderFoto(p.foto, "w-full h-full object-cover")}
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-slate-800 text-xs">${p.titulo} <span class="text-[10px] text-gray-400">(${badgeStr})</span></h5>
+                                    <p class="text-[10px] text-accent font-extrabold">${precoStr}</p>
+                                </div>
+                            </div>
+                            <button onclick="eliminarAnuncioPeca(${p.id})" class="text-xs text-red-500 hover:text-red-700 font-bold px-3 py-1 rounded-full bg-red-50 hover:bg-red-100 transition">
+                                <i class="fa-solid fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    `;
+                    }).join('');
+                }
+            } else {
+                deslogado.classList.remove('hidden');
+                logado.classList.add('hidden');
+            }
+        }
+
+        function eliminarAnuncio(id) {
+            if (confirm("Tem a certeza de que deseja eliminar este anúncio?")) {
+                let cs = getCarros();
+                cs = cs.filter(c => c.id !== id);
+                setCarros(cs);
+                atualizarPerfilUI();
+                renderizarCarros();
+            }
+        }
+
+        function eliminarAnuncioPeca(id) {
+            if (confirm("Tem a certeza de que deseja eliminar este anúncio de peça/pedido?")) {
+                let lista = getPecas();
+                lista = lista.filter(p => p.id !== id);
+                setPecas(lista);
+                atualizarPerfilUI();
+                renderizarPecas();
+            }
+        }
+
+        // ============ DETALHES DO CARRO ============
+        function renderDescricao(texto) {
+            if (!texto) return '';
+            let escaped = texto
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+            escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+            const lines = escaped.split('\n');
+            let inList = false;
+            let result = [];
+
+            for (let line of lines) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
+                    if (!inList) {
+                        result.push('<ul class="list-disc pl-5 my-2 space-y-1">');
+                        inList = true;
+                    }
+                    result.push(`<li>${trimmed.substring(2)}</li>`);
+                } else {
+                    if (inList) {
+                        result.push('</ul>');
+                        inList = false;
+                    }
+                    result.push(line);
+                }
+            }
+            if (inList) {
+                result.push('</ul>');
+            }
+
+            return result.join('<br>').replace(/<\/ul><br>/g, '</ul>').replace(/<br><ul/g, '<ul');
+        }
+
+        // ============ DETALHES DO CARRO ============
+        function verDetalhes(id) {
+            const c = getCarros().find(c => c.id === id);
+            if (!c) return;
+            
+            const isFav = favoritos.includes(c.id);
+            const content = document.getElementById('detalhesContent');
+            
+            let manutencaoBlock = '';
+            if (c.estadoVeiculo === 'manutencao') {
+                const tipos = (c.tiposManutencao || []).slice();
+                if (c.manutencaoOutro) {
+                    tipos.push(`Outro: ${c.manutencaoOutro}`);
+                }
+                
+                let orcamentoBlock = '';
+                if (c.orcamentoTexto) {
+                    let mecanicoInfo = '';
+                    if ((c.incluirMecanicoNome && c.mecanicoNome) || (c.incluirMecanicoTelefone && c.mecanicoTelefone)) {
+                        mecanicoInfo = `
+                            <div class="mt-2 pt-2 border-t border-orange-100 text-xs text-orange-850">
+                                <strong>Contacto Oficina/Mecânico:</strong>
+                                ${c.incluirMecanicoNome && c.mecanicoNome ? `<div class="mt-0.5"><i class="fa-solid fa-wrench mr-1"></i> ${c.mecanicoNome}</div>` : ''}
+                                ${c.incluirMecanicoTelefone && c.mecanicoTelefone ? `<div class="mt-0.5"><i class="fa-solid fa-phone mr-1"></i> ${c.mecanicoTelefone}</div>` : ''}
+                            </div>
+                        `;
+                    }
+                    
+                    orcamentoBlock = `
+                        <div class="mt-3 bg-white rounded-lg p-3 border border-orange-200">
+                            <span class="block text-xs font-bold text-orange-700 uppercase tracking-wider mb-1">Orçamento Preexistente</span>
+                            <p class="text-xs text-slate-700 whitespace-pre-line leading-relaxed">${c.orcamentoTexto}</p>
+                            ${mecanicoInfo}
+                        </div>
+                    `;
+                }
+                
+                manutencaoBlock = `
+                    <div class="bg-orange-50 border border-orange-200 rounded-2xl p-4 sm:p-5 mb-6">
+                        <div class="flex items-start gap-3">
+                            <span class="text-orange-500 text-xl flex-shrink-0 mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                            <div class="flex-1">
+                                <h4 class="font-extrabold text-orange-950 text-sm mb-1">Precisa de Manutenção / Reparos</h4>
+                                <div class="flex flex-col gap-1 text-xs text-orange-850 mb-3 bg-white/50 p-2 rounded-lg border border-orange-100">
+                                    <span><i class="fa-solid ${c.rodando !== false ? 'fa-circle-play text-green-600' : 'fa-circle-stop text-red-600'} mr-1"></i> <strong>Circulação:</strong> ${c.rodando !== false ? 'Está a rodar / apto a circular' : 'Não está a rodar (parado)'}</span>
+                                    <span><i class="fa-solid ${c.inspecao !== false ? 'fa-file-shield text-green-600' : 'fa-file-circle-xmark text-red-600'} mr-1"></i> <strong>Inspeção (IPO):</strong> ${c.inspecao !== false ? 'Com Inspeção Periódica válida' : 'Sem Inspeção Periódica'}</span>
+                                </div>
+                                <p class="text-xs text-orange-850 mb-2">Esta viatura necessita de intervenções técnicas nas seguintes áreas:</p>
+                                <div class="flex flex-wrap gap-1.5 mb-2">
+                                    ${tipos.map(t => `<span class="bg-orange-100 text-orange-800 text-[10px] font-bold px-2.5 py-1 rounded-md border border-orange-200"><i class="fa-solid fa-circle-dot text-[8px] mr-1 align-middle"></i>${t}</span>`).join('')}
+                                </div>
+                                ${orcamentoBlock}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                manutencaoBlock = `
+                    <div class="bg-green-50 border border-green-200 rounded-2xl p-4 sm:p-5 mb-6">
+                        <div class="flex items-start gap-3">
+                            <span class="text-green-500 text-xl flex-shrink-0 mt-0.5"><i class="fa-solid fa-circle-check"></i></span>
+                            <div>
+                                <h4 class="font-extrabold text-green-950 text-sm mb-1">Pronto para rodar</h4>
+                                <p class="text-xs text-green-800">Esta viatura está em bom estado e não necessita de qualquer manutenção ou reparação imediata para circular.</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Coluna Esquerda: Galeria e Ações -->
+                    <div>
+                        <div class="relative aspect-[4/3] bg-gradient-to-br from-brand-100 to-brand-200 rounded-2xl flex items-center justify-center text-7xl mb-4 cursor-pointer overflow-hidden group shadow-inner" onclick="abrirGaleria(${c.id})">
+                            ${renderFoto(c.fotos[0], "w-full h-full object-cover group-hover:scale-105 transition-all duration-500")}
+                            <span class="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md"><i class="fa-solid fa-images mr-1"></i> ${c.fotos.length} fotos</span>
+                        </div>
+                        <div class="flex gap-2 mb-4 flex-wrap">
+                            <span class="inline-flex items-center gap-1 bg-yellow-400 text-brand-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                                <i class="fa-solid ${c.estadoVeiculo === 'manutencao' ? 'fa-wrench' : 'fa-check'} text-[10px]"></i>
+                                ${c.estadoVeiculo === 'manutencao' ? 'Precisam de Reparos' : 'Pronto para Rodar'}
+                            </span>
+                            ${c.estadoVeiculo === 'manutencao' ? `
+                                <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                                    <i class="fa-solid ${c.rodando !== false ? 'fa-circle-play text-green-400' : 'fa-circle-stop text-red-400'} text-[10px]"></i>
+                                    ${c.rodando !== false ? 'Rodando' : 'Não roda'}
+                                </span>
+                                <span class="inline-flex items-center gap-1 bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                                    <i class="fa-solid ${c.inspecao !== false ? 'fa-file-shield text-green-400' : 'fa-file-circle-xmark text-red-400'} text-[10px]"></i>
+                                    ${c.inspecao !== false ? 'Com Inspeção' : 'Sem Inspeção'}
+                                </span>
+                            ` : ''}
+                            ${c.preco > 2000 ? '<span class="bg-indigo-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm"><i class="fa-solid fa-star"></i> Valor Livre</span>' : ''}
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 mt-4">
+                            <a href="https://wa.me/351912345678?text=Olá!%20Tenho%20interesse%20no%20${encodeURIComponent(c.marca+' '+c.modelo)}%20(${c.preco}€)%20anunciado%20na%20ReparAuto.%20Ainda%20disponível?"
+                               target="_blank" rel="noopener"
+                               class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                              <i class="fa-brands fa-whatsapp text-lg"></i> Falar com Vendedor
+                            </a>
+                            <button onclick="toggleFavorito(${c.id})" class="sm:w-auto px-6 border border-slate-300 hover:bg-slate-50 font-bold py-3 rounded-xl transition text-sm flex items-center justify-center gap-2" id="favBtn${c.id}">
+                              ${isFav ? '<span class="text-red-500">❤️</span> Remover dos favoritos' : '<span>🤍</span> Adicionar aos favoritos'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Dados e Especificações -->
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <div class="border-b pb-4 mb-4">
+                                <h2 class="text-3xl font-extrabold text-brand-900 tracking-tight leading-tight">${c.marca} ${c.modelo}</h2>
+                                <div class="flex items-baseline gap-2 mt-1">
+                                    <span class="text-accent font-extrabold text-4xl">${c.preco.toLocaleString('pt-PT')} €</span>
+                                    ${c.negociável ? '<span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200 font-semibold">Negociável</span>' : ''}
+                                </div>
+                            </div>
+
+                            <!-- Ficha Técnica -->
+                            <h3 class="font-bold text-brand-900 text-sm mb-2.5 uppercase tracking-wider">Ficha Técnica</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Ano Fabricação</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.anoFabricacao || c.ano}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Ano Modelo</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.anoModelo || c.ano}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Quilómetros</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.km.toLocaleString('pt-PT')} km</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Combustível</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.combustivel}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Câmbio</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.cambio || c.caixa}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Cor</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.cor || 'Não especificada'}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Portas</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.portas || 'N/A'}</span>
+                                </div>
+                                <div class="bg-slate-50 border rounded-xl p-2.5 text-center">
+                                    <span class="text-xs text-slate-500 block mb-0.5">Concelho</span>
+                                    <span class="font-bold text-brand-900 text-sm">${c.local}</span>
+                                </div>
+                            </div>
+
+                            <!-- Estado do Veículo Panel -->
+                            ${manutencaoBlock}
+
+                            <!-- Descrição -->
+                            <div class="mb-6">
+                                <h3 class="font-bold text-brand-900 text-sm mb-2 uppercase tracking-wider">Descrição do Veículo</h3>
+                                <div class="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200 text-sm text-slate-700 leading-relaxed max-w-none prose">
+                                    ${renderDescricao(c.descricao)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            navegar('detalhes');
+        }
+
+        function abrirGaleria(id) {
+            const c = getCarros().find(c => c.id === id);
+            if (!c) return;
+            const imgEl = document.getElementById('galeriaImg');
+            
+            // Render principal da galeria
+            if (c.fotos[0] && (c.fotos[0].endsWith('.png') || c.fotos[0].endsWith('.jpg') || c.fotos[0].endsWith('.jpeg'))) {
+                imgEl.src = c.fotos[0];
+                imgEl.style.display = 'block';
+                imgEl.textContent = '';
+                imgEl.style.fontSize = 'initial';
+            } else {
+                imgEl.removeAttribute('src');
+                imgEl.style.display = 'flex';
+                imgEl.style.alignItems = 'center';
+                imgEl.style.justifyContent = 'center';
+                imgEl.textContent = c.fotos[0] || '🚗';
+                imgEl.style.fontSize = '8rem';
+            }
+
+            document.getElementById('galeriaThumbs').innerHTML = c.fotos.map((f, i) => {
+                if (f && (f.endsWith('.png') || f.endsWith('.jpg') || f.endsWith('.jpeg'))) {
+                    return `<button type="button" class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center cursor-pointer hover:ring-2 ring-accent transition" onclick="const gImg = document.getElementById('galeriaImg'); gImg.src='${f}'; gImg.textContent=''; gImg.style.fontSize='initial';" aria-label="Visualizar foto ${i + 1}"><img src="${f}" class="w-full h-full object-cover" alt="Miniatura ${i + 1}"></button>`;
+                }
+                return `<button type="button" class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-2xl cursor-pointer hover:ring-2 ring-accent transition" onclick="const gImg = document.getElementById('galeriaImg'); gImg.removeAttribute('src'); gImg.textContent='${f}'; gImg.style.fontSize='8rem';" aria-label="Visualizar foto ${i + 1}">${f}</button>`;
+            }).join('');
+            document.getElementById('galeriaModal').classList.add('show');
+            toggleFocusTrap('galeriaModal', true);
+        }
+
+        function fecharGaleria() {
+            document.getElementById('galeriaModal').classList.remove('show');
+            toggleFocusTrap('galeriaModal', false);
+        }
+
+        // ============ FAVORITOS ============
+        function toggleFavorito(id) {
+            const idx = favoritos.indexOf(id);
+            if (idx > -1) favoritos.splice(idx, 1);
+            else favoritos.push(id);
+            localStorage.setItem('favs_reparauto', JSON.stringify(favoritos));
+            atualizarFavCount();
+            const btn = document.getElementById('favBtn' + id);
+            if (btn) btn.innerHTML = favoritos.includes(id) ? '❤️ Remover dos favoritos' : '🤍 Adicionar aos favoritos';
+        }
+
+        function toggleFavoritoCard(e, id) {
+            if (e) e.stopPropagation();
+            toggleFavorito(id);
+            document.querySelectorAll(`.fav-card-btn[data-car-id="${id}"] i`).forEach(icon => {
+                const isFav = favoritos.includes(id);
+                if (isFav) {
+                    icon.className = 'fa-solid fa-heart text-red-500';
+                } else {
+                    icon.className = 'fa-regular fa-heart text-slate-400';
+                }
+            });
+        }
+
+        function toggleFavoritos() {
+            if (favoritos.length === 0) { mostrarToast('Nenhum carro nos favoritos ainda.', 'warning'); return; }
+            const cs = getCarros().filter(c => favoritos.includes(c.id));
+            const grid = document.getElementById('carGrid');
+            grid.innerHTML = cs.map(c => `
+            <div class="card-car bg-white rounded-2xl shadow-md overflow-hidden" onclick="verDetalhes(${c.id})">
+              <div class="h-40 bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-5xl relative">
+                ${c.fotos[0]}<span class="absolute top-2 left-2 bg-yellow-400 text-brand-900 text-xs font-bold px-2 py-0.5 rounded-full">${c.estado}</span>
+              </div>
+              <div class="p-3">
+                <h3 class="font-bold text-brand-900 text-sm">${c.marca} ${c.modelo} – ${c.ano}</h3>
+                <p class="text-accent font-extrabold text-xl">${c.preco.toLocaleString('pt-PT')} €</p>
+              </div>
+            </div>`).join('');
+            navegar('home');
+            window.scrollTo({ top: 200, behavior: 'smooth' });
+        }
+
+        function atualizarFavCount() {
+            const el = document.getElementById('favCount');
+            el.textContent = favoritos.length;
+            el.classList.toggle('hidden', favoritos.length === 0);
+        }
+
+        // ============ ANUNCIAR ============
+        function processarFotosCarro(input) {
+            if (input.files) {
+                const totalNovas = input.files.length;
+                if (anuncioFotos.length + totalNovas > 6) {
+                    mostrarToast('Pode adicionar no máximo 6 fotos por anúncio.', 'warning');
+                    input.value = '';
+                    return;
+                }
+                
+                let carregamentos = 0;
+                const errFotos = document.getElementById('err_step1_fotos');
+                if (errFotos) errFotos.classList.add('hidden');
+
+                for (let i = 0; i < totalNovas; i++) {
+                    const file = input.files[i];
+                    if (file.size > 2 * 1024 * 1024) {
+                        mostrarToast(`A imagem "${file.name}" excede o tamanho limite de 2MB.`, 'error');
+                        continue;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        anuncioFotos.push(e.target.result);
+                        carregamentos++;
+                        if (carregamentos === totalNovas || anuncioFotos.length === 6) {
+                            renderFotosPreview();
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+                input.value = ''; // Reset input to allow choosing same files again
+            }
+        }
+
+        function adicionarEmojiCarro() {
+            if (anuncioFotos.length >= 6) {
+                mostrarToast('Pode adicionar no máximo 6 fotos por anúncio.', 'warning');
+                return;
+            }
+            const errFotos = document.getElementById('err_step1_fotos');
+            if (errFotos) errFotos.classList.add('hidden');
+
+            const emojis = ['🚗', '🚙', '🚐', '🚘', '🏎️', '🚜', '🏍️', '🛞', '⚙️', '🧰'];
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            anuncioFotos.push(randomEmoji);
+            renderFotosPreview();
+        }
+
+        function renderFotosPreview() {
+            const container = document.getElementById('fotoPreviewContainer');
+            if (!container) return;
+            
+            container.innerHTML = anuncioFotos.map((foto, idx) => {
+                const imgSource = (foto.startsWith('data:image/') || foto.startsWith('blob:')) ? foto : null;
+                return `
+                    <div class="relative w-full aspect-square bg-slate-100 rounded-xl flex items-center justify-center border border-slate-200 overflow-hidden text-2xl group">
+                        ${imgSource ? `<img src="${imgSource}" class="w-full h-full object-cover">` : `<span>${foto}</span>`}
+                        <button type="button" onclick="removerFotoAnuncio(${idx})" class="absolute top-1 right-1 bg-black/75 hover:bg-red-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] transition" aria-label="Remover imagem">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removerFotoAnuncio(idx) {
+            anuncioFotos.splice(idx, 1);
+            renderFotosPreview();
+        }
+
+        function nextStep(n) {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            if (!user) {
+                mostrarToast("Precisa de iniciar sessão (Aba Perfil) antes de poder publicar anúncios.", 'warning');
+                navegar('perfil');
+                return;
+            }
+
+            if (n === 2 && stepAtual === 1) {
+                const errFotos = document.getElementById('err_step1_fotos');
+                if (anuncioFotos.length === 0) {
+                    if (errFotos) {
+                        errFotos.classList.remove('hidden');
+                    } else {
+                        mostrarToast("Por favor, adicione pelo menos 1 foto.", 'warning');
+                    }
+                    return;
+                } else {
+                    if (errFotos) errFotos.classList.add('hidden');
+                }
+            }
+
+            if (n === 3 && stepAtual === 2) {
+                let hasError = false;
+                const marca = document.getElementById('anuncioMarca');
+                const modelo = document.getElementById('anuncioModelo');
+                const anoFab = document.getElementById('anuncioAnoFabricacao');
+                const anoMod = document.getElementById('anuncioAnoModelo');
+                const km = document.getElementById('anuncioKm');
+                const cor = document.getElementById('anuncioCor');
+                const portas = document.getElementById('anuncioPortas');
+                
+                [marca, modelo, anoFab, anoMod, km, cor, portas].forEach(el => {
+                    if (el) {
+                        el.classList.remove('border-red-500');
+                        const errEl = document.getElementById('err_' + el.id);
+                        if (errEl) errEl.classList.add('hidden');
+                    }
+                });
+
+                if (!marca.value.trim()) {
+                    marca.classList.add('border-red-500');
+                    document.getElementById('err_anuncioMarca').classList.remove('hidden');
+                    if (!hasError) { marca.focus(); hasError = true; }
+                }
+
+                if (!modelo.value.trim()) {
+                    modelo.classList.add('border-red-500');
+                    document.getElementById('err_anuncioModelo').classList.remove('hidden');
+                    if (!hasError) { modelo.focus(); hasError = true; }
+                }
+
+                const currentYear = new Date().getFullYear();
+                const anoFabVal = parseInt(anoFab.value);
+                if (isNaN(anoFabVal) || anoFabVal < 1900 || anoFabVal > currentYear + 1) {
+                    anoFab.classList.add('border-red-500');
+                    const errEl = document.getElementById('err_anuncioAnoFabricacao');
+                    if (errEl) {
+                        errEl.textContent = `Ano inválido (insira entre 1900 e ${currentYear + 1}).`;
+                        errEl.classList.remove('hidden');
+                    }
+                    if (!hasError) { anoFab.focus(); hasError = true; }
+                }
+
+                const anoModVal = parseInt(anoMod.value);
+                if (isNaN(anoModVal) || anoModVal < 1900 || anoModVal > currentYear + 1) {
+                    anoMod.classList.add('border-red-500');
+                    const errEl = document.getElementById('err_anuncioAnoModelo');
+                    if (errEl) {
+                        errEl.textContent = `Ano inválido (insira entre 1900 e ${currentYear + 1}).`;
+                        errEl.classList.remove('hidden');
+                    }
+                    if (!hasError) { anoMod.focus(); hasError = true; }
+                }
+
+                const kmVal = parseInt(km.value);
+                if (isNaN(kmVal) || kmVal < 0) {
+                    km.classList.add('border-red-500');
+                    const errEl = document.getElementById('err_anuncioKm');
+                    if (errEl) {
+                        errEl.textContent = "Quilómetros inválidos (deve ser maior ou igual a 0).";
+                        errEl.classList.remove('hidden');
+                    }
+                    if (!hasError) { km.focus(); hasError = true; }
+                }
+
+                if (!cor.value.trim()) {
+                    cor.classList.add('border-red-500');
+                    document.getElementById('err_anuncioCor').classList.remove('hidden');
+                    if (!hasError) { cor.focus(); hasError = true; }
+                }
+
+                const portasVal = parseInt(portas.value);
+                if (isNaN(portasVal) || portasVal <= 0) {
+                    portas.classList.add('border-red-500');
+                    document.getElementById('err_anuncioPortas').classList.remove('hidden');
+                    if (!hasError) { portas.focus(); hasError = true; }
+                }
+
+                if (hasError) return;
+            }
+
+            document.querySelectorAll('.step-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById('step' + n).classList.remove('hidden');
+            stepAtual = n;
+            atualizarStepsUI();
+        }
+
+        function atualizarStepsUI() {
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById('dot' + i);
+                if (dot) {
+                    dot.classList.remove('active-step', 'done-step');
+                    if (i < stepAtual) dot.classList.add('done-step');
+                    if (i === stepAtual) dot.classList.add('active-step');
+                }
+            }
+            document.getElementById('line1').style.background = stepAtual > 1 ? '#10B981' : '#e2e8f0';
+            document.getElementById('line2').style.background = stepAtual > 2 ? '#10B981' : '#e2e8f0';
+        }
+
+        function sugerirNegocio(val) {
+            const preco = parseFloat(val);
+            const sug = document.getElementById('sugestaoPreco');
+            if (!preco) {
+                sug.textContent = "Pode anunciar carros de qualquer valor (baixo custo ou premium).";
+                return;
+            }
+            if (preco <= 2000) {
+                sug.innerHTML = `<span class="text-green-600 font-semibold"><i class="fa-solid fa-tags"></i> Enquadrado como veículo Low-Cost!</span> Ficará visível por predefinição.`;
+            } else {
+                sug.innerHTML = `<span class="text-indigo-600 font-semibold"><i class="fa-solid fa-star"></i> Enquadrado na Aba de Valor Livre.</span> Visível na categoria de Qualquer Valor.`;
+            }
+        }
+
+        function inserirFormatacao(tipo) {
+            const textarea = document.getElementById('anuncioDescricao');
+            if (!textarea) return;
+            
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            const selectedText = text.substring(start, end);
+            
+            let replacement = '';
+            if (tipo === 'bold') {
+                replacement = `**${selectedText || 'texto em negrito'}**`;
+            } else if (tipo === 'list') {
+                replacement = `\n* ${selectedText || 'item'}`;
+            }
+            
+            textarea.value = text.substring(0, start) + replacement + text.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + replacement.length, start + replacement.length);
+        }
+
+        function toggleEstadoVeiculoFields(value) {
+            const fields = document.getElementById('manutencaoFields');
+            if (!fields) return;
+            if (value === 'manutencao') {
+                fields.classList.remove('hidden');
+            } else {
+                fields.classList.add('hidden');
+            }
+        }
+
+        function toggleOutroManutencaoInput(checked) {
+            const input = document.getElementById('manutencaoOutroTexto');
+            if (!input) return;
+            if (checked) {
+                input.classList.remove('hidden');
+                input.focus();
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+            }
+        }
+
+        function toggleMecanicoNomeInput(checked) {
+            const input = document.getElementById('mecanicoNome');
+            if (!input) return;
+            if (checked) {
+                input.classList.remove('hidden');
+                input.focus();
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+            }
+        }
+
+        function toggleMecanicoTelefoneInput(checked) {
+            const input = document.getElementById('mecanicoTelefone');
+            if (!input) return;
+            if (checked) {
+                input.classList.remove('hidden');
+                input.focus();
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+            }
+        }
+
+        function publicarAnuncio() {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            if (!user) return;
+
+            const precoEl = document.getElementById('precoInput');
+            const precoVal = parseFloat(precoEl.value);
+            
+            precoEl.classList.remove('border-red-500');
+            const errPreco = document.getElementById('err_precoInput');
+            if (errPreco) errPreco.classList.add('hidden');
+
+            if (isNaN(precoVal) || precoVal <= 0) {
+                precoEl.classList.add('border-red-500');
+                if (errPreco) errPreco.classList.remove('hidden');
+                precoEl.focus();
+                return;
+            }
+
+            const descEl = document.getElementById('anuncioDescricao');
+            const descVal = descEl.value.trim();
+            descEl.classList.remove('border-red-500');
+            const errDesc = document.getElementById('err_anuncioDescricao');
+            if (errDesc) errDesc.classList.add('hidden');
+
+            if (!descVal) {
+                descEl.classList.add('border-red-500');
+                if (errDesc) errDesc.classList.remove('hidden');
+                descEl.focus();
+                return;
+            }
+
+            const estadoRadio = document.querySelector('input[name="estadoVeiculo"]:checked');
+            const estadoVeiculo = estadoRadio ? estadoRadio.value : 'pronto';
+            
+            let tiposManutencao = [];
+            let manutencaoOutro = '';
+            let temOrcamento = false;
+            let orcamentoTexto = '';
+            let incluirMecanicoNome = false;
+            let mecanicoNome = '';
+            let incluirMecanicoTelefone = false;
+            let mecanicoTelefone = '';
+            let rodando = true;
+            let inspecao = true;
+
+            if (estadoVeiculo === 'manutencao') {
+                const rodandoRadio = document.querySelector('input[name="anuncioRodando"]:checked');
+                rodando = rodandoRadio ? rodandoRadio.value === 'sim' : true;
+
+                const inspecaoRadio = document.querySelector('input[name="anuncioInspecao"]:checked');
+                inspecao = inspecaoRadio ? inspecaoRadio.value === 'sim' : true;
+
+                const checkboxes = document.querySelectorAll('input[name="tipoManutencao"]:checked');
+                tiposManutencao = Array.from(checkboxes).map(cb => cb.value);
+                
+                const outroChecked = document.getElementById('manutencaoOutroCheck').checked;
+                if (outroChecked) {
+                    manutencaoOutro = document.getElementById('manutencaoOutroTexto').value.trim();
+                }
+
+                const errTipo = document.getElementById('err_tipoManutencao');
+                if (errTipo) errTipo.classList.add('hidden');
+
+                if (tiposManutencao.length === 0 && !manutencaoOutro) {
+                    if (errTipo) errTipo.classList.remove('hidden');
+                    return;
+                }
+
+                const orcText = document.getElementById('orcamentoTexto').value.trim();
+                if (orcText) {
+                    temOrcamento = true;
+                    orcamentoTexto = orcText;
+                    
+                    incluirMecanicoNome = document.getElementById('incluirMecanicoNome').checked;
+                    if (incluirMecanicoNome) {
+                        mecanicoNome = document.getElementById('mecanicoNome').value.trim();
+                    }
+                    
+                    incluirMecanicoTelefone = document.getElementById('incluirMecanicoTelefone').checked;
+                    if (incluirMecanicoTelefone) {
+                        mecanicoTelefone = document.getElementById('mecanicoTelefone').value.trim();
+                    }
+                }
+            }
+
+            const marca = document.getElementById('anuncioMarca').value.trim();
+            const modelo = document.getElementById('anuncioModelo').value.trim();
+            const anoFab = parseInt(document.getElementById('anuncioAnoFabricacao').value);
+            const anoMod = parseInt(document.getElementById('anuncioAnoModelo').value);
+            const km = parseInt(document.getElementById('anuncioKm').value);
+            const cor = document.getElementById('anuncioCor').value.trim();
+            const combustivel = document.getElementById('anuncioCombustivel').value;
+            const cambio = document.getElementById('anuncioCambio').value;
+            const portas = parseInt(document.getElementById('anuncioPortas').value);
+            const local = document.getElementById('anuncioLocal').value;
+
+            const listaCarros = getCarros();
+            const novoId = listaCarros.length > 0 ? Math.max(...listaCarros.map(c => c.id)) + 1 : 1;
+
+            const novoCarro = {
+                id: novoId,
+                marca: marca,
+                modelo: modelo,
+                anoFabricacao: anoFab,
+                anoModelo: anoMod,
+                preco: precoVal,
+                km: km,
+                combustivel: combustivel,
+                cambio: cambio,
+                cor: cor,
+                portas: portas,
+                local: local,
+                descricao: descVal,
+                estadoVeiculo: estadoVeiculo,
+                rodando: rodando,
+                inspecao: inspecao,
+                tiposManutencao: tiposManutencao,
+                manutencaoOutro: manutencaoOutro,
+                temOrcamento: temOrcamento,
+                orcamentoTexto: orcamentoTexto,
+                incluirMecanicoNome: incluirMecanicoNome,
+                mecanicoNome: mecanicoNome,
+                incluirMecanicoTelefone: incluirMecanicoTelefone,
+                mecanicoTelefone: mecanicoTelefone,
+                fotos: anuncioFotos.length > 0 ? [...anuncioFotos] : ['🚗'],
+                criador: user.email,
+                // Retrocompatibilidade
+                ano: anoFab,
+                caixa: cambio,
+                estado: precoVal <= 2000 ? 'Low-Cost' : 'Livre',
+                negociável: true,
+                motivo: 'Venda rápida'
+            };
+
+            listaCarros.unshift(novoCarro);
+            setCarros(listaCarros);
+
+            document.querySelectorAll('.step-content').forEach(s => s.classList.add('hidden'));
+            document.getElementById('sucessoAnuncio').classList.remove('hidden');
+            document.getElementById('stepIndicators').style.opacity = '0.3';
+            
+            renderizarCarros();
+        }
+
+        function resetAnuncio() {
+            document.getElementById('sucessoAnuncio').classList.add('hidden');
+            document.getElementById('stepIndicators').style.opacity = '1';
+            stepAtual = 1;
+            atualizarStepsUI();
+            document.getElementById('step1').classList.remove('hidden');
+            
+            anuncioFotos = [];
+            renderFotosPreview();
+            
+            const errFotos = document.getElementById('err_step1_fotos');
+            if (errFotos) errFotos.classList.add('hidden');
+
+            const textInputs = ['anuncioMarca', 'anuncioModelo', 'anuncioAnoFabricacao', 'anuncioAnoModelo', 'anuncioKm', 'anuncioCor', 'anuncioPortas', 'precoInput', 'anuncioDescricao', 'manutencaoOutroTexto', 'orcamentoTexto', 'mecanicoNome', 'mecanicoTelefone'];
+            textInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    el.classList.remove('border-red-500');
+                }
+                const errEl = document.getElementById('err_' + id);
+                if (errEl) errEl.classList.add('hidden');
+            });
+
+            document.querySelectorAll('input[name="tipoManutencao"]').forEach(cb => cb.checked = false);
+            document.getElementById('manutencaoOutroCheck').checked = false;
+            document.getElementById('incluirMecanicoNome').checked = false;
+            document.getElementById('incluirMecanicoTelefone').checked = false;
+            
+            const radioRodandoSim = document.querySelector('input[name="anuncioRodando"][value="sim"]');
+            if (radioRodandoSim) radioRodandoSim.checked = true;
+            const radioInspecaoSim = document.querySelector('input[name="anuncioInspecao"][value="sim"]');
+            if (radioInspecaoSim) radioInspecaoSim.checked = true;
+
+            const radioPronto = document.querySelector('input[name="estadoVeiculo"][value="pronto"]');
+            if (radioPronto) radioPronto.checked = true;
+
+            toggleEstadoVeiculoFields('pronto');
+            toggleOutroManutencaoInput(false);
+            toggleMecanicoNomeInput(false);
+            toggleMecanicoTelefoneInput(false);
+        }
+        // ============ LISTENERS & AUXILIAR ============
+        function scrollToOfertas() {
+            document.getElementById('ofertas').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ============ MODAIS DE POLÍTICAS DO RODAPÉ ============
+        function abrirPolitica(tipo) {
+            const dados = textosPoliticas[tipo];
+            if (!dados) return;
+
+            document.getElementById('politicaModalTitulo').textContent = dados.titulo;
+            document.getElementById('politicaModalConteudo').innerHTML = dados.corpo;
+            document.getElementById('politicasModal').classList.add('show');
+            toggleFocusTrap('politicasModal', true);
+        }
+
+        function fecharPoliticasModal() {
+            document.getElementById('politicasModal').classList.remove('show');
+            toggleFocusTrap('politicasModal', false);
+        }
+
+        // ============ SISTEMA DE PEÇAS & DESMONTE ============
+        function renderizarPecas(filtro = null) {
+            if (filtro) {
+                pecasFiltroAtivo = filtro;
+            }
+            const grid = document.getElementById('pecasGrid');
+            const countLabel = document.getElementById('pecasCountLabel');
+            if (!grid) return;
+            
+            let items = getPecas();
+
+            if (pecasFiltroAtivo !== 'todos') {
+                items = items.filter(p => p.tipo === pecasFiltroAtivo);
+            }
+
+            // Pesquisa Global Textual
+            const searchInput = document.getElementById('globalSearch');
+            const searchInputMobile = document.getElementById('globalSearchMobile');
+            const searchVal = ((searchInput && searchInput.value) || (searchInputMobile && searchInputMobile.value) || '').toLowerCase().trim();
+            if (searchVal) {
+                items = items.filter(p => 
+                    p.titulo.toLowerCase().includes(searchVal) || 
+                    p.descricao.toLowerCase().includes(searchVal) || 
+                    p.categoria.toLowerCase().includes(searchVal) ||
+                    p.marcaCarro.toLowerCase().includes(searchVal) ||
+                    p.modeloCarro.toLowerCase().includes(searchVal) ||
+                    p.local.toLowerCase().includes(searchVal)
+                );
+            }
+
+            // Filtros Avançados (Preço Mínimo, Preço Máximo, Localização)
+            if (advPriceMin !== null && !isNaN(advPriceMin)) {
+                items = items.filter(p => p.preco >= advPriceMin);
+            }
+            if (advPriceMax !== null && !isNaN(advPriceMax)) {
+                items = items.filter(p => p.preco <= advPriceMax);
+            }
+            if (advLocation) {
+                const locVal = advLocation.toLowerCase().trim();
+                items = items.filter(p => p.local.toLowerCase().includes(locVal));
+            }
+
+            // Ordenação por preço
+            if (sortOrdem === 'crescente') {
+                items.sort((a, b) => a.preco - b.preco);
+            } else if (sortOrdem === 'decrescente') {
+                items.sort((a, b) => b.preco - a.preco);
+            }
+
+            countLabel.textContent = `${items.length} ${items.length === 1 ? 'anúncio' : 'anúncios'}`;
+
+            if (items.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-8 bg-white rounded-2xl border border-dashed border-slate-300">
+                        <i class="fa-solid fa-gears text-slate-300 text-4xl mb-2"></i>
+                        <p class="text-sm font-semibold text-slate-500">Nenhuma peça ou pedido encontrado.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = items.map(p => {
+                let badgeType = '';
+                if (p.tipo === 'venda') {
+                    badgeType = `<span class="bg-green-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm"><i class="fa-solid fa-gears text-[8px] mr-1"></i> Venda</span>`;
+                } else if (p.tipo === 'desmonte') {
+                    badgeType = `<span class="bg-indigo-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm"><i class="fa-solid fa-car text-[8px] mr-1"></i> Desmonte</span>`;
+                } else if (p.tipo === 'procura') {
+                    badgeType = `<span class="bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm"><i class="fa-solid fa-magnifying-glass text-[8px] mr-1"></i> Procura-se</span>`;
+                }
+
+                const priceDisplay = p.tipo === 'procura' ? 'Procura-se' : `${p.preco.toLocaleString('pt-PT')} €`;
+                const stateDisplay = p.estado || 'Usado';
+                
+                return `
+                <div class="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between" onclick="verDetalhesPeca(${p.id})">
+                  <div>
+                      <div class="h-40 bg-gradient-to-br from-brand-100 to-brand-200 flex items-center justify-center text-5xl relative overflow-hidden">
+                        ${renderFoto(p.foto)}
+                        <div class="absolute top-2 left-2 flex flex-col gap-1 z-10 items-start pointer-events-none">
+                            ${badgeType}
+                            <span class="bg-slate-950/85 backdrop-blur-sm text-white text-[8px] font-semibold px-2 py-0.5 rounded-full shadow-sm">${stateDisplay}</span>
+                        </div>
+                      </div>
+                      <div class="p-3">
+                        <h3 class="font-bold text-brand-900 text-sm line-clamp-1">${p.titulo}</h3>
+                        <p class="text-accent font-extrabold text-xl mt-1">${priceDisplay}</p>
+                        <p class="text-xs text-gray-500 mt-1 line-clamp-2">${p.descricao}</p>
+                      </div>
+                  </div>
+                  <div class="p-3 pt-0 border-t border-slate-100">
+                    <div class="flex items-center justify-between text-xs text-gray-500 mt-2">
+                      <span class="font-semibold text-brand-700">${p.marcaCarro} ${p.modeloCarro}</span>
+                      <span class="font-semibold text-brand-700">${p.local}</span>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('');
+        }
+
+        function abrirCriarPecaModal() {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            if (!user) {
+                mostrarToast("Precisa de iniciar sessão (Aba Perfil) antes de poder anunciar peças ou pedidos.", 'warning');
+                navegar('perfil');
+                return;
+            }
+            
+            resetFormPeca();
+            document.getElementById('criarPecaModal').classList.add('show');
+            toggleFocusTrap('criarPecaModal', true);
+        }
+
+        function fecharCriarPecaModal() {
+            document.getElementById('criarPecaModal').classList.remove('show');
+            toggleFocusTrap('criarPecaModal', false);
+        }
+
+        function atualizarCamposFormPeca(tipo) {
+            const containerPreco = document.getElementById('containerPecaPreco');
+            const inputPreco = document.getElementById('pecaPreco');
+            const selectEstado = document.getElementById('pecaEstado');
+            const lblPecaFoto = document.getElementById('lblPecaFoto');
+            
+            if (tipo === 'procura') {
+                containerPreco.classList.add('opacity-50');
+                inputPreco.disabled = true;
+                inputPreco.value = '0';
+                inputPreco.required = false;
+                selectEstado.value = 'Indiferente';
+                if (lblPecaFoto) {
+                    lblPecaFoto.innerHTML = '📸 FOTO DO ANÚNCIO (OPCIONAL)';
+                }
+            } else {
+                containerPreco.classList.remove('opacity-50');
+                inputPreco.disabled = false;
+                inputPreco.value = '';
+                inputPreco.required = true;
+                if (selectEstado.value === 'Indiferente') {
+                    selectEstado.value = 'Usado';
+                }
+                if (lblPecaFoto) {
+                    lblPecaFoto.innerHTML = '📸 FOTO DO ANÚNCIO <span class="text-red-500">*</span>';
+                }
+            }
+            const errFoto = document.getElementById('err_pecaFoto');
+            if (errFoto) errFoto.classList.add('hidden');
+        }
+
+        function processarFotoPeca(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 2 * 1024 * 1024) {
+                    mostrarToast("A imagem excede o tamanho limite de 2MB.", 'error');
+                    input.value = '';
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    pecaFotoSelecionada = e.target.result;
+                    const previewContainer = document.getElementById('pecaFotoPreviewContainer');
+                    previewContainer.innerHTML = `<img src="${pecaFotoSelecionada}" class="w-full h-full object-cover rounded-lg">`;
+                    previewContainer.classList.remove('hidden');
+                    const errFoto = document.getElementById('err_pecaFoto');
+                    if (errFoto) errFoto.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function adicionarEmojiPeca() {
+            const emojis = ['⚙️', '🚗', '🛠️', '🔌', '💡', '🛞', '🪞', '🔑', '🔋', '📦'];
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            pecaFotoSelecionada = randomEmoji;
+            const previewContainer = document.getElementById('pecaFotoPreviewContainer');
+            previewContainer.innerHTML = `<span class="text-4xl">${randomEmoji}</span>`;
+            previewContainer.classList.remove('hidden');
+            const errFoto = document.getElementById('err_pecaFoto');
+            if (errFoto) errFoto.classList.add('hidden');
+        }
+
+        function resetFormPeca() {
+            pecaFotoSelecionada = '';
+            document.getElementById('pecaFotoInput').value = '';
+            const preview = document.getElementById('pecaFotoPreviewContainer');
+            preview.innerHTML = '';
+            preview.classList.add('hidden');
+
+            const errFoto = document.getElementById('err_pecaFoto');
+            if (errFoto) errFoto.classList.add('hidden');
+
+            const ids = ['pecaTitulo', 'pecaMarcaCarro', 'pecaModeloCarro', 'pecaPreco', 'pecaContacto', 'pecaDescricao'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    el.classList.remove('border-red-500');
+                }
+                const err = document.getElementById('err_' + id);
+                if (err) err.classList.add('hidden');
+            });
+
+            const radioVenda = document.querySelector('input[name="pecaTipo"][value="venda"]');
+            if (radioVenda) {
+                radioVenda.checked = true;
+                atualizarCamposFormPeca('venda');
+            }
+        }
+
+        function publicarPeca() {
+            const user = JSON.parse(localStorage.getItem('loggedUser_reparauto'));
+            if (!user) return;
+
+            let hasError = false;
+            
+            const titulo = document.getElementById('pecaTitulo');
+            const marca = document.getElementById('pecaMarcaCarro');
+            const modelo = document.getElementById('pecaModeloCarro');
+            const preco = document.getElementById('pecaPreco');
+            const contacto = document.getElementById('pecaContacto');
+            const desc = document.getElementById('pecaDescricao');
+            const tipo = document.querySelector('input[name="pecaTipo"]:checked').value;
+            const categoria = document.getElementById('pecaCategoria').value;
+            const estado = document.getElementById('pecaEstado').value;
+            const local = document.getElementById('pecaLocal').value;
+
+            [titulo, marca, modelo, preco, contacto, desc].forEach(el => {
+                if (el) {
+                    el.classList.remove('border-red-500');
+                    const err = document.getElementById('err_' + el.id);
+                    if (err) err.classList.add('hidden');
+                }
+            });
+            const errFoto = document.getElementById('err_pecaFoto');
+            if (errFoto) errFoto.classList.add('hidden');
+
+            if (!titulo.value.trim()) {
+                titulo.classList.add('border-red-500');
+                document.getElementById('err_pecaTitulo').classList.remove('hidden');
+                if (!hasError) { titulo.focus(); hasError = true; }
+            }
+
+            if (!marca.value.trim()) {
+                marca.classList.add('border-red-500');
+                document.getElementById('err_pecaMarcaCarro').classList.remove('hidden');
+                if (!hasError) { marca.focus(); hasError = true; }
+            }
+
+            if (!modelo.value.trim()) {
+                modelo.classList.add('border-red-500');
+                document.getElementById('err_pecaModeloCarro').classList.remove('hidden');
+                if (!hasError) { modelo.focus(); hasError = true; }
+            }
+
+            if (tipo !== 'procura') {
+                const precoVal = parseFloat(preco.value);
+                if (isNaN(precoVal) || precoVal <= 0) {
+                    preco.classList.add('border-red-500');
+                    document.getElementById('err_pecaPreco').classList.remove('hidden');
+                    if (!hasError) { preco.focus(); hasError = true; }
+                }
+
+                if (!pecaFotoSelecionada) {
+                    if (errFoto) errFoto.classList.remove('hidden');
+                    hasError = true;
+                }
+            }
+
+            if (!contacto.value.trim()) {
+                contacto.classList.add('border-red-500');
+                document.getElementById('err_pecaContacto').classList.remove('hidden');
+                if (!hasError) { contacto.focus(); hasError = true; }
+            }
+
+            if (!desc.value.trim()) {
+                desc.classList.add('border-red-500');
+                document.getElementById('err_pecaDescricao').classList.remove('hidden');
+                if (!hasError) { desc.focus(); hasError = true; }
+            }
+
+            if (hasError) return;
+
+            const lista = getPecas();
+            const novoId = lista.length > 0 ? Math.max(...lista.map(p => p.id)) + 1 : 1;
+
+            const novaPeca = {
+                id: novoId,
+                tipo: tipo,
+                titulo: titulo.value.trim(),
+                categoria: categoria,
+                marcaCarro: marca.value.trim(),
+                modeloCarro: modelo.value.trim(),
+                preco: tipo === 'procura' ? 0 : parseFloat(preco.value),
+                estado: estado,
+                local: local,
+                contacto: contacto.value.trim(),
+                foto: pecaFotoSelecionada || (tipo === 'procura' ? '🔍' : tipo === 'desmonte' ? '🚗' : '⚙️'),
+                criador: user.email,
+                descricao: desc.value.trim()
+            };
+
+            lista.unshift(novaPeca);
+            setPecas(lista);
+
+            fecharCriarPecaModal();
+            renderizarPecas();
+            
+            if (paginaAtual === 'perfil') {
+                atualizarPerfilUI();
+            }
+            
+            mostrarToast("Anúncio de peça/pedido publicado com sucesso!", 'success');
+        }
+
+        function verDetalhesPeca(id) {
+            const p = getPecas().find(item => item.id === id);
+            if (!p) return;
+
+            const badge = document.getElementById('detalhesPecaBadge');
+            if (p.tipo === 'venda') {
+                badge.className = "bg-green-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm";
+                badge.innerHTML = `<i class="fa-solid fa-gears mr-1"></i> Venda de Peça`;
+            } else if (p.tipo === 'desmonte') {
+                badge.className = "bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm";
+                badge.innerHTML = `<i class="fa-solid fa-car mr-1"></i> Veículo para Desmonte`;
+            } else if (p.tipo === 'procura') {
+                badge.className = "bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm";
+                badge.innerHTML = `<i class="fa-solid fa-magnifying-glass mr-1"></i> Procura-se Peça`;
+            }
+
+            document.getElementById('detalhesPecaTitle').textContent = p.titulo;
+            document.getElementById('detalhesPecaPreco').textContent = p.tipo === 'procura' ? 'Procura-se' : `${p.preco.toLocaleString('pt-PT')} €`;
+            document.getElementById('detalhesPecaCategoria').textContent = p.categoria;
+            document.getElementById('detalhesPecaCompatibilidade').textContent = `${p.marcaCarro} ${p.modeloCarro}`;
+            document.getElementById('detalhesPecaEstado').textContent = p.estado;
+            document.getElementById('detalhesPecaLocal').textContent = p.local;
+            document.getElementById('detalhesPecaDescricao').textContent = p.descricao;
+
+            const fotoContainer = document.getElementById('detalhesPecaFotoContainer');
+            fotoContainer.innerHTML = renderFoto(p.foto, "w-full h-full object-cover");
+
+            const cleanPhone = p.contacto.replace(/\s+/g, '');
+            const whatsappUrl = `https://wa.me/351${cleanPhone}?text=Olá!%20Tenho%20interesse%20no%20anúncio%20"${encodeURIComponent(p.titulo)}"%20na%20ReparAuto.%20Ainda%20está%20disponível?`;
+            
+            document.getElementById('btnPecaWhatsapp').href = whatsappUrl;
+            document.getElementById('btnPecaTelefone').href = `tel:+351${cleanPhone}`;
+
+            document.getElementById('detalhesPecaModal').classList.add('show');
+            toggleFocusTrap('detalhesPecaModal', true);
+        }
+
+        function fecharDetalhesPecaModal() {
+            document.getElementById('detalhesPecaModal').classList.remove('show');
+            toggleFocusTrap('detalhesPecaModal', false);
+        }
+
+        // ============ SISTEMA DE FILTROS DA SEARCH BAR ============
+        function toggleAdvancedSearch() {
+            const panel = document.getElementById('advancedSearchPanel');
+            if (panel) {
+                panel.classList.toggle('hidden');
+            }
+        }
+
+        function aplicarFiltrosAvancados() {
+            const minInput = document.getElementById('filterPriceMin').value.trim();
+            const maxInput = document.getElementById('filterPriceMax').value.trim();
+            const locInput = document.getElementById('filterLocation').value.trim();
+
+            advPriceMin = minInput !== '' ? parseFloat(minInput) : null;
+            advPriceMax = maxInput !== '' ? parseFloat(maxInput) : null;
+            advLocation = locInput;
+
+            if (paginaAtual !== 'home' && paginaAtual !== 'pecas') {
+                navegar('home');
+            } else {
+                if (paginaAtual === 'home') {
+                    renderizarCarros();
+                } else if (paginaAtual === 'pecas') {
+                    renderizarPecas();
+                }
+            }
+        }
+
+        function limparFiltrosAvancados() {
+            document.getElementById('filterPriceMin').value = '';
+            document.getElementById('filterPriceMax').value = '';
+            document.getElementById('filterLocation').value = '';
+
+            advPriceMin = null;
+            advPriceMax = null;
+            advLocation = '';
+            sortOrdem = null;
+
+            const btnLow = document.getElementById('btnSortLow');
+            const btnHigh = document.getElementById('btnSortHigh');
+            if (btnLow && btnHigh) {
+                btnLow.classList.remove('bg-accent', 'border-accent');
+                btnLow.classList.add('bg-white/10', 'border-white/20');
+                btnHigh.classList.remove('bg-accent', 'border-accent');
+                btnHigh.classList.add('bg-white/10', 'border-white/20');
+            }
+
+            if (paginaAtual === 'home') {
+                renderizarCarros();
+            } else if (paginaAtual === 'pecas') {
+                renderizarPecas();
+            }
+        }
+
+        function ordenarPorPreco(ordem) {
+            if (sortOrdem === ordem) {
+                sortOrdem = null;
+            } else {
+                sortOrdem = ordem;
+            }
+
+            const btnLow = document.getElementById('btnSortLow');
+            const btnHigh = document.getElementById('btnSortHigh');
+
+            if (btnLow && btnHigh) {
+                btnLow.classList.remove('bg-accent', 'border-accent');
+                btnLow.classList.add('bg-white/10', 'border-white/20');
+                btnHigh.classList.remove('bg-accent', 'border-accent');
+                btnHigh.classList.add('bg-white/10', 'border-white/20');
+
+                if (sortOrdem === 'crescente') {
+                    btnLow.classList.add('bg-accent', 'border-accent');
+                    btnLow.classList.remove('bg-white/10', 'border-white/20');
+                    mostrarToast("Ordenado por preço mais baixo", 'success');
+                } else if (sortOrdem === 'decrescente') {
+                    btnHigh.classList.add('bg-accent', 'border-accent');
+                    btnHigh.classList.remove('bg-white/10', 'border-white/20');
+                    mostrarToast("Ordenado por preço mais alto", 'success');
+                } else {
+                    mostrarToast("Ordenação por preço removida", 'success');
+                }
+            }
+
+            if (paginaAtual === 'home') {
+                renderizarCarros();
+            } else if (paginaAtual === 'pecas') {
+                renderizarPecas();
+            }
+        }
+
+        function buscarLocalizacaoGPS() {
+            const btn = document.querySelector('button[onclick="buscarLocalizacaoGPS()"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> A buscar...';
+            }
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        let concelhoDetectado = 'Lisboa'; // default
+                        
+                        const concelhos = [
+                            { name: 'Braga', lat: 41.55, lon: -8.42 },
+                            { name: 'Porto', lat: 41.15, lon: -8.62 },
+                            { name: 'Lisboa', lat: 38.72, lon: -9.13 },
+                            { name: 'Coimbra', lat: 40.20, lon: -8.41 },
+                            { name: 'Faro', lat: 37.01, lon: -7.93 },
+                            { name: 'Leiria', lat: 39.74, lon: -8.80 }
+                        ];
+                        
+                        let minDst = Infinity;
+                        concelhos.forEach(c => {
+                            const dst = Math.sqrt(Math.pow(c.lat - lat, 2) + Math.pow(c.lon - lon, 2));
+                            if (dst < minDst) {
+                                minDst = dst;
+                                concelhoDetectado = c.name;
+                            }
+                        });
+                        
+                        document.getElementById('filterLocation').value = concelhoDetectado;
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Buscar';
+                        }
+                        mostrarToast(`Localização detetada com sucesso: ${concelhoDetectado}`, 'success');
+                    },
+                    (error) => {
+                        const concelhosMock = ['Braga', 'Porto', 'Lisboa', 'Coimbra', 'Faro', 'Leiria'];
+                        const mockItem = concelhosMock[Math.floor(Math.random() * concelhosMock.length)];
+                        document.getElementById('filterLocation').value = mockItem;
+                        if (btn) {
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Buscar';
+                        }
+                        mostrarToast(`Não foi possível aceder ao GPS. Localização estimada: ${mockItem}`, 'warning');
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                mostrarToast("Geolocalização não é suportada neste navegador. Localização simulada: Porto", 'warning');
+                document.getElementById('filterLocation').value = 'Porto';
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fa-solid fa-location-arrow"></i> Buscar';
+                }
+            }
+        }
+
+        // ============ LISTENERS GERAIS ============
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('chip-filter')) {
+                document.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('chip-active'));
+                e.target.classList.add('chip-active');
+                const filtro = e.target.dataset.chip;
+                renderizarCarros(filtro);
+            }
+        });
+
+        // Procurar em tempo real nos inputs de pesquisa global de carros (sincronizados)
+        const globalSearch = document.getElementById('globalSearch');
+        const globalSearchMobile = document.getElementById('globalSearchMobile');
+
+        function syncAndSearch(e) {
+            const targetVal = e.target.value;
+            if (globalSearch && e.target !== globalSearch) {
+                globalSearch.value = targetVal;
+            }
+            if (globalSearchMobile && e.target !== globalSearchMobile) {
+                globalSearchMobile.value = targetVal;
+            }
+            
+            // Se o utilizador começar a escrever e não estiver na home ou pecas, navega automaticamente para a home
+            if (paginaAtual !== 'home' && paginaAtual !== 'pecas' && targetVal.trim() !== '') {
+                navegar('home');
+            }
+            
+            if (paginaAtual === 'home') {
+                renderizarCarros();
+            } else if (paginaAtual === 'pecas') {
+                renderizarPecas();
+            }
+        }
+
+        if (globalSearch) {
+            globalSearch.addEventListener('input', syncAndSearch);
+        }
+        if (globalSearchMobile) {
+            globalSearchMobile.addEventListener('input', syncAndSearch);
+        }
+
+        // Fechar modais com ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                fecharGaleria();
+                fecharLoginModal();
+                fecharPoliticasModal();
+                fecharCriarPecaModal();
+                fecharDetalhesPecaModal();
+            }
+        });
+
+        // ============ INICIALIZAÇÃO ============
+        verificarLoginInicial();
+        renderizarCarros();
+        atualizarStepsUI();
+        atualizarFavCount();
+    </script>
+</body>
+</html>
