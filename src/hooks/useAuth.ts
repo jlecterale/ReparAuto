@@ -57,12 +57,12 @@ export default function useAuth() {
       if (firebaseUser) {
         const base = criarUsuarioBase(firebaseUser);
         try {
-          const profile = await getUserProfile(firebaseUser.uid);
-          if (profile) {
-            setUser({ ...base, ...profile });
-          } else {
-            setUser(base);
+          let profile = await getUserProfile(firebaseUser.uid);
+          if (!profile) {
+            await createUserProfile(firebaseUser.uid, base as unknown as Record<string, unknown>);
+            profile = base;
           }
+          setUser({ ...base, ...profile });
         } catch {
           setUser(base);
         }

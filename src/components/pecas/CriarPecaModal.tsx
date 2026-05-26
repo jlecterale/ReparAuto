@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
+import { getAdminUsers, criarNotificacao } from '@/lib/db';
 
 interface CriarPecaModalProps {
   show: boolean;
@@ -22,6 +23,9 @@ export default function CriarPecaModal({ show, onClose }: CriarPecaModalProps) {
     preco: '',
     descricao: '',
     localizacao: 'Portugal',
+    vendedorTelefone: user?.telefone || '',
+    vendedorWhatsApp: '',
+    vendedorEmail: user?.email || '',
   });
 
   const [erro, setErro] = useState('');
@@ -42,13 +46,21 @@ export default function CriarPecaModal({ show, onClose }: CriarPecaModalProps) {
     }
 
     try {
-      await publicarPeca({
+      const peca = await publicarPeca({
         ...form,
         local: form.localizacao,
         localizacao: undefined,
         preco: form.preco ? Number(form.preco) : null,
         criador: user?.email || '',
         vendedorNome: user?.nome || 'Anónimo',
+        vendedorTelefone: form.vendedorTelefone || null,
+        vendedorWhatsApp: form.vendedorWhatsApp || null,
+        vendedorEmail: form.vendedorEmail || user?.email || null,
+      });
+
+      const admins = await getAdminUsers();
+      admins.forEach((a) => {
+        criarNotificacao(a.uid, 'info', 'Nova peça pendente', `Uma nova peça foi publicada: ${form.titulo}.`, `/pecas`);
       });
 
       setForm({
@@ -60,6 +72,9 @@ export default function CriarPecaModal({ show, onClose }: CriarPecaModalProps) {
         preco: '',
         descricao: '',
         localizacao: 'Portugal',
+        vendedorTelefone: '',
+        vendedorWhatsApp: '',
+        vendedorEmail: '',
       });
       onClose();
     } catch (err) {
@@ -195,6 +210,44 @@ export default function CriarPecaModal({ show, onClose }: CriarPecaModalProps) {
             onChange={(e) => atualizar('descricao', e.target.value)}
             className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
           />
+        </div>
+
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+          <span className="block text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
+            <i className="fa-solid fa-address-card text-blue-500"></i> Contacto do Vendedor
+          </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">WhatsApp</label>
+              <input
+                type="tel"
+                placeholder="351912345678"
+                value={form.vendedorWhatsApp}
+                onChange={(e) => atualizar('vendedorWhatsApp', e.target.value)}
+                className="w-full border border-gray-300 rounded-xl p-2 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">Telefone</label>
+              <input
+                type="tel"
+                placeholder="912345678"
+                value={form.vendedorTelefone}
+                onChange={(e) => atualizar('vendedorTelefone', e.target.value)}
+                className="w-full border border-gray-300 rounded-xl p-2 text-sm focus:outline-none focus:border-accent"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">Email de Contacto</label>
+            <input
+              type="email"
+              placeholder="seu@email.com"
+              value={form.vendedorEmail}
+              onChange={(e) => atualizar('vendedorEmail', e.target.value)}
+              className="w-full border border-gray-300 rounded-xl p-2 text-sm focus:outline-none focus:border-accent"
+            />
+          </div>
         </div>
 
         {erro && (

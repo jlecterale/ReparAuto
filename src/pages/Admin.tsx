@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
+import { useToast } from '@/components/ui/Toast';
 import {
   getAllUsers,
   setUserRole,
@@ -10,12 +11,15 @@ import {
   deletePeca,
   updateCarroStatus,
   updatePecaStatus,
+  updateCarro,
+  updatePeca,
+  criarNotificacao,
 } from '@/lib/db';
 import AdminStats from '@/components/admin/AdminStats';
 import UserTable from '@/components/admin/UserTable';
 import ListingsTable from '@/components/admin/ListingsTable';
 import type { Usuario, Role } from '@/types/usuario';
-import type { Carro } from '@/types/carro';
+import type { Carro} from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import type { StatusAnuncio } from '@/types/carro';
 
@@ -25,8 +29,11 @@ export default function Admin() {
   const { auth } = useApp();
   const { isAdmin, loading: authLoading } = auth;
   const navigate = useNavigate();
+  const toast = useToast();
 
   const [tab, setTab] = useState<TabAdmin>('visao-geral');
+  const [subTabAnuncios, setSubTabAnuncios] = useState<'carros' | 'pecas'>('carros');
+  const [statusFilter, setStatusFilter] = useState<StatusAnuncio | null>(null);
   const [users, setUsers] = useState<Usuario[]>([]);
   const [carros, setCarros] = useState<Carro[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
@@ -40,6 +47,22 @@ export default function Admin() {
     }
     carregarDados();
   }, [authLoading, isAdmin]);
+
+  const sortPendentesTop = useCallback(<T extends { status: StatusAnuncio; dataCriacao: unknown }>(lista: T[]): T[] => {
+    const ordem: Record<StatusAnuncio, number> = { pendente: 0, rejeitado: 1, aprovado: 2 };
+    return [...lista].sort((a, b) => {
+      const diff = ordem[a.status] - ordem[b.status];
+      if (diff !== 0) return diff;
+      const da = a.dataCriacao as unknown as { seconds?: number; toMillis?: () => number };
+      const db = b.dataCriacao as unknown as { seconds?: number; toMillis?: () => number };
+      const ta = da?.seconds ? da.seconds * 1000 : da?.toMillis ? da.toMillis() : 0;
+      const tb = db?.seconds ? db.seconds * 1000 : db?.toMillis ? db.toMillis() : 0;
+      return tb - ta;
+    });
+  }, []);
+
+  const carrosOrdenados = sortPendentesTop(carros);
+  const pecasOrdenados = sortPendentesTop(pecas);
 
   const carregarDados = async () => {
     setLoading(true);
@@ -60,38 +83,120 @@ export default function Admin() {
   };
 
   const handleRoleChange = async (uid: string, role: Role) => {
-    await setUserRole(uid, role);
-    setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role } : u)));
+    try {
+      await setUserRole(uid, role);
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, role } : u)));
+      toast?.sucesso('Role alterado com sucesso.');
+    } catch {
+      toast?.erro('Erro ao alterar role.');
+    }
   };
 
   const handleDeleteCarro = async (id: string) => {
-    await deleteCarro(id);
-    setCarros((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await deleteCarro(id);
+      setCarros((prev) => prev.filter((c) => c.id !== id));
+      toast?.sucesso('Carro eliminado.');
+    } catch {
+      toast?.erro('Erro ao eliminar carro.');
+    }
   };
 
   const handleDeletePeca = async (id: string) => {
-    await deletePeca(id);
-    setPecas((prev) => prev.filter((p) => p.id !== id));
+    try {
+      await deletePeca(id);
+      setPecas((prev) => prev.filter((p) => p.id !== id));
+      toast?.sucesso('Peça eliminada.');
+    } catch {
+      toast?.erro('Erro ao eliminar peça.');
+    }
+  };
+
+  const handleUpdateCarro = async (id: string, dados: Record<string, unknown>) => {
+    try {
+      await updateCarro(id, dados);
+      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, ...dados } as Carro : c)));
+      toast?.sucesso('Carro atualizado.');
+    } catch {
+      toast?.erro('Erro ao atualizar carro.');
+    }
+  };
+
+  const handleUpdatePeca = async (id: string, dados: Record<string, unknown>) => {
+    try {
+      await updatePeca(id, dados);
+      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, ...dados } as Peca : p)));
+      toast?.sucesso('Peça atualizada.');
+    } catch {
+      toast?.erro('Erro ao atualizar peça.');
+    }
+  };
+
+  const notificarUtilizador = async (email: string, tipo: 'aprovado' | 'rejeitado', titulo: string, link?: string) => {
+    const user = users.find((u) => u.email === email);
+    if (!user) return;
+    const label = tipo === 'aprovado' ? 'aprovado' : 'rejeitado';
+    await criarNotificacao(
+      user.uid,
+      tipo,
+      `Anúncio ${label}!`,
+      `O seu anúncio "${titulo}" foi ${label}.`,
+      link,
+    );
   };
 
   const handleApproveCarro = async (id: string) => {
-    await updateCarroStatus(id, 'aprovado');
-    setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'aprovado' } : c)));
+    try {
+      const c = carros.find((c) => c.id === id);
+      await updateCarroStatus(id, 'aprovado');
+      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'aprovado' } : c)));
+      toast?.sucesso('Carro aprovado!');
+      if (c) await notificarUtilizador(c.criador, 'aprovado', `${c.marca} ${c.modelo}`, `/detalhes/${id}`);
+    } catch {
+      toast?.erro('Erro ao aprovar carro.');
+    }
   };
 
   const handleRejectCarro = async (id: string) => {
-    await updateCarroStatus(id, 'rejeitado');
-    setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'rejeitado' } : c)));
+    try {
+      const c = carros.find((c) => c.id === id);
+      await updateCarroStatus(id, 'rejeitado');
+      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, status: 'rejeitado' } : c)));
+      toast?.sucesso('Carro rejeitado.');
+      if (c) await notificarUtilizador(c.criador, 'rejeitado', `${c.marca} ${c.modelo}`);
+    } catch {
+      toast?.erro('Erro ao rejeitar carro.');
+    }
   };
 
   const handleApprovePeca = async (id: string) => {
-    await updatePecaStatus(id, 'aprovado');
-    setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'aprovado' } : p)));
+    try {
+      const p = pecas.find((p) => p.id === id);
+      await updatePecaStatus(id, 'aprovado');
+      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'aprovado' } : p)));
+      toast?.sucesso('Peça aprovada!');
+      if (p) await notificarUtilizador(p.criador, 'aprovado', p.titulo);
+    } catch {
+      toast?.erro('Erro ao aprovar peça.');
+    }
   };
 
   const handleRejectPeca = async (id: string) => {
-    await updatePecaStatus(id, 'rejeitado');
-    setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'rejeitado' } : p)));
+    try {
+      const p = pecas.find((p) => p.id === id);
+      await updatePecaStatus(id, 'rejeitado');
+      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, status: 'rejeitado' } : p)));
+      toast?.sucesso('Peça rejeitada.');
+      if (p) await notificarUtilizador(p.criador, 'rejeitado', p.titulo);
+    } catch {
+      toast?.erro('Erro ao rejeitar peça.');
+    }
+  };
+
+  const handleNavigateStats = (targetTab: 'utilizadores' | 'anuncios', subTab?: 'carros' | 'pecas', filter?: StatusAnuncio) => {
+    setTab(targetTab);
+    if (subTab) setSubTabAnuncios(subTab);
+    setStatusFilter(filter ?? null);
   };
 
   const tabs = [
@@ -143,6 +248,7 @@ export default function Admin() {
           totalPecas={pecas.length}
           carrosPendentes={carros.filter((c) => c.status === 'pendente').length}
           pecasPendentes={pecas.filter((p) => p.status === 'pendente').length}
+          onNavigate={handleNavigateStats}
         />
       )}
 
@@ -161,14 +267,18 @@ export default function Admin() {
             <i className="fa-solid fa-list mr-2 text-accent"></i> Gestão de Anúncios
           </h2>
           <ListingsTable
-            carros={carros}
-            pecas={pecas}
+            carros={carrosOrdenados}
+            pecas={pecasOrdenados}
+            defaultTab={subTabAnuncios}
+            statusFilter={statusFilter}
             onDeleteCarro={handleDeleteCarro}
             onDeletePeca={handleDeletePeca}
             onApproveCarro={handleApproveCarro}
             onRejectCarro={handleRejectCarro}
             onApprovePeca={handleApprovePeca}
             onRejectPeca={handleRejectPeca}
+            onUpdateCarro={handleUpdateCarro}
+            onUpdatePeca={handleUpdatePeca}
           />
         </div>
       )}

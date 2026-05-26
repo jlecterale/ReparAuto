@@ -1,0 +1,102 @@
+import { useState, useEffect } from 'react';
+import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useApp } from '@/providers/AppProvider';
+import type { Mensagem } from '@/types/chat';
+
+interface ChatInboxProps {
+  show: boolean;
+  onClose: () => void;
+}
+
+export default function ChatInbox({ show, onClose }: ChatInboxProps) {
+  const { auth } = useApp();
+  const { user } = auth;
+  const [conversas, setConversas] = useState<Mensagem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!show || !user) return;
+    const uid = user.uid;
+    async function load() {
+      setLoading(true);
+      try {
+        const q = query(
+          collection(db, 'messages'),
+          where('toUid', '==', uid),
+          orderBy('dataCriacao', 'desc'),
+        );
+        const snap = await getDocs(q);
+        const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Mensagem));
+
+        const latest = new Map<string, Mensagem>();
+        for (const msg of todas) {
+          const key = `${msg.listingId}_${msg.fromUid}`;
+          if (!latest.has(key)) {
+            latest.set(key, msg);
+          }
+        }
+        setConversas(Array.from(latest.values()));
+      } catch {
+        setConversas([]);
+      }
+      setLoading(false);
+    }
+    load();
+  }, [show, user]);
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
+          <h3 className="font-extrabold text-brand-900 text-sm">Mensagens Recebidas</h3>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 transition p-1"
+            aria-label="Fechar"
+          >
+            <i className="fa-solid fa-xmark text-xl"></i>
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <i className="fa-solid fa-spinner fa-spin text-accent text-xl"></i>
+            </div>
+          ) : conversas.length === 0 ? (
+            <div className="text-center py-8 text-slate-400">
+              <i className="fa-solid fa-inbox text-3xl mb-2"></i>
+              <p className="text-sm font-semibold">Nenhuma mensagem recebida</p>
+              <p className="text-xs mt-1">Quando alguém lhe enviar uma mensagem, aparecerá aqui.</p>
+            </div>
+          ) : (
+            conversas.map((msg) => (
+              <div
+                key={msg.id}
+                className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 hover:border-accent transition cursor-pointer"
+                onClick={onClose}
+              >
+                <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                  <i className="fa-solid fa-user text-accent text-sm"></i>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-sm text-brand-800 truncate">{msg.fromNome}</span>
+                    {!msg.lida && (
+                      <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 truncate">{msg.listingTitle}</p>
+                  <p className="text-xs text-slate-600 mt-0.5 truncate">{msg.mensagem}</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

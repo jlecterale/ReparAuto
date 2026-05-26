@@ -92,7 +92,8 @@ export default function StepFotos({ fotos, setFotos, onNext }: StepFotosProps) {
         {Array.from({ length: Math.max(0, 6 - fotos.length) }).map((_, i) => (
           <div
             key={`empty-${i}`}
-            className="w-full h-20 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-300 text-xs"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full h-20 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-300 text-xs cursor-pointer hover:bg-slate-50 transition"
           >
             {fotos.length + i + 1}
           </div>

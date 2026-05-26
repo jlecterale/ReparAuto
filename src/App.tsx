@@ -4,6 +4,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
+import ChatModal from '@/components/chat/ChatModal';
 import Home from '@/pages/Home';
 import DetalhesCarro from '@/pages/DetalhesCarro';
 import Anunciar from '@/pages/Anunciar';
@@ -34,6 +35,7 @@ export default function App() {
             </main>
             <Footer />
             <BottomNav />
+            <ChatModal />
           </div>
         </ToastProvider>
       </AppProvider>

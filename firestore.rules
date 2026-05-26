@@ -2,78 +2,70 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ==========================================
-    // Funções Auxiliares
-    // ==========================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
-    
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
     function isAdmin() {
-      return isAuthenticated() && (request.auth.token.admin == true || request.auth.uid == 'N4oCVnsPILZivmlgLo4jC7Bq8GU2');
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.uid == 'N4oCVnsPILZivmlgLo4jC7Bq8GU2' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
     }
-
-    // Função para verificar limite de fotos em um array "images" ou "photos"
-    // Se o campo não existir, ele permite (assume 0 fotos). 
-    // Se existir, valida o tamanho.
+    function isCreatorByEmail() {
+      return isAuthenticated() && request.resource.data.criador == request.auth.token.email;
+    }
+    function isOwnerByEmail() {
+      return isAuthenticated() && resource.data.criador == request.auth.token.email;
+    }
     function hasValidImageCount(maxLimit) {
       let data = request.resource.data;
-      let hasImages = 'images' in data;
-      let hasPhotos = 'photos' in data;
-      
-      // Valida se o array não ultrapassa o limite
-      return (!hasImages || data.images.size() <= maxLimit) && 
-             (!hasPhotos || data.photos.size() <= maxLimit);
+      let hasFotos = 'fotos' in data;
+      return !hasFotos || data.fotos.size() <= maxLimit;
     }
-
-    // ==========================================
-    // Regras por Coleção (Modelo Marketplace)
-    // ==========================================
 
     match /users/{userId} {
       allow read: if true;
       allow write: if isOwner(userId) || isAdmin();
     }
 
-    // CARROS: Máximo 7 fotos
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && hasValidImageCount(7);
-      allow update: if (isAuthenticated() && resource.data.userId == request.auth.uid && hasValidImageCount(7)) || isAdmin();
-      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && hasValidImageCount(7);
+      allow update: if isOwnerByEmail() && hasValidImageCount(7) || isAdmin();
+      allow delete: if isOwnerByEmail() || isAdmin();
     }
 
-    // PEÇAS: Máximo 3 fotos
     match /parts/{partId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && hasValidImageCount(3);
-      allow update: if (isAuthenticated() && resource.data.userId == request.auth.uid && hasValidImageCount(3)) || isAdmin();
-      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && hasValidImageCount(3);
+      allow update: if isOwnerByEmail() && hasValidImageCount(3) || isAdmin();
+      allow delete: if isOwnerByEmail() || isAdmin();
     }
 
-    // SERVIÇOS: Máximo 7 fotos
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && hasValidImageCount(7);
-      allow update: if (isAuthenticated() && resource.data.userId == request.auth.uid && hasValidImageCount(7)) || isAdmin();
-      allow delete: if (isAuthenticated() && resource.data.userId == request.auth.uid) || isAdmin();
+      allow create: if isAuthenticated() && hasValidImageCount(7);
+      allow update: if isOwnerByEmail() && hasValidImageCount(7) || isAdmin();
+      allow delete: if isOwnerByEmail() || isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && (isAdmin() || request.auth.uid == request.resource.data.uid);
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow delete: if isAdmin();
     }
 
     match /chats/{chatId} {
       allow read, update: if isAuthenticated() && (request.auth.uid in resource.data.participants);
       allow create: if isAuthenticated() && (request.auth.uid in request.resource.data.participants);
-      
       match /messages/{messageId} {
         allow read: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
-        allow create: if isAuthenticated() 
-                      && request.resource.data.senderId == request.auth.uid 
-                      && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
+        allow create: if isAuthenticated() && request.resource.data.senderId == request.auth.uid && (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants);
       }
     }
   }

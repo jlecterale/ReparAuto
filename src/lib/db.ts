@@ -18,6 +18,7 @@ import { DB_VERSION, DB_VERSION_KEY } from './constants';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput } from '@/types/peca';
 import type { Usuario, Role } from '@/types/usuario';
+import type { Notificacao, TipoNotificacao } from '@/types/notificacao';
 
 type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
 type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
@@ -52,6 +53,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '912345678',
     fotos: ['images/clio.png', '🔧', '⚠️'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     rodando: false,
     inspecao: false,
     status: 'aprovado',
@@ -82,6 +87,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '',
     fotos: ['images/peugeot206.png', '🛠️', '📦'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     rodando: false,
     inspecao: false,
     status: 'aprovado',
@@ -113,6 +122,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '',
     fotos: ['images/golf4.png', '✅', '🔩'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     rodando: true,
     inspecao: true,
     status: 'aprovado',
@@ -143,6 +156,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '',
     fotos: ['images/bmw320d.png', '✨', '💎'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     status: 'aprovado',
     dataCriacao: Timestamp.now(),
   },
@@ -171,6 +188,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '',
     fotos: ['🚐', '⏳', '🕸️'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     rodando: false,
     inspecao: false,
     status: 'aprovado',
@@ -201,6 +222,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '',
     fotos: ['images/mercedes.png', '🚗', '⚙️'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     status: 'aprovado',
     dataCriacao: Timestamp.now(),
   },
@@ -229,6 +254,10 @@ const defaultCarros: CarroSeed[] = [
     mecanicoTelefone: '933567890',
     fotos: ['🚗', '⚡', '🔌'],
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     rodando: true,
     inspecao: true,
     status: 'aprovado',
@@ -249,6 +278,10 @@ const defaultPecas: PecaSeed[] = [
     contacto: '912345678',
     foto: '⚙️',
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     descricao:
       'Motor em excelente estado de funcionamento. Retirado de veículo acidentado na traseira. Tem cerca de 210.000 km. Vendido completo com turbo original.',
     status: 'aprovado',
@@ -266,6 +299,10 @@ const defaultPecas: PecaSeed[] = [
     contacto: '933567890',
     foto: '🚗',
     criador: 'carlos@email.com',
+    vendedorNome: 'Carlos Silva',
+    vendedorTelefone: '933567890',
+    vendedorWhatsApp: '351933567890',
+    vendedorEmail: 'carlos@email.com',
     descricao:
       'Carro completo para peças. Chaparia em bom estado, interiores impecáveis. Motor parado. Vendo peças individuais ou o conjunto.',
     status: 'aprovado',
@@ -283,6 +320,10 @@ const defaultPecas: PecaSeed[] = [
     contacto: '922456789',
     foto: '🔍',
     criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
     descricao:
       'Procuro farol esquerdo (lado condutor) original e em bom estado para Renault Clio de 2007 (Fase 1).',
     status: 'aprovado',
@@ -457,7 +498,7 @@ export async function createUserProfile(uid: string, data: Record<string, unknow
       ...data,
       dataCriacao: Timestamp.now(),
       dataAtualizacao: Timestamp.now(),
-    });
+    }, { merge: true });
   } catch (err) {
     console.error('[DB] Erro ao criar perfil:', err);
     throw err;
@@ -492,6 +533,35 @@ export async function setUserRole(uid: string, role: Role): Promise<void> {
     await setDoc(userRef, { role, dataAtualizacao: Timestamp.now() }, { merge: true });
   } catch (err) {
     console.error('[DB] Erro ao alterar role:', err);
+    throw err;
+  }
+}
+
+export async function getAdminUsers(): Promise<Usuario[]> {
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where('role', '==', 'admin'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ uid: d.id, ...d.data() } as Usuario));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar admins:', err);
+    return [];
+  }
+}
+
+export async function updateCarro(id: string, dados: Record<string, unknown>): Promise<void> {
+  try {
+    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, dados as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar carro:', err);
+    throw err;
+  }
+}
+
+export async function updatePeca(id: string, dados: Record<string, unknown>): Promise<void> {
+  try {
+    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, dados as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar peça:', err);
     throw err;
   }
 }
@@ -533,5 +603,69 @@ export async function getAllPecasAdmin(): Promise<Peca[]> {
   } catch (err) {
     console.error('[DB] Erro ao buscar peças (admin):', err);
     return [];
+  }
+}
+
+// ============ NOTIFICAÇÕES ============
+
+const NOTIFICACOES_COLLECTION = 'notifications';
+
+export async function criarNotificacao(
+  uid: string,
+  tipo: TipoNotificacao,
+  titulo: string,
+  mensagem: string,
+  link?: string,
+): Promise<void> {
+  try {
+    await addDoc(collection(db, NOTIFICACOES_COLLECTION), {
+      uid,
+      tipo,
+      titulo,
+      mensagem,
+      link: link || null,
+      lida: false,
+      dataCriacao: Timestamp.now(),
+    });
+  } catch (err) {
+    console.error('[DB] Erro ao criar notificação:', err);
+  }
+}
+
+export async function getNotificacoes(uid: string): Promise<Notificacao[]> {
+  try {
+    const q = query(
+      collection(db, NOTIFICACOES_COLLECTION),
+      where('uid', '==', uid),
+      orderBy('dataCriacao', 'desc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar notificações:', err);
+    return [];
+  }
+}
+
+export async function marcarNotificacaoLida(id: string): Promise<void> {
+  try {
+    await updateDoc(doc(db, NOTIFICACOES_COLLECTION, id), { lida: true });
+  } catch (err) {
+    console.error('[DB] Erro ao marcar notificação como lida:', err);
+  }
+}
+
+export async function marcarTodasNotificacoesLidas(uid: string): Promise<void> {
+  try {
+    const q = query(
+      collection(db, NOTIFICACOES_COLLECTION),
+      where('uid', '==', uid),
+      where('lida', '==', false),
+    );
+    const snap = await getDocs(q);
+    const batch = snap.docs.map((d) => updateDoc(doc(db, NOTIFICACOES_COLLECTION, d.id), { lida: true }));
+    await Promise.all(batch);
+  } catch (err) {
+    console.error('[DB] Erro ao marcar notificações como lidas:', err);
   }
 }

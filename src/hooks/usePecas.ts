@@ -6,6 +6,9 @@ export default function usePecas() {
   const [pecas, setPecasState] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipoPeca>('todos');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filtroCategoria, setFiltroCategoria] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('');
 
   const carregar = useCallback(async () => {
     setLoading(true);
@@ -25,8 +28,28 @@ export default function usePecas() {
       lista = lista.filter((p) => p.tipo === filtroTipo);
     }
 
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      lista = lista.filter(
+        (p) =>
+          p.titulo.toLowerCase().includes(term) ||
+          p.descricao.toLowerCase().includes(term) ||
+          p.marcaCarro.toLowerCase().includes(term) ||
+          (p.modeloCarro?.toLowerCase().includes(term) ?? false) ||
+          p.categoria.toLowerCase().includes(term)
+      );
+    }
+
+    if (filtroCategoria) {
+      lista = lista.filter((p) => p.categoria === filtroCategoria);
+    }
+
+    if (filtroEstado) {
+      lista = lista.filter((p) => p.estado === filtroEstado);
+    }
+
     return lista;
-  }, [pecas, filtroTipo]);
+  }, [pecas, filtroTipo, searchTerm, filtroCategoria, filtroEstado]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -56,6 +79,12 @@ export default function usePecas() {
     loading,
     filtroTipo,
     setFiltroTipo,
+    searchTerm,
+    setSearchTerm,
+    filtroCategoria,
+    setFiltroCategoria,
+    filtroEstado,
+    setFiltroEstado,
     publicarPeca,
     eliminarPeca,
     getPecaPorId,

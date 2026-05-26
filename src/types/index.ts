@@ -26,5 +26,9 @@ export type {
 export type { StatusAnuncio } from './carro';
 
 export type {
+  Mensagem, MensagemInput, ListingType, ChatContextValue,
+} from './chat';
+
+export type {
   CarrosContextValue, PecasContextValue, AppContextValue, AppProviderProps,
 } from './app';

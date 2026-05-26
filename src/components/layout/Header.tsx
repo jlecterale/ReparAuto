@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { CONCELHOS } from '@/lib/constants';
+import NotificationBell from './NotificationBell';
+import ChatInbox from '@/components/chat/ChatInbox';
 
 export default function Header() {
-  const { auth, carros } = useApp();
+  const { auth, carros, chat } = useApp();
   const { user, isLoggedIn, logout } = auth;
   const { searchQuery, setSearchQuery, advPriceMin, setAdvPriceMin, advPriceMax, setAdvPriceMax, advLocation, setAdvLocation, sortOrdem, setSortOrdem, filtroAtivo, setFiltroAtivo } = carros;
+  const { mensagensNaoLidas } = chat;
+
+  const [showChatInbox, setShowChatInbox] = useState(false);
 
   const limparFiltrosAvancados = () => {
     setAdvPriceMin(null);
@@ -71,12 +76,27 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4 flex-shrink-0">
+          {isLoggedIn && (
+            <button
+              onClick={() => setShowChatInbox(true)}
+              className="relative text-white hover:text-accent transition"
+              aria-label="Mensagens"
+            >
+              <i className="fa-solid fa-comment-dots text-xl"></i>
+              {mensagensNaoLidas > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-accent text-white text-[10px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded-full min-w-[18px] min-h-[18px] leading-none">
+                  {mensagensNaoLidas > 99 ? '99+' : mensagensNaoLidas}
+                </span>
+              )}
+            </button>
+          )}
+          <NotificationBell />
           <a href="#/perfil" className="relative text-white hover:text-accent transition" aria-label="Favoritos">
             <i className="fa-solid fa-heart text-xl"></i>
           </a>
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-white/70 hidden sm:inline">{user?.nome}</span>
+              <a href="#/perfil" className="text-xs text-white/70 hidden sm:inline hover:text-accent transition no-underline">{user?.nome}</a>
               <button
                 onClick={logout}
                 className="text-xs border border-white/30 px-3 py-1.5 rounded-full hover:bg-white/10 transition"
@@ -216,6 +236,8 @@ export default function Header() {
           </button>
         ))}
       </div>
+
+      <ChatInbox show={showChatInbox} onClose={() => setShowChatInbox(false)} />
     </header>
   );
 }

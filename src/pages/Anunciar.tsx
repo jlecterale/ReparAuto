@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
+import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
@@ -30,6 +31,9 @@ const initialDados: CarroFormData = {
   incluirMecanicoTelefone: false,
   mecanicoNome: '',
   mecanicoTelefone: '',
+  vendedorWhatsApp: '',
+  vendedorTelefone: '',
+  vendedorEmail: '',
 };
 
 export default function Anunciar() {
@@ -53,10 +57,10 @@ export default function Anunciar() {
     }
 
     try {
-      await publicarCarro({
-        ...dados,
-        local: dados.localizacao,
-        localizacao: undefined,
+      const { localizacao, ...dadosLimpos } = dados;
+      const carro = await publicarCarro({
+        ...dadosLimpos,
+        local: localizacao,
         fotos,
         preco: Number(dados.preco),
         km: Number(dados.km),
@@ -67,10 +71,19 @@ export default function Anunciar() {
         inspecao: dados.inspecao === 'sim',
         criador: user.email,
         vendedorNome: user.nome,
+        vendedorTelefone: dados.vendedorTelefone || null,
+        vendedorWhatsApp: dados.vendedorWhatsApp || null,
+        vendedorEmail: dados.vendedorEmail || user.email,
       });
 
       setPublicado(true);
       toast?.sucesso('Anúncio publicado com sucesso!');
+
+      const admins = await getAdminUsers();
+      const titulo = `${dados.marca} ${dados.modelo} (${dados.anoFabricacao})`;
+      admins.forEach((a) => {
+        criarNotificacao(a.uid, 'info', 'Novo anúncio pendente', `Um novo carro foi publicado: ${titulo}.`, `/detalhes/${(carro as any).id}`);
+      });
     } catch (err) {
       toast?.erro('Erro ao publicar anúncio. Tente novamente.');
       console.error('[Anunciar] Erro:', err);
@@ -82,20 +95,25 @@ export default function Anunciar() {
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="text-center py-6">
           <i className="fa-solid fa-circle-check text-green-500 text-5xl mb-3"></i>
-          <h3 className="text-xl font-extrabold text-brand-900">Anúncio publicado!</h3>
-          <p className="text-gray-500 text-sm">O seu anúncio já está disponível para visualização e busca local.</p>
+          <h3 className="text-xl font-extrabold text-brand-900">Anúncio enviado!</h3>
+          <p className="text-gray-500 text-sm mb-2">
+            O seu anúncio foi submetido com sucesso e está <strong>pendente de aprovação</strong> pela nossa equipa de administração.
+          </p>
+          <p className="text-gray-500 text-sm">
+            Assim que for aprovado, ficará visível para todos. Pode acompanhar o estado em <strong>Perfil → Os Seus Carros Anunciados</strong>.
+          </p>
           <div className="flex gap-3 justify-center mt-6">
             <button
-              onClick={() => { setPublicado(false); setPasso(1); setFotos([]); setDados({ ...dados, preco: '', descricao: '', tiposManutencao: [] }); }}
+              onClick={() => navigate('/perfil')}
               className="bg-brand-900 text-white font-bold px-6 py-2 rounded-full"
             >
-              Anunciar outro
+              Ver meus anúncios
             </button>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => { setPublicado(false); setPasso(1); setFotos([]); setDados({ ...dados, preco: '', descricao: '', tiposManutencao: [] }); }}
               className="bg-accent text-white font-bold px-6 py-2 rounded-full"
             >
-              Ver anúncios
+              Anunciar outro
             </button>
           </div>
         </div>
@@ -105,7 +123,7 @@ export default function Anunciar() {
 
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
-      <h2 className="text-2xl font-extrabold text-brand-900 mb-1">Anunciar Carro</h2>
+      <h2 className="text-2xl font-extrabold text-brand-900 mb-1">Anunciar Carro ou Moto</h2>
       <p className="text-gray-500 text-sm mb-5">3 passos simples • Grátis</p>
 
       <StepIndicator passoAtual={passo} />

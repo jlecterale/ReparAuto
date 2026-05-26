@@ -15,6 +15,9 @@ export interface Peca {
   estado: string;
   local: string;
   contacto?: string;
+  vendedorTelefone?: string;
+  vendedorWhatsApp?: string;
+  vendedorEmail?: string;
   foto?: string;
   criador: string;
   vendedorNome?: string;
@@ -34,4 +37,7 @@ export interface PecaFormData {
   preco: string;
   descricao: string;
   localizacao: string;
+  vendedorTelefone: string;
+  vendedorWhatsApp: string;
+  vendedorEmail: string;
 }

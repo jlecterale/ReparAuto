@@ -5,6 +5,7 @@ import useAuth from '@/hooks/useAuth';
 import useCarros from '@/hooks/useCarros';
 import usePecas from '@/hooks/usePecas';
 import useFavoritos from '@/hooks/useFavoritos';
+import { useChat } from '@/hooks/useChat';
 import type { AppContextValue } from '@/types/app';
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -32,6 +33,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   const carros = useCarros();
   const pecas = usePecas();
   const favoritos = useFavoritos(auth.user);
+  const chat = useChat(auth.user?.uid || null);
 
   const { isLoggedIn, loading, profileCompleted } = auth;
 
@@ -48,6 +50,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
     carros,
     pecas,
     favoritos,
+    chat,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

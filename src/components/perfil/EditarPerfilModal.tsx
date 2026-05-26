@@ -69,12 +69,13 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
     }
   };
 
-  const inputClasse = (campo: string): string => {
+  const inputClasse = (campo: string, extra?: string): string => {
     const valido = campoValido(campo);
     const base = 'w-full border rounded-xl p-3 text-sm focus:outline-none transition';
-    if (valido === false) return `${base} border-red-400 bg-red-50 focus:border-red-500`;
-    if (valido === true) return `${base} border-green-400 bg-green-50/50 focus:border-green-500`;
-    return `${base} border-gray-300 focus:border-accent`;
+    const extraClasse = extra ? ` ${extra}` : '';
+    if (valido === false) return `${base}${extraClasse} border-red-400 bg-red-50 focus:border-red-500`;
+    if (valido === true) return `${base}${extraClasse} border-green-400 bg-green-50/50 focus:border-green-500`;
+    return `${base}${extraClasse} border-gray-300 focus:border-accent`;
   };
 
   useEffect(() => {

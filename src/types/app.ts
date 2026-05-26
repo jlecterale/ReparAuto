@@ -3,6 +3,7 @@ import type { AuthContextValue } from './usuario';
 import type { FavoritosContextValue } from './favoritos';
 import type { Carro, FiltroAtivo, SortOrdem } from './carro';
 import type { Peca, FiltroTipoPeca } from './peca';
+import type { ChatContextValue } from './chat';
 
 export interface CarrosContextValue {
   carros: Carro[];
@@ -32,6 +33,12 @@ export interface PecasContextValue {
   loading: boolean;
   filtroTipo: FiltroTipoPeca;
   setFiltroTipo: (v: FiltroTipoPeca) => void;
+  searchTerm: string;
+  setSearchTerm: (v: string) => void;
+  filtroCategoria: string;
+  setFiltroCategoria: (v: string) => void;
+  filtroEstado: string;
+  setFiltroEstado: (v: string) => void;
   publicarPeca: (dados: any) => Promise<any>;
   eliminarPeca: (id: string) => Promise<void>;
   getPecaPorId: (id: string) => Peca | null;
@@ -44,6 +51,7 @@ export interface AppContextValue {
   carros: CarrosContextValue;
   pecas: PecasContextValue;
   favoritos: FavoritosContextValue;
+  chat: ChatContextValue;
 }
 
 export interface AppProviderProps {

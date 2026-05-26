@@ -38,8 +38,15 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
     }
   };
 
+  const formatPhone = (val: string) => {
+    const digits = val.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 9)}`;
+  };
+
   const getSugestaoPreco = (valor: string) => {
-    if (!valor || Number(valor) <= 0) return 'Pode anunciar carros de qualquer valor (baixo custo ou premium).';
+    if (!valor || Number(valor) <= 0) return 'Pode anunciar carros ou motos de qualquer valor (baixo custo ou premium).';
     if (Number(valor) <= 2000) return '💡 Preço low-cost! Ótimo para atrair compradores rápidos.';
     if (Number(valor) <= 10000) return '💰 Preço médio. Considere destacar o bom estado do veículo.';
     return '🏆 Carro premium. Destaque os diferenciais e a documentação em dia.';
@@ -257,6 +264,50 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
             </div>
           </div>
         )}
+      </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+        <span className="block text-sm font-bold text-brand-900 mb-3 flex items-center gap-2">
+          <i className="fa-solid fa-address-card text-blue-500"></i> Contacto do Vendedor
+        </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              WhatsApp <span className="text-green-600">(recomendado)</span>
+            </label>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-slate-600">+</span>
+              <input
+                type="tel"
+                placeholder="351 912 345 678"
+                value={dados.vendedorWhatsApp || ''}
+                onChange={(e) => atualizar('vendedorWhatsApp', e.target.value.replace(/\s/g, ''))}
+                className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">Nº com código do país (ex: 351912345678)</p>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Telefone</label>
+            <input
+              type="tel"
+              placeholder="912 345 678"
+              value={dados.vendedorTelefone || ''}
+              onChange={(e) => atualizar('vendedorTelefone', e.target.value)}
+              className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+            />
+          </div>
+        </div>
+        <div className="mt-3">
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Email de Contacto</label>
+          <input
+            type="email"
+            placeholder="seu@email.com"
+            value={dados.vendedorEmail || ''}
+            onChange={(e) => atualizar('vendedorEmail', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          />
+        </div>
       </div>
 
       <div className="flex gap-3">

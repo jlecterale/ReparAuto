@@ -35,6 +35,8 @@ export interface Carro {
   criador: string;
   vendedorNome?: string;
   vendedorTelefone?: string;
+  vendedorWhatsApp?: string;
+  vendedorEmail?: string;
   rodando?: boolean;
   inspecao?: boolean;
   status: StatusAnuncio;
@@ -65,4 +67,7 @@ export interface CarroFormData {
   incluirMecanicoTelefone: boolean;
   mecanicoNome: string;
   mecanicoTelefone: string;
+  vendedorWhatsApp: string;
+  vendedorTelefone: string;
+  vendedorEmail: string;
 }

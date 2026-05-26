@@ -24,9 +24,10 @@ export default function PoliticaPage() {
         <i className="fa-solid fa-arrow-left"></i> Voltar
       </button>
       <h1 className="text-2xl font-extrabold text-brand-900 mb-4">{titulo}</h1>
-      <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
-        {conteudo}
-      </div>
+      <div
+        className="text-sm text-slate-700 leading-relaxed"
+        dangerouslySetInnerHTML={{ __html: conteudo }}
+      />
     </div>
   );
 }

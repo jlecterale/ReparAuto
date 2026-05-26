@@ -3,6 +3,8 @@ import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator } from '@/lib/db';
 import { formatarPreco } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { storage } from '@/lib/firebase';
 import EditarPerfilModal from './EditarPerfilModal';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
@@ -10,7 +12,7 @@ import type { Peca } from '@/types/peca';
 
 export default function ProfileLoggedIn() {
   const { auth } = useApp();
-  const { user, logout, isAdmin } = auth;
+  const { user, logout, isAdmin, updateProfile, refreshProfile } = auth;
   const navigate = useNavigate();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [meusCarros, setMeusCarros] = useState<Carro[]>([]);
@@ -37,10 +39,42 @@ export default function ProfileLoggedIn() {
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white text-2xl font-bold relative">
-              {user?.nome?.charAt(0)?.toUpperCase() || 'U'}
+            <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white text-2xl font-bold relative flex-shrink-0 overflow-hidden">
+              {user?.foto ? (
+                <img src={user.foto} alt="Foto de perfil" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <>{user?.nome?.charAt(0)?.toUpperCase() || 'U'}</>
+              )}
+              <label className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 rounded-full transition cursor-pointer group">
+                <i className="fa-solid fa-pen text-white text-xs opacity-0 group-hover:opacity-100 transition"></i>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !user) return;
+                    if (file.size > 1 * 1024 * 1024) {
+                      alert('A foto deve ter no máximo 1MB.');
+                      return;
+                    }
+                    try {
+                      const storageRef = ref(storage, `users/${user.uid}/profile.jpg`);
+                      const uploadTask = uploadBytesResumable(storageRef, file);
+                      await new Promise<void>((resolve, reject) => {
+                        uploadTask.on('state_changed', null, reject, resolve);
+                      });
+                      const url = await getDownloadURL(storageRef);
+                      await updateProfile({ foto: url });
+                      await refreshProfile();
+                    } catch {
+                      alert('Erro ao enviar foto. Tente novamente.');
+                    }
+                  }}
+                />
+              </label>
               {isAdmin && (
-                <span className="absolute -top-1 -right-1 bg-yellow-400 text-brand-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border-2 border-white">
+                <span className="absolute -top-1 -right-1 bg-yellow-400 text-brand-900 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border-2 border-white z-10">
                   Admin
                 </span>
               )}
@@ -153,7 +187,7 @@ export default function ProfileLoggedIn() {
               onClick={() => navigate('/anunciar')}
               className="mt-2 text-accent hover:text-accent-hover font-semibold text-xs"
             >
-              <i className="fa-solid fa-circle-plus mr-1"></i> Anunciar carro
+              <i className="fa-solid fa-circle-plus mr-1"></i> Anunciar carro ou moto
             </button>
           </div>
         ) : (

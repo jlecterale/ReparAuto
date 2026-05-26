@@ -7,7 +7,7 @@ interface GeoApiResponse {
   Distrito: string;
   Concelho: string;
   Localidade: string;
-  Designação Postal: string;
+  'Designação Postal': string;
   partes: { Artéria: string; Local: string; Troço: string; Porta: string; Cliente: string }[];
   ruas: string[];
   municipio: string;

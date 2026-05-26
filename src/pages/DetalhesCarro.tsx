@@ -5,6 +5,7 @@ import { getCarroPorId as getCarroPorIdDb } from '@/lib/db';
 import { formatarPreco, renderDescricao, renderFoto } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import StatusPanel from '@/components/detalhes/StatusPanel';
+import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
@@ -184,6 +185,10 @@ export default function DetalhesCarro() {
         )}
 
         <TechnicalSheet carro={carro} />
+
+        <div className="mt-6">
+          <ContactSection carro={carro} />
+        </div>
       </div>
 
       <GalleryModal
