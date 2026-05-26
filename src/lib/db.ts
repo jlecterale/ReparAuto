@@ -1,0 +1,394 @@
+import {
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  setDoc,
+  Timestamp,
+  type DocumentData,
+} from 'firebase/firestore';
+import { db } from './firebase';
+import { DB_VERSION, DB_VERSION_KEY } from './constants';
+import type { Carro, CarroInput } from '@/types/carro';
+import type { Peca, PecaInput } from '@/types/peca';
+
+type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
+type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
+
+const CARROS_COLLECTION = 'cars';
+const PECAS_COLLECTION = 'parts';
+
+const defaultCarros: CarroSeed[] = [
+  {
+    marca: 'Renault',
+    modelo: 'Clio 1.5 dCi',
+    anoFabricacao: 2007,
+    anoModelo: 2008,
+    preco: 600,
+    km: 210000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Cinzento',
+    portas: 5,
+    local: 'Braga',
+    descricao:
+      'Viatura comercial com alguns problemas de motor. **Motor de arranque avariado.**\nIdeal para quem quer reparar.\n\n* Direção assistida\n* Fecho centralizado\n* Vidros elétricos',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Elétrica'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto:
+      'Diagnóstico elétrico e motor de arranque novo: 250€ com mão de obra incluída.',
+    incluirMecanicoNome: true,
+    mecanicoNome: 'Auto Oficina Rapidez',
+    incluirMecanicoTelefone: true,
+    mecanicoTelefone: '912345678',
+    fotos: ['images/clio.png', '🔧', '⚠️'],
+    criador: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Peugeot',
+    modelo: '206 1.1',
+    anoFabricacao: 2004,
+    anoModelo: 2004,
+    preco: 450,
+    km: 195000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Azul',
+    portas: 3,
+    local: 'Porto',
+    descricao:
+      'Peugeot 206 sinistrado na parte frontal. Ideal para peças ou reparação profunda.\n\n* Motor arranca mas radiador está partido\n* Interiores em bom estado\n* Farol esquerdo partido',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Pintura e funilaria', 'Lataria / amassados'],
+    manutencaoOutro: 'Radiador partido',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/peugeot206.png', '🛠️', '📦'],
+    criador: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Volkswagen',
+    modelo: 'Golf IV 1.9 TDI',
+    anoFabricacao: 2003,
+    anoModelo: 2003,
+    preco: 900,
+    km: 280000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Preto',
+    portas: 5,
+    local: 'Coimbra',
+    descricao:
+      'Excelente motor 1.9 TDI de 110cv. Anda diariamente mas precisa de pastilhas e discos novos urgentemente.\n\n* Revisão feita há 5.000 km\n* AC a funcionar\n* Interiores desgastados',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto:
+      'Substituição de discos e pastilhas frontais e traseiras: 180€ com mão de obra',
+    incluirMecanicoNome: true,
+    mecanicoNome: 'Mecânica do Zé',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/golf4.png', '✅', '🔩'],
+    criador: 'admin@reparauto.pt',
+    rodando: true,
+    inspecao: true,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'BMW',
+    modelo: '320d Coupé (Valor Livre)',
+    anoFabricacao: 2011,
+    anoModelo: 2012,
+    preco: 12400,
+    km: 185000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Branco',
+    portas: 3,
+    local: 'Lisboa',
+    descricao:
+      'BMW 320d Coupé em excelente estado de conservação. Quilómetros reais e comprovados.\n\n* Estofos em pele\n* Faróis Bi-Xénon\n* Sensores de estacionamento\n* Jantes de liga leve',
+    estadoVeiculo: 'pronto',
+    tiposManutencao: [],
+    manutencaoOutro: '',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/bmw320d.png', '✨', '💎'],
+    criador: 'admin@reparauto.pt',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Opel',
+    modelo: 'Corsa B 1.2',
+    anoFabricacao: 1999,
+    anoModelo: 1999,
+    preco: 350,
+    km: 165000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Verde',
+    portas: 5,
+    local: 'Lisboa',
+    descricao:
+      'Carro parado há 2 anos numa garagem. Não pega, provavelmente bateria ou bomba de combustível avariada.\nTem alguma ferrugem na porta do condutor.\n\n* Pintura queimada do sol\n* Pneus ressequidos',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Elétrica', 'Pintura e funilaria', 'Lataria / amassados'],
+    manutencaoOutro: 'Parado há muito tempo',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['🚐', '⏳', '🕸️'],
+    criador: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Mercedes-Benz',
+    modelo: 'C220 CDI (Valor Livre)',
+    anoFabricacao: 2009,
+    anoModelo: 2009,
+    preco: 8900,
+    km: 250000,
+    combustivel: 'Diesel',
+    cambio: 'Automático',
+    cor: 'Preto',
+    portas: 4,
+    local: 'Porto',
+    descricao:
+      'Mercedes C220 CDI nacional, caixa automática. Anda diariamente sem qualquer problema.\n\n* GPS e Bluetooth\n* Tecto de abrir\n* Bancos elétricos com memória',
+    estadoVeiculo: 'pronto',
+    tiposManutencao: [],
+    manutencaoOutro: '',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/mercedes.png', '🚗', '⚙️'],
+    criador: 'admin@reparauto.pt',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Seat',
+    modelo: 'Ibiza 1.4',
+    anoFabricacao: 2006,
+    anoModelo: 2006,
+    preco: 750,
+    km: 230000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Vermelho',
+    portas: 5,
+    local: 'Faro',
+    descricao:
+      'Seat Ibiza 1.4 a gasolina. Anda diariamente mas apresenta luz de erro de motor no painel (EGR ou sonda lambda) e o ar condicionado não arrefece.\n\n* Jantes especiais\n* Vidros elétricos à frente\n* Fecho central',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Eletrônica', 'Ar-condicionado'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto: 'Diagnóstico de erro EGR + carregamento de AC: 120€',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: true,
+    mecanicoTelefone: '933567890',
+    fotos: ['🚗', '⚡', '🔌'],
+    criador: 'admin@reparauto.pt',
+    rodando: true,
+    inspecao: true,
+    dataCriacao: Timestamp.now(),
+  },
+];
+
+const defaultPecas: PecaSeed[] = [
+  {
+    tipo: 'venda',
+    titulo: 'Motor 1.9 TDI ASZ 130cv',
+    categoria: 'Motor e Transmissão',
+    marcaCarro: 'Seat',
+    modeloCarro: 'Ibiza 6L',
+    preco: 450,
+    estado: 'Usado',
+    local: 'Braga',
+    contacto: '912345678',
+    foto: '⚙️',
+    criador: 'admin@reparauto.pt',
+    descricao:
+      'Motor em excelente estado de funcionamento. Retirado de veículo acidentado na traseira. Tem cerca de 210.000 km. Vendido completo com turbo original.',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'desmonte',
+    titulo: 'Peugeot 206 1.1 para desmonte completo',
+    categoria: 'Carro Completo p/ Desmonte',
+    marcaCarro: 'Peugeot',
+    modeloCarro: '206',
+    preco: 300,
+    estado: 'Usado',
+    local: 'Porto',
+    contacto: '933567890',
+    foto: '🚗',
+    criador: 'carlos@email.com',
+    descricao:
+      'Carro completo para peças. Chaparia em bom estado, interiores impecáveis. Motor parado. Vendo peças individuais ou o conjunto.',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'procura',
+    titulo: 'Procuro Farol Frontal Esquerdo Halogéneo',
+    categoria: 'Iluminação e Óticas',
+    marcaCarro: 'Renault',
+    modeloCarro: 'Clio III',
+    preco: 0,
+    estado: 'Usado',
+    local: 'Lisboa',
+    contacto: '922456789',
+    foto: '🔍',
+    criador: 'admin@reparauto.pt',
+    descricao:
+      'Procuro farol esquerdo (lado condutor) original e em bom estado para Renault Clio de 2007 (Fase 1).',
+    dataCriacao: Timestamp.now(),
+  },
+];
+
+export async function initDatabase(): Promise<void> {
+  try {
+    const carrosSnap = await getDocs(collection(db, CARROS_COLLECTION));
+    const pecasSnap = await getDocs(collection(db, PECAS_COLLECTION));
+
+    const precisaSeed = carrosSnap.empty || pecasSnap.empty;
+
+    if (precisaSeed) {
+      for (const carro of defaultCarros) {
+        await addDoc(collection(db, CARROS_COLLECTION), carro as DocumentData);
+      }
+      for (const peca of defaultPecas) {
+        await addDoc(collection(db, PECAS_COLLECTION), peca as DocumentData);
+      }
+      localStorage.setItem(DB_VERSION_KEY, DB_VERSION);
+      console.log('[DB] Seed data imported to Firestore');
+    }
+  } catch (err) {
+    console.error('[DB] Erro ao inicializar:', err);
+  }
+}
+
+export async function getCarros(): Promise<Carro[]> {
+  try {
+    const q = query(collection(db, CARROS_COLLECTION), orderBy('dataCriacao', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Carro));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar carros:', err);
+    return [];
+  }
+}
+
+export async function getCarroPorId(id: string): Promise<Carro | null> {
+  try {
+    const docRef = doc(db, CARROS_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as Carro;
+    }
+    return null;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar carro:', err);
+    return null;
+  }
+}
+
+export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
+  try {
+    const docRef = await addDoc(collection(db, CARROS_COLLECTION), {
+      ...dados,
+      dataCriacao: Timestamp.now(),
+    });
+    return { id: docRef.id, ...dados } as Carro;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar carro:', err);
+    throw err;
+  }
+}
+
+export async function deleteCarro(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, CARROS_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao eliminar carro:', err);
+    throw err;
+  }
+}
+
+export async function getPecas(): Promise<Peca[]> {
+  try {
+    const q = query(collection(db, PECAS_COLLECTION), orderBy('dataCriacao', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar peças:', err);
+    return [];
+  }
+}
+
+export async function getPecaPorId(id: string): Promise<Peca | null> {
+  try {
+    const docRef = doc(db, PECAS_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as Peca;
+    }
+    return null;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar peça:', err);
+    return null;
+  }
+}
+
+export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
+  try {
+    const docRef = await addDoc(collection(db, PECAS_COLLECTION), {
+      ...dados,
+      dataCriacao: Timestamp.now(),
+    });
+    return { id: docRef.id, ...dados } as Peca;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar peça:', err);
+    throw err;
+  }
+}
+
+export async function deletePeca(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, PECAS_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao eliminar peça:', err);
+    throw err;
+  }
+}

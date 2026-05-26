@@ -1,0 +1,278 @@
+import { useState } from 'react';
+import { TIPOS_MANUTENCAO } from '@/lib/constants';
+import type { CarroFormData } from '@/types/carro';
+
+interface StepPrecoProps {
+  dados: CarroFormData;
+  setDados: React.Dispatch<React.SetStateAction<CarroFormData>>;
+  onBack: () => void;
+  onPublicar: () => void;
+}
+
+export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepPrecoProps) {
+  const [erros, setErros] = useState<Record<string, boolean>>({});
+
+  const atualizar = (campo: string, valor: unknown) => {
+    setDados((prev) => ({ ...prev, [campo]: valor }));
+    setErros((prev) => ({ ...prev, [campo]: false }));
+  };
+
+  const toggleManutencao = (tipo: string) => {
+    const atuais = dados.tiposManutencao || [];
+    const novos = atuais.includes(tipo)
+      ? atuais.filter((t) => t !== tipo)
+      : [...atuais, tipo];
+    atualizar('tiposManutencao', novos);
+  };
+
+  const validar = () => {
+    const novosErros: Record<string, boolean> = {};
+    if (!dados.preco || Number(dados.preco) <= 0) novosErros.preco = true;
+    if (!dados.descricao?.trim()) novosErros.descricao = true;
+    if (dados.estadoVeiculo === 'manutencao' && (!dados.tiposManutencao || dados.tiposManutencao.length === 0)) {
+      novosErros.tiposManutencao = true;
+    }
+    setErros(novosErros);
+    if (Object.keys(novosErros).length === 0) {
+      onPublicar();
+    }
+  };
+
+  const getSugestaoPreco = (valor: string) => {
+    if (!valor || Number(valor) <= 0) return 'Pode anunciar carros de qualquer valor (baixo custo ou premium).';
+    if (Number(valor) <= 2000) return '💡 Preço low-cost! Ótimo para atrair compradores rápidos.';
+    if (Number(valor) <= 10000) return '💰 Preço médio. Considere destacar o bom estado do veículo.';
+    return '🏆 Carro premium. Destaque os diferenciais e a documentação em dia.';
+  };
+
+  return (
+    <div>
+      <h3 className="font-bold text-lg mb-3">💰 Preço, Descrição & Estado</h3>
+
+      <div className="mb-4">
+        <label className="block text-sm font-semibold text-brand-900 mb-1">
+          Preço (€) <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          placeholder="Ex: 950 ou 15000"
+          value={dados.preco || ''}
+          onChange={(e) => atualizar('preco', e.target.value)}
+          className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-accent font-bold text-lg ${
+            erros.preco ? 'border-red-400' : 'border-gray-300'
+          }`}
+        />
+        {erros.preco && <span className="text-xs text-red-500 mt-1 block">O preço deve ser superior a 0.</span>}
+        <p className="text-xs text-gray-400 mt-1">{getSugestaoPreco(dados.preco)}</p>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-semibold text-brand-900 mb-1">
+          Descrição do Carro <span className="text-red-500">*</span>
+        </label>
+        <textarea
+          rows={6}
+          placeholder="Descreva os detalhes do veículo..."
+          value={dados.descricao || ''}
+          onChange={(e) => atualizar('descricao', e.target.value)}
+          className={`w-full border-2 rounded-xl p-3.5 text-sm focus:outline-none transition leading-relaxed shadow-inner ${
+            erros.descricao ? 'border-red-400' : 'border-slate-200 focus:border-accent'
+          }`}
+        />
+        {erros.descricao && <span className="text-xs text-red-500 mt-1 block">A descrição do carro é obrigatória.</span>}
+      </div>
+
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+        <span className="block text-sm font-bold text-brand-900 mb-2">
+          Estado do Veículo <span className="text-red-500">*</span>
+        </span>
+        <div className="flex gap-4 mb-3">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+            <input
+              type="radio"
+              name="estadoVeiculo"
+              value="pronto"
+              checked={dados.estadoVeiculo !== 'manutencao'}
+              onChange={() => atualizar('estadoVeiculo', 'pronto')}
+              className="text-accent focus:ring-accent w-4 h-4"
+            />
+            Pronto para rodar
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+            <input
+              type="radio"
+              name="estadoVeiculo"
+              value="manutencao"
+              checked={dados.estadoVeiculo === 'manutencao'}
+              onChange={() => atualizar('estadoVeiculo', 'manutencao')}
+              className="text-accent focus:ring-accent w-4 h-4"
+            />
+            Precisa de manutenção / reparos
+          </label>
+        </div>
+
+        {dados.estadoVeiculo === 'manutencao' && (
+          <div className="mt-3 pt-3 border-t border-slate-200 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white border border-slate-200 rounded-xl p-3 shadow-inner">
+              <div>
+                <span className="block text-xs font-bold text-slate-500 mb-2">
+                  <i className="fa-solid fa-road mr-1 text-slate-400"></i> Estado de Circulação
+                </span>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="radio"
+                      name="rodando"
+                      value="sim"
+                      checked={dados.rodando !== 'nao'}
+                      onChange={() => atualizar('rodando', 'sim')}
+                      className="text-accent focus:ring-accent w-4 h-4"
+                    />
+                    Sim (A rodar)
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="radio"
+                      name="rodando"
+                      value="nao"
+                      checked={dados.rodando === 'nao'}
+                      onChange={() => atualizar('rodando', 'nao')}
+                      className="text-accent focus:ring-accent w-4 h-4"
+                    />
+                    Não (Parado)
+                  </label>
+                </div>
+              </div>
+              <div>
+                <span className="block text-xs font-bold text-slate-500 mb-2">
+                  <i className="fa-solid fa-file-invoice mr-1 text-slate-400"></i> Inspeção (IPO)
+                </span>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="radio"
+                      name="inspecao"
+                      value="sim"
+                      checked={dados.inspecao !== 'nao'}
+                      onChange={() => atualizar('inspecao', 'sim')}
+                      className="text-accent focus:ring-accent w-4 h-4"
+                    />
+                    Com Inspeção
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                    <input
+                      type="radio"
+                      name="inspecao"
+                      value="nao"
+                      checked={dados.inspecao === 'nao'}
+                      onChange={() => atualizar('inspecao', 'nao')}
+                      className="text-accent focus:ring-accent w-4 h-4"
+                    />
+                    Sem Inspeção
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span className="block text-xs font-bold text-slate-500 mb-2">
+                Tipo de manutenção necessária (múltipla escolha)
+              </span>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                {TIPOS_MANUTENCAO.filter((t) => t !== 'Outro').map((tipo) => (
+                  <label
+                    key={tipo}
+                    className={`flex items-center gap-2 p-2 bg-white border rounded-lg hover:border-accent cursor-pointer transition ${
+                      (dados.tiposManutencao || []).includes(tipo) ? 'border-accent bg-orange-50/30' : ''
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(dados.tiposManutencao || []).includes(tipo)}
+                      onChange={() => toggleManutencao(tipo)}
+                      className="rounded text-accent focus:ring-accent"
+                    />
+                    {tipo}
+                  </label>
+                ))}
+              </div>
+              {erros.tiposManutencao && (
+                <span className="text-xs text-red-500 mt-1 block">
+                  Selecione pelo menos um tipo de manutenção.
+                </span>
+              )}
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-lg p-3">
+              <span className="block text-xs font-bold text-slate-500 mb-1.5">
+                Orçamento preexistente (opcional)
+              </span>
+              <textarea
+                rows={3}
+                placeholder="Cole aqui os detalhes ou valores do orçamento que já possui..."
+                value={dados.orcamentoTexto || ''}
+                onChange={(e) => atualizar('orcamentoTexto', e.target.value)}
+                className="w-full border border-slate-200 focus:border-accent rounded-lg p-2 text-xs focus:outline-none transition"
+              />
+              <div className="flex flex-col sm:flex-row gap-3 mt-2 text-xs">
+                <label className="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={!!dados.incluirMecanicoNome}
+                    onChange={(e) => atualizar('incluirMecanicoNome', e.target.checked)}
+                    className="rounded text-accent focus:ring-accent"
+                  />
+                  Incluir nome do mecânico / oficina
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                  <input
+                    type="checkbox"
+                    checked={!!dados.incluirMecanicoTelefone}
+                    onChange={(e) => atualizar('incluirMecanicoTelefone', e.target.checked)}
+                    className="rounded text-accent focus:ring-accent"
+                  />
+                  Incluir telefone do mecânico / oficina
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {dados.incluirMecanicoNome && (
+                  <input
+                    type="text"
+                    placeholder="Nome da oficina/mecânico"
+                    value={dados.mecanicoNome || ''}
+                    onChange={(e) => atualizar('mecanicoNome', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent"
+                  />
+                )}
+                {dados.incluirMecanicoTelefone && (
+                  <input
+                    type="tel"
+                    placeholder="Telefone do mecânico"
+                    value={dados.mecanicoTelefone || ''}
+                    onChange={(e) => atualizar('mecanicoTelefone', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent"
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={onBack}
+          className="flex-1 bg-white hover:bg-slate-50 text-brand-700 font-bold py-3 rounded-xl transition border border-slate-300"
+        >
+          Voltar
+        </button>
+        <button
+          onClick={validar}
+          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition"
+        >
+          ✅ Publicar Anúncio
+        </button>
+      </div>
+    </div>
+  );
+}
