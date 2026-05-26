@@ -3,6 +3,7 @@ import { useApp } from '@/providers/AppProvider';
 import { CONCELHOS } from '@/lib/constants';
 import NotificationBell from './NotificationBell';
 import ChatInbox from '@/components/chat/ChatInbox';
+import UserAvatar from '@/components/ui/UserAvatar';
 
 export default function Header() {
   const { auth, carros, chat } = useApp();
@@ -96,7 +97,10 @@ export default function Header() {
           </a>
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
-              <a href="#/perfil" className="text-xs text-white/70 hidden sm:inline hover:text-accent transition no-underline">{user?.nome}</a>
+              <a href="#/perfil" className="hidden sm:flex items-center gap-2 no-underline group">
+                <UserAvatar user={user} size="sm" />
+                <span className="text-xs text-white/70 group-hover:text-accent transition">{user?.nome}</span>
+              </a>
               <button
                 onClick={logout}
                 className="text-xs border border-white/30 px-3 py-1.5 rounded-full hover:bg-white/10 transition"

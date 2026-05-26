@@ -103,6 +103,15 @@ export function dataAtualISO(): string {
   return new Date().toISOString();
 }
 
+export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null): string | null {
+  if (whatsapp && whatsapp.trim()) return whatsapp.trim();
+  if (!telefone) return null;
+  const digits = telefone.replace(/\s/g, '');
+  if (/^9\d{8}$/.test(digits)) return '351' + digits;
+  if (/^3519\d{8}$/.test(digits)) return digits;
+  return null;
+}
+
 export function formatarData(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
   if (!data) return '—';
   if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT');

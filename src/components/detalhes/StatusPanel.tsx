@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatarPreco } from '@/lib/utils';
+import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
 
@@ -8,8 +8,9 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
 
   if (!carro) return null;
 
+  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone);
   const email = carro.vendedorEmail || carro.criador;
-  const temWhatsApp = !!carro.vendedorWhatsApp;
+  const temWhatsApp = !!whatsapp;
   const temTelefone = !!carro.vendedorTelefone;
 
   return (
@@ -33,7 +34,7 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
 
         {temWhatsApp && (
           <a
-            href={`https://wa.me/${carro.vendedorWhatsApp?.replace(/\s/g, '')}`}
+            href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"

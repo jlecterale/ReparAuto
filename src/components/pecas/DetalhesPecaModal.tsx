@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
-import { formatarPreco } from '@/lib/utils';
+import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import type { Peca, TipoPeca } from '@/types/peca';
 
@@ -28,7 +28,8 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
   const config = tipoConfig[peca.tipo] || tipoConfig.venda;
   const telefone = peca.vendedorTelefone || peca.contacto;
   const email = peca.vendedorEmail || peca.criador;
-  const temWhatsApp = !!peca.vendedorWhatsApp;
+  const whatsapp = obterWhatsApp(peca.vendedorWhatsApp, telefone);
+  const temWhatsApp = !!whatsapp;
   const temTelefone = !!telefone;
   const temEmail = !!email;
   const temChat = !!user && user.email !== peca.criador;
@@ -84,7 +85,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {temWhatsApp && (
               <a
-                href={`https://wa.me/${peca.vendedorWhatsApp?.replace(/\s/g, '')}`}
+                href={`https://wa.me/${whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"

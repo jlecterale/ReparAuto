@@ -637,10 +637,15 @@ export async function getNotificacoes(uid: string): Promise<Notificacao[]> {
     const q = query(
       collection(db, NOTIFICACOES_COLLECTION),
       where('uid', '==', uid),
-      orderBy('dataCriacao', 'desc'),
     );
     const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
+    const notificacoes = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
+    notificacoes.sort((a, b) => {
+      const aTime = a.dataCriacao?.toDate?.()?.getTime() || 0;
+      const bTime = b.dataCriacao?.toDate?.()?.getTime() || 0;
+      return bTime - aTime;
+    });
+    return notificacoes;
   } catch (err) {
     console.error('[DB] Erro ao buscar notificações:', err);
     return [];

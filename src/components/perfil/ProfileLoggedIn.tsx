@@ -7,6 +7,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import EditarPerfilModal from './EditarPerfilModal';
 import Badge from '@/components/ui/Badge';
+import UserAvatar from '@/components/ui/UserAvatar';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
@@ -39,12 +40,8 @@ export default function ProfileLoggedIn() {
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white text-2xl font-bold relative flex-shrink-0 overflow-hidden">
-              {user?.foto ? (
-                <img src={user.foto} alt="Foto de perfil" className="w-full h-full object-cover rounded-full" />
-              ) : (
-                <>{user?.nome?.charAt(0)?.toUpperCase() || 'U'}</>
-              )}
+            <div className="relative flex-shrink-0 w-16 h-16">
+              <UserAvatar user={user} size="md" />
               <label className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 rounded-full transition cursor-pointer group">
                 <i className="fa-solid fa-pen text-white text-xs opacity-0 group-hover:opacity-100 transition"></i>
                 <input

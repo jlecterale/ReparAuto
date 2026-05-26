@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
+import { obterWhatsApp } from '@/lib/utils';
 import type { Carro } from '@/types/carro';
 
 export default function ContactSection({ carro }: { carro: Carro | null }) {
@@ -10,7 +11,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
 
   if (!carro) return null;
 
-  const whatsapp = carro.vendedorWhatsApp;
+  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone);
   const telefone = carro.vendedorTelefone;
   const email = carro.vendedorEmail || carro.criador;
   const temWhatsApp = !!whatsapp;
@@ -32,7 +33,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {temWhatsApp && (
           <a
-            href={`https://wa.me/${carro.vendedorWhatsApp?.replace(/\s/g, '')}`}
+            href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
