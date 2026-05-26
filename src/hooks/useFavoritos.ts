@@ -5,12 +5,23 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useApp } from '@/providers/AppProvider';
+import type { Usuario } from '@/types/usuario';
 
-export default function useFavoritos() {
-  const { auth } = useApp();
-  const { user } = auth;
+const STORAGE_KEY = 'favs_reparauto';
 
+function carregarLocal(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function salvarLocal(lista: string[]): void {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+}
+
+export default function useFavoritos(user: Usuario | null) {
   const [favoritos, setFavoritosState] = useState<string[]>([]);
 
   useEffect(() => {
@@ -24,17 +35,12 @@ export default function useFavoritos() {
             setFavoritosState([]);
           }
         } catch {
-          setFavoritosState([]);
+          setFavoritosState(carregarLocal());
         }
       };
       carregarFavs();
     } else {
-      try {
-        const stored: string[] = JSON.parse(localStorage.getItem('favs_reparauto') || '[]');
-        setFavoritosState(stored);
-      } catch {
-        setFavoritosState([]);
-      }
+      setFavoritosState(carregarLocal());
     }
   }, [user?.uid]);
 
@@ -48,9 +54,10 @@ export default function useFavoritos() {
           await setDoc(userRef, { favoritos: lista }, { merge: true });
         } catch (err) {
           console.error('[Favoritos] Erro ao salvar no Firestore:', err);
+          salvarLocal(lista);
         }
       } else {
-        localStorage.setItem('favs_reparauto', JSON.stringify(lista));
+        salvarLocal(lista);
       }
     },
     [user?.uid]

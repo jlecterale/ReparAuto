@@ -28,7 +28,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth();
   const carros = useCarros();
   const pecas = usePecas();
-  const favoritos = useFavoritos();
+  const favoritos = useFavoritos(auth.user);
 
   const value: AppContextValue = {
     dbReady,
