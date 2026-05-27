@@ -15,10 +15,10 @@ export default function Header() {
   const [showChatInbox, setShowChatInbox] = useState(false);
 
   const chips = [
+    { label: 'Todas as Ofertas', value: 'qualquer' },
     { label: 'Destaques Low-Cost', value: 'lowcost' },
     { label: 'Até 500€', value: '500' },
     { label: 'Até 1.000€', value: '1000' },
-    { label: 'Qualquer Valor', value: 'qualquer' },
   ];
 
   return (
