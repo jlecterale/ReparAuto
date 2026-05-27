@@ -3,8 +3,6 @@ import {
   collection,
   query,
   where,
-  orderBy,
-  limit,
   onSnapshot,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -32,14 +30,16 @@ export default function ChatInbox({ show, onClose }: ChatInboxProps) {
     setLoading(true);
     const q = query(
       collection(db, 'messages'),
-      where('toUid', '==', uid),
-      orderBy('dataCriacao', 'desc'),
-      limit(50),
+      where('participants', 'array-contains', uid),
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Mensagem);
+        const todas = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }) as Mensagem)
+          .filter((m) => m.toUid === uid)
+          .sort((a, b) => b.dataCriacao.toMillis() - a.dataCriacao.toMillis())
+          .slice(0, 50);
         const latest = new Map<string, Mensagem>();
         for (const msg of todas) {
           const key = `${msg.listingId}_${msg.fromUid}`;

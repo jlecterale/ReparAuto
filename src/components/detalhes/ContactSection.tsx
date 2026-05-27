@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
-import { obterWhatsApp } from '@/lib/utils';
+import { obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
 import type { Carro } from '@/types/carro';
 
 export default function ContactSection({ carro }: { carro: Carro | null }) {
@@ -33,33 +33,13 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {temWhatsApp && (
           <a
-            href={`https://wa.me/${whatsapp}`}
+            href={gerarLinkWhatsApp(whatsapp, `${carro.marca} ${carro.modelo}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
           >
             <i className="fa-brands fa-whatsapp text-lg"></i>
             WhatsApp
-          </a>
-        )}
-
-        {temTelefone && !mostrarTelefone && (
-          <button
-            onClick={() => setMostrarTelefone(true)}
-            className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-accent font-semibold py-3 px-4 rounded-xl transition border border-accent text-sm"
-          >
-            <i className="fa-solid fa-phone"></i>
-            Ver Telefone
-          </button>
-        )}
-
-        {temTelefone && mostrarTelefone && (
-          <a
-            href={`tel:${carro.vendedorTelefone}`}
-            className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white font-bold py-3 px-4 rounded-xl transition text-sm"
-          >
-            <i className="fa-solid fa-phone"></i>
-            {carro.vendedorTelefone}
           </a>
         )}
 
@@ -72,11 +52,35 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
             Enviar Email
           </a>
         )}
+      </div>
 
+      <div className="mt-3">
+        {temTelefone && !mostrarTelefone && (
+          <button
+            onClick={() => setMostrarTelefone(true)}
+            className="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-accent font-semibold py-3 px-4 rounded-xl transition border border-accent text-sm"
+          >
+            <i className="fa-solid fa-phone"></i>
+            Ver Telefone
+          </button>
+        )}
+
+        {temTelefone && mostrarTelefone && (
+          <a
+            href={`tel:${carro.vendedorTelefone}`}
+            className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 px-4 rounded-xl transition text-sm"
+          >
+            <i className="fa-solid fa-phone"></i>
+            {carro.vendedorTelefone}
+          </a>
+        )}
+      </div>
+
+      <div className="mt-3">
         {temChat && (
           <button
             onClick={() => abrirChat(carro.id, 'carro', `${carro.marca} ${carro.modelo}`, carro.criador, carro.vendedorNome || carro.criador || 'Vendedor')}
-            className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm col-span-full"
+            className="flex items-center justify-center gap-2 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
           >
             <i className="fa-solid fa-comment-dots"></i>
             Enviar Mensagem (Chat Interno)
@@ -86,7 +90,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
         {!temChat && !user && (
           <a
             href="#/perfil"
-            className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-xl transition text-sm col-span-full"
+            className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold py-3 px-4 rounded-xl transition text-sm"
           >
             <i className="fa-solid fa-right-to-bracket"></i>
             Faça login para enviar mensagem

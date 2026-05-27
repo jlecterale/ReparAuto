@@ -6,7 +6,6 @@ import {
   writeBatch,
   query,
   where,
-  orderBy,
   onSnapshot,
   Timestamp,
   type Unsubscribe,
@@ -42,12 +41,16 @@ export function useChat(uid: string | null, nome: string = '') {
     }
     const q = query(
       collection(db, MENSAGENS_COLLECTION),
-      where('toUid', '==', uid),
-      where('lida', '==', false),
+      where('participants', 'array-contains', uid),
     );
     unsubNaoLidas.current = onSnapshot(
       q,
-      (snap) => { setMensagensNaoLidas(snap.size); },
+      (snap) => {
+        const naoLidas = snap.docs
+          .map((d) => d.data() as Mensagem)
+          .filter((m) => m.toUid === uid && !m.lida);
+        setMensagensNaoLidas(naoLidas.length);
+      },
       (err) => {
         console.error('[Chat] Erro ao ouvir mensagens não lidas:', err);
         setMensagensNaoLidas(0);
@@ -75,14 +78,14 @@ export function useChat(uid: string | null, nome: string = '') {
     const q = query(
       collection(db, MENSAGENS_COLLECTION),
       where('participants', 'array-contains', uid),
-      where('listingId', '==', chatListingId),
-      orderBy('dataCriacao', 'asc'),
     );
     unsubConversa.current = onSnapshot(
       q,
       (snap) => {
         const msgs = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Mensagem);
+          .map((d) => ({ id: d.id, ...d.data() }) as Mensagem)
+          .filter((m) => m.listingId === chatListingId)
+          .sort((a, b) => a.dataCriacao.toMillis() - b.dataCriacao.toMillis());
         setConversa(msgs);
         setCarregandoConversa(false);
       },

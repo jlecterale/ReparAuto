@@ -112,6 +112,11 @@ export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null
   return null;
 }
 
+export function gerarLinkWhatsApp(numero: string, tituloAnuncio: string): string {
+  const msg = encodeURIComponent(`Olá, tenho interesse no anúncio: ${tituloAnuncio}`);
+  return `https://wa.me/${numero}?text=${msg}`;
+}
+
 export function formatarData(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
   if (!data) return '—';
   if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT');
