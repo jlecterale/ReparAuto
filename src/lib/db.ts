@@ -580,6 +580,19 @@ export async function updateUserProfile(uid: string, data: Record<string, unknow
   }
 }
 
+export async function getUserByEmail(email: string): Promise<Usuario | null> {
+  try {
+    const q = query(collection(db, USERS_COLLECTION), where('email', '==', email));
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { uid: d.id, ...d.data() } as Usuario;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar utilizador por email:', err);
+    return null;
+  }
+}
+
 // ============ ADMIN ============
 
 export async function getAllUsers(): Promise<Usuario[]> {
