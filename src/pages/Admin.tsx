@@ -18,12 +18,16 @@ import {
 import AdminStats from '@/components/admin/AdminStats';
 import UserTable from '@/components/admin/UserTable';
 import ListingsTable from '@/components/admin/ListingsTable';
+import ReportsQueue from '@/components/admin/ReportsQueue';
+import VerificationsQueue from '@/components/admin/VerificationsQueue';
+import useReports from '@/hooks/useReports';
+import { useVerificationsAdmin } from '@/hooks/useVerification';
 import type { Usuario, Role } from '@/types/usuario';
 import type { Carro} from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import type { StatusAnuncio } from '@/types/carro';
 
-type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios';
+type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'denuncias' | 'verificacoes';
 
 export default function Admin() {
   const { auth } = useApp();
@@ -38,6 +42,8 @@ export default function Admin() {
   const [carros, setCarros] = useState<Carro[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
+  const { reports, loading: reportsLoading, carregar: carregarReports, atualizarStatus: atualizarStatusReport } = useReports();
+  const { verifications, loading: verificationsLoading, carregar: carregarVerifications, atualizarStatus: atualizarStatusVerification } = useVerificationsAdmin();
 
   useEffect(() => {
     if (authLoading) return;
@@ -75,6 +81,8 @@ export default function Admin() {
       setUsers(u);
       setCarros(c);
       setPecas(p);
+      carregarReports();
+      carregarVerifications();
     } catch (err) {
       console.error('[Admin] Erro ao carregar dados:', err);
     } finally {
@@ -199,10 +207,39 @@ export default function Admin() {
     setStatusFilter(filter ?? null);
   };
 
+  const reportsPendentes = reports.filter((r) => r.status === 'pendente').length;
+  const verificationsPendentes = verifications.filter((v) => v.status === 'pendente').length;
+
+  const handleReportStatusUpdate = async (id: string, status: import('@/types/report').StatusReport, notasAdmin?: string) => {
+    try {
+      await atualizarStatusReport(id, status, auth.user?.email || 'admin', notasAdmin);
+      toast?.sucesso(`Denúncia ${status === 'resolvido' ? 'resolvida' : status === 'rejeitado' ? 'rejeitada' : 'atualizada'}.`);
+    } catch {
+      toast?.erro('Erro ao atualizar denúncia.');
+    }
+  };
+
+  const handleVerificationStatusUpdate = async (id: string, uid: string, status: import('@/types/verification').StatusVerificacao, notasAdmin?: string) => {
+    try {
+      await atualizarStatusVerification(id, uid, status, auth.user?.email || 'admin', notasAdmin);
+      const u = users.find((u) => u.uid === uid);
+      if (u && status === 'aprovado') {
+        await criarNotificacao(uid, 'info', 'Conta Verificada!', 'A sua conta foi verificada com sucesso pela equipa ReparAuto.');
+      } else if (u && status === 'rejeitado') {
+        await criarNotificacao(uid, 'info', 'Verificação Rejeitada', 'O seu pedido de verificação foi rejeitado.' + (notasAdmin ? ` Motivo: ${notasAdmin}` : ''));
+      }
+      toast?.sucesso(`Verificação ${status === 'aprovado' ? 'aprovada' : 'rejeitada'}.`);
+    } catch {
+      toast?.erro('Erro ao atualizar verificação.');
+    }
+  };
+
   const tabs = [
     { key: 'visao-geral' as TabAdmin, label: 'Visão Geral', icon: 'fa-solid fa-chart-simple' },
     { key: 'utilizadores' as TabAdmin, label: 'Utilizadores', icon: 'fa-solid fa-users' },
     { key: 'anuncios' as TabAdmin, label: 'Anúncios', icon: 'fa-solid fa-list' },
+    { key: 'denuncias' as TabAdmin, label: `Denúncias${reportsPendentes > 0 ? ` (${reportsPendentes})` : ''}`, icon: 'fa-solid fa-flag' },
+    { key: 'verificacoes' as TabAdmin, label: `Verificações${verificationsPendentes > 0 ? ` (${verificationsPendentes})` : ''}`, icon: 'fa-solid fa-shield-halved' },
   ];
 
   if (authLoading || loading) {
@@ -279,6 +316,26 @@ export default function Admin() {
             onRejectPeca={handleRejectPeca}
             onUpdateCarro={handleUpdateCarro}
             onUpdatePeca={handleUpdatePeca}
+          />
+        </div>
+      )}
+
+      {tab === 'denuncias' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <ReportsQueue
+            reports={reports}
+            loading={reportsLoading}
+            onUpdateStatus={handleReportStatusUpdate}
+          />
+        </div>
+      )}
+
+      {tab === 'verificacoes' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <VerificationsQueue
+            verifications={verifications}
+            loading={verificationsLoading}
+            onUpdateStatus={handleVerificationStatusUpdate}
           />
         </div>
       )}

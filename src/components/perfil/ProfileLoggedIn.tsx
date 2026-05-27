@@ -10,6 +10,11 @@ import EditarCarroModal from '@/components/admin/EditarCarroModal';
 import EditarPecaModal from '@/components/admin/EditarPecaModal';
 import Badge from '@/components/ui/Badge';
 import UserAvatar from '@/components/ui/UserAvatar';
+import SellerBadges from '@/components/trust/SellerBadges';
+import VerificationRequest from '@/components/trust/VerificationRequest';
+import ReviewsList from '@/components/trust/ReviewsList';
+import useReviews from '@/hooks/useReviews';
+import useVerification from '@/hooks/useVerification';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
@@ -25,6 +30,8 @@ export default function ProfileLoggedIn() {
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ tipo: 'carro' | 'peca'; id: string; titulo: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
+  const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
 
   const carregar = useCallback(async () => {
     if (!user?.email) return;
@@ -121,6 +128,13 @@ export default function ProfileLoggedIn() {
                   </span>
                 )}
               </div>
+              <SellerBadges
+                verificado={user?.verificado}
+                badges={user?.badges}
+                mediaAvaliacoes={user?.mediaAvaliacoes}
+                totalAvaliacoes={user?.totalAvaliacoes}
+                compact
+              />
               <p className="text-sm text-gray-500">{user?.email}</p>
               {user?.telefone && (
                 <p className="text-xs text-gray-400 mt-1">
@@ -327,6 +341,36 @@ export default function ProfileLoggedIn() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Verification */}
+      {user && (
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <VerificationRequest
+            uid={user.uid}
+            email={user.email}
+            nome={user.nome}
+            nif={user.nif}
+            verificado={user.verificado}
+            verification={verification}
+            loading={verificationLoading}
+            onSubmit={pedirVerificacao}
+          />
+        </div>
+      )}
+
+      {/* Reviews */}
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h4 className="font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+          <i className="fa-solid fa-star text-yellow-400"></i> Avaliações Recebidas
+        </h4>
+        <ReviewsList
+          reviews={reviews}
+          loading={reviewsLoading}
+          media={media}
+          total={total}
+          currentUserUid={user?.uid}
+        />
       </div>
 
       <EditarPerfilModal show={editModalOpen} onClose={() => setEditModalOpen(false)} />

@@ -22,6 +22,9 @@ import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput } from '@/types/peca';
 import type { Usuario, Role } from '@/types/usuario';
 import type { Notificacao, TipoNotificacao } from '@/types/notificacao';
+import type { Review, ReviewInput } from '@/types/review';
+import type { Report, ReportInput, StatusReport } from '@/types/report';
+import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 
 type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
 type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
@@ -775,5 +778,197 @@ export async function decrementCampo(colecao: string, id: string, campo: string)
     await updateDoc(doc(db, colecao, id), { [campo]: increment(-1) });
   } catch (err) {
     console.error(`[DB] Erro ao decrementar ${campo}:`, err);
+  }
+}
+
+// ============ REVIEWS ============
+
+const REVIEWS_COLLECTION = 'reviews';
+
+export async function addReview(data: ReviewInput): Promise<Review> {
+  try {
+    const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), {
+      ...data,
+      dataCriacao: Timestamp.now(),
+    });
+    return { id: docRef.id, ...data } as Review;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar avaliação:', err);
+    throw err;
+  }
+}
+
+export function subscribeReviews(
+  vendedorEmail: string,
+  onData: (reviews: Review[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(
+    collection(db, REVIEWS_COLLECTION),
+    where('vendedorEmail', '==', vendedorEmail),
+    orderBy('dataCriacao', 'desc'),
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const reviews = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
+      onData(reviews);
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de avaliações:', err);
+      onError?.(err);
+    },
+  );
+}
+
+export async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
+  try {
+    const q = query(
+      collection(db, REVIEWS_COLLECTION),
+      where('vendedorEmail', '==', vendedorEmail),
+      orderBy('dataCriacao', 'desc'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
+  } catch (err) {
+    console.error('[DB] Erro ao buscar avaliações:', err);
+    return [];
+  }
+}
+
+export async function deleteReview(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, REVIEWS_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao eliminar avaliação:', err);
+    throw err;
+  }
+}
+
+export async function updateSellerRating(vendedorUid: string, vendedorEmail: string): Promise<void> {
+  try {
+    const reviews = await getReviewsByVendedor(vendedorEmail);
+    const total = reviews.length;
+    const media = total > 0 ? reviews.reduce((sum, r) => sum + r.nota, 0) / total : 0;
+    const badges: string[] = [];
+    if (total >= 5 && media >= 4.5) badges.push('top_vendedor');
+    await updateUserProfile(vendedorUid, {
+      mediaAvaliacoes: Math.round(media * 10) / 10,
+      totalAvaliacoes: total,
+      badges,
+    });
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar rating do vendedor:', err);
+  }
+}
+
+// ============ REPORTS ============
+
+const REPORTS_COLLECTION = 'reports';
+
+export async function addReport(data: ReportInput): Promise<Report> {
+  try {
+    const docRef = await addDoc(collection(db, REPORTS_COLLECTION), {
+      ...data,
+      dataCriacao: Timestamp.now(),
+    });
+    return { id: docRef.id, ...data } as Report;
+  } catch (err) {
+    console.error('[DB] Erro ao criar denúncia:', err);
+    throw err;
+  }
+}
+
+export async function getAllReports(): Promise<Report[]> {
+  try {
+    const q = query(collection(db, REPORTS_COLLECTION), orderBy('dataCriacao', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Report);
+  } catch (err) {
+    console.error('[DB] Erro ao buscar denúncias:', err);
+    return [];
+  }
+}
+
+export async function updateReportStatus(
+  id: string,
+  status: StatusReport,
+  resolvidoPor: string,
+  notasAdmin?: string,
+): Promise<void> {
+  try {
+    const updates: Record<string, unknown> = { status, resolvidoPor };
+    if (status === 'resolvido' || status === 'rejeitado') {
+      updates.dataResolucao = Timestamp.now();
+    }
+    if (notasAdmin) updates.notasAdmin = notasAdmin;
+    await updateDoc(doc(db, REPORTS_COLLECTION, id), updates);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar denúncia:', err);
+    throw err;
+  }
+}
+
+// ============ VERIFICATIONS ============
+
+const VERIFICATIONS_COLLECTION = 'verifications';
+
+export async function addVerification(data: VerificationInput): Promise<Verification> {
+  try {
+    const docRef = await addDoc(collection(db, VERIFICATIONS_COLLECTION), {
+      ...data,
+      dataPedido: Timestamp.now(),
+    });
+    return { id: docRef.id, ...data } as Verification;
+  } catch (err) {
+    console.error('[DB] Erro ao criar pedido de verificação:', err);
+    throw err;
+  }
+}
+
+export async function getVerificationByUid(uid: string): Promise<Verification | null> {
+  try {
+    const q = query(
+      collection(db, VERIFICATIONS_COLLECTION),
+      where('uid', '==', uid),
+      orderBy('dataPedido', 'desc'),
+    );
+    const snap = await getDocs(q);
+    if (snap.empty) return null;
+    const d = snap.docs[0];
+    return { id: d.id, ...d.data() } as Verification;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar verificação:', err);
+    return null;
+  }
+}
+
+export async function getAllVerifications(): Promise<Verification[]> {
+  try {
+    const q = query(collection(db, VERIFICATIONS_COLLECTION), orderBy('dataPedido', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Verification);
+  } catch (err) {
+    console.error('[DB] Erro ao buscar verificações:', err);
+    return [];
+  }
+}
+
+export async function updateVerificationStatus(
+  id: string,
+  status: StatusVerificacao,
+  resolvidoPor: string,
+  notasAdmin?: string,
+): Promise<void> {
+  try {
+    const updates: Record<string, unknown> = { status, resolvidoPor };
+    if (status === 'aprovado' || status === 'rejeitado') {
+      updates.dataResolucao = Timestamp.now();
+    }
+    if (notasAdmin) updates.notasAdmin = notasAdmin;
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), updates);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar verificação:', err);
+    throw err;
   }
 }

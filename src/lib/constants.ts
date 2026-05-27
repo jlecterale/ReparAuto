@@ -51,6 +51,22 @@ export const TIPOS_MANUTENCAO = [
 
 export const EMOJIS_CARRO = ['🚗', '🚙', '🚐', '🚘', '🏎️', '🚜', '🏍️', '🛞', '⚙️', '🧰'];
 
+export const MOTIVOS_DENUNCIA = [
+  { value: 'fraude' as const, label: 'Fraude / Burla' },
+  { value: 'informacao_falsa' as const, label: 'Informação falsa ou enganosa' },
+  { value: 'conteudo_ofensivo' as const, label: 'Conteúdo ofensivo ou inadequado' },
+  { value: 'spam' as const, label: 'Spam ou publicidade indevida' },
+  { value: 'veiculo_roubado' as const, label: 'Veículo / Peça roubado(a)' },
+  { value: 'outro' as const, label: 'Outro motivo' },
+];
+
+export const BADGES_CONFIANCA = [
+  { key: 'verificado', label: 'Verificado', icon: 'fa-solid fa-circle-check', cor: 'text-blue-500' },
+  { key: 'profissional', label: 'Profissional', icon: 'fa-solid fa-store', cor: 'text-purple-500' },
+  { key: 'top_vendedor', label: 'Top Vendedor', icon: 'fa-solid fa-star', cor: 'text-yellow-500' },
+  { key: 'respostas_rapidas', label: 'Respostas Rápidas', icon: 'fa-solid fa-bolt', cor: 'text-green-500' },
+];
+
 // ============ TEXTOS DAS POLÍTICAS ============
 export const TEXTOS_POLITICAS = {
   termos: {

@@ -19,6 +19,10 @@ export interface Usuario {
   notificacoes: boolean;
   foto: string | null;
   profileCompleted: boolean;
+  verificado?: boolean;
+  mediaAvaliacoes?: number;
+  totalAvaliacoes?: number;
+  badges?: string[];
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }

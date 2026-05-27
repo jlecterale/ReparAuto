@@ -66,6 +66,12 @@ export default function CarCard({ carro }: { carro: Carro }) {
           <span className="w-1 h-1 rounded-full bg-slate-300"></span>
           <span>{carro.combustivel}</span>
         </div>
+        {carro.vendedorNome && (
+          <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1">
+            <i className="fa-solid fa-user"></i>
+            <span className="truncate">{carro.vendedorNome}</span>
+          </div>
+        )}
         <div className="mt-auto flex items-center justify-between">
           <span className="text-xl font-extrabold text-accent">
             {formatarPreco(carro.preco)}
