@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "export": "vite build",
     "deploy:rules": "firebase deploy --only firestore:rules",
-    "deploy": "vite build && cmd /c firebase.cmd deploy --only hosting"
+    "deploy": "vite build && firebase deploy --only hosting"
   },
   "dependencies": {
     "firebase": "^11.7.2",
