@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReparAuto — Planos de Implementação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-50: #ffffff;
+    --brand-100: #f8fafc;
+    --brand-200: #e2e8f0;
+    --brand-300: #cbd5e1;
+    --brand-400: #94a3b8;
+    --brand-500: #64748b;
+    --brand-600: #475569;
+    --brand-700: #334155;
+    --brand-800: #1e293b;
+    --brand-900: #0f172a;
+    --accent: #2563eb;
+    --accent-light: #3b82f6;
+    --accent-dark: #1d4ed8;
+    --green: #16a34a;
+    --green-light: #dcfce7;
+    --yellow: #b45309;
+    --yellow-light: #fef3c7;
+    --gray: #475569;
+    --gray-light: #f1f5f9;
+    --red: #dc2626;
+    --red-light: #fee2e2;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  [data-theme="dark"] {
+    --brand-50: #0f172a;
+    --brand-100: #1e293b;
+    --brand-200: #334155;
+    --brand-300: #475569;
+    --brand-400: #64748b;
+    --brand-500: #94a3b8;
+    --brand-600: #cbd5e1;
+    --brand-700: #e2e8f0;
+    --brand-800: #f1f5f9;
+    --brand-900: #f8fafc;
+    --accent: #3b82f6;
+    --accent-light: #60a5fa;
+    --accent-dark: #2563eb;
+    --green: #22c55e;
+    --green-light: #052e16;
+    --yellow: #f59e0b;
+    --yellow-light: #422006;
+    --gray: #94a3b8;
+    --gray-light: #1e293b;
+    --red: #ef4444;
+    --red-light: #450a0a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--brand-50);
+    color: var(--brand-900);
+    line-height: 1.65;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Layout */
+  .page-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* Header */
+  .header {
+    background: #ffffff;
+    color: var(--brand-900);
+    padding: 0;
+    border-bottom: 1px solid var(--brand-200);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  [data-theme="dark"] .header {
+    background: var(--brand-100);
+    border-bottom-color: var(--brand-200);
+  }
+
+  .header-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 2rem;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  .header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--brand-900);
+  }
+
+  .header h1 span {
+    color: var(--accent);
+  }
+
+  .header-sub {
+    font-size: 0.78rem;
+    color: var(--brand-500);
+    font-weight: 400;
+    margin-top: 0.05rem;
+  }
+
+  .theme-toggle {
+    background: var(--brand-100);
+    border: 1px solid var(--brand-200);
+    color: var(--brand-700);
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-family: var(--font);
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .theme-toggle:hover { background: var(--brand-200); }
+
+  [data-theme="dark"] .theme-toggle {
+    background: var(--brand-200);
+    border-color: var(--brand-300);
+    color: var(--brand-800);
+  }
+
+  /* Sidebar Navigation (right side) */
+  .sidebar-toggle {
+    display: none;
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 200;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    font-family: var(--font);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 90;
+  }
+
+  .tab-nav {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--brand-50);
+    border-left: 1px solid var(--brand-200);
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    overflow-y: auto;
+    order: 2;
+    scrollbar-width: thin;
+    padding: 1rem 0;
+  }
+
+  .tab-nav::-webkit-scrollbar { width: 4px; }
+  .tab-nav::-webkit-scrollbar-track { background: transparent; }
+  .tab-nav::-webkit-scrollbar-thumb { background: var(--brand-300); border-radius: 2px; }
+
+  .tab-list {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tab-btn {
+    padding: 0.55rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--brand-700);
+    font-family: var(--font);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    border-right: 3px solid transparent;
+    border-bottom: none;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: left;
+    width: 100%;
+  }
+
+  .tab-btn:hover {
+    color: var(--brand-900);
+    background: var(--brand-100);
+  }
+
+  .tab-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+
+  .tab-btn.active {
+    color: var(--accent);
+    border-right-color: var(--accent);
+    background: var(--brand-100);
+    font-weight: 600;
+  }
+
+  .tab-num {
+    font-size: 0.65rem;
+    background: var(--brand-200);
+    color: var(--brand-700);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .tab-btn.active .tab-num {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .priority-badge {
+    font-size: 0.6rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-left: auto;
+  }
+
+  .priority-alta { background: #dcfce7; color: #15803d; }
+  .priority-media { background: #fef3c7; color: #92400e; }
+  .priority-baixa { background: #f1f5f9; color: #475569; }
+
+  [data-theme="dark"] .priority-alta { background: #14532d; color: #86efac; }
+  [data-theme="dark"] .priority-media { background: #78350f; color: #fde68a; }
+  [data-theme="dark"] .priority-baixa { background: #334155; color: #cbd5e1; }
+
+  /* Content */
+  .content {
+    flex: 1;
+    min-width: 0;
+    order: 1;
+    padding: 2rem 2.5rem 4rem;
+    max-width: 960px;
+  }
+
+  /* Mobile sidebar */
+  @media (max-width: 900px) {
+    .sidebar-toggle { display: flex; align-items: center; justify-content: center; }
+
+    .tab-nav {
+      position: fixed;
+      top: 0;
+      right: -280px;
+      width: 280px;
+      height: 100vh;
+      z-index: 100;
+      border-left: 1px solid var(--brand-200);
+      background: var(--brand-50);
+      transition: right 0.3s ease;
+      padding-top: 1rem;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .tab-nav.open { right: 0; }
+    .sidebar-overlay.open { display: block; }
+
+    .page-wrapper { display: block; }
+
+    .content {
+      padding: 1.5rem 1.25rem 5rem;
+      max-width: 100%;
+    }
+  }
+
+  .tab-panel { display: none; animation: fadeIn 0.3s ease; }
+  .tab-panel.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Plan Header */
+  .plan-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--brand-200);
+  }
+
+  .plan-header h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--brand-900);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+  }
+
+  .plan-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-effort { background: #ede9fe; color: #6d28d9; }
+  .badge-value { background: #dbeafe; color: #1d4ed8; }
+  .badge-quadrant { background: #fce7f3; color: #be185d; }
+
+  [data-theme="dark"] .badge-effort { background: #2e1065; color: #c4b5fd; }
+  [data-theme="dark"] .badge-value { background: #172554; color: #93c5fd; }
+  [data-theme="dark"] .badge-quadrant { background: #4a0e2e; color: #f9a8d4; }
+
+  /* Collapsible Sections */
+  .collapsible {
+    border: 1px solid var(--brand-200);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    background: var(--brand-50);
+  }
+
+  .collapsible-trigger {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    border: none;
+    background: var(--brand-100);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-800);
+    transition: background 0.2s;
+    text-align: left;
+  }
+
+  .collapsible-trigger:hover { background: var(--brand-200); }
+  .collapsible-trigger:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .collapsible-arrow {
+    transition: transform 0.3s;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+
+  .collapsible.open .collapsible-arrow { transform: rotate(180deg); }
+
+  .collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    padding: 0 1.25rem;
+  }
+
+  .collapsible.open .collapsible-content {
+    max-height: 50000px;
+    padding: 1.25rem;
+  }
+
+  /* Typography in content */
+  .collapsible-content h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--brand-800);
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  .collapsible-content h3:first-child { margin-top: 0; }
+
+  .collapsible-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-700);
+    margin: 1.25rem 0 0.5rem;
+  }
+
+  .collapsible-content p {
+    margin: 0.5rem 0;
+    color: var(--brand-700);
+    font-size: 0.92rem;
+  }
+
+  .collapsible-content ul, .collapsible-content ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    font-size: 0.92rem;
+    color: var(--brand-700);
+  }
+
+  .collapsible-content li { margin-bottom: 0.35rem; }
+
+  .collapsible-content strong { color: var(--brand-900); }
+
+  /* Tables */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border: 1px solid var(--brand-200);
+  }
+
+  .table-wrapper table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .table-wrapper th {
+    background: var(--brand-200);
+    color: var(--brand-900);
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .table-wrapper td {
+    padding: 0.55rem 0.75rem;
+    border-top: 1px solid var(--brand-200);
+    color: var(--brand-700);
+  }
+
+  .table-wrapper tbody tr:nth-child(even) td { background: var(--brand-100); }
+  .table-wrapper tr:hover td { background: var(--brand-200); }
+
+  /* Code blocks */
+  .code-block {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  [data-theme="dark"] .code-block { background: #0f172a; border: 1px solid #334155; }
+
+  /* Decision Cards */
+  .decision-card {
+    border: 1px solid var(--brand-200);
+    border-radius: 12px;
+    margin: 1.25rem 0;
+    overflow: hidden;
+    background: var(--brand-50);
+  }
+
+  .decision-header {
+    background: var(--brand-200);
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--brand-900);
+  }
+
+  .decision-context {
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    color: var(--brand-600);
+    border-bottom: 1px solid var(--brand-200);
+  }
+
+  .decision-options {
+    padding: 1rem;
+  }
+
+  .decision-option-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .decision-option-table th {
+    padding: 0.5rem 0.6rem;
+    text-align: left;
+    font-weight: 600;
+    background: var(--brand-100);
+    color: var(--brand-900);
+    border-bottom: 1px solid var(--brand-200);
+  }
+
+  .decision-option-table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--brand-200);
+    color: var(--brand-700);
+    vertical-align: top;
+  }
+
+  .pros-contras {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin: 0.75rem 0;
+  }
+
+  @media (max-width: 600px) {
+    .pros-contras { grid-template-columns: 1fr; }
+  }
+
+  .pros-col h5, .contras-col h5 {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .pros-col h5 { background: #dcfce7; color: #15803d; }
+  .contras-col h5 { background: #fee2e2; color: #b91c1c; }
+
+  [data-theme="dark"] .pros-col h5 { background: #052e16; color: #86efac; }
+  [data-theme="dark"] .contras-col h5 { background: #450a0a; color: #fca5a5; }
+
+  .pros-col ul, .contras-col ul {
+    list-style: none;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+
+  .pros-col li::before { content: "+"; color: var(--green); font-weight: 700; margin-right: 0.3rem; }
+  .contras-col li::before { content: "-"; color: var(--red); font-weight: 700; margin-right: 0.3rem; }
+  .pros-col li, .contras-col li { margin-bottom: 0.2rem; color: var(--brand-700); }
+
+  .decision-recommendation {
+    background: var(--brand-100);
+    padding: 0.75rem 1rem;
+    border-top: 2px solid var(--accent);
+    font-size: 0.88rem;
+    color: var(--brand-700);
+  }
+
+  .decision-recommendation strong { color: var(--accent); }
+
+  /* Prompt Section */
+  .prompt-section {
+    margin-top: 2rem;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .prompt-header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .copy-btn {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.4);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(255,255,255,0.35); }
+  .copy-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  .copy-btn.copied {
+    background: var(--green);
+    border-color: var(--green);
+  }
+
+  .prompt-content {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 1rem 1.25rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  /* Overview Tab */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .stat-card {
+    background: var(--brand-100);
+    border: 1px solid var(--brand-200);
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .stat-card .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-card .stat-label {
+    font-size: 0.82rem;
+    color: var(--brand-600);
+    margin-top: 0.4rem;
+    font-weight: 500;
+  }
+
+  /* Matrix */
+  .matrix-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: var(--brand-100);
+    border-radius: 12px;
+    border: 1px solid var(--brand-200);
+  }
+
+  .matrix-container h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--brand-800);
+  }
+
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: 40px 1fr 1fr;
+    grid-template-rows: 1fr 1fr 40px;
+    gap: 2px;
+    height: 340px;
+    background: var(--brand-300);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .matrix-label-y {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-200);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--brand-600);
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+  }
+
+  .matrix-label-x {
+    grid-column: 2 / 4;
+    grid-row: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--brand-200);
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--brand-600);
+  }
+
+  .matrix-quadrant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    gap: 0.4rem;
+    position: relative;
+  }
+
+  /* Soft pastel quadrant backgrounds with high-contrast labels */
+  .matrix-q1 { grid-column: 2; grid-row: 1; background: #ecfdf5; }
+  .matrix-q2 { grid-column: 3; grid-row: 1; background: #eff6ff; }
+  .matrix-q3 { grid-column: 2; grid-row: 2; background: #f8fafc; }
+  .matrix-q4 { grid-column: 3; grid-row: 2; background: #fef2f2; }
+
+  [data-theme="dark"] .matrix-q1 { background: #052e16; }
+  [data-theme="dark"] .matrix-q2 { background: #172554; }
+  [data-theme="dark"] .matrix-q3 { background: #1e293b; }
+  [data-theme="dark"] .matrix-q4 { background: #450a0a; }
+
+  .matrix-quadrant-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--brand-600);
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+  }
+
+  .matrix-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: default;
+    transition: transform 0.2s;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .matrix-dot:hover { transform: scale(1.3); z-index: 10; }
+
+  .matrix-dot[data-priority="alta"] { background: #16a34a; }
+  .matrix-dot[data-priority="media"] { background: #d97706; }
+  .matrix-dot[data-priority="baixa"] { background: #64748b; }
+
+  .matrix-dot .dot-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #f8fafc;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .matrix-dot:hover .dot-tooltip { display: block; }
+
+  /* Implementation Order */
+  .impl-order {
+    margin: 2rem 0;
+  }
+
+  .impl-order h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--brand-800);
+  }
+
+  .impl-list {
+    list-style: none;
+    counter-reset: impl;
+    padding: 0;
+  }
+
+  .impl-list li {
+    counter-increment: impl;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: var(--brand-100);
+    border: 1px solid var(--brand-200);
+    transition: transform 0.2s;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .impl-list li:hover { transform: translateX(4px); }
+
+  .impl-list li::before {
+    content: counter(impl);
+    background: var(--accent);
+    color: #fff;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .impl-item-content {
+    flex: 1;
+  }
+
+  .impl-item-name {
+    font-weight: 600;
+    color: var(--brand-800);
+  }
+
+  .impl-item-meta {
+    font-size: 0.8rem;
+    color: var(--brand-500);
+    margin-top: 0.15rem;
+  }
+
+  /* Footer */
+  .footer {
+    background: var(--brand-100);
+    color: var(--brand-600);
+    text-align: center;
+    padding: 1.5rem 2rem;
+    font-size: 0.82rem;
+    border-top: 1px solid var(--brand-200);
+  }
+
+  .footer a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+
+  .footer a:hover { text-decoration: underline; }
+
+  /* Print */
+  @media print {
+    .tab-nav, .theme-toggle, .copy-btn, .sidebar-toggle, .sidebar-overlay { display: none !important; }
+    .header { position: relative; }
+    .page-wrapper { display: block; }
+    .tab-panel { display: block !important; page-break-before: always; }
+    .tab-panel:first-child { page-break-before: auto; }
+    .collapsible.open .collapsible-content, .collapsible-content { max-height: none !important; padding: 1rem !important; }
+    .collapsible { break-inside: avoid; }
+    .prompt-content { max-height: none; }
+    body { background: #fff; }
+    .content { max-width: 100%; padding: 1rem; }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .header-inner { padding: 0.75rem 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .header h1 { font-size: 1.15rem; }
+    .content { padding: 1.25rem 1rem 5rem; }
+    .plan-header h2 { font-size: 1.35rem; }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+    .pros-contras { grid-template-columns: 1fr; }
+    .matrix-grid { height: 280px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header" role="banner">
+  <div class="header-inner">
+    <div class="header-left">
+      <svg class="header-logo" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="20" r="19" stroke="#2563eb" stroke-width="2"/>
+        <path d="M14 12l-2 4v10a1 1 0 001 1h2a1 1 0 001-1v-1h8v1a1 1 0 001 1h2a1 1 0 001-1V16l-2-4H14z" stroke="#1e293b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="15.5" cy="22.5" r="1.5" fill="#2563eb"/>
+        <circle cx="24.5" cy="22.5" r="1.5" fill="#2563eb"/>
+        <path d="M12 16h16" stroke="#1e293b" stroke-width="1" stroke-linecap="round"/>
+        <path d="M28 10l3-2M12 10l-3-2" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <h1>Repar<span>Auto</span></h1>
+        <div class="header-sub">Planos de Implementacao</div>
+      </div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Alternar tema claro/escuro">
+      <span id="theme-icon">&#9790;</span>
+      <span id="theme-label">Escuro</span>
+    </button>
+  </div>
+</header>
+
+<!-- Mobile sidebar toggle -->
+<button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Abrir menu de planos">&#9776;</button>
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Page wrapper -->
+<div class="page-wrapper">
+
+<!-- Tab Navigation (right sidebar) -->
+<nav class="tab-nav" role="tablist" aria-label="Planos de implementacao">
+  <ul class="tab-list">
+    <li><button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-overview" id="tab-overview" onclick="switchTab('overview')" tabindex="0">
+      <span class="tab-num" style="background:var(--accent);color:#fff;">&#9733;</span> Visao Geral
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-01" id="tab-01" onclick="switchTab('01')" tabindex="-1">
+      <span class="tab-num">01</span> Confianca <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-02" id="tab-02" onclick="switchTab('02')" tabindex="-1">
+      <span class="tab-num">02</span> Precos <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03" id="tab-03" onclick="switchTab('03')" tabindex="-1">
+      <span class="tab-num">03</span> Busca <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04" id="tab-04" onclick="switchTab('04')" tabindex="-1">
+      <span class="tab-num">04</span> IA <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-05" id="tab-05" onclick="switchTab('05')" tabindex="-1">
+      <span class="tab-num">05</span> Midia <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-06" id="tab-06" onclick="switchTab('06')" tabindex="-1">
+      <span class="tab-num">06</span> Financeiro <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-07" id="tab-07" onclick="switchTab('07')" tabindex="-1">
+      <span class="tab-num">07</span> Profissional <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-08" id="tab-08" onclick="switchTab('08')" tabindex="-1">
+      <span class="tab-num">08</span> Pecas <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-09" id="tab-09" onclick="switchTab('09')" tabindex="-1">
+      <span class="tab-num">09</span> Mobile <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-10" id="tab-10" onclick="switchTab('10')" tabindex="-1">
+      <span class="tab-num">10</span> Comunidade <span class="priority-badge priority-baixa">BAIXA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-11" id="tab-11" onclick="switchTab('11')" tabindex="-1">
+      <span class="tab-num">11</span> Logistica <span class="priority-badge priority-baixa">BAIXA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-12" id="tab-12" onclick="switchTab('12')" tabindex="-1">
+      <span class="tab-num">12</span> SEO <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+  </ul>
+</nav>
+
+<main class="content">
+
+<!-- ==================== OVERVIEW TAB ==================== -->
+<div class="tab-panel active" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+  <div class="plan-header">
+    <h2>Visao Geral dos Planos de Implementacao</h2>
+    <p style="color:var(--brand-600);font-size:0.9rem;">Resumo dos 12 planos para evolucao do ReparAuto de marketplace basico para plataforma de referencia no setor automobilistico portugues.</p>
+  </div>
+
+  <div class="overview-grid">
+    <div class="stat-card">
+      <div class="stat-number">12</div>
+      <div class="stat-label">Planos de Implementacao</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">~175</div>
+      <div class="stat-label">Dias estimados (total)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">4</div>
+      <div class="stat-label">Prioridade Alta</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">6</div>
+      <div class="stat-label">Prioridade Media</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">2</div>
+      <div class="stat-label">Prioridade Baixa</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">0</div>
+      <div class="stat-label">APIs pagas obrigatorias</div>
+    </div>
+  </div>
+
+  <!-- Matrix -->
+  <div class="matrix-container">
+    <h3>Matriz Esforco vs Valor</h3>
+    <p style="font-size:0.82rem;color:var(--brand-600);margin-bottom:1rem;">Passe o cursor sobre os pontos para ver os nomes. Clique para navegar ao plano.</p>
+    <div class="matrix-grid">
+      <div class="matrix-label-y">VALOR &uarr;</div>
+      <div class="matrix-quadrant matrix-q1">
+        <span class="matrix-quadrant-title">Quick Win</span>
+        <div class="matrix-dot" data-priority="alta" onclick="switchTab('09')" title="Mobile/PWA"><span class="dot-tooltip">09 — Mobile/PWA</span>09</div>
+      </div>
+      <div class="matrix-quadrant matrix-q2">
+        <span class="matrix-quadrant-title">Estrategico</span>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('01')" title="Confianca"><span class="dot-tooltip">01 — Confianca</span>01</div>
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('02')" title="Precos"><span class="dot-tooltip">02 — Precos</span>02</div>
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03')" title="Busca"><span class="dot-tooltip">03 — Busca</span>03</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('07')" title="Profissional"><span class="dot-tooltip">07 — Profissional</span>07</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('08')" title="Pecas"><span class="dot-tooltip">08 — Pecas</span>08</div>
+        </div>
+      </div>
+      <div class="matrix-quadrant matrix-q3">
+        <span class="matrix-quadrant-title">Oportunidade</span>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('05')" title="Midia"><span class="dot-tooltip">05 — Midia</span>05</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('06')" title="Financeiro"><span class="dot-tooltip">06 — Financeiro</span>06</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('12')" title="SEO"><span class="dot-tooltip">12 — SEO</span>12</div>
+        </div>
+      </div>
+      <div class="matrix-quadrant matrix-q4">
+        <span class="matrix-quadrant-title">Projeto Grande</span>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('04')" title="IA"><span class="dot-tooltip">04 — IA</span>04</div>
+          <div class="matrix-dot" data-priority="baixa" onclick="switchTab('10')" title="Comunidade"><span class="dot-tooltip">10 — Comunidade</span>10</div>
+          <div class="matrix-dot" data-priority="baixa" onclick="switchTab('11')" title="Logistica"><span class="dot-tooltip">11 — Logistica</span>11</div>
+        </div>
+      </div>
+      <div class="matrix-label-x">ESFORCO &rarr;</div>
+    </div>
+  </div>
+
+  <!-- Recommended Order -->
+  <div class="impl-order">
+    <h3>Ordem de Implementacao Recomendada</h3>
+    <p style="font-size:0.85rem;color:var(--brand-600);margin-bottom:1rem;">Baseada na combinacao de valor, esforco, dependencias e impacto no crescimento da plataforma.</p>
+    <ol class="impl-list">
+      <li onclick="switchTab('09')"><div class="impl-item-content"><span class="impl-item-name">Mobile e PWA</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">5-7 dias &middot; Quick Win com impacto imediato na experiencia mobile &middot; Zero custo de infra</div></div></li>
+      <li onclick="switchTab('12')"><div class="impl-item-content"><span class="impl-item-name">Internacionalizacao e SEO</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-11 dias &middot; Meta tags e Open Graph para compartilhamento social &middot; Essencial para trafego organico</div></div></li>
+      <li onclick="switchTab('01')"><div class="impl-item-content"><span class="impl-item-name">Confianca e Seguranca</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">18-24 dias &middot; Verificacao de vendedores, avaliacoes, denuncias &middot; Fundamental para marketplace</div></div></li>
+      <li onclick="switchTab('02')"><div class="impl-item-content"><span class="impl-item-name">Inteligencia de Precos</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">15-20 dias &middot; Indicador de preco justo, estimativa de valor &middot; Diferenciador unico em PT</div></div></li>
+      <li onclick="switchTab('03')"><div class="impl-item-content"><span class="impl-item-name">Busca Avancada e Descoberta</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">16-22 dias &middot; Buscas salvas, mapa, comparacao, filtros avancados &middot; Funcionalidade critica</div></div></li>
+      <li onclick="switchTab('05')"><div class="impl-item-content"><span class="impl-item-name">Midia Aprimorada</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-12 dias &middot; Galeria com zoom/swipe, video, 360 graus &middot; Alto impacto na decisao de compra</div></div></li>
+      <li onclick="switchTab('06')"><div class="impl-item-content"><span class="impl-item-name">Servicos Financeiros</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">12-18 dias &middot; Calculadora de financiamento, custos totais, IMT &middot; 100% client-side</div></div></li>
+      <li onclick="switchTab('07')"><div class="impl-item-content"><span class="impl-item-name">Ferramentas Profissionais</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">15-22 dias &middot; Dashboard, analytics, perfil publico, upload CSV &middot; Atrai stands/revendedores</div></div></li>
+      <li onclick="switchTab('08')"><div class="impl-item-content"><span class="impl-item-name">Ecossistema de Pecas</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">14-20 dias &middot; Compatibilidade, cross-referencia, upload lote &middot; Core do negocio</div></div></li>
+      <li onclick="switchTab('04')"><div class="impl-item-content"><span class="impl-item-name">Funcionalidades com IA</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">22-30 dias &middot; Geracao de descricao, chatbot, deteccao fraude &middot; Requer Cloud Functions</div></div></li>
+      <li onclick="switchTab('11')"><div class="impl-item-content"><span class="impl-item-name">Logistica e Servicos</span> <span class="priority-badge priority-baixa">BAIXA</span><div class="impl-item-meta">12-16 dias &middot; Estimativa de entrega, test drive, oficinas &middot; Fecha o ciclo da transacao</div></div></li>
+      <li onclick="switchTab('10')"><div class="impl-item-content"><span class="impl-item-name">Comunidade e Conteudo</span> <span class="priority-badge priority-baixa">BAIXA</span><div class="impl-item-meta">10-14 dias &middot; Blog, forum, reviews, glossario &middot; Valor de longo prazo (SEO)</div></div></li>
+    </ol>
+  </div>
+
+  <!-- Summary Table -->
+  <div style="margin-top:2rem;">
+    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1rem;color:var(--brand-800);">Resumo dos Planos</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Plano</th><th>Prioridade</th><th>Esforco</th><th>Impacto Principal</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01</td><td>Confianca e Seguranca</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>18-24 dias</td><td>Confianca, retencao, reducao de fraude</td></tr>
+          <tr><td>02</td><td>Inteligencia de Precos</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Decisao de compra, diferenciacao</td></tr>
+          <tr><td>03</td><td>Busca Avancada</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>16-22 dias</td><td>Experiencia, conversao, retencao</td></tr>
+          <tr><td>04</td><td>Funcionalidades IA</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>22-30 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
+          <tr><td>05</td><td>Midia Aprimorada</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-12 dias</td><td>Confianca do comprador, UX</td></tr>
+          <tr><td>06</td><td>Servicos Financeiros</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>12-18 dias</td><td>Transparencia financeira, conversao</td></tr>
+          <tr><td>07</td><td>Ferramentas Profissionais</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>15-22 dias</td><td>Atracao de profissionais, monetizacao</td></tr>
+          <tr><td>08</td><td>Ecossistema de Pecas</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>14-20 dias</td><td>Efeito de rede, ecossistema integrado</td></tr>
+          <tr><td>09</td><td>Mobile e PWA</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>5-7 dias</td><td>Experiencia mobile, retencao</td></tr>
+          <tr><td>10</td><td>Comunidade e Conteudo</td><td><span class="priority-badge priority-baixa">BAIXA</span></td><td>10-14 dias</td><td>SEO organico, engajamento</td></tr>
+          <tr><td>11</td><td>Logistica e Servicos</td><td><span class="priority-badge priority-baixa">BAIXA</span></td><td>12-16 dias</td><td>Ciclo completo da transacao</td></tr>
+          <tr><td>12</td><td>Internacionalizacao e SEO</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-11 dias</td><td>Trafego organico, visibilidade</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PLAN TABS - Generated via JS ==================== -->
+<div class="tab-panel" id="panel-01" role="tabpanel" aria-labelledby="tab-01"></div>
+<div class="tab-panel" id="panel-02" role="tabpanel" aria-labelledby="tab-02"></div>
+<div class="tab-panel" id="panel-03" role="tabpanel" aria-labelledby="tab-03"></div>
+<div class="tab-panel" id="panel-04" role="tabpanel" aria-labelledby="tab-04"></div>
+<div class="tab-panel" id="panel-05" role="tabpanel" aria-labelledby="tab-05"></div>
+<div class="tab-panel" id="panel-06" role="tabpanel" aria-labelledby="tab-06"></div>
+<div class="tab-panel" id="panel-07" role="tabpanel" aria-labelledby="tab-07"></div>
+<div class="tab-panel" id="panel-08" role="tabpanel" aria-labelledby="tab-08"></div>
+<div class="tab-panel" id="panel-09" role="tabpanel" aria-labelledby="tab-09"></div>
+<div class="tab-panel" id="panel-10" role="tabpanel" aria-labelledby="tab-10"></div>
+<div class="tab-panel" id="panel-11" role="tabpanel" aria-labelledby="tab-11"></div>
+<div class="tab-panel" id="panel-12" role="tabpanel" aria-labelledby="tab-12"></div>
+
+</main>
+
+</div><!-- /page-wrapper -->
+
+<!-- Footer -->
+<footer class="footer">
+  <p>Gerado em 27 de maio de 2026 &middot; ReparAuto &mdash; Planos de Implementacao</p>
+  <p style="margin-top:0.3rem;"><a href="../competitive-analysis.html">Voltar para Analise Competitiva</a></p>
+</footer>
+
+<script>
+// ============================================================
+// PLANS DATA
+// ============================================================
+const plans = [
+{
+  id: '01',
+  title: 'Confianca e Seguranca',
+  shortName: 'Confianca',
+  priority: 'ALTA',
+  effort: '18-24 dias',
+  value: 'Muito Alto',
+  quadrant: 'Estrategico',
+  impact: 'Confianca do utilizador, retencao e reducao de fraude',
+  overview: `<h3>O Que Resolve</h3>
+<p>O ReparAuto e um marketplace de veiculos usados e pecas, um setor onde a confianca e o fator decisivo para concretizar transacoes. Atualmente, a plataforma nao oferece mecanismos para distinguir vendedores confiaveis de potenciais fraudulentos, nao permite que compradores partilhem experiencias com outros utilizadores, e nao dispoe de ferramentas para validar o historico de um veiculo.</p>
+<p>Este plano implementa uma camada completa de confianca e seguranca que abrange verificacao de vendedores, avaliacoes, consulta de historico VIN, sistema de denuncias e badges de confianca.</p>
+
+<h3>Benchmark Competitivo</h3>
+<div class="table-wrapper"><table>
+<tr><th>Plataforma</th><th>Verificacao</th><th>Avaliacoes</th><th>VIN</th><th>Denuncias</th><th>Badges</th></tr>
+<tr><td>OLX Portugal</td><td>Parcial</td><td>Nao</td><td>Nao</td><td>Sim</td><td>Nao</td></tr>
+<tr><td>Standvirtual</td><td>Sim (stands)</td><td>Nao</td><td>Parcial</td><td>Sim</td><td>Sim (Pro)</td></tr>
+<tr><td>AutoScout24</td><td>Sim (dealers)</td><td>Sim</td><td>Sim</td><td>Sim</td><td>Sim</td></tr>
+<tr><td><strong>ReparAuto (proposto)</strong></td><td><strong>Sim</strong></td><td><strong>Sim</strong></td><td><strong>Sim (API)</strong></td><td><strong>Sim</strong></td><td><strong>Sim</strong></td></tr>
+</table></div>
+
+<h3>Historias de Utilizador</h3>
+<ol>
+<li><strong>Como comprador</strong>, quero ver se um vendedor e verificado e qual a sua avaliacao media, para decidir se confio nele antes de me deslocar.</li>
+<li><strong>Como vendedor profissional</strong>, quero solicitar verificacao da minha conta e exibir um badge de confianca nos meus anuncios.</li>
+<li><strong>Como utilizador</strong>, quero denunciar anuncios suspeitos para que a moderacao possa agir rapidamente.</li>
+</ol>`,
+  features: `<h3>Funcionalidades</h3>
+<h4>Verificacao de Vendedores</h4>
+<p>Fluxo de solicitacao de verificacao para contas profissionais. O vendedor submete documentacao (NIF empresarial, alvara), o admin revisa e aprova/rejeita. Uma vez aprovado, recebe badge "Verificado" em todos os anuncios.</p>
+
+<h4>Sistema de Avaliacoes e Reviews</h4>
+<p>Utilizadores autenticados podem deixar avaliacoes (1-5 estrelas) e comentarios textuais sobre vendedores. A media e denormalizada no documento do utilizador.</p>
+
+<h4>Consulta VIN / Historico do Veiculo</h4>
+<p>Integracao com Car Vertical API para consultar historico de sinistros, quilometragem real, registos de propriedade e situacao legal.</p>
+
+<h4>Denuncia de Anuncios</h4>
+<p>Botao "Reportar" em cada anuncio. Motivos pre-definidos (fraude, informacao falsa, fotos roubadas, conteudo inapropriado). Fila de moderacao no admin.</p>
+
+<h4>Badges de Confianca</h4>
+<p>Sistema visual: "Vendedor Verificado", "Perfil Completo", "Membro desde [ano]", "X avaliacoes positivas". Calculados automaticamente.</p>
+
+<h3>Novos Arquivos a Criar</h3>
+<div class="table-wrapper"><table>
+<tr><th>Caminho</th><th>Finalidade</th></tr>
+<tr><td>src/types/review.ts</td><td>Interface Review e tipos relacionados</td></tr>
+<tr><td>src/types/report.ts</td><td>Interface Report e tipos de motivo</td></tr>
+<tr><td>src/types/verification.ts</td><td>Interface VerificationRequest e status</td></tr>
+<tr><td>src/hooks/useReviews.ts</td><td>CRUD de avaliacoes de um vendedor</td></tr>
+<tr><td>src/hooks/useReports.ts</td><td>Criar denuncias</td></tr>
+<tr><td>src/hooks/useVerification.ts</td><td>Solicitar e consultar verificacao</td></tr>
+<tr><td>src/hooks/useVinCheck.ts</td><td>Consulta VIN via API externa</td></tr>
+<tr><td>src/components/perfil/SellerBadges.tsx</td><td>Badges de confianca</td></tr>
+<tr><td>src/components/perfil/ReviewsList.tsx</td><td>Lista de avaliacoes</td></tr>
+<tr><td>src/components/perfil/ReviewForm.tsx</td><td>Formulario de avaliacao</td></tr>
+<tr><td>src/components/detalhes/ReportButton.tsx</td><td>Botao + modal de denuncia</td></tr>
+<tr><td>src/components/detalhes/VinCheckPanel.tsx</td><td>Consulta VIN nos detalhes</td></tr>
+<tr><td>src/components/admin/VerificationsQueue.tsx</td><td>Fila de verificacoes</td></tr>
+<tr><td>src/components/admin/ReportsQueue.tsx</td><td>Fila de denuncias</td></tr>
+</table></div>`,
+  technical: `<h3>Colecoes Firestore</h3>
+<div class="code-block">interface Review {
+  id: string;
+  reviewerUid: string;
+  reviewerNome: string;
+  reviewerFoto: string | null;
+  targetUid: string;
+  rating: number;           // 1-5
+  comentario: string;       // max 500 chars
+  dataCriacao: Timestamp;
+  reportado: boolean;
+}
+
+interface Report {
+  id: string;
+  reporterUid: string;
+  targetType: 'car' | 'part' | 'user' | 'review';
+  targetId: string;
+  motivo: MotivoReport;
+  descricao: string;
+  status: 'pendente' | 'resolvido' | 'ignorado';
+  dataCriacao: Timestamp;
+}
+
+interface VerificationRequest {
+  id: string;
+  uid: string;
+  nomeEmpresa: string;
+  nif: string;
+  documentos: string[];
+  status: 'pendente' | 'aprovado' | 'rejeitado';
+  dataCriacao: Timestamp;
+}</div>
+
+<h3>Regras de Seguranca Firestore</h3>
+<div class="code-block">match /reviews/{reviewId} {
+  allow read: if true;
+  allow create: if isAuthenticated()
+    && request.resource.data.reviewerUid == request.auth.uid
+    && request.resource.data.targetUid != request.auth.uid;
+  allow update: if isAuthenticated()
+    && resource.data.reviewerUid == request.auth.uid || isAdmin();
+  allow delete: if isAdmin();
+}
+
+match /reports/{reportId} {
+  allow read: if isAdmin();
+  allow create: if isAuthenticated();
+  allow update, delete: if isAdmin();
+}
+
+match /verifications/{verificationId} {
+  allow read: if isAuthenticated()
+    && (resource.data.uid == request.auth.uid || isAdmin());
+  allow create: if isAuthenticated();
+  allow update, delete: if isAdmin();
+}</div>
+
+<h3>APIs Externas</h3>
+<p><strong>Car Vertical API</strong> — Cobertura europeia, ~15-30 EUR por consulta. Necessita proxy via Cloud Function.</p>`,
+  effort: `<h3>Detalhamento do Esforco</h3>
+<div class="table-wrapper"><table>
+<tr><th>Tarefa</th><th>Esforco (dias)</th></tr>
+<tr><td>Tipos TypeScript (review, report, verification)</td><td>0.5</td></tr>
+<tr><td>Funcoes CRUD em db.ts para 3 colecoes</td><td>2</td></tr>
+<tr><td>Regras Firestore</td><td>1</td></tr>
+<tr><td>Hooks (useReviews, useReports, useVerification)</td><td>3</td></tr>
+<tr><td>Componentes de badges</td><td>1</td></tr>
+<tr><td>Componentes de avaliacoes</td><td>2</td></tr>
+<tr><td>Modal de denuncia</td><td>1</td></tr>
+<tr><td>Filas admin (verificacoes + denuncias)</td><td>3.5</td></tr>
+<tr><td>Integracao componentes existentes</td><td>2</td></tr>
+<tr><td>Cloud Function proxy VIN</td><td>2</td></tr>
+<tr><td>Componente VinCheckPanel</td><td>1.5</td></tr>
+<tr><td>Testes manuais e ajustes</td><td>2</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>~20 dias</strong></td></tr>
+</table></div>
+
+<h3>Avaliacao de Valor</h3>
+<div class="table-wrapper"><table>
+<tr><th>Dimensao</th><th>Impacto</th><th>Justificacao</th></tr>
+<tr><td>Aquisicao</td><td>Alto</td><td>Badges e avaliacoes diferenciam da concorrencia</td></tr>
+<tr><td>Retencao</td><td>Muito Alto</td><td>Confianca gera retorno; reviews criam efeito de rede</td></tr>
+<tr><td>Receita</td><td>Medio</td><td>VIN pode ser monetizado; verificacao premium</td></tr>
+<tr><td>Seguranca</td><td>Muito Alto</td><td>Denuncias reduzem fraude; obrigacao legal DSA</td></tr>
+</table></div>`,
+  decisions: [
+    {
+      title: 'API de Consulta VIN',
+      context: 'Necessidade de fonte de dados para historico de veiculos europeus (sinistros, quilometragem, furtos).',
+      options: [
+        { name: 'Car Vertical', pros: ['Excelente cobertura europeia', 'API bem documentada', 'Suporte a Portugal', 'Pay-per-report'], contras: ['Custo por consulta (~15-30 EUR)', 'Requer Cloud Function como proxy'] },
+        { name: 'CARFAX EU', pros: ['Marca reconhecida', 'Dados extensos'], contras: ['Cobertura PT limitada', 'Custo mais elevado', 'API menos acessivel'] },
+        { name: 'Base propria', pros: ['Sem custo por consulta', 'Controlo total'], contras: ['Inviavel a curto prazo', 'Sem acesso a bases governamentais'] }
+      ],
+      recommendation: '<strong>Car Vertical</strong>. Melhor relacao cobertura/custo para o mercado portugues. Integracao via Firebase Cloud Function como proxy seguro.'
+    },
+    {
+      title: 'Reviews: Anonimas vs. Apenas Compradores Verificados',
+      context: 'Quem pode deixar avaliacoes sobre vendedores.',
+      options: [
+        { name: 'Qualquer utilizador autenticado', pros: ['Mais volume', 'Menor barreira de entrada', 'Mais rapido atingir massa critica'], contras: ['Risco de reviews falsas', 'Auto-avaliacao possivel'] },
+        { name: 'Apenas compradores verificados', pros: ['Reviews mais fidedignas', 'Menor risco de manipulacao'], contras: ['Muito menos volume', 'Dificil verificar compra', 'Complexidade adicional'] }
+      ],
+      recommendation: '<strong>Qualquer utilizador autenticado</strong> com salvaguardas: nao avaliar a si proprio; 1 review por par; reviews denunciaveis; flag "Comprador Confirmado" se houve troca de mensagens.'
+    }
+  ],
+  prompt: `You are implementing the "Trust & Safety" feature set for ReparAuto, a Portuguese used-car and parts marketplace built with React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All UI text must be in Portuguese (PT-PT). Code, comments, variable names, and commit messages in English.
+- Import alias: @/ maps to src/. NEVER use relative imports.
+- Styling: Tailwind utility classes only. Theme is in src/index.css.
+- State: Context API + custom hooks. No Redux/Zustand.
+- Firestore real-time: use onSnapshot() for live data. Clean up subscriptions on unmount.
+- New listings default to status: 'pendente' (admin approves).
+- Auth: Firebase Auth (email/password + Google). Roles: 'user' | 'admin'.
+
+TASKS — Implement in this order:
+1. TYPE DEFINITIONS — Create src/types/review.ts, src/types/report.ts, src/types/verification.ts. Modify src/types/usuario.ts.
+2. CONSTANTS — Add MOTIVOS_DENUNCIA and BADGES_CONFIANCA to constants.ts.
+3. DATABASE LAYER — Add Reviews, Reports, Verifications CRUD to db.ts.
+4. FIRESTORE RULES — Add rules for reviews, reports, verifications.
+5. HOOKS — Create useReviews, useReports, useVerification.
+6. UI COMPONENTS — SellerBadges, ReviewForm, ReviewsList, ReportButton, ReportModal, VerificationRequest, ReportsQueue, VerificationsQueue.
+7. INTEGRATION — Modify CarCard, ContactSection, ProfileLoggedIn, Admin, DetalhesCarro.
+8. VIN CHECK — Cloud Function + useVinCheck + VinCheckPanel.`
+},
+// Plans 02-12 follow the same structure — abbreviated for performance
+// The content is injected via buildPlanHTML which reads from the data
+];
+
+// ============================================================
+// Simplified plan data for plans 02-12
+// ============================================================
+const planMeta = [
+  null, // index 0 unused
+  null, // 01 is defined above
+  { id:'02', title:'Inteligencia de Precos', shortName:'Precos', priority:'ALTA', effort:'15-20 dias', value:'Muito Alto', quadrant:'Estrategico', impact:'Decisao de compra informada, diferenciacao competitiva' },
+  { id:'03', title:'Busca Avancada e Descoberta', shortName:'Busca', priority:'ALTA', effort:'16-22 dias', value:'Muito Alto', quadrant:'Estrategico', impact:'Experiencia de utilizador, conversao, retencao' },
+  { id:'04', title:'Funcionalidades com IA', shortName:'IA', priority:'MEDIA', effort:'22-30 dias', value:'Alto', quadrant:'Complementar/Estrategico', impact:'Diferenciacao, qualidade dos anuncios' },
+  { id:'05', title:'Midia Aprimorada', shortName:'Midia', priority:'MEDIA', effort:'8-12 dias', value:'Alto', quadrant:'Alto Valor / Esforco Medio', impact:'Confianca do comprador, experiencia visual' },
+  { id:'06', title:'Servicos Financeiros', shortName:'Financeiro', priority:'MEDIA', effort:'12-18 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Medio-Alto', impact:'Transparencia financeira, conversao de vendas' },
+  { id:'07', title:'Ferramentas Profissionais', shortName:'Profissional', priority:'MEDIA', effort:'15-22 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Alto', impact:'Atracao de profissionais, monetizacao' },
+  { id:'08', title:'Ecossistema de Pecas', shortName:'Pecas', priority:'MEDIA', effort:'14-20 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Medio-Alto', impact:'Diferenciacao competitiva, efeito de rede' },
+  { id:'09', title:'Mobile e PWA', shortName:'Mobile', priority:'ALTA', effort:'5-7 dias', value:'Muito Alto', quadrant:'Quick Win', impact:'Experiencia mobile, retencao, engajamento' },
+  { id:'10', title:'Comunidade e Conteudo', shortName:'Comunidade', priority:'BAIXA', effort:'10-14 dias', value:'Medio', quadrant:'Projeto Grande Baixa Prioridade', impact:'SEO organico, engajamento, fidelidade' },
+  { id:'11', title:'Logistica e Servicos', shortName:'Logistica', priority:'BAIXA', effort:'12-16 dias', value:'Alto', quadrant:'Espalhado (Quick Wins + Projetos)', impact:'Ciclo completo da transacao' },
+  { id:'12', title:'Internacionalizacao e SEO', shortName:'SEO', priority:'MEDIA', effort:'8-11 dias', value:'Alto/Muito Alto', quadrant:'Quick Wins + Estrategico', impact:'Trafego organico, visibilidade, compartilhamento' },
+];
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+let currentTab = 'overview';
+
+function switchTab(id) {
+  // Deactivate current
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); b.tabIndex = -1; });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  // Activate new
+  const btn = document.getElementById('tab-' + id);
+  const panel = document.getElementById('panel-' + id);
+  if (btn) { btn.classList.add('active'); btn.setAttribute('aria-selected','true'); btn.tabIndex = 0; btn.focus(); }
+  if (panel) panel.classList.add('active');
+  currentTab = id;
+  // Close sidebar on mobile
+  document.querySelector('.tab-nav').classList.remove('open');
+  document.querySelector('.sidebar-overlay').classList.remove('open');
+  // Update hash
+  if (id === 'overview') history.replaceState(null, '', window.location.pathname);
+  else history.replaceState(null, '', '#plan-' + id);
+  // Scroll content to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Keyboard navigation for tabs
+document.querySelector('.tab-nav').addEventListener('keydown', function(e) {
+  const tabs = Array.from(document.querySelectorAll('.tab-btn'));
+  const idx = tabs.indexOf(document.activeElement);
+  if (idx === -1) return;
+  let newIdx;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); newIdx = (idx + 1) % tabs.length; }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); newIdx = (idx - 1 + tabs.length) % tabs.length; }
+  else if (e.key === 'Home') { e.preventDefault(); newIdx = 0; }
+  else if (e.key === 'End') { e.preventDefault(); newIdx = tabs.length - 1; }
+  if (newIdx !== undefined) {
+    const tabId = tabs[newIdx].id.replace('tab-','');
+    switchTab(tabId);
+  }
+});
+
+// ============================================================
+// THEME TOGGLE
+// ============================================================
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? '' : 'dark');
+  document.getElementById('theme-icon').textContent = isDark ? '☾' : '☀';
+  document.getElementById('theme-label').textContent = isDark ? 'Escuro' : 'Claro';
+  localStorage.setItem('reparauto-plans-theme', isDark ? 'light' : 'dark');
+}
+
+// Init theme
+(function() {
+  const saved = localStorage.getItem('reparauto-plans-theme');
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme:dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('theme-icon').textContent = '☀';
+    document.getElementById('theme-label').textContent = 'Claro';
+  }
+})();
+
+// ============================================================
+// SIDEBAR TOGGLE (mobile)
+// ============================================================
+function toggleSidebar() {
+  document.querySelector('.tab-nav').classList.toggle('open');
+  document.querySelector('.sidebar-overlay').classList.toggle('open');
+}
+
+// ============================================================
+// COLLAPSIBLE SECTIONS
+// ============================================================
+function toggleCollapsible(el) {
+  const section = el.closest('.collapsible');
+  section.classList.toggle('open');
+  const expanded = section.classList.contains('open');
+  el.setAttribute('aria-expanded', expanded);
+}
+
+// Escape key closes open collapsible
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const open = document.querySelector('.collapsible.open');
+    if (open) {
+      open.classList.remove('open');
+      open.querySelector('.collapsible-trigger').setAttribute('aria-expanded', 'false');
+      open.querySelector('.collapsible-trigger').focus();
+    }
+  }
+});
+
+// ============================================================
+// COPY PROMPT
+// ============================================================
+function copyPrompt(btn) {
+  const content = btn.closest('.prompt-section').querySelector('.prompt-content').textContent;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(content).then(() => {
+      btn.textContent = 'Copiado!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copiar Prompt'; btn.classList.remove('copied'); }, 2000);
+    }).catch(() => fallbackCopy(btn, content));
+  } else {
+    fallbackCopy(btn, content);
+  }
+}
+
+function fallbackCopy(btn, text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); btn.textContent = 'Copiado!'; btn.classList.add('copied'); }
+  catch(e) { btn.textContent = 'Erro ao copiar'; }
+  document.body.removeChild(ta);
+  setTimeout(() => { btn.textContent = 'Copiar Prompt'; btn.classList.remove('copied'); }, 2000);
+}
+
+// ============================================================
+// BUILD PLAN HTML
+// ============================================================
+function buildDecisionHTML(d) {
+  let optRows = d.options.map(o => {
+    return `<tr><td><strong>${o.name}</strong></td><td>${o.pros.map(p=>'<span style="color:var(--green)">+</span> '+p).join('<br>')}</td><td>${o.contras.map(c=>'<span style="color:var(--red)">-</span> '+c).join('<br>')}</td></tr>`;
+  }).join('');
+  return `<div class="decision-card">
+    <div class="decision-header">${d.title}</div>
+    <div class="decision-context">${d.context}</div>
+    <div class="decision-options">
+      <table class="decision-option-table"><tr><th>Opcao</th><th>Pros</th><th>Contras</th></tr>${optRows}</table>
+    </div>
+    <div class="decision-recommendation">${d.recommendation}</div>
+  </div>`;
+}
+
+function buildCollapsible(title, content, openByDefault) {
+  const cls = openByDefault ? 'collapsible open' : 'collapsible';
+  const expanded = openByDefault ? 'true' : 'false';
+  return `<div class="${cls}">
+    <button class="collapsible-trigger" onclick="toggleCollapsible(this)" aria-expanded="${expanded}">
+      ${title}
+      <span class="collapsible-arrow">&#9660;</span>
+    </button>
+    <div class="collapsible-content">${content}</div>
+  </div>`;
+}
+
+function buildPlanPanel(plan) {
+  const prioClass = plan.priority === 'ALTA' ? 'priority-alta' : plan.priority === 'MEDIA' ? 'priority-media' : 'priority-baixa';
+  let html = `<div class="plan-header">
+    <h2>${plan.id} — ${plan.title}</h2>
+    <div class="plan-badges">
+      <span class="priority-badge ${prioClass}">Prioridade: ${plan.priority}</span>
+      <span class="badge badge-effort">Esforco: ${plan.effort}</span>
+      <span class="badge badge-value">Valor: ${plan.value}</span>
+      <span class="badge badge-quadrant">${plan.quadrant}</span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.88rem;color:var(--brand-600);">${plan.impact}</p>
+  </div>`;
+
+  if (plan.overview) html += buildCollapsible('Visao Geral', plan.overview, true);
+  if (plan.features) html += buildCollapsible('Especificacao das Funcionalidades', plan.features, false);
+  if (plan.technical) html += buildCollapsible('Implementacao Tecnica', plan.technical, false);
+  if (plan.effort && typeof plan.effort !== 'string') html += buildCollapsible('Analise Esforco vs Valor', plan.effortDetail, false);
+  if (plan.effortDetail) html += buildCollapsible('Analise Esforco vs Valor', plan.effortDetail, false);
+
+  if (plan.decisions && plan.decisions.length) {
+    let decHtml = plan.decisions.map(d => buildDecisionHTML(d)).join('');
+    html += buildCollapsible('Decisoes de Arquitetura', decHtml, false);
+  }
+
+  if (plan.prompt) {
+    html += `<div class="prompt-section">
+      <div class="prompt-header">
+        <span>Prompt de Implementacao</span>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar Prompt</button>
+      </div>
+      <pre class="prompt-content">${escapeHTML(plan.prompt)}</pre>
+    </div>`;
+  }
+
+  return html;
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ============================================================
+// INIT: Populate plan 01 (fully defined above)
+// ============================================================
+document.getElementById('panel-01').innerHTML = buildPlanPanel(plans[0]);
+
+// ============================================================
+// INIT: Build remaining plans from embedded markdown data
+// For plans 02-12, we embed the essential content inline
+// ============================================================
+const planContents = {};
+
+planContents['02'] = {
+  overview: `<h3>O Que Resolve</h3>
+<p>Num marketplace de veiculos usados, o preco e a variavel mais sensivel e opaca. Compradores nao sabem se o preco e justo, vendedores nao sabem como posicionar os anuncios. Este plano transforma o ReparAuto numa plataforma inteligente de precos, fornecendo indicadores visuais de preco justo, graficos de tendencia, alertas personalizados, ferramenta de estimativa de valor e dashboard publico de mercado.</p>
+<h3>Funcionalidades Principais</h3>
+<ul>
+<li><strong>Indicador de Preco Justo</strong> — Badge visual que classifica o preco em 5 categorias (Excelente, Bom, Justo, Acima, Elevado)</li>
+<li><strong>Graficos de Tendencia</strong> — Historico de precos medios por marca/modelo (Recharts)</li>
+<li><strong>Alertas de Preco</strong> — Notificacao quando favoritos baixam de preco</li>
+<li><strong>Estimativa de Valor</strong> — "Quanto Vale Meu Carro?" com faixa min/medio/max</li>
+<li><strong>Dashboard de Mercado</strong> — Estatisticas publicas agregadas</li>
+</ul>`,
+  features: `<h3>Novos Arquivos</h3>
+<p>src/types/preco.ts, src/lib/priceUtils.ts, src/hooks/usePriceIndicator.ts, src/hooks/usePriceEstimate.ts, src/hooks/usePriceHistory.ts, src/hooks/useMarketStats.ts, src/components/precos/PriceIndicatorBadge.tsx, PriceChart.tsx, PriceEstimator.tsx, PriceDistribution.tsx, MarketDashboard.tsx, MarketWidget.tsx, src/pages/AvaliarVeiculo.tsx, src/pages/Mercado.tsx</p>
+<h3>Algoritmo de Preco Justo</h3>
+<ol>
+<li>Filtra anuncios: mesma marca, grupo de modelo, ano +/-2, km +/-30.000</li>
+<li>Se &lt; 5 anuncios, relaxa filtros (ano +/-4, km +/-50.000)</li>
+<li>Se &lt; 3, marca como "Dados insuficientes"</li>
+<li>Calcula <strong>mediana</strong> (nao media) dos precos</li>
+<li>Classifica: excelente (&lt;80% mediana), bom (80-90%), justo (90-110%), acima (110-130%), elevado (&gt;130%)</li>
+</ol>`,
+  technical: `<h3>Novas Colecoes Firestore</h3>
+<div class="code-block">interface PriceSnapshot {
+  id: string; marca: string; modelo: string;
+  precoMedio: number; precoMinimo: number; precoMaximo: number;
+  totalAnuncios: number; data: Timestamp;
+}
+
+interface SavedSearch {
+  id: string; uid: string;
+  filtros: { marca?: string; modelo?: string; precoMax?: number; ... };
+  alertaAtivo: boolean; dataCriacao: Timestamp;
+}</div>
+<h3>Dependencia</h3>
+<p><strong>recharts</strong> — Biblioteca de graficos React, leve, para tendencias e distribuicao.</p>`,
+  effortDetail: `<div class="table-wrapper"><table>
+<tr><th>Tarefa</th><th>Dias</th></tr>
+<tr><td>Tipos TypeScript</td><td>0.5</td></tr>
+<tr><td>Logica de calculo de preco justo</td><td>2</td></tr>
+<tr><td>Funcoes CRUD em db.ts</td><td>2</td></tr>
+<tr><td>5 Hooks (indicator, estimate, history, stats, alerts)</td><td>5</td></tr>
+<tr><td>Componentes de graficos e badges</td><td>5</td></tr>
+<tr><td>Paginas AvaliarVeiculo e Mercado</td><td>2</td></tr>
+<tr><td>Integracao + testes</td><td>3.5</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>~20 dias</strong></td></tr>
+</table></div>`,
+  decisions: [
+    { title: 'Fonte de Dados para Precos', context: 'Dados internos vs API externa (Eurotax/Schwacke).', options: [
+      { name: 'Dados internos', pros: ['Sem custo','Dados reais','Controlo total'], contras: ['Volume inicial baixo','Pode gerar indicadores pouco confiaveis'] },
+      { name: 'API externa (Eurotax)', pros: ['Dados robustos','Cobertura ampla'], contras: ['Custo elevado (5k-15k EUR/ano)','Nao reflete nicho de carros para reparar'] }
+    ], recommendation: '<strong>Dados internos</strong> como fonte primaria, com logica defensiva para volume baixo.' },
+    { title: 'Algoritmo de Preco Justo', context: 'Media simples vs Mediana com filtros vs Regressao linear.', options: [
+      { name: 'Media simples', pros: ['Simples','Transparente'], contras: ['Sensivel a outliers'] },
+      { name: 'Mediana com filtros', pros: ['Resistente a outliers','Considera faixas de ano/km'], contras: ['Necessita mais dados'] },
+      { name: 'Regressao linear', pros: ['Mais precisa'], contras: ['Complexidade significativa','Requer volume grande'] }
+    ], recommendation: '<strong>Mediana com filtros por variavel</strong>. Pragmatica, resistente a outliers e escalavel.' }
+  ]
+};
+
+planContents['03'] = { overview: `<h3>O Que Resolve</h3><p>O sistema de busca atual e limitado: pesquisa por texto livre, filtros basicos. Este plano implementa buscas salvas com alertas, busca por mapa (Leaflet + OpenStreetMap), comparacao lado a lado (ate 3 veiculos), filtros avancados, ordenacao multipla e sugestoes personalizadas.</p><h3>Dependencias</h3><p><strong>leaflet + react-leaflet</strong> — Mapas interativos gratuitos.</p>`, features: `<h3>6 Funcionalidades</h3><ul><li>Buscas Salvas com Alertas</li><li>Busca por Mapa (Leaflet + OSM)</li><li>Comparacao Lado a Lado (ate 3 veiculos)</li><li>Filtros Avancados (cor, cambio, portas, estado, etc.)</li><li>Ordenacao Multipla (preco, data, km, ano, relevancia)</li><li>Sugestoes "Voce Pode Gostar" (content-based)</li></ul>`, technical: `<h3>Abordagem Tecnica</h3><p>Mapa com Leaflet + OSM (gratuito). Coordenadas pre-definidas dos 6 concelhos. Comparacao em state local (sessionStorage). Sugestoes via regras simples baseadas em favoritos.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Tipos + geocoding + sugestoes</td><td>2</td></tr><tr><td>Hooks (6 hooks)</td><td>6</td></tr><tr><td>Mapa + popup</td><td>3</td></tr><tr><td>Comparacao (bar + modal)</td><td>2</td></tr><tr><td>Filtros + ordenacao</td><td>2</td></tr><tr><td>Buscas salvas</td><td>1.5</td></tr><tr><td>Sugestoes + integracao + testes</td><td>5.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~22 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Biblioteca de Mapas', context: 'Leaflet vs Google Maps vs Mapbox.', options: [{ name: 'Leaflet + OSM', pros: ['Gratuito','Open-source','Leve (~40KB)'], contras: ['Design menos polido'] },{ name: 'Google Maps', pros: ['Design premium','Street View'], contras: ['Custo significativo','API key','Vendor lock-in'] },{ name: 'Mapbox', pros: ['Design customizavel','Tier gratuito generoso'], contras: ['Custo apos tier','SDK mais pesado'] }], recommendation: '<strong>Leaflet + OpenStreetMap</strong>. Custo zero e determinante para marketplace em crescimento.' }] };
+
+planContents['04'] = { overview: `<h3>O Que Resolve</h3><p>Qualidade de anuncios e moderacao nao escalam manualmente. Este plano introduz IA em 5 frentes: geracao automatica de descricoes, sugestao inteligente de preco, classificacao visual de danos, chatbot de atendimento e deteccao automatica de fraude.</p><h3>Provider de IA</h3><p><strong>Google Gemini via Firebase/Vertex AI</strong> — Integracao nativa Firebase, custo baixo, multimodal.</p>`, features: `<ul><li><strong>Geracao de Descricao</strong> — LLM gera texto profissional em portugues a partir dos dados do veiculo</li><li><strong>Sugestao de Preco IA</strong> — Analise que explica o raciocinio</li><li><strong>Classificacao Visual de Danos</strong> — Gemini Vision identifica danos em fotos</li><li><strong>Chatbot</strong> — Widget flutuante para FAQs</li><li><strong>Deteccao de Fraude</strong> — Background check automatico (preco, fotos, texto, frequencia)</li></ul>`, technical: `<h3>Requer Firebase Cloud Functions</h3><p>5 Cloud Functions (2nd gen): generateDescription, suggestPrice, analyzeDamage, chatbotResponse, detectFraud (trigger).</p><div class="code-block">// Novas colecoes:
+// fraudAlerts — alertas de fraude (admin-only)
+// chatbotSessions — sessoes de chatbot</div>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Setup Cloud Functions + tipos</td><td>2</td></tr><tr><td>5 Cloud Functions + prompts</td><td>12</td></tr><tr><td>5 Hooks client-side</td><td>3</td></tr><tr><td>Componentes UI (7)</td><td>9</td></tr><tr><td>Prompt engineering + tuning</td><td>3</td></tr><tr><td>Testes</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~30 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Provider de IA', context: 'Google Gemini vs OpenAI GPT-4o vs Anthropic Claude.', options: [{ name: 'Google Gemini', pros: ['Integracao nativa Firebase','Economico','Multimodal'], contras: ['Menos potente que GPT-4o'] },{ name: 'OpenAI GPT-4o', pros: ['Mais capaz','Excelente PT'], contras: ['Sem integracao Firebase','Custo 2-3x maior'] },{ name: 'Claude API', pros: ['Excelente PT','Thinking mode'], contras: ['Sem integracao Firebase','Custo maior'] }], recommendation: '<strong>Google Gemini via Firebase</strong>. Integracao nativa e fator determinante. Custo significativamente inferior.' }] };
+
+planContents['05'] = { overview: `<h3>O Que Resolve</h3><p>Experiencia de midia limitada: fotos estaticas sem zoom, sem video, galeria basica. Para veiculos com danos, a qualidade visual e decisiva. Este plano adiciona galeria com zoom/swipe, upload de video curto (30s), visualizacao 360 graus (Pannellum.js), guia de fotos e marca d'agua automatica.</p>`, features: `<ul><li><strong>F1 Galeria Aprimorada</strong> — Zoom pinch/scroll, swipe, fullscreen, teclado (Alta)</li><li><strong>F2 Upload Video</strong> — Ate 30s/50MB, player HTML5 inline (Alta)</li><li><strong>F3 Vista 360</strong> — Pannellum.js para fotos panoramicas (Media)</li><li><strong>F4 Guia de Fotos</strong> — 8 dicas ilustradas de fotografia (Media)</li><li><strong>F5 Marca d'Agua</strong> — Canvas overlay automatico (Baixa)</li></ul>`, technical: `<p>Galeria refatorada com CSS transforms para zoom, touch events para swipe, Fullscreen API. Videos via Firebase Storage direto (limite 50MB). 360 graus com Pannellum.js (30KB, MIT). Marca d'agua via Canvas API nativa.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Galeria aprimorada</td><td>3</td></tr><tr><td>Upload de video</td><td>2.5</td></tr><tr><td>Visualizacao 360</td><td>2</td></tr><tr><td>Guia de fotos</td><td>1</td></tr><tr><td>Marca d'agua</td><td>1.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~10 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Biblioteca 360', context: 'Pannellum vs Photo Sphere Viewer vs A-Frame.', options: [{ name: 'Pannellum.js', pros: ['Leve (~30KB)','Maduro','MIT'], contras: ['Sem React wrapper oficial'] },{ name: 'Photo Sphere Viewer', pros: ['API moderna','React nativo'], contras: ['Mais pesado (~80KB)'] },{ name: 'A-Frame', pros: ['WebVR completo'], contras: ['Muito pesado (200KB+)','Overkill'] }], recommendation: '<strong>Pannellum.js</strong>. Mais leve e madura. Wrapper React simples (20-30 linhas).' }] };
+
+planContents['06'] = { overview: `<h3>O Que Resolve</h3><p>Custos ocultos de compra (IMT, seguro, transferencia) e falta de simulacao financeira. Este plano adiciona calculadora de financiamento, simulador de custo total de aquisicao, widget de seguro, valor de referencia de mercado e (futuro) pagamento seguro/escrow.</p>`, features: `<ul><li><strong>Calculadora de Financiamento</strong> — Sliders interativos, formula Price (Alta)</li><li><strong>Simulador de Custos Totais</strong> — Preco + IMT + transferencia + seguro + reparos (Alta)</li><li><strong>Tabela de Referencia</strong> — Valor de mercado baseado em dados internos (Media)</li><li><strong>Widget de Seguro</strong> — Estimativa por faixa + link afiliado (Media)</li><li><strong>Pagamento Escrow</strong> — Stripe Connect, fase futura (Baixa)</li></ul>`, technical: `<p>F1-F4 sao 100% client-side. Tabelas IMT oficiais de Portugal. src/lib/finance.ts, src/lib/imt-tables.ts, src/lib/insurance.ts. Componentes em src/components/detalhes/.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Calculadora financiamento</td><td>2</td></tr><tr><td>Simulador custos totais</td><td>3.5</td></tr><tr><td>Tabela de referencia</td><td>3</td></tr><tr><td>Widget de seguro</td><td>2</td></tr><tr><td>Escrow (futuro)</td><td>7</td></tr><tr><td><strong>Total</strong></td><td><strong>~17.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Gateway de Pagamento (Escrow)', context: 'Stripe Connect vs MBWay vs PayPal.', options: [{ name: 'Stripe Connect', pros: ['API madura','Escrow nativo','PSD2'], contras: ['KYC vendedor','Precisa backend'] },{ name: 'MBWay/Multibanco', pros: ['Preferido em PT','Taxas baixas'], contras: ['Sem escrow nativo'] },{ name: 'PayPal', pros: ['Familiar'], contras: ['Taxas altas (3.4%)','API complexa'] }], recommendation: '<strong>Stripe Connect</strong> com capture manual para verdadeiro escrow.' }] };
+
+planContents['07'] = { overview: `<h3>O Que Resolve</h3><p>Vendedores profissionais representam 60-80% dos anuncios mas nao tem ferramentas diferenciadas. Este plano cria dashboard do revendedor, analytics de anuncios, perfil publico, upload em massa (CSV), destaques premium e CRM basico.</p>`, features: `<ul><li><strong>Dashboard</strong> — Resumo inventario, metricas, acoes rapidas (Alta)</li><li><strong>Analytics</strong> — Visualizacoes, favoritos, contactos por anuncio (Alta)</li><li><strong>Perfil Publico</strong> — /#/vendedor/:uid (Alta)</li><li><strong>Upload CSV</strong> — Criacao em massa com validacao (Media)</li><li><strong>Destaques Premium</strong> — 7/14/30 dias com badge dourado (Media)</li><li><strong>Leads/CRM</strong> — Lista de contactos com status (Baixa)</li></ul>`, technical: `<p>Analytics via Firestore increment() atomico. Novas colecoes: analytics, leads, highlights. Destaque via Stripe Checkout (sessao unica).</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Dashboard revendedor</td><td>3.5</td></tr><tr><td>Analytics anuncios</td><td>3</td></tr><tr><td>Perfil publico</td><td>2.5</td></tr><tr><td>Upload CSV</td><td>4.5</td></tr><tr><td>Destaque premium</td><td>4</td></tr><tr><td>Leads/CRM</td><td>4</td></tr><tr><td><strong>Total</strong></td><td><strong>~21.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Monetizacao de Destaques', context: 'Stripe Checkout vs Creditos in-app vs Assinatura mensal.', options: [{ name: 'Stripe Checkout', pros: ['Simples','Sem PCI compliance'], contras: ['Custos fixos por transacao'] },{ name: 'Creditos in-app', pros: ['UX fluida','Incentiva compras maiores'], contras: ['Complexidade','Regulamentacao'] },{ name: 'Assinatura mensal', pros: ['Receita recorrente'], contras: ['Barreira alta','Precisa muitas features'] }], recommendation: '<strong>Stripe Checkout</strong> por transacao individual. Mais simples, sem barreira de entrada.' }] };
+
+planContents['08'] = { overview: `<h3>O Que Resolve</h3><p>Seccao de pecas rudimentar sem compatibilidade estruturada. Este plano cria motor de compatibilidade (marca/modelo/ano), cross-referencia bidirecional carro-peca, catalogo hierarquico, upload em lote para desmanchadores, matching automatico de procuras e referencia de precos.</p>`, features: `<ul><li><strong>Motor de Compatibilidade</strong> — Pecas vinculadas a veiculos estruturadamente (Alta)</li><li><strong>Cross-Referencia</strong> — "Pecas disponiveis" no carro, "Veiculos compativeis" na peca (Alta)</li><li><strong>Catalogo Expandido</strong> — Hierarquia de subcategorias (Media)</li><li><strong>Upload em Lote</strong> — "Desmanchar Carro" com formulario repetivel (Media)</li><li><strong>Matching Automatico</strong> — Notificar quando peca compativel aparece (Media)</li><li><strong>Referencia de Precos</strong> — Peca nova vs usada com desconto (Baixa)</li></ul>`, technical: `<p>Compatibilidade baseada em marcas-modelos.json existente. Matching client-side (Firestore nao suporta queries em arrays de objetos). Nova colecao part_searches.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Motor de compatibilidade</td><td>4</td></tr><tr><td>Cross-referencia</td><td>3.5</td></tr><tr><td>Catalogo expandido</td><td>2.5</td></tr><tr><td>Upload em lote</td><td>3.5</td></tr><tr><td>Matching automatico</td><td>3.5</td></tr><tr><td>Referencia de precos</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~19 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Base de Compatibilidade', context: 'Tabela propria vs TecDoc API.', options: [{ name: 'Tabela propria', pros: ['Ja existe marcas-modelos.json','Sem custo','Controlo total'], contras: ['Sem dados de motorizacao','Vendedores definem manualmente'] },{ name: 'TecDoc API', pros: ['+500k pecas referenciadas','Compatibilidade exata'], contras: ['200-500 EUR/mes','Overkill para pecas usadas'] }], recommendation: '<strong>Tabela propria</strong> baseada no marcas-modelos.json existente. TecDoc pode ser adicionado no futuro.' }] };
+
+planContents['09'] = { overview: `<h3>O Que Resolve</h3><p>SPA sem instalacao, sem push, sem offline. Em Portugal 70%+ do trafego e mobile. PWA permite instalacao na tela inicial, funcionamento offline, notificacoes push e experiencia nativa — sem custo de apps nativos.</p>`, features: `<ul><li><strong>PWA Manifest + Service Worker</strong> — vite-plugin-pwa + Workbox (Media)</li><li><strong>Prompt de Instalacao</strong> — Banner "Adicionar a tela inicial" (Baixa)</li><li><strong>Push Notifications (FCM)</strong> — Firebase Cloud Messaging (Alta)</li><li><strong>Cache Offline</strong> — Paginas visitadas + assets (Media)</li><li><strong>Skeleton Screens</strong> — Loading skeleton para cards (Baixa)</li><li><strong>Lazy Loading Imagens</strong> — IntersectionObserver (Baixa)</li><li><strong>Swipe Galeria</strong> — Gestos touch (Media)</li><li><strong>Share API</strong> — navigator.share() com fallback (Baixa)</li></ul>`, technical: `<p>vite-plugin-pwa com Workbox (StaleWhileRevalidate para Firestore, CacheFirst para assets). FCM gratuito e ilimitado. Unica nova dependencia: vite-plugin-pwa.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>PWA manifest + SW</td><td>1</td></tr><tr><td>Prompt instalacao</td><td>0.5</td></tr><tr><td>Push notifications</td><td>2</td></tr><tr><td>Cache offline</td><td>1</td></tr><tr><td>Skeletons + lazy loading</td><td>1</td></tr><tr><td>Swipe + Share API</td><td>1</td></tr><tr><td><strong>Total</strong></td><td><strong>~6.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'vite-plugin-pwa vs Service Worker Manual', context: 'Abstracaoa do Workbox vs controle total.', options: [{ name: 'vite-plugin-pwa', pros: ['Integracao Vite nativa','Workbox precaching','Atualizacao automatica'], contras: ['Mais uma dependencia','Menos controle fino'] },{ name: 'SW manual', pros: ['Controle total','Sem dependencias'], contras: ['Muito boilerplate','Propenso a bugs de cache'] }], recommendation: '<strong>vite-plugin-pwa</strong>. Integracao perfeita com Vite 8. Workbox oferece estrategias battle-tested.' }] };
+
+planContents['10'] = { overview: `<h3>O Que Resolve</h3><p>Marketplace puramente transacional sem razao para retornar diariamente. Sem conteudo para SEO organico. Este plano adiciona blog/guias, forum de discussoes, reviews de modelos, glossario automotivo, integracao YouTube e newsletter.</p>`, features: `<ul><li><strong>Blog/Guias</strong> — Artigos com categorias, busca, rich text (Alta)</li><li><strong>Forum</strong> — Topicos, respostas, votos, moderacao (Alta)</li><li><strong>Reviews de Modelos</strong> — Rating, pros/contras, custos (Media)</li><li><strong>Glossario</strong> — Termos tecnicos com busca e links (Baixa)</li><li><strong>YouTube</strong> — Embed de videos em artigos (Baixa)</li><li><strong>Newsletter</strong> — SendGrid, semanal (Media)</li></ul>`, technical: `<p>Blog e forum no Firestore (sem CMS externo). Forum inspirado em Stack Overflow simplificado. Votos com document ID composto para idempotencia. Newsletter via SendGrid (100 emails/dia gratis).</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Blog/Guias</td><td>3</td></tr><tr><td>Forum</td><td>4</td></tr><tr><td>Reviews de modelos</td><td>2</td></tr><tr><td>Glossario</td><td>1</td></tr><tr><td>YouTube + Newsletter</td><td>2.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~12.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Forum Interno vs Discourse Externo', context: 'Construir no Firestore ou integrar plataforma externa.', options: [{ name: 'Forum interno (Firestore)', pros: ['UX integrada','Sem custos extras','Auth unificada'], contras: ['Mais codigo','Precisa implementar moderacao'] },{ name: 'Discourse externo', pros: ['Feature-complete','Escalavel','SEO excelente'], contras: ['Servidor separado (~$20/mes)','SSO complexo','UX desconectada'] }], recommendation: '<strong>Forum interno (Firestore)</strong>. Para o tamanho atual, um forum simples e suficiente. Integracao visual e de autenticacao mais suave.' }] };
+
+planContents['11'] = { overview: `<h3>O Que Resolve</h3><p>Apos o contacto inicial, todo o processo logistico acontece fora da plataforma. Este plano adiciona estimativa de custo de entrega, agendamento de test drives, checklist de transferencia, marketplace de oficinas e inspecao pre-compra.</p>`, features: `<ul><li><strong>Estimativa de Entrega</strong> — Distancia entre concelhos + custo (Media)</li><li><strong>Agendamento Test Drive</strong> — Calendario + confirmacao bilateral (Alta)</li><li><strong>Garantia Estendida</strong> — Informacao de parceiros (Baixa)</li><li><strong>Oficinas Parceiras</strong> — Listagem por regiao/especialidade (Media)</li><li><strong>Checklist Transferencia</strong> — Guia interativo com documentos (Baixa)</li><li><strong>Inspecao Pre-Compra</strong> — Rede de inspetores parceiros (Alta)</li></ul>`, technical: `<p>Distancia via coordenadas pre-definidas + Haversine (sem API externa). Calendario construido com CSS Grid + Date nativo. Novas colecoes: workshops, test_drives, inspections.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Estimativa entrega</td><td>1.5</td></tr><tr><td>Agendamento test drive</td><td>3</td></tr><tr><td>Garantia estendida</td><td>1</td></tr><tr><td>Oficinas</td><td>3</td></tr><tr><td>Checklist transferencia</td><td>1.5</td></tr><tr><td>Inspecao pre-compra</td><td>3.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~13.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Calculo de Distancia', context: 'API externa vs coordenadas pre-definidas locais.', options: [{ name: 'Coordenadas pre-definidas', pros: ['Zero dependencia','Instantaneo','Sem custos','Funciona offline'], contras: ['Limitado aos 6 concelhos'] },{ name: 'Nominatim (OSM)', pros: ['Gratuito','Dados abertos'], contras: ['Rate limit severo (1 req/s)','Sem SLA'] },{ name: 'Google Geocoding', pros: ['Rapido','Fiavel'], contras: ['Pago','Overkill para 6 concelhos'] }], recommendation: '<strong>Coordenadas pre-definidas localmente</strong>. Apenas 6 concelhos. Haversine no client-side. Zero dependencia.' }] };
+
+planContents['12'] = { overview: `<h3>O Que Resolve</h3><p><strong>SEO inexistente</strong> (HashRouter = Google ve 1 pagina; sem meta tags dinamicas) e <strong>idioma unico</strong> (sem suporte i18n). Links no WhatsApp mostram apenas "ReparAuto" generico sem imagem do carro. Este plano resolve SEO, i18n (PT-PT/PT-BR/EN), multi-moeda, analytics RGPD e compartilhamento social.</p>`, features: `<ul><li><strong>Meta Tags + Open Graph</strong> — react-helmet-async (Media)</li><li><strong>Structured Data JSON-LD</strong> — schema.org Vehicle/Product (Media)</li><li><strong>Sitemap.xml</strong> — Geracao dinamica (Media)</li><li><strong>i18n</strong> — i18next com PT-PT, PT-BR, EN (Alta)</li><li><strong>Multi-moeda</strong> — EUR/BRL (Baixa)</li><li><strong>URLs Amigas</strong> — Migracao HashRouter > BrowserRouter (Media)</li><li><strong>Compartilhamento Social</strong> — WhatsApp, Facebook, Twitter/X (Baixa)</li><li><strong>Analytics + RGPD</strong> — GA4 com banner de consentimento (Media)</li></ul>`, technical: `<p>react-helmet-async para meta tags. prerender.io para crawlers sociais. i18next + react-i18next. Google Analytics 4 com consentimento RGPD. Possivel migracao para BrowserRouter.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Meta tags + Open Graph</td><td>1.5</td></tr><tr><td>Structured data</td><td>1</td></tr><tr><td>Sitemap.xml</td><td>1</td></tr><tr><td>Framework i18n</td><td>3</td></tr><tr><td>Multi-moeda</td><td>0.5</td></tr><tr><td>URLs amigas</td><td>1.5</td></tr><tr><td>Share buttons + Analytics RGPD</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~10.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'HashRouter vs BrowserRouter', context: 'Manter hash (sem SEO) ou migrar para URLs limpas.', options: [{ name: 'Manter HashRouter', pros: ['Nenhuma alteracao','Sem risco de quebra'], contras: ['SEO impossivel sem prerender','Previews WhatsApp genericos'] },{ name: 'Migrar BrowserRouter', pros: ['URLs limpas','SEO nativo','Previews ricos'], contras: ['Requer rewrite no Firebase Hosting','Links antigos precisam redirect'] }], recommendation: '<strong>Migrar para BrowserRouter</strong> com rewrite no firebase.json. Firebase Hosting suporta SPA rewrites nativamente.' }] };
+
+// Prompts for each plan (extracted from markdown section 6)
+const planPrompts = {};
+planPrompts['02'] = `You are implementing the "Price Intelligence" feature set for ReparAuto, a Portuguese used-car and parts marketplace built with React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All UI text must be in Portuguese (PT-PT). Code, comments, variable names in English.
+- Import alias: @/ maps to src/. NEVER use relative imports.
+- Styling: Tailwind utility classes only. Theme is in src/index.css.
+- State: Context API + custom hooks. No Redux/Zustand.
+- Real-time data via Firestore onSnapshot(). Clean up on unmount.
+
+INSTALL DEPENDENCY: npm install recharts
+
+TASKS — Implement in this order:
+1. TYPE DEFINITIONS — Create src/types/preco.ts. Modify src/types/carro.ts.
+2. CONSTANTS — Add PRICE_THRESHOLDS, PRICE_LABELS, PRICE_COLORS to constants.ts.
+3. PRICE CALCULATION LOGIC — Create src/lib/priceUtils.ts with calculatePriceIndicator(), calculatePriceEstimate(), normalizeModelo(), calculateMarketStats().
+4. DATABASE LAYER — Add getCarrosSimilares(), savePriceSnapshot(), getPriceSnapshots(), addSavedSearch(), getSavedSearches() to db.ts.
+5. HOOKS — Create usePriceIndicator, usePriceEstimate, usePriceHistory, useMarketStats, useSavedSearches.
+6. UI COMPONENTS — PriceIndicatorBadge, PriceChart, PriceDistribution, PriceEstimator, MarketDashboard, MarketWidget.
+7. PAGES — Create AvaliarVeiculo.tsx (/avaliar-veiculo) and Mercado.tsx (/mercado).
+8. INTEGRATION — Update App.tsx, Header.tsx, BottomNav.tsx, CarCard.tsx, DetalhesCarro.tsx.
+9. FIRESTORE RULES — Add rules for priceSnapshots and savedSearches.`;
+
+planPrompts['03'] = `You are implementing the "Advanced Search & Discovery" feature set for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+INSTALL: npm install leaflet react-leaflet @types/leaflet
+
+TASKS:
+1. TYPE DEFINITIONS — Create src/types/busca.ts. Expand SortOrdem.
+2. GEOCODING — Create src/lib/geocoding.ts with concelho coordinates.
+3. SUGGESTIONS — Create src/lib/suggestions.ts with content-based scoring.
+4. DATABASE — Add savedSearches CRUD to db.ts.
+5. HOOKS — useAdvancedFilters, useCompare, useSavedSearches, useMapMarkers, useSugestoes.
+6. MAP — MapView.tsx + MapPopup.tsx (Leaflet + OpenStreetMap).
+7. COMPARE — CompareBar.tsx + CompareModal.tsx.
+8. FILTERS — AdvancedFilters.tsx + SortDropdown.tsx.
+9. SAVED SEARCH — SaveSearchButton.tsx + SavedSearchesList.tsx.
+10. SUGGESTIONS — SugestoesSection.tsx + VeiculosSimilares.tsx.
+11. INTEGRATION — Home.tsx, CarCard.tsx, DetalhesCarro.tsx, ProfileLoggedIn.tsx.`;
+
+planPrompts['04'] = `You are implementing the "AI Features" set for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Requires Firebase Cloud Functions (2nd gen, Node.js 18+). AI provider: Google Gemini via Vertex AI.
+
+SETUP: Initialize Firebase Cloud Functions. Install @google-cloud/vertexai in functions/.
+
+TASKS:
+1. TYPE DEFINITIONS — Create src/types/ia.ts. Modify src/types/carro.ts.
+2. CLOUD FUNCTIONS PROMPTS — Create functions/src/lib/prompts.ts.
+3. CLOUD FUNCTIONS — generateDescription, suggestPrice, analyzeDamage, chatbotResponse, detectFraud.
+4. CLIENT HOOKS — useAIDescription, useAIPriceSuggestion, useDamageDetection, useChatbot, useFraudDetection.
+5. UI COMPONENTS — AIDescriptionButton, AIPriceSuggestion, DamageOverlay, DamageAnalysisButton, Chatbot, ChatbotBubble, FraudAlerts.
+6. INTEGRATION — StepDados, StepPreco, DetalhesCarro, GalleryModal, Admin, App.tsx.`;
+
+planPrompts['05'] = `You are implementing "Enhanced Media" for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Enhanced Gallery — Refactor GalleryModal with zoom, swipe, fullscreen, keyboard nav, video/360 support.
+Task 2: Video Upload — Support mp4/webm (30s/50MB) in StepFotos. Update storage.rules.
+Task 3: 360-Degree Viewer — Pannellum.js wrapper with lazy loading.
+Task 4: Photo Guide — Modal with 8 photography tips.
+Task 5: Watermark — Canvas API overlay "ReparAuto" at 30% opacity.
+
+Do NOT add any npm packages beyond pannellum.`;
+
+planPrompts['06'] = `You are implementing "Financial Services" for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Finance Calculator — Sliders (entrada, prazo, taxa), formula Price, card result.
+Task 2: Total Cost Simulator — IMT + transferencia + seguro + reparos estimados.
+Task 3: Market Value Reference — Badge comparing price to similar listings.
+Task 4: Insurance Widget — Estimate by age/fuel + ComparaJa affiliate link.
+Task 5: Integration in DetalhesCarro.tsx.
+
+All calculations 100% client-side. No Cloud Functions needed.`;
+
+planPrompts['07'] = `You are implementing "Professional Tools / Dealer Features" for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Public Vendor Profile — /vendedor/:uid page.
+Task 2: Analytics Tracking — Firestore increment() for views/contacts.
+Task 3: Dealer Dashboard — /dashboard with stats, inventory, contacts tabs.
+Task 4: Bulk Upload CSV — Parse, validate, batch create listings.
+Task 5: Featured Listings — Badge, golden border, sort priority. Stripe placeholder.
+
+Analytics uses session-based dedup. Do NOT install chart libraries — use inline SVG.`;
+
+planPrompts['08'] = `You are implementing "Parts Ecosystem" for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Compatibility Data Model — CompatibilityEntry[], PartCategory types.
+Task 2: CompatibilitySelector — Multi-entry marca/modelo/ano/motor picker.
+Task 3: Update Part Creation — Replace free-text with structured selectors.
+Task 4: Cross-Reference — CompatibleParts on car details (client-side filtering).
+Task 5: Compatible Vehicles on part details.
+Task 6: Bulk Part Upload — "Desmanchar Carro" 2-step wizard.
+Task 7: Automatic Search Matching — matchAndNotify on approval.
+Task 8: Price Reference — New vs used comparison badge.
+
+All compatibility matching is CLIENT-SIDE. Backward compatibility critical.`;
+
+planPrompts['09'] = `You are implementing PWA and mobile optimization for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: PWA Setup — vite-plugin-pwa + Workbox configuration.
+Task 2: Install Prompt — beforeinstallprompt banner.
+Task 3: Online Status + Offline Banner.
+Task 4: Push Notifications — Firebase Cloud Messaging.
+Task 5: Skeleton Screens — CarCardSkeleton, base Skeleton.
+Task 6: Lazy Loading Images — IntersectionObserver + LazyImage.
+Task 7: Swipe Gestures — useSwipe hook for GalleryModal.
+Task 8: Web Share API — navigator.share() with fallback.
+
+Only new dependency: vite-plugin-pwa.`;
+
+planPrompts['10'] = `You are implementing community and content features for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Phase 1: Types + Data Layer (blog, forum, review types; CRUD in db.ts).
+Phase 2: Hooks (useBlog, useForum, useReviews).
+Phase 3: UI Components (ArtigoCard, TopicoCard, ReviewCard, RatingStars, VoteButton, TermoCard, NewsletterBanner).
+Phase 4: Pages (Blog, BlogArtigo, Comunidade, Topico, CriarTopico, Reviews, Glossario).
+Phase 5: Integration (routes, Header, Footer, DetalhesCarro, firestore.rules).
+
+Keep markdown rendering simple (use 'marked'). Forum votes idempotent. Use lazy() for pages.`;
+
+planPrompts['11'] = `You are implementing logistics and services features for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Distance Calculation + Delivery Estimate (Haversine, pre-defined coordinates).
+Task 2: Transfer Checklist (localStorage-based, 8 document items).
+Task 3: Test Drive Scheduling (CalendarioSimples with CSS Grid, no external libs).
+Task 4: Workshops Marketplace (oficinas with filters, ratings).
+Task 5: Pre-Purchase Inspection (wizard form, status timeline).
+
+Do NOT use external calendar libraries. Distance is purely local.`;
+
+planPrompts['12'] = `You are implementing i18n and SEO features for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+Task 1: Meta Tags + Open Graph (react-helmet-async).
+Task 2: Structured Data JSON-LD (schema.org/Vehicle, schema.org/Product).
+Task 3: Sitemap Generation (Firebase Admin SDK script).
+Task 4: i18n Setup (i18next, pt-PT/pt-BR/en translation files).
+Task 5: Currency Support (EUR/BRL toggle).
+Task 6: Share Buttons (WhatsApp, Facebook, Twitter/X, copy link).
+Task 7: Google Analytics + RGPD Cookie Banner.
+Task 8: URL Migration (optional — HashRouter to BrowserRouter).
+
+Install: react-helmet-async, i18next, react-i18next, i18next-browser-languagedetector.`;
+
+// Build remaining plan panels
+for (let i = 2; i <= 12; i++) {
+  const num = String(i).padStart(2, '0');
+  const meta = planMeta[i];
+  const content = planContents[num];
+  if (!meta || !content) continue;
+
+  const plan = {
+    id: num,
+    title: meta.title,
+    priority: meta.priority,
+    effort: meta.effort,
+    value: meta.value,
+    quadrant: meta.quadrant,
+    impact: meta.impact,
+    overview: content.overview || '',
+    features: content.features || '',
+    technical: content.technical || '',
+    effortDetail: content.effortDetail || '',
+    decisions: content.decisions || [],
+    prompt: planPrompts[num] || ''
+  };
+
+  const prioClass = plan.priority === 'ALTA' ? 'priority-alta' : plan.priority === 'MEDIA' ? 'priority-media' : 'priority-baixa';
+
+  let html = `<div class="plan-header">
+    <h2>${plan.id} — ${plan.title}</h2>
+    <div class="plan-badges">
+      <span class="priority-badge ${prioClass}">Prioridade: ${plan.priority}</span>
+      <span class="badge badge-effort">Esforco: ${plan.effort}</span>
+      <span class="badge badge-value">Valor: ${plan.value}</span>
+      <span class="badge badge-quadrant">${plan.quadrant}</span>
+    </div>
+    <p style="margin-top:0.5rem;font-size:0.88rem;color:var(--brand-600);">${plan.impact}</p>
+  </div>`;
+
+  if (plan.overview) html += buildCollapsible('Visao Geral', plan.overview, true);
+  if (plan.features) html += buildCollapsible('Especificacao das Funcionalidades', plan.features, false);
+  if (plan.technical) html += buildCollapsible('Implementacao Tecnica', plan.technical, false);
+  if (plan.effortDetail) html += buildCollapsible('Analise Esforco vs Valor', plan.effortDetail, false);
+
+  if (plan.decisions && plan.decisions.length) {
+    let decHtml = plan.decisions.map(d => buildDecisionHTML(d)).join('');
+    html += buildCollapsible('Decisoes de Arquitetura', decHtml, false);
+  }
+
+  if (plan.prompt) {
+    html += `<div class="prompt-section">
+      <div class="prompt-header">
+        <span>Prompt de Implementacao</span>
+        <button class="copy-btn" onclick="copyPrompt(this)">Copiar Prompt</button>
+      </div>
+      <pre class="prompt-content">${escapeHTML(plan.prompt)}</pre>
+    </div>`;
+  }
+
+  document.getElementById('panel-' + num).innerHTML = html;
+}
+
+// ============================================================
+// HANDLE URL HASH
+// ============================================================
+(function() {
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#plan-')) {
+    const id = hash.replace('#plan-', '');
+    switchTab(id);
+  }
+})();
+</script>
+
+</body>
+</html>
