@@ -4,10 +4,14 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import StepIndicator from '@/components/anunciar/StepIndicator';
+import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
+import PecaForm from '@/components/pecas/PecaForm';
 import type { CarroFormData } from '@/types/carro';
+
+type CategoriaAnuncio = 'carro' | 'peca';
 
 const initialDados: CarroFormData = {
   marca: '',
@@ -43,7 +47,8 @@ export default function Anunciar() {
   const { user } = auth;
   const toast = useToast();
 
-  const [passo, setPasso] = useState(1);
+  const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(null);
+  const [passo, setPasso] = useState(0);
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
@@ -95,7 +100,16 @@ export default function Anunciar() {
     }
   };
 
+  const handleAnunciarOutro = () => {
+    setPublicado(false);
+    setCategoria(null);
+    setPasso(0);
+    setFotos([]);
+    setDados((prev) => ({ ...prev, preco: '', descricao: '', tiposManutencao: [] }));
+  };
+
   if (publicado) {
+    const isPeca = categoria === 'peca';
     return (
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="text-center py-6">
@@ -105,17 +119,19 @@ export default function Anunciar() {
             O seu anúncio foi submetido com sucesso e está <strong>pendente de aprovação</strong> pela nossa equipa de administração.
           </p>
           <p className="text-gray-500 text-sm">
-            Assim que for aprovado, ficará visível para todos. Pode acompanhar o estado em <strong>Perfil → Os Seus Carros Anunciados</strong>.
+            {isPeca
+              ? 'Assim que for aprovado, ficará visível na secção de Peças & Desmonte.'
+              : 'Assim que for aprovado, ficará visível para todos. Pode acompanhar o estado em Perfil → Os Seus Carros Anunciados.'}
           </p>
           <div className="flex gap-3 justify-center mt-6">
             <button
-              onClick={() => navigate('/perfil')}
+              onClick={() => navigate(isPeca ? '/pecas' : '/perfil')}
               className="bg-brand-900 text-white font-bold px-6 py-2 rounded-full"
             >
               Ver meus anúncios
             </button>
             <button
-              onClick={() => { setPublicado(false); setPasso(1); setFotos([]); setDados({ ...dados, preco: '', descricao: '', tiposManutencao: [] }); }}
+              onClick={handleAnunciarOutro}
               className="bg-accent text-white font-bold px-6 py-2 rounded-full"
             >
               Anunciar outro
@@ -126,34 +142,62 @@ export default function Anunciar() {
     );
   }
 
+  const titulo = passo === 0
+    ? 'Anunciar'
+    : categoria === 'carro'
+      ? 'Anunciar Carro ou Moto'
+      : 'Anunciar Peça / Desmonte';
+
+  const subtitulo = passo === 0
+    ? 'Escolha o tipo de anúncio'
+    : categoria === 'carro'
+      ? '3 passos simples • Grátis'
+      : 'Preencha os dados abaixo';
+
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
-      <h2 className="text-2xl font-extrabold text-brand-900 mb-1">Anunciar Carro ou Moto</h2>
-      <p className="text-gray-500 text-sm mb-5">3 passos simples • Grátis</p>
+      <h2 className="text-2xl font-extrabold text-brand-900 mb-1">{titulo}</h2>
+      <p className="text-gray-500 text-sm mb-5">{subtitulo}</p>
 
-      <StepIndicator passoAtual={passo} />
+      {passo === 0 && (
+        <StepCategoria onSelect={(cat) => { setCategoria(cat); setPasso(1); }} />
+      )}
 
-      {passo === 1 && (
-        <StepFotos
-          fotos={fotos}
-          setFotos={setFotos}
-          onNext={() => setPasso(2)}
-        />
+      {categoria === 'carro' && passo >= 1 && (
+        <>
+          <StepIndicator passoAtual={passo} />
+
+          {passo === 1 && (
+            <StepFotos
+              fotos={fotos}
+              setFotos={setFotos}
+              onNext={() => setPasso(2)}
+              onBack={() => { setCategoria(null); setPasso(0); }}
+            />
+          )}
+          {passo === 2 && (
+            <StepDados
+              dados={dados}
+              setDados={setDados}
+              onNext={() => setPasso(3)}
+              onBack={() => setPasso(1)}
+            />
+          )}
+          {passo === 3 && (
+            <StepPreco
+              dados={dados}
+              setDados={setDados}
+              onBack={() => setPasso(2)}
+              onPublicar={handlePublicar}
+            />
+          )}
+        </>
       )}
-      {passo === 2 && (
-        <StepDados
-          dados={dados}
-          setDados={setDados}
-          onNext={() => setPasso(3)}
-          onBack={() => setPasso(1)}
-        />
-      )}
-      {passo === 3 && (
-        <StepPreco
-          dados={dados}
-          setDados={setDados}
-          onBack={() => setPasso(2)}
-          onPublicar={handlePublicar}
+
+      {categoria === 'peca' && passo === 1 && (
+        <PecaForm
+          onCancel={() => { setCategoria(null); setPasso(0); }}
+          onSuccess={() => setPublicado(true)}
         />
       )}
     </div>

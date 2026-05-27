@@ -5,9 +5,10 @@ interface StepFotosProps {
   fotos: string[];
   setFotos: (fotos: string[]) => void;
   onNext: () => void;
+  onBack?: () => void;
 }
 
-export default function StepFotos({ fotos, setFotos, onNext }: StepFotosProps) {
+export default function StepFotos({ fotos, setFotos, onNext, onBack }: StepFotosProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const processarFotos = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,17 +101,27 @@ export default function StepFotos({ fotos, setFotos, onNext }: StepFotosProps) {
         ))}
       </div>
 
-      <button
-        onClick={onNext}
-        disabled={fotos.length === 0}
-        className={`w-full font-bold py-3 rounded-xl transition ${
-          fotos.length === 0
-            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-            : 'bg-accent hover:bg-accent-hover text-white'
-        }`}
-      >
-        Continuar
-      </button>
+      <div className="flex gap-3">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="flex-1 bg-white hover:bg-slate-50 text-brand-700 font-bold py-3 rounded-xl transition border border-slate-300"
+          >
+            Voltar
+          </button>
+        )}
+        <button
+          onClick={onNext}
+          disabled={fotos.length === 0}
+          className={`flex-1 font-bold py-3 rounded-xl transition ${
+            fotos.length === 0
+              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+              : 'bg-accent hover:bg-accent-hover text-white'
+          }`}
+        >
+          Continuar
+        </button>
+      </div>
     </div>
   );
 }
