@@ -11,6 +11,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { incrementCampo } from '@/lib/db';
 import type { Mensagem, ListingType } from '@/types/chat';
 
 const MENSAGENS_COLLECTION = 'messages';
@@ -162,6 +163,11 @@ export function useChat(uid: string | null, nome: string = '') {
           lida: false,
           dataCriacao: Timestamp.now(),
         });
+        incrementCampo(
+          chatListingType === 'carro' ? 'cars' : 'parts',
+          chatListingId,
+          'contagemMensagens',
+        );
       } catch (err) {
         console.error('[Chat] Erro ao enviar mensagem:', err);
         throw err;

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
-import { getUserByEmail } from '@/lib/db';
+import { getUserByEmail, incrementCampo } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
 import type { Peca, TipoPeca } from '@/types/peca';
 
@@ -29,11 +29,16 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
     if (!peca) return;
     if (peca.criadorUid) {
       setVendedorUid(peca.criadorUid);
-      return;
+    } else {
+      getUserByEmail(peca.criador).then((u) => {
+        if (u) setVendedorUid(u.uid);
+      });
     }
-    getUserByEmail(peca.criador).then((u) => {
-      if (u) setVendedorUid(u.uid);
-    });
+    const key = `viewed_part_${peca.id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      incrementCampo('parts', peca.id, 'visualizacoes');
+    }
   }, [peca?.id]);
 
   if (!peca) return null;

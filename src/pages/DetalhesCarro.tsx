@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
-import { getCarroPorId as getCarroPorIdDb } from '@/lib/db';
+import { getCarroPorId as getCarroPorIdDb, incrementCampo } from '@/lib/db';
 import { formatarPreco, renderDescricao, renderFoto } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import StatusPanel from '@/components/detalhes/StatusPanel';
@@ -44,6 +44,11 @@ export default function DetalhesCarro() {
       }
       setCarro(data);
       setLoading(false);
+      const key = `viewed_car_${id}`;
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, '1');
+        incrementCampo('cars', id, 'visualizacoes');
+      }
     }
     fetchCarro();
   }, [id, user, isAdmin]);

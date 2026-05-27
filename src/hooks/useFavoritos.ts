@@ -5,6 +5,7 @@ import {
   setDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { incrementCampo, decrementCampo } from '@/lib/db';
 import type { Usuario } from '@/types/usuario';
 
 const STORAGE_KEY = 'favs_reparauto';
@@ -71,8 +72,10 @@ export default function useFavoritos(user: Usuario | null) {
       if (idx > -1) {
         nova = [...favoritos];
         nova.splice(idx, 1);
+        decrementCampo('cars', idStr, 'contagemFavoritos');
       } else {
         nova = [...favoritos, idStr];
+        incrementCampo('cars', idStr, 'contagemFavoritos');
       }
       salvar(nova);
     },
