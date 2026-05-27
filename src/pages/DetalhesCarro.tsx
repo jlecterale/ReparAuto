@@ -159,11 +159,8 @@ export default function DetalhesCarro() {
 
         <div className="flex flex-col sm:flex-row gap-6 mb-6">
           <div className="flex-1">
-            <span className="text-3xl sm:text-4xl font-extrabold text-accent">
-              {formatarPreco(carro.preco)}
-            </span>
             {carro.estadoVeiculo === 'manutencao' && (
-              <div className="mt-2 text-xs font-semibold text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex items-center gap-2">
+              <div className="text-xs font-semibold text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex items-center gap-2">
                 <i className="fa-solid fa-tools"></i>
                 Este veículo precisa de manutenção/reparações
               </div>
