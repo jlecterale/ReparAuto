@@ -5,13 +5,19 @@ let messaging: ReturnType<typeof getMessaging> | null = null;
 
 function getMessagingInstance() {
   if (!messaging) {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+      throw new Error('FCM requires a browser with service worker support');
+    }
     messaging = getMessaging(app);
   }
   return messaging;
 }
 
 export async function requestNotificationPermission(): Promise<string | null> {
-  if (!('Notification' in window)) return null;
+  if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+    return null;
+  }
+
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') return null;
 
@@ -26,7 +32,11 @@ export async function requestNotificationPermission(): Promise<string | null> {
   }
 }
 
-export function onForegroundMessage(callback: (payload: MessagePayload) => void): () => void {
-  const m = getMessagingInstance();
-  return onMessage(m, callback);
+export function onForegroundMessage(callback: (payload: MessagePayload) => void): (() => void) | null {
+  try {
+    const m = getMessagingInstance();
+    return onMessage(m, callback);
+  } catch {
+    return null;
+  }
 }

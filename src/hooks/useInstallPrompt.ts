@@ -8,16 +8,25 @@ interface BeforeInstallPromptEvent extends Event {
 export default function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(() =>
-    sessionStorage.getItem('pwa_install_dismissed') === '1'
+    localStorage.getItem('pwa_install_dismissed') === '1'
   );
+  const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    function handler(e: Event) {
+    function handlePrompt(e: Event) {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     }
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    function handleInstalled() {
+      setInstalled(true);
+      setDeferredPrompt(null);
+    }
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
   }, []);
 
   const install = useCallback(async () => {
@@ -31,11 +40,12 @@ export default function useInstallPrompt() {
 
   const dismiss = useCallback(() => {
     setDismissed(true);
-    sessionStorage.setItem('pwa_install_dismissed', '1');
+    setDeferredPrompt(null);
+    localStorage.setItem('pwa_install_dismissed', '1');
   }, []);
 
   return {
-    canInstall: !!deferredPrompt && !dismissed,
+    canInstall: !!deferredPrompt && !dismissed && !installed,
     install,
     dismiss,
   };

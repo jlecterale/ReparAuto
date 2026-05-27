@@ -1,5 +1,6 @@
-import { formatarPreco } from '@/lib/utils';
+import { formatarPreco, renderFoto } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import LazyImage from '@/components/ui/LazyImage';
 import type { Peca, TipoPeca } from '@/types/peca';
 
 const tipoConfig: Record<TipoPeca, { cor: 'blue' | 'yellow' | 'gray'; icon: string; label: string }> = {
@@ -17,6 +18,15 @@ export default function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes
       className="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
       onClick={() => onDetalhes(peca)}
     >
+      {peca.foto && (() => {
+        const fotoData = renderFoto(peca.foto);
+        if (fotoData.type === 'img') {
+          return (
+            <LazyImage src={fotoData.src} alt={peca.titulo} className="w-full h-36" />
+          );
+        }
+        return null;
+      })()}
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">

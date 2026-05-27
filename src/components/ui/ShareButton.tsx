@@ -9,9 +9,9 @@ interface ShareButtonProps {
 export default function ShareButton({ title, text, url }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
 
-  const shareUrl = url || window.location.href;
-
   const handleShare = useCallback(async () => {
+    const shareUrl = url || window.location.href;
+
     if (navigator.share) {
       try {
         await navigator.share({ title, text, url: shareUrl });
@@ -27,14 +27,15 @@ export default function ShareButton({ title, text, url }: ShareButtonProps) {
     } catch {
       // clipboard not available
     }
-  }, [title, text, shareUrl]);
+  }, [title, text, url]);
 
   return (
     <button
       onClick={handleShare}
       className="px-3 py-1.5 rounded-full text-xs font-semibold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition flex items-center gap-1"
+      aria-label="Partilhar anúncio"
     >
-      <i className={`fa-solid ${copied ? 'fa-check' : 'fa-share-nodes'}`}></i>
+      <i className={`fa-solid ${copied ? 'fa-check text-green-500' : 'fa-share-nodes'}`}></i>
       {copied ? 'Link copiado!' : 'Partilhar'}
     </button>
   );

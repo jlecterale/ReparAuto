@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo } from '@/lib/db';
-import { formatarPreco, renderDescricao, renderFoto } from '@/lib/utils';
+import { formatarPreco, renderDescricao } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import StatusPanel from '@/components/detalhes/StatusPanel';
 import ContactSection from '@/components/detalhes/ContactSection';
@@ -10,13 +10,8 @@ import GalleryModal from '@/components/detalhes/GalleryModal';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
 import Badge from '@/components/ui/Badge';
 import ShareButton from '@/components/ui/ShareButton';
+import FotoRender from '@/components/ui/FotoRender';
 import type { Carro } from '@/types/carro';
-
-function FotoRender({ foto, classes }: { foto: string; classes?: string }) {
-  const data = renderFoto(foto, classes);
-  if (data.type === 'img') return <img src={data.src} className={data.classes} alt="Foto do anúncio" />;
-  return <div className="w-full h-full flex items-center justify-center text-5xl">{data.emoji}</div>;
-}
 
 export default function DetalhesCarro() {
   const { id } = useParams<{ id: string }>();
