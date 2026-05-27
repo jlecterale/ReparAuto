@@ -35,14 +35,18 @@ service cloud.firestore {
     match /cars/{carId} {
       allow read: if true;
       allow create: if isAuthenticated() && hasValidImageCount(7);
-      allow update: if isOwnerByEmail() && hasValidImageCount(7) || isAdmin();
+      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin()
+        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['visualizacoes', 'contagemMensagens', 'contagemFavoritos']));
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
     match /parts/{partId} {
       allow read: if true;
       allow create: if isAuthenticated() && hasValidImageCount(3);
-      allow update: if isOwnerByEmail() && hasValidImageCount(3) || isAdmin();
+      allow update: if (isOwnerByEmail() && hasValidImageCount(3)) || isAdmin()
+        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['visualizacoes', 'contagemMensagens']));
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 

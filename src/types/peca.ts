@@ -26,6 +26,8 @@ export interface Peca {
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
+  visualizacoes?: number;
+  contagemMensagens?: number;
 }
 
 export type PecaInput = Omit<Peca, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };

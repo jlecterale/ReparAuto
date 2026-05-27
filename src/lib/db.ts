@@ -13,6 +13,7 @@ import {
   writeBatch,
   Timestamp,
   onSnapshot,
+  increment,
   type DocumentData,
 } from 'firebase/firestore';
 import { db } from './firebase';
@@ -758,5 +759,21 @@ export async function marcarTodasNotificacoesLidas(uid: string): Promise<void> {
     await Promise.all(batch);
   } catch (err) {
     console.error('[DB] Erro ao marcar notificações como lidas:', err);
+  }
+}
+
+export async function incrementCampo(colecao: string, id: string, campo: string): Promise<void> {
+  try {
+    await updateDoc(doc(db, colecao, id), { [campo]: increment(1) });
+  } catch (err) {
+    console.error(`[DB] Erro ao incrementar ${campo}:`, err);
+  }
+}
+
+export async function decrementCampo(colecao: string, id: string, campo: string): Promise<void> {
+  try {
+    await updateDoc(doc(db, colecao, id), { [campo]: increment(-1) });
+  } catch (err) {
+    console.error(`[DB] Erro ao decrementar ${campo}:`, err);
   }
 }
