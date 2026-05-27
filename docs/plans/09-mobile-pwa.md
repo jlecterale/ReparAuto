@@ -1,8 +1,28 @@
 # Plano 09 — Mobile e PWA
 
+> **Status:** IMPLEMENTADO (PR #4)
 > **Prioridade:** ALTA
 > **Estimativa total:** 5-7 dias de desenvolvimento
 > **Dependencias:** Nenhuma (pode ser implementado de forma independente)
+
+### Resumo da Implementacao
+
+Todas as 8 funcionalidades foram implementadas em PR #4 com melhorias adicionais baseadas em code review e pesquisa competitiva (OLX, Standvirtual, AutoScout24).
+
+| Funcionalidade | Status | Notas |
+|---|---|---|
+| PWA Manifest + Service Worker | Feito | vite-plugin-pwa + Workbox (generateSW), precache de 15 entries |
+| Prompt de Instalacao | Feito | Engagement-based (3+ page views), dismiss expira em 14 dias |
+| Push Notifications (FCM) | Feito | fcm.ts + firebase-messaging-sw.js com deep-linking no click |
+| Cache Offline | Feito | Firestore persistentLocalCache + Workbox runtime caching |
+| Skeleton Screens | Feito | Shimmer animation, CarCardSkeleton + PecaCardSkeleton |
+| Lazy Loading Imagens | Feito | IntersectionObserver + error fallback + decoding="async" |
+| Swipe na Galeria | Feito | Visual drag feedback (translateX) + keyboard arrows |
+| Share API | Feito | Web Share API + desktop dropdown (WhatsApp, Facebook, Copy) |
+
+**Arquivos criados:** `useInstallPrompt.ts`, `useOnlineStatus.ts`, `useSwipe.ts`, `InstallBanner.tsx`, `OfflineBanner.tsx`, `Skeleton.tsx`, `LazyImage.tsx`, `ShareButton.tsx`, `FotoRender.tsx`, `fcm.ts`, `firebase-messaging-sw.js`, `pwa-icon.svg`, `favicon.svg`, `vite-env.d.ts`
+
+**Arquivos modificados:** `vite.config.ts`, `index.html`, `package.json`, `App.tsx`, `firebase.ts`, `index.css`, `GalleryModal.tsx`, `CarCard.tsx`, `CarGrid.tsx`, `PecasCard.tsx`, `PecasGrid.tsx`, `DetalhesCarro.tsx`
 
 ---
 
