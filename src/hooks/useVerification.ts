@@ -5,6 +5,7 @@ import {
   getAllVerifications,
   updateVerificationStatus,
   updateUserProfile,
+  getUserProfile,
 } from '@/lib/db';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 
@@ -62,7 +63,14 @@ export function useVerificationsAdmin() {
   ) => {
     await updateVerificationStatus(id, status, resolvidoPor, notasAdmin);
     if (status === 'aprovado') {
-      await updateUserProfile(uid, { verificado: true });
+      const v = verifications.find((v) => v.id === id);
+      const updates: Record<string, unknown> = { verificado: true };
+      if (v?.tipo === 'profissional') {
+        const profile = await getUserProfile(uid);
+        const existingBadges = (profile?.badges || []).filter((b) => b !== 'profissional');
+        updates.badges = [...existingBadges, 'profissional'];
+      }
+      await updateUserProfile(uid, updates);
     }
     setVerifications((prev) =>
       prev.map((v) => (v.id === id ? { ...v, status, resolvidoPor, notasAdmin } : v)),

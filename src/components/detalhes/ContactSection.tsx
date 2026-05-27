@@ -26,9 +26,11 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
 
   useEffect(() => {
     if (!vendedorEmail) return;
+    let stale = false;
     getUserByEmail(vendedorEmail).then((found) => {
-      if (found) setVendedorProfile(found);
+      if (!stale && found) setVendedorProfile(found);
     });
+    return () => { stale = true; };
   }, [vendedorEmail]);
 
   if (!carro) return null;
@@ -175,7 +177,6 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
       <ReportModal
         show={reportModalOpen}
         onClose={() => setReportModalOpen(false)}
-        alvoId={carro.id}
         alvoTipo="carro"
         onSubmit={async (motivo, descricao) => {
           if (!user) return;

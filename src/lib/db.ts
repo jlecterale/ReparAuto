@@ -654,7 +654,7 @@ export async function updateCarroStatus(id: string, status: StatusAnuncio): Prom
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, CARROS_COLLECTION, id), updates);
+    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status do carro:', err);
     throw err;
@@ -667,7 +667,7 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, PECAS_COLLECTION, id), updates);
+    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da peça:', err);
     throw err;
@@ -850,12 +850,15 @@ export async function updateSellerRating(vendedorUid: string, vendedorEmail: str
     const reviews = await getReviewsByVendedor(vendedorEmail);
     const total = reviews.length;
     const media = total > 0 ? reviews.reduce((sum, r) => sum + r.nota, 0) / total : 0;
-    const badges: string[] = [];
-    if (total >= 5 && media >= 4.5) badges.push('top_vendedor');
+
+    const profile = await getUserProfile(vendedorUid);
+    const existingBadges = (profile?.badges || []).filter((b) => b !== 'top_vendedor');
+    if (total >= 5 && media >= 4.5) existingBadges.push('top_vendedor');
+
     await updateUserProfile(vendedorUid, {
       mediaAvaliacoes: Math.round(media * 10) / 10,
       totalAvaliacoes: total,
-      badges,
+      badges: existingBadges,
     });
   } catch (err) {
     console.error('[DB] Erro ao atualizar rating do vendedor:', err);
@@ -902,7 +905,7 @@ export async function updateReportStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, REPORTS_COLLECTION, id), updates);
+    await updateDoc(doc(db, REPORTS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar denúncia:', err);
     throw err;
@@ -966,7 +969,7 @@ export async function updateVerificationStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), updates);
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar verificação:', err);
     throw err;

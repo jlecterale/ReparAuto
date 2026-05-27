@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import type { Verification, StatusVerificacao } from '@/types/verification';
 
@@ -6,11 +7,6 @@ interface VerificationsQueueProps {
   verifications: Verification[];
   loading: boolean;
   onUpdateStatus: (id: string, uid: string, status: StatusVerificacao, notasAdmin?: string) => Promise<void>;
-}
-
-function formatDate(timestamp: { toDate?: () => Date; seconds?: number }): string {
-  const date = timestamp?.toDate?.() || (timestamp?.seconds ? new Date(timestamp.seconds * 1000) : new Date());
-  return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 const statusColors: Record<StatusVerificacao, string> = {
@@ -69,7 +65,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                         <i className={`fa-solid ${v.tipo === 'profissional' ? 'fa-store' : 'fa-id-card'} mr-1`}></i>
                         {v.tipo}
                       </span>
-                      <span className="text-[10px] text-slate-400">{formatDate(v.dataPedido)}</span>
+                      <span className="text-[10px] text-slate-400">{formatarDataHora(v.dataPedido)}</span>
                     </div>
                     <p className="text-sm font-semibold text-brand-900">{v.nome}</p>
                     <p className="text-xs text-slate-500">{v.email}</p>

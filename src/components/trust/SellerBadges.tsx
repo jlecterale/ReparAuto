@@ -15,7 +15,7 @@ export default function SellerBadges({
   totalAvaliacoes,
   compact = false,
 }: SellerBadgesProps) {
-  const allBadges = verificado ? ['verificado', ...badges] : badges;
+  const allBadges = [...new Set(verificado ? ['verificado', ...badges] : badges)];
   const activeBadges = BADGES_CONFIANCA.filter((b) => allBadges.includes(b.key));
 
   if (activeBadges.length === 0 && !totalAvaliacoes) return null;

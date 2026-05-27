@@ -9,7 +9,7 @@ interface ReviewFormProps {
   vendedorEmail: string;
   anuncioId: string;
   anuncioTipo: 'carro' | 'peca';
-  onSubmit: (data: ReviewInput) => Promise<void>;
+  onSubmit: (data: ReviewInput) => Promise<unknown>;
 }
 
 export default function ReviewForm({
@@ -27,10 +27,12 @@ export default function ReviewForm({
   const [comentario, setComentario] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [erro, setErro] = useState('');
 
   const handleSubmit = async () => {
     if (nota === 0) return;
     setEnviando(true);
+    setErro('');
     try {
       await onSubmit({
         autorUid,
@@ -46,6 +48,8 @@ export default function ReviewForm({
       setEnviado(true);
       setNota(0);
       setComentario('');
+    } catch {
+      setErro('Erro ao enviar avaliação. Tente novamente.');
     } finally {
       setEnviando(false);
     }
@@ -72,6 +76,7 @@ export default function ReviewForm({
           <button
             key={star}
             type="button"
+            aria-label={`${star} de 5 estrelas`}
             onClick={() => setNota(star)}
             onMouseEnter={() => setHoverNota(star)}
             onMouseLeave={() => setHoverNota(0)}
@@ -102,6 +107,12 @@ export default function ReviewForm({
         className="w-full border border-slate-300 rounded-lg p-3 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
         maxLength={500}
       />
+
+      {erro && (
+        <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+          <i className="fa-solid fa-circle-exclamation"></i> {erro}
+        </p>
+      )}
 
       <div className="flex items-center justify-between mt-3">
         <span className="text-[10px] text-slate-400">{comentario.length}/500</span>

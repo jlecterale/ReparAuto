@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MOTIVOS_DENUNCIA } from '@/lib/constants';
+import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import type { Report, StatusReport } from '@/types/report';
 
@@ -7,11 +8,6 @@ interface ReportsQueueProps {
   reports: Report[];
   loading: boolean;
   onUpdateStatus: (id: string, status: StatusReport, notasAdmin?: string) => Promise<void>;
-}
-
-function formatDate(timestamp: { toDate?: () => Date; seconds?: number }): string {
-  const date = timestamp?.toDate?.() || (timestamp?.seconds ? new Date(timestamp.seconds * 1000) : new Date());
-  return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 const statusColors: Record<StatusReport, string> = {
@@ -87,7 +83,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Badge cor={statusColors[report.status] as any}>{statusLabels[report.status]}</Badge>
                       <span className="text-xs font-semibold text-slate-600">{motivoLabel}</span>
-                      <span className="text-[10px] text-slate-400">{formatDate(report.dataCriacao)}</span>
+                      <span className="text-[10px] text-slate-400">{formatarDataHora(report.dataCriacao)}</span>
                     </div>
                     <p className="text-xs text-slate-500">
                       <strong>Tipo:</strong> {report.alvoTipo} • <strong>ID:</strong> {report.alvoId.slice(0, 12)}...

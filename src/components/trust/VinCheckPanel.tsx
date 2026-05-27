@@ -16,7 +16,8 @@ export default function VinCheckPanel() {
         <i className="fa-solid fa-barcode text-accent"></i> Verificar VIN
       </h3>
       <p className="text-xs text-slate-500 mb-3">
-        Introduza o número de chassis (VIN) para verificar informações do veículo.
+        Introduza o número de chassis (VIN) para verificar informações básicas do veículo.
+        Esta verificação é apenas indicativa e não substitui uma consulta oficial.
       </p>
 
       <form onSubmit={handleSubmit} className="flex gap-2 mb-3">

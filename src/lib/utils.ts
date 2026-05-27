@@ -125,3 +125,13 @@ export function formatarData(data: { toDate?: () => Date; seconds?: number } | s
   if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT');
   return '—';
 }
+
+export function formatarDataHora(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
+  if (!data) return '—';
+  const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT', opts);
+  if (data instanceof Date) return data.toLocaleDateString('pt-PT', opts);
+  if (typeof data.toDate === 'function') return data.toDate().toLocaleDateString('pt-PT', opts);
+  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT', opts);
+  return '—';
+}

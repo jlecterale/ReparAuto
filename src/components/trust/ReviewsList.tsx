@@ -1,3 +1,4 @@
+import { formatarData } from '@/lib/utils';
 import type { Review } from '@/types/review';
 import UserAvatar from '@/components/ui/UserAvatar';
 
@@ -21,11 +22,6 @@ function StarRating({ nota }: { nota: number }) {
       ))}
     </div>
   );
-}
-
-function formatDate(timestamp: { toDate?: () => Date; seconds?: number }): string {
-  const date = timestamp?.toDate?.() || (timestamp?.seconds ? new Date(timestamp.seconds * 1000) : new Date());
-  return date.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function ReviewsList({ reviews, loading, media, total, currentUserUid, onDelete }: ReviewsListProps) {
@@ -69,7 +65,7 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
                   <p className="text-sm font-semibold text-brand-900">{review.autorNome}</p>
                   <div className="flex items-center gap-2">
                     <StarRating nota={review.nota} />
-                    <span className="text-[10px] text-slate-400">{formatDate(review.dataCriacao)}</span>
+                    <span className="text-[10px] text-slate-400">{formatarData(review.dataCriacao)}</span>
                   </div>
                 </div>
               </div>

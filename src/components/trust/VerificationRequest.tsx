@@ -9,7 +9,7 @@ interface VerificationRequestProps {
   verificado?: boolean;
   verification: Verification | null;
   loading: boolean;
-  onSubmit: (data: VerificationInput) => Promise<void>;
+  onSubmit: (data: VerificationInput) => Promise<unknown>;
 }
 
 export default function VerificationRequest({
@@ -39,11 +39,10 @@ export default function VerificationRequest({
     );
   }
 
-  if (verification) {
+  if (verification && verification.status !== 'rejeitado') {
     const statusMap: Record<string, { cor: string; icon: string; texto: string }> = {
       pendente: { cor: 'bg-yellow-50 border-yellow-200', icon: 'fa-solid fa-clock text-yellow-500', texto: 'O seu pedido de verificação está em análise.' },
       aprovado: { cor: 'bg-green-50 border-green-200', icon: 'fa-solid fa-circle-check text-green-500', texto: 'O seu pedido foi aprovado!' },
-      rejeitado: { cor: 'bg-red-50 border-red-200', icon: 'fa-solid fa-circle-xmark text-red-500', texto: 'O seu pedido foi rejeitado.' },
     };
     const status = statusMap[verification.status] || statusMap.pendente;
 
@@ -51,7 +50,7 @@ export default function VerificationRequest({
       <div className={`${status.cor} border rounded-xl p-4 flex items-center gap-3`}>
         <i className={`${status.icon} text-xl`}></i>
         <div>
-          <p className="font-semibold text-brand-900 text-sm">Verificação {verification.status === 'pendente' ? 'em análise' : verification.status === 'aprovado' ? 'aprovada' : 'rejeitada'}</p>
+          <p className="font-semibold text-brand-900 text-sm">Verificação {verification.status === 'pendente' ? 'em análise' : 'aprovada'}</p>
           <p className="text-xs text-slate-600">{status.texto}</p>
           {verification.notasAdmin && (
             <p className="text-xs text-slate-500 mt-1 italic">Notas: {verification.notasAdmin}</p>
@@ -79,6 +78,16 @@ export default function VerificationRequest({
 
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+      {verification?.status === 'rejeitado' && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+          <p className="text-xs text-red-700 font-semibold">
+            <i className="fa-solid fa-circle-xmark mr-1"></i>
+            O seu pedido anterior foi rejeitado.
+            {verification.notasAdmin && <span className="font-normal italic"> Motivo: {verification.notasAdmin}</span>}
+          </p>
+          <p className="text-xs text-red-600 mt-1">Pode submeter um novo pedido abaixo.</p>
+        </div>
+      )}
       <h4 className="font-bold text-brand-900 text-sm mb-2 flex items-center gap-2">
         <i className="fa-solid fa-shield-halved text-accent"></i>
         Verificar Conta
