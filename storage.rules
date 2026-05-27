@@ -39,7 +39,7 @@ service firebase.storage {
 
     match /verifications/{userId}/{allImages=**} {
       allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
-      allow write: if (isAuthenticated() && request.auth.uid == userId && isValidImage()) || isAdmin();
+      allow write: if (isAuthenticated() && request.auth.uid == userId && request.resource.contentType.matches('image/.*') && request.resource.size < 5 * 1024 * 1024) || isAdmin();
       allow delete: if isAdmin();
     }
 

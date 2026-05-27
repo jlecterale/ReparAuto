@@ -93,7 +93,7 @@ export default function VerificationRequest({
 
   const validateFile = (file: File): string | null => {
     if (!file.type.startsWith('image/')) return 'Apenas ficheiros de imagem são permitidos.';
-    if (file.size > 1 * 1024 * 1024) return 'O ficheiro deve ter no máximo 1MB.';
+    if (file.size > 5 * 1024 * 1024) return 'O ficheiro deve ter no máximo 5MB.';
     return null;
   };
 
@@ -221,7 +221,7 @@ export default function VerificationRequest({
             <>
               <i className="fa-solid fa-cloud-arrow-up text-slate-400 text-xl mb-1"></i>
               <p className="text-xs text-slate-500">Clique para enviar foto do documento</p>
-              <p className="text-[10px] text-slate-400">Imagem até 1MB (JPG, PNG)</p>
+              <p className="text-[10px] text-slate-400">Imagem até 5MB (JPG, PNG)</p>
             </>
           )}
         </div>
@@ -260,7 +260,7 @@ export default function VerificationRequest({
             <>
               <i className="fa-solid fa-camera text-slate-400 text-xl mb-1"></i>
               <p className="text-xs text-slate-500">Clique para enviar selfie segurando o documento</p>
-              <p className="text-[10px] text-slate-400">Imagem até 1MB (JPG, PNG)</p>
+              <p className="text-[10px] text-slate-400">Imagem até 5MB (JPG, PNG)</p>
             </>
           )}
         </div>
