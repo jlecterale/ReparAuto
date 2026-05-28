@@ -11,9 +11,21 @@ const FIREBASE_HOSTS = [
   'https://firebasestorage.googleapis.com',
 ];
 
+const isDev = process.env.NODE_ENV !== 'production';
+
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  // 'unsafe-eval' is only needed for React Refresh / Turbopack HMR in dev
+  ...(isDev ? ["'unsafe-eval'"] : []),
+  'https://cdnjs.cloudflare.com',
+  'https://fonts.googleapis.com',
+  ...FIREBASE_HOSTS,
+].join(' ');
+
 const cspDirectives = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://fonts.googleapis.com ${FIREBASE_HOSTS.join(' ')}`,
+  `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
   "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com",

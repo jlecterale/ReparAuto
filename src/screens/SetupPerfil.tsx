@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { createUserProfile } from '@/lib/db';
@@ -399,7 +400,7 @@ export default function SetupPerfil() {
 
           <p className="text-xs text-gray-400 text-center">
             Ao continuar, concorda com os{' '}
-            <a href="/termos" className="text-accent font-semibold hover:underline">Termos de Utilização</a>.
+            <Link href="/termos" className="text-accent font-semibold hover:underline">Termos de Utilização</Link>.
           </p>
         </div>
       </div>

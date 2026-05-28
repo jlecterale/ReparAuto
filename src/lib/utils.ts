@@ -88,15 +88,17 @@ export function renderFoto(foto: string, classes = 'w-full h-full object-cover')
     foto &&
     (foto.startsWith('data:image/') ||
       foto.startsWith('blob:') ||
-      foto.startsWith('http://') ||
       foto.startsWith('https://') ||
+      foto.startsWith('http://') ||
       foto.endsWith('.png') ||
       foto.endsWith('.jpg') ||
       foto.endsWith('.jpeg') ||
       foto.includes('images/'))
   ) {
     let src = foto;
-    if (!src.startsWith('http') && !src.startsWith('data:') && !src.startsWith('blob:') && !src.startsWith('/')) {
+    if (src.startsWith('http://')) {
+      src = 'https://' + src.slice('http://'.length);
+    } else if (!src.startsWith('https://') && !src.startsWith('data:') && !src.startsWith('blob:') && !src.startsWith('/')) {
       src = '/' + src;
     }
     return { type: 'img', src, classes };

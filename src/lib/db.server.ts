@@ -56,12 +56,20 @@ function decodeDoc<T>(doc: FirestoreDoc): T {
 }
 
 async function restList(collection: string): Promise<FirestoreDoc[]> {
-  const res = await fetch(`${REST_BASE}/${collection}?pageSize=300`, {
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return (data.documents || []) as FirestoreDoc[];
+  const out: FirestoreDoc[] = [];
+  let pageToken: string | undefined;
+  do {
+    const params = new URLSearchParams({ pageSize: '300' });
+    if (pageToken) params.set('pageToken', pageToken);
+    const res = await fetch(`${REST_BASE}/${collection}?${params.toString()}`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) break;
+    const data = (await res.json()) as { documents?: FirestoreDoc[]; nextPageToken?: string };
+    if (data.documents) out.push(...data.documents);
+    pageToken = data.nextPageToken;
+  } while (pageToken);
+  return out;
 }
 
 async function restGet(collection: string, id: string): Promise<FirestoreDoc | null> {
