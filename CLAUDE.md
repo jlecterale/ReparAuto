@@ -49,6 +49,38 @@ localStorage fallback for anonymous favorites only (`favs_reparauto` key).
 - **TypeScript**: strict mode enabled. Types live in `src/types/`.
 - **No tests**: no test framework exists — do not attempt to run tests.
 
+## PWA & Push Notifications
+
+The app is a PWA with offline support via `vite-plugin-pwa` + Workbox. Firestore uses `persistentLocalCache` for offline data.
+
+### Firebase Cloud Messaging (FCM) — VAPID Key Setup
+
+Push notifications require a VAPID key. To obtain it:
+
+1. Go to [Firebase Console](https://console.firebase.google.com/) → project `reparauto-site`
+2. Navigate to **Project Settings** (gear icon) → **Cloud Messaging** tab
+3. Under **Web Push certificates**, click **Generate key pair** (or copy existing)
+4. Copy the **Key pair** value (a long base64 string)
+5. Create a `.env` file in the project root:
+   ```
+   VITE_FIREBASE_VAPID_KEY=your_vapid_key_here
+   ```
+6. Restart the dev server (`npm run dev`)
+
+Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` returns `null` gracefully — the app works fine, just without push notifications.
+
+### PWA Files
+
+- `src/lib/fcm.ts` — FCM token request + foreground message listener
+- `src/lib/lqip.ts` — LQIP blur-up placeholder generation + cache
+- `src/lib/offlineQueue.ts` — localStorage action queue for offline writes
+- `src/hooks/useInstallPrompt.ts` — PWA install prompt (engagement-based)
+- `src/hooks/useOnlineStatus.ts` — online/offline detection
+- `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
+- `src/hooks/useSwipe.ts` — touch swipe with drag feedback
+- `src/hooks/usePinchZoom.ts` — two-finger zoom for gallery
+- `public/firebase-messaging-sw.js` — FCM background message service worker
+
 ## Key Files
 
 - `src/lib/firebase.ts` — Firebase config (API keys are intentionally public per Firebase Web SDK convention)

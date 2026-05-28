@@ -196,6 +196,28 @@ a:focus-visible {
   animation: fadeIn 0.3s ease;
 }
 
+/* ============ SKELETON SHIMMER ============ */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f0f4f8 50%, #e2e8f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ============ GALLERY SWIPE ============ */
+.gallery-slide {
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
 /* ============ TOAST ============ */
 .custom-toast {
   transition: all 0.3s ease;

@@ -1,12 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
-import { renderFoto } from '@/lib/utils';
-
-function FotoRender({ foto, classes }: { foto: string; classes?: string }) {
-  const data = renderFoto(foto, classes);
-  if (data.type === 'img') return <img src={data.src} className={data.classes} alt="Foto do anúncio" />;
-  return <div className="w-full h-full flex items-center justify-center text-5xl">{data.emoji}</div>;
-}
+import FotoRender from '@/components/ui/FotoRender';
+import useSwipe from '@/hooks/useSwipe';
+import usePinchZoom from '@/hooks/usePinchZoom';
 
 interface GalleryModalProps {
   show: boolean;
@@ -18,20 +14,81 @@ interface GalleryModalProps {
 export default function GalleryModal({ show, onClose, fotos = [], indiceInicial = 0 }: GalleryModalProps) {
   const [indice, setIndice] = useState(indiceInicial);
 
+  useEffect(() => {
+    if (show) setIndice(indiceInicial);
+  }, [show, indiceInicial]);
+
+  const goNext = useCallback(
+    () => setIndice((i) => (i < fotos.length - 1 ? i + 1 : 0)),
+    [fotos.length],
+  );
+  const goPrev = useCallback(
+    () => setIndice((i) => (i > 0 ? i - 1 : fotos.length - 1)),
+    [fotos.length],
+  );
+
+  useEffect(() => {
+    if (!show) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'ArrowLeft') goPrev();
+      else if (e.key === 'ArrowRight') goNext();
+    }
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [show, goNext, goPrev]);
+
+  const swipeHandlers = useSwipe({ onLeft: goNext, onRight: goPrev });
+  const pinchHandlers = usePinchZoom();
+
+  useEffect(() => {
+    pinchHandlers.reset();
+  }, [indice, pinchHandlers]);
+
+  const combinedTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) pinchHandlers.onTouchStart(e);
+    else swipeHandlers.onTouchStart(e);
+  }, [swipeHandlers, pinchHandlers]);
+
+  const combinedTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) pinchHandlers.onTouchMove(e);
+    else swipeHandlers.onTouchMove(e);
+  }, [swipeHandlers, pinchHandlers]);
+
+  const combinedTouchEnd = useCallback((e: React.TouchEvent) => {
+    pinchHandlers.onTouchEnd(e);
+    swipeHandlers.onTouchEnd(e);
+  }, [swipeHandlers, pinchHandlers]);
+
+  const combinedTouchCancel = useCallback((e: React.TouchEvent) => {
+    pinchHandlers.onTouchCancel(e);
+    swipeHandlers.onTouchCancel(e);
+  }, [swipeHandlers, pinchHandlers]);
+
   if (!show || fotos.length === 0) return null;
 
   return (
     <Modal show={show} onClose={onClose} titulo="Galeria de Fotos" tamanho="lg">
       <div className="space-y-3">
-        <div className="w-full h-64 sm:h-96 rounded-xl overflow-hidden bg-slate-200">
+        <div
+          className="w-full h-64 sm:h-96 rounded-xl overflow-hidden bg-slate-200 touch-pan-y select-none"
+          onTouchStart={combinedTouchStart}
+          onTouchMove={combinedTouchMove}
+          onTouchEnd={combinedTouchEnd}
+          onTouchCancel={combinedTouchCancel}
+        >
           <FotoRender foto={fotos[indice]} classes="w-full h-full object-cover" />
         </div>
+
+        <p className="text-[10px] text-slate-400 text-center block sm:hidden">
+          <i className="fa-solid fa-hand-pointer mr-1"></i> Deslize para navegar &middot; Belisque para zoom
+        </p>
 
         {fotos.length > 1 && (
           <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => setIndice((i) => (i > 0 ? i - 1 : fotos.length - 1))}
+              onClick={goPrev}
               className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+              aria-label="Foto anterior"
             >
               <i className="fa-solid fa-chevron-left mr-1"></i> Anterior
             </button>
@@ -39,8 +96,9 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
               {indice + 1} / {fotos.length}
             </span>
             <button
-              onClick={() => setIndice((i) => (i < fotos.length - 1 ? i + 1 : 0))}
+              onClick={goNext}
               className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+              aria-label="Próxima foto"
             >
               Seguinte <i className="fa-solid fa-chevron-right ml-1"></i>
             </button>
@@ -56,6 +114,8 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
                 className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition ${
                   i === indice ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'
                 }`}
+                aria-label={`Foto ${i + 1}`}
+                aria-current={i === indice ? 'true' : undefined}
               >
                 <FotoRender foto={foto} classes="w-full h-full object-cover" />
               </button>

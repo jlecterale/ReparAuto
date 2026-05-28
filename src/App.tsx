@@ -5,6 +5,8 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import BottomNav from '@/components/layout/BottomNav';
 import ChatModal from '@/components/chat/ChatModal';
+import InstallBanner from '@/components/ui/InstallBanner';
+import OfflineBanner from '@/components/ui/OfflineBanner';
 import Home from '@/pages/Home';
 import DetalhesCarro from '@/pages/DetalhesCarro';
 import Anunciar from '@/pages/Anunciar';
@@ -19,6 +21,7 @@ export default function App() {
     <HashRouter>
       <AppProvider>
         <ToastProvider>
+          <OfflineBanner />
           <div className="flex flex-col min-h-screen">
             <Header />
             <main className="max-w-6xl mx-auto px-4 py-5 w-full">
@@ -36,6 +39,7 @@ export default function App() {
             <Footer />
             <BottomNav />
             <ChatModal />
+            <InstallBanner />
           </div>
         </ToastProvider>
       </AppProvider>
