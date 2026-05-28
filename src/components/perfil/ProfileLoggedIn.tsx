@@ -13,6 +13,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import SellerBadges from '@/components/trust/SellerBadges';
 import VerificationRequest from '@/components/trust/VerificationRequest';
 import ReviewsList from '@/components/trust/ReviewsList';
+import NotificationPreferences from '@/components/perfil/NotificationPreferences';
 import useReviews from '@/hooks/useReviews';
 import useVerification from '@/hooks/useVerification';
 import type { Carro } from '@/types/carro';
@@ -213,6 +214,13 @@ export default function ProfileLoggedIn() {
             </p>
           </div>
         </div>
+
+        {user?.uid && (
+          <div className="mt-4">
+            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Preferências de Notificação</h4>
+            <NotificationPreferences uid={user.uid} />
+          </div>
+        )}
       </div>
 
       {loading ? (

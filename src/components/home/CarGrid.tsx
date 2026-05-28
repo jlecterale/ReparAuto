@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { CONCELHOS } from '@/lib/constants';
 import CarCard from './CarCard';
+import { CarCardSkeleton } from '@/components/ui/Skeleton';
 
 export default function CarGrid() {
   const { carros } = useApp();
@@ -141,7 +142,13 @@ export default function CarGrid() {
         </span>
       </h2>
 
-      {filtered.length === 0 ? (
+      {carros.loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <CarCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-slate-500">
           <i className="fa-solid fa-car-side text-4xl mb-3 text-slate-300"></i>
           <p className="font-semibold">Nenhum anúncio encontrado</p>

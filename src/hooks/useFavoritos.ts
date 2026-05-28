@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { incrementCampo, decrementCampo } from '@/lib/db';
+import { enqueue, processQueue } from '@/lib/offlineQueue';
 import type { Usuario } from '@/types/usuario';
 
 const STORAGE_KEY = 'favs_reparauto';
@@ -45,6 +46,26 @@ export default function useFavoritos(user: Usuario | null) {
     }
   }, [user?.uid]);
 
+  useEffect(() => {
+    const uid = user?.uid || null;
+
+    async function replayQueue() {
+      if (!navigator.onLine) return;
+      await processQueue(uid, async (action) => {
+        const carId = action.payload.carId as string;
+        if (action.type === 'favorito_add') {
+          await incrementCampo('cars', carId, 'contagemFavoritos');
+        } else if (action.type === 'favorito_remove') {
+          await decrementCampo('cars', carId, 'contagemFavoritos');
+        }
+      });
+    }
+
+    window.addEventListener('online', replayQueue);
+    replayQueue();
+    return () => window.removeEventListener('online', replayQueue);
+  }, [user?.uid]);
+
   const salvar = useCallback(
     async (lista: string[]) => {
       setFavoritosState(lista);
@@ -68,18 +89,27 @@ export default function useFavoritos(user: Usuario | null) {
     (id: string | number) => {
       const idStr = String(id);
       const idx = favoritos.indexOf(idStr);
+      const uid = user?.uid || null;
       let nova: string[];
       if (idx > -1) {
         nova = [...favoritos];
         nova.splice(idx, 1);
-        decrementCampo('cars', idStr, 'contagemFavoritos');
+        if (navigator.onLine) {
+          decrementCampo('cars', idStr, 'contagemFavoritos');
+        } else {
+          enqueue({ uid, type: 'favorito_remove', payload: { carId: idStr } });
+        }
       } else {
         nova = [...favoritos, idStr];
-        incrementCampo('cars', idStr, 'contagemFavoritos');
+        if (navigator.onLine) {
+          incrementCampo('cars', idStr, 'contagemFavoritos');
+        } else {
+          enqueue({ uid, type: 'favorito_add', payload: { carId: idStr } });
+        }
       }
       salvar(nova);
     },
-    [favoritos, salvar]
+    [favoritos, salvar, user?.uid]
   );
 
   const isFavorito = useCallback(

@@ -1049,8 +1049,8 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-08" id="tab-08" onclick="switchTab('08')" tabindex="-1">
       <span class="tab-num">08</span> Pecas <span class="priority-badge priority-media">MEDIA</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-09" id="tab-09" onclick="switchTab('09')" tabindex="-1">
-      <span class="tab-num">09</span> Mobile <span class="priority-badge priority-alta">ALTA</span>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-09" id="tab-09" onclick="switchTab('09')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Mobile <span class="priority-badge priority-implementado">FEITO</span>
     </button></li>
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-10" id="tab-10" onclick="switchTab('10')" tabindex="-1">
       <span class="tab-num">10</span> Comunidade <span class="priority-badge priority-baixa">BAIXA</span>
@@ -1108,7 +1108,7 @@
       <div class="matrix-label-y">VALOR &uarr;</div>
       <div class="matrix-quadrant matrix-q1">
         <span class="matrix-quadrant-title">Quick Win</span>
-        <div class="matrix-dot" data-priority="alta" onclick="switchTab('09')" title="Mobile/PWA"><span class="dot-tooltip">09 — Mobile/PWA</span>09</div>
+        <div class="matrix-dot" data-priority="alta" onclick="switchTab('09')" title="Mobile/PWA (Implementado)" style="outline:2px solid #16a34a;outline-offset:2px;"><span class="dot-tooltip">09 — Mobile/PWA &#10003;</span>&#10003;</div>
       </div>
       <div class="matrix-quadrant matrix-q2">
         <span class="matrix-quadrant-title">Estrategico</span>
@@ -1145,9 +1145,9 @@
     <h3>Ordem de Implementacao Recomendada</h3>
     <p style="font-size:0.85rem;color:var(--brand-600);margin-bottom:1rem;">Baseada na combinacao de valor, esforco, dependencias e impacto no crescimento da plataforma.</p>
     <ol class="impl-list">
-      <li onclick="switchTab('09')"><div class="impl-item-content"><span class="impl-item-name">Mobile e PWA</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">5-7 dias &middot; Quick Win com impacto imediato na experiencia mobile &middot; Zero custo de infra</div></div></li>
+      <li class="implemented" onclick="switchTab('09')"><div class="impl-item-content"><span class="impl-item-name">Mobile e PWA</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; PWA + Workbox, install prompt, offline, FCM, skeletons, lazy images, swipe, share</div></div></li>
       <li onclick="switchTab('12')"><div class="impl-item-content"><span class="impl-item-name">Internacionalizacao e SEO</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-11 dias &middot; Meta tags e Open Graph para compartilhamento social &middot; Essencial para trafego organico</div></div></li>
-      <li class="implemented" onclick="switchTab('01')"><div class="impl-item-content"><span class="impl-item-name">Confianca e Seguranca</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">18-24 dias &middot; Verificacao de vendedores, avaliacoes, denuncias &middot; Fundamental para marketplace</div></div></li>
+      <li class="implemented" onclick="switchTab('01')"><div class="impl-item-content"><span class="impl-item-name">Confianca e Seguranca</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; Verificacao de vendedores, avaliacoes, denuncias, badges, VIN check</div></div></li>
       <li onclick="switchTab('02')"><div class="impl-item-content"><span class="impl-item-name">Inteligencia de Precos</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">15-20 dias &middot; Indicador de preco justo, estimativa de valor &middot; Diferenciador unico em PT</div></div></li>
       <li onclick="switchTab('03')"><div class="impl-item-content"><span class="impl-item-name">Busca Avancada e Descoberta</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">16-22 dias &middot; Buscas salvas, mapa, comparacao, filtros avancados &middot; Funcionalidade critica</div></div></li>
       <li onclick="switchTab('05')"><div class="impl-item-content"><span class="impl-item-name">Midia Aprimorada</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-12 dias &middot; Galeria com zoom/swipe, video, 360 graus &middot; Alto impacto na decisao de compra</div></div></li>
@@ -1177,7 +1177,7 @@
           <tr><td>06</td><td>Servicos Financeiros</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>12-18 dias</td><td>Transparencia financeira, conversao</td></tr>
           <tr><td>07</td><td>Ferramentas Profissionais</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>15-22 dias</td><td>Atracao de profissionais, monetizacao</td></tr>
           <tr><td>08</td><td>Ecossistema de Pecas</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>14-20 dias</td><td>Efeito de rede, ecossistema integrado</td></tr>
-          <tr><td>09</td><td>Mobile e PWA</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>5-7 dias</td><td>Experiencia mobile, retencao</td></tr>
+          <tr class="implemented"><td>09</td><td>Mobile e PWA</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>5-7 dias</td><td>Experiencia mobile, retencao</td></tr>
           <tr><td>10</td><td>Comunidade e Conteudo</td><td><span class="priority-badge priority-baixa">BAIXA</span></td><td>10-14 dias</td><td>SEO organico, engajamento</td></tr>
           <tr><td>11</td><td>Logistica e Servicos</td><td><span class="priority-badge priority-baixa">BAIXA</span></td><td>12-16 dias</td><td>Ciclo completo da transacao</td></tr>
           <tr><td>12</td><td>Internacionalizacao e SEO</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-11 dias</td><td>Trafego organico, visibilidade</td></tr>
@@ -1424,7 +1424,7 @@ const planMeta = [
   { id:'06', title:'Servicos Financeiros', shortName:'Financeiro', priority:'MEDIA', effort:'12-18 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Medio-Alto', impact:'Transparencia financeira, conversao de vendas' },
   { id:'07', title:'Ferramentas Profissionais', shortName:'Profissional', priority:'MEDIA', effort:'15-22 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Alto', impact:'Atracao de profissionais, monetizacao' },
   { id:'08', title:'Ecossistema de Pecas', shortName:'Pecas', priority:'MEDIA', effort:'14-20 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Medio-Alto', impact:'Diferenciacao competitiva, efeito de rede' },
-  { id:'09', title:'Mobile e PWA', shortName:'Mobile', priority:'ALTA', effort:'5-7 dias', value:'Muito Alto', quadrant:'Quick Win', impact:'Experiencia mobile, retencao, engajamento' },
+  { id:'09', title:'Mobile e PWA', shortName:'Mobile', priority:'ALTA', implemented:true, effort:'5-7 dias', value:'Muito Alto', quadrant:'Quick Win', impact:'Experiencia mobile, retencao, engajamento' },
   { id:'10', title:'Comunidade e Conteudo', shortName:'Comunidade', priority:'BAIXA', effort:'10-14 dias', value:'Medio', quadrant:'Projeto Grande Baixa Prioridade', impact:'SEO organico, engajamento, fidelidade' },
   { id:'11', title:'Logistica e Servicos', shortName:'Logistica', priority:'BAIXA', effort:'12-16 dias', value:'Alto', quadrant:'Espalhado (Quick Wins + Projetos)', impact:'Ciclo completo da transacao' },
   { id:'12', title:'Internacionalizacao e SEO', shortName:'SEO', priority:'MEDIA', effort:'8-11 dias', value:'Alto/Muito Alto', quadrant:'Quick Wins + Estrategico', impact:'Trafego organico, visibilidade, compartilhamento' },
