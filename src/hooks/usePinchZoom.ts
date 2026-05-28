@@ -4,6 +4,8 @@ interface PinchZoomBindings {
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: (e: React.TouchEvent) => void;
+  onTouchCancel: (e: React.TouchEvent) => void;
+  reset: () => void;
 }
 
 const MIN_SCALE = 1;
@@ -22,10 +24,28 @@ export default function usePinchZoom(): PinchZoomBindings {
   const originX = useRef(0);
   const originY = useRef(0);
 
+  const reset = useCallback(() => {
+    currentScale.current = 1;
+    baseScale.current = 1;
+    isPinching.current = false;
+    const target = targetRef.current;
+    if (target) {
+      const img = target.querySelector('img');
+      if (img) {
+        img.style.transition = 'transform 0.2s ease';
+        img.style.transform = '';
+        img.style.transformOrigin = '';
+        setTimeout(() => { if (img) img.style.transition = ''; }, 200);
+      }
+    }
+  }, []);
+
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) {
+      const dist = getDistance(e.touches[0], e.touches[1]);
+      if (dist === 0) return;
       isPinching.current = true;
-      initialDistance.current = getDistance(e.touches[0], e.touches[1]);
+      initialDistance.current = dist;
       baseScale.current = currentScale.current;
       targetRef.current = e.currentTarget as HTMLElement;
       const rect = targetRef.current.getBoundingClientRect();
@@ -36,6 +56,7 @@ export default function usePinchZoom(): PinchZoomBindings {
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
     if (!isPinching.current || e.touches.length < 2 || !targetRef.current) return;
+    if (initialDistance.current === 0) return;
     const dist = getDistance(e.touches[0], e.touches[1]);
     const scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, baseScale.current * (dist / initialDistance.current)));
     currentScale.current = scale;
@@ -50,17 +71,17 @@ export default function usePinchZoom(): PinchZoomBindings {
     if (!isPinching.current) return;
     if (e.touches.length < 2) {
       isPinching.current = false;
-      if (currentScale.current <= 1.05 && targetRef.current) {
-        currentScale.current = 1;
-        const img = targetRef.current.querySelector('img');
-        if (img) {
-          img.style.transition = 'transform 0.2s ease';
-          img.style.transform = 'scale(1)';
-          setTimeout(() => { if (img) img.style.transition = ''; }, 200);
-        }
+      if (currentScale.current <= 1.05) {
+        reset();
       }
     }
-  }, []);
+  }, [reset]);
 
-  return { onTouchStart, onTouchMove, onTouchEnd };
+  const onTouchCancel = useCallback(() => {
+    if (isPinching.current) {
+      reset();
+    }
+  }, [reset]);
+
+  return { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel, reset };
 }

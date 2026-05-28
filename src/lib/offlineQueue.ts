@@ -2,6 +2,7 @@ const QUEUE_KEY = 'offline_queue';
 
 export interface QueuedAction {
   id: string;
+  uid: string | null;
   type: 'favorito_add' | 'favorito_remove' | 'mensagem';
   payload: Record<string, unknown>;
   timestamp: number;
@@ -29,16 +30,36 @@ export function enqueue(action: Omit<QueuedAction, 'id' | 'timestamp'>) {
   saveQueue(queue);
 }
 
-export function dequeueAll(): QueuedAction[] {
+export function peekQueue(uid: string | null = null): QueuedAction[] {
   const queue = getQueue();
-  saveQueue([]);
-  return queue;
+  return uid === null ? queue : queue.filter((a) => a.uid === uid || a.uid === null);
 }
 
-export function peekQueue(): QueuedAction[] {
-  return getQueue();
+export function removeFromQueue(ids: string[]) {
+  if (ids.length === 0) return;
+  const idSet = new Set(ids);
+  saveQueue(getQueue().filter((a) => !idSet.has(a.id)));
 }
 
-export function hasQueued(): boolean {
-  return getQueue().length > 0;
+export async function processQueue(
+  uid: string | null,
+  handler: (action: QueuedAction) => Promise<void>,
+): Promise<{ succeeded: string[]; failed: string[] }> {
+  const actions = peekQueue(uid);
+  const succeeded: string[] = [];
+  const failed: string[] = [];
+  for (const action of actions) {
+    try {
+      await handler(action);
+      succeeded.push(action.id);
+    } catch {
+      failed.push(action.id);
+    }
+  }
+  removeFromQueue(succeeded);
+  return { succeeded, failed };
+}
+
+export function hasQueued(uid: string | null = null): boolean {
+  return peekQueue(uid).length > 0;
 }

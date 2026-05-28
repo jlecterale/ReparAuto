@@ -40,6 +40,10 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
   const swipeHandlers = useSwipe({ onLeft: goNext, onRight: goPrev });
   const pinchHandlers = usePinchZoom();
 
+  useEffect(() => {
+    pinchHandlers.reset();
+  }, [indice, pinchHandlers]);
+
   const combinedTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2) pinchHandlers.onTouchStart(e);
     else swipeHandlers.onTouchStart(e);
@@ -55,6 +59,11 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
     swipeHandlers.onTouchEnd(e);
   }, [swipeHandlers, pinchHandlers]);
 
+  const combinedTouchCancel = useCallback((e: React.TouchEvent) => {
+    pinchHandlers.onTouchCancel(e);
+    swipeHandlers.onTouchCancel(e);
+  }, [swipeHandlers, pinchHandlers]);
+
   if (!show || fotos.length === 0) return null;
 
   return (
@@ -65,11 +74,12 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
           onTouchStart={combinedTouchStart}
           onTouchMove={combinedTouchMove}
           onTouchEnd={combinedTouchEnd}
+          onTouchCancel={combinedTouchCancel}
         >
           <FotoRender foto={fotos[indice]} classes="w-full h-full object-cover" />
         </div>
 
-        <p className="text-[10px] text-slate-400 text-center hidden sm:hidden">
+        <p className="text-[10px] text-slate-400 text-center block sm:hidden">
           <i className="fa-solid fa-hand-pointer mr-1"></i> Deslize para navegar &middot; Belisque para zoom
         </p>
 

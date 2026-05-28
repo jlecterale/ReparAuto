@@ -9,6 +9,7 @@ interface SwipeBindings {
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
   onTouchEnd: (e: React.TouchEvent) => void;
+  onTouchCancel: (e: React.TouchEvent) => void;
 }
 
 const THRESHOLD = 50;
@@ -21,6 +22,15 @@ export default function useSwipe(handlers: SwipeHandlers): SwipeBindings {
   const targetRef = useRef<HTMLElement | null>(null);
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
+
+  const resetTarget = useCallback(() => {
+    const el = targetRef.current;
+    if (el) {
+      el.classList.add('gallery-slide');
+      el.style.transform = '';
+      el.style.opacity = '';
+    }
+  }, []);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     startX.current = e.touches[0].clientX;
@@ -51,19 +61,19 @@ export default function useSwipe(handlers: SwipeHandlers): SwipeBindings {
   }, []);
 
   const onTouchEnd = useCallback((e: React.TouchEvent) => {
-    const el = targetRef.current;
-    if (el) {
-      el.classList.add('gallery-slide');
-      el.style.transform = '';
-      el.style.opacity = '';
-    }
-
+    resetTarget();
     if (!swiping.current) return;
     const dx = e.changedTouches[0].clientX - startX.current;
+    swiping.current = false;
     if (Math.abs(dx) < THRESHOLD) return;
     if (dx > 0) handlersRef.current.onRight?.();
     else handlersRef.current.onLeft?.();
-  }, []);
+  }, [resetTarget]);
 
-  return { onTouchStart, onTouchMove, onTouchEnd };
+  const onTouchCancel = useCallback(() => {
+    resetTarget();
+    swiping.current = false;
+  }, [resetTarget]);
+
+  return { onTouchStart, onTouchMove, onTouchEnd, onTouchCancel };
 }

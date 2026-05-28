@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { incrementCampo, decrementCampo } from '@/lib/db';
-import { enqueue, dequeueAll } from '@/lib/offlineQueue';
+import { enqueue, processQueue } from '@/lib/offlineQueue';
 import type { Usuario } from '@/types/usuario';
 
 const STORAGE_KEY = 'favs_reparauto';
@@ -47,17 +47,20 @@ export default function useFavoritos(user: Usuario | null) {
   }, [user?.uid]);
 
   useEffect(() => {
-    function replayQueue() {
-      if (!user?.uid || !navigator.onLine) return;
-      const actions = dequeueAll();
-      for (const action of actions) {
+    const uid = user?.uid || null;
+
+    async function replayQueue() {
+      if (!navigator.onLine) return;
+      await processQueue(uid, async (action) => {
+        const carId = action.payload.carId as string;
         if (action.type === 'favorito_add') {
-          incrementCampo('cars', action.payload.carId as string, 'contagemFavoritos');
+          await incrementCampo('cars', carId, 'contagemFavoritos');
         } else if (action.type === 'favorito_remove') {
-          decrementCampo('cars', action.payload.carId as string, 'contagemFavoritos');
+          await decrementCampo('cars', carId, 'contagemFavoritos');
         }
-      }
+      });
     }
+
     window.addEventListener('online', replayQueue);
     replayQueue();
     return () => window.removeEventListener('online', replayQueue);
@@ -86,6 +89,7 @@ export default function useFavoritos(user: Usuario | null) {
     (id: string | number) => {
       const idStr = String(id);
       const idx = favoritos.indexOf(idStr);
+      const uid = user?.uid || null;
       let nova: string[];
       if (idx > -1) {
         nova = [...favoritos];
@@ -93,19 +97,19 @@ export default function useFavoritos(user: Usuario | null) {
         if (navigator.onLine) {
           decrementCampo('cars', idStr, 'contagemFavoritos');
         } else {
-          enqueue({ type: 'favorito_remove', payload: { carId: idStr } });
+          enqueue({ uid, type: 'favorito_remove', payload: { carId: idStr } });
         }
       } else {
         nova = [...favoritos, idStr];
         if (navigator.onLine) {
           incrementCampo('cars', idStr, 'contagemFavoritos');
         } else {
-          enqueue({ type: 'favorito_add', payload: { carId: idStr } });
+          enqueue({ uid, type: 'favorito_add', payload: { carId: idStr } });
         }
       }
       salvar(nova);
     },
-    [favoritos, salvar]
+    [favoritos, salvar, user?.uid]
   );
 
   const isFavorito = useCallback(

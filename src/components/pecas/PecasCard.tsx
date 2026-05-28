@@ -12,21 +12,21 @@ const tipoConfig: Record<TipoPeca, { cor: 'blue' | 'yellow' | 'gray'; icon: stri
 export default function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) => void }) {
   const config = tipoConfig[peca.tipo] || tipoConfig.venda;
   const isNovo = peca.dataAprovacao && (Date.now() - peca.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
+  const fotoData = peca.foto ? renderFoto(peca.foto) : null;
 
   return (
     <div
       className="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
       onClick={() => onDetalhes(peca)}
     >
-      {peca.foto && (() => {
-        const fotoData = renderFoto(peca.foto);
-        if (fotoData.type === 'img') {
-          return (
-            <LazyImage src={fotoData.src} alt={peca.titulo} className="w-full h-36" />
-          );
-        }
-        return null;
-      })()}
+      {fotoData?.type === 'img' && (
+        <LazyImage src={fotoData.src} alt={peca.titulo} className="w-full h-36" />
+      )}
+      {fotoData?.type === 'emoji' && (
+        <div className="w-full h-36 bg-slate-100 flex items-center justify-center text-5xl">
+          {fotoData.emoji}
+        </div>
+      )}
       <div className="p-4 flex flex-col flex-1">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
