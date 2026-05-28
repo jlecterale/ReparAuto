@@ -1,3 +1,5 @@
+import { getAllConcelhos } from '@/lib/geo';
+
 // ============ CONSTANTES REPARAUTO ============
 
 // Limites
@@ -12,7 +14,7 @@ export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
 
 // Listas
-export const CONCELHOS = ['Braga', 'Porto', 'Lisboa', 'Coimbra', 'Faro', 'Leiria'];
+export const CONCELHOS = getAllConcelhos();
 
 export const TIPOS_COMBUSTIVEL = [
   'Gasolina', 'Etanol', 'Flex', 'Diesel', 'Elétrico', 'Híbrido',

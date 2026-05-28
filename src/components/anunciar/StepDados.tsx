@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { CONCELHOS, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
+import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import type { CarroFormData } from '@/types/carro';
 
 interface StepDadosProps {
@@ -123,7 +124,17 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         {campo('Combustível', 'combustivel', 'text', '', TIPOS_COMBUSTIVEL)}
         {campo('Câmbio', 'cambio', 'text', '', TIPOS_CAMBIO)}
         {campo('Nº Portas', 'portas', 'number', 'Ex: 5')}
-        {campo('Concelho', 'localizacao', 'text', '', CONCELHOS)}
+        <div className="col-span-2">
+          <SeletorLocalizacao
+            distrito={dados.localizacaoDistrito}
+            concelho={dados.localizacao}
+            onChange={(d, c) => {
+              atualizar('localizacaoDistrito', d);
+              atualizar('localizacao', c);
+            }}
+            obrigatorio
+          />
+        </div>
       </div>
       <div className="flex gap-3">
         <button

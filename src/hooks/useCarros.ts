@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
+import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 
@@ -10,7 +11,10 @@ export default function useCarros() {
   const [searchQuery, setSearchQuery] = useState('');
   const [advPriceMin, setAdvPriceMin] = useState<number | null>(null);
   const [advPriceMax, setAdvPriceMax] = useState<number | null>(null);
-  const [advLocation, setAdvLocation] = useState('');
+  const [advDistrito, setAdvDistrito] = useState('');
+  const [advConcelho, setAdvConcelho] = useState('');
+  const [advRaioCentro, setAdvRaioCentro] = useState('');
+  const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
   const [sortOrdem, setSortOrdem] = useState<SortOrdem>(null);
 
   useEffect(() => {
@@ -53,9 +57,22 @@ export default function useCarros() {
     if (advPriceMax !== null && !isNaN(advPriceMax)) {
       cs = cs.filter((c) => c.preco <= Number(advPriceMax));
     }
-    if (advLocation.trim()) {
-      const loc = advLocation.toLowerCase().trim();
-      cs = cs.filter((c) => c.local?.toLowerCase().includes(loc));
+
+    if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
+      const centro = getCoordenadas(advRaioCentro);
+      if (centro) {
+        cs = cs.filter((c) => {
+          const coords = c.coordenadas ?? getCoordenadas(c.local);
+          if (!coords) return false;
+          return haversineKm(centro, coords) <= advRaioKm!;
+        });
+      }
+    } else if (advConcelho) {
+      cs = cs.filter((c) => c.local?.toLowerCase() === advConcelho.toLowerCase());
+    } else if (advDistrito) {
+      cs = cs.filter(
+        (c) => (c.distrito ?? getDistritoForConcelho(c.local)) === advDistrito
+      );
     }
 
     if (sortOrdem === 'crescente') {
@@ -65,7 +82,7 @@ export default function useCarros() {
     }
 
     return cs;
-  }, [carros, filtroAtivo, searchQuery, advPriceMin, advPriceMax, advLocation, sortOrdem]);
+  }, [carros, filtroAtivo, searchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -99,8 +116,14 @@ export default function useCarros() {
     setAdvPriceMin,
     advPriceMax,
     setAdvPriceMax,
-    advLocation,
-    setAdvLocation,
+    advDistrito,
+    setAdvDistrito,
+    advConcelho,
+    setAdvConcelho,
+    advRaioCentro,
+    setAdvRaioCentro,
+    advRaioKm,
+    setAdvRaioKm,
     sortOrdem,
     setSortOrdem,
     publicarCarro,

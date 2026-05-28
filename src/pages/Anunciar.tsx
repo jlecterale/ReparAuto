@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
@@ -23,7 +24,8 @@ const initialDados: CarroFormData = {
   combustivel: 'Gasolina',
   cambio: 'Manual',
   portas: '',
-  localizacao: 'Porto',
+  localizacao: '',
+  localizacaoDistrito: '',
   preco: '',
   descricao: '',
   estadoVeiculo: 'pronto',
@@ -66,10 +68,12 @@ export default function Anunciar() {
     }
 
     try {
-      const { localizacao, ...dadosLimpos } = dados;
+      const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
         ...dadosLimpos,
         local: localizacao,
+        distrito: localizacaoDistrito || undefined,
+        coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
         fotos,
         preco: Number(dados.preco),
         km: Number(dados.km),

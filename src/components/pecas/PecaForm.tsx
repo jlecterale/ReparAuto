@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { getCoordenadas } from '@/lib/geo';
+import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 
 interface PecaFormProps {
   onSuccess?: () => void;
@@ -23,7 +25,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     marcaCarro: '',
     preco: '',
     descricao: '',
-    localizacao: 'Portugal',
+    localizacao: '',
+    localizacaoDistrito: '',
     vendedorTelefone: telefoneInicial,
     vendedorWhatsApp: telefoneInicial,
     vendedorEmail: user?.email || '',
@@ -57,7 +60,10 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       await publicarPeca({
         ...form,
         local: form.localizacao,
+        distrito: form.localizacaoDistrito || undefined,
+        coordenadas: form.localizacao ? getCoordenadas(form.localizacao) : undefined,
         localizacao: undefined,
+        localizacaoDistrito: undefined,
         preco: form.preco ? Number(form.preco) : null,
         criador: user?.email || '',
         criadorUid: user?.uid || '',
@@ -80,7 +86,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         marcaCarro: '',
         preco: '',
         descricao: '',
-        localizacao: 'Portugal',
+        localizacao: '',
+        localizacaoDistrito: '',
         vendedorTelefone: '',
         vendedorWhatsApp: '',
         vendedorEmail: '',
@@ -201,12 +208,13 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       <div>
         <label className="block text-xs font-bold text-slate-500 mb-1">Localização</label>
-        <input
-          type="text"
-          placeholder="Ex: Porto, Lisboa, Braga"
-          value={form.localizacao}
-          onChange={(e) => atualizar('localizacao', e.target.value)}
-          className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+        <SeletorLocalizacao
+          distrito={form.localizacaoDistrito}
+          concelho={form.localizacao}
+          onChange={(d, c) => {
+            atualizar('localizacaoDistrito', d);
+            atualizar('localizacao', c);
+          }}
         />
       </div>
 

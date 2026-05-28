@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
-import { CONCELHOS } from '@/lib/constants';
+import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import { getDistritoForConcelho } from '@/lib/geo';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
 import {
   validarTelefone,
@@ -25,6 +26,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [distrito, setDistrito] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
@@ -42,6 +44,8 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
+      const d = getDistritoForConcelho(cpLookup.localidade);
+      if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
@@ -83,6 +87,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setNome(user.nome || '');
       setTelefone(user.telefone || '');
       setLocalidade(user.localidade || '');
+      setDistrito(user.distrito || getDistritoForConcelho(user.localidade || '') || '');
       setCodigoPostal(user.codigoPostal || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
@@ -121,6 +126,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         nome: nome.trim(),
         telefone: telefone.trim(),
         localidade: localidade.trim(),
+        distrito: distrito.trim() || undefined,
         codigoPostal: codigoPostal.trim(),
         morada: morada.trim(),
         nif: nif.trim(),
@@ -165,29 +171,21 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Localidade</label>
-          <div className="relative">
-            <input
-              type="text"
-              list="modal-concelhos"
-              value={localidade}
-              onChange={(e) => {
-                setLocalidade(e.target.value);
-                lookupTriggered.current = true;
-              }}
-              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
-            />
-            <datalist id="modal-concelhos">
-              {CONCELHOS.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-            {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
-              <p className="text-[10px] text-green-600 mt-0.5">
-                <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente
-              </p>
-            )}
-          </div>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Localização</label>
+          <SeletorLocalizacao
+            distrito={distrito}
+            concelho={localidade}
+            onChange={(d, c) => {
+              setDistrito(d);
+              setLocalidade(c);
+              lookupTriggered.current = true;
+            }}
+          />
+          {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
+            <p className="text-[10px] text-green-600 mt-1">
+              <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente pelo código postal
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">

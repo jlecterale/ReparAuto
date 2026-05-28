@@ -14,6 +14,8 @@ export interface Peca {
   preco: number | null;
   estado: string;
   local: string;
+  distrito?: string;
+  coordenadas?: { lat: number; lng: number };
   contacto?: string;
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;
@@ -41,6 +43,7 @@ export interface PecaFormData {
   preco: string;
   descricao: string;
   localizacao: string;
+  localizacaoDistrito: string;
   vendedorTelefone: string;
   vendedorWhatsApp: string;
   vendedorEmail: string;

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
-import { CONCELHOS, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
+import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
+import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
+import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import type { Carro } from '@/types/carro';
 
 interface EditarCarroModalProps {
@@ -23,6 +25,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     cor: carro.cor,
     portas: String(carro.portas),
     local: carro.local,
+    distrito: carro.distrito ?? getDistritoForConcelho(carro.local) ?? '',
     descricao: carro.descricao,
     estadoVeiculo: carro.estadoVeiculo,
   });
@@ -47,6 +50,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         cor: form.cor,
         portas: Number(form.portas),
         local: form.local,
+        distrito: form.distrito || undefined,
+        coordenadas: form.local ? getCoordenadas(form.local) : undefined,
         descricao: form.descricao,
         estadoVeiculo: form.estadoVeiculo,
       });
@@ -100,7 +105,13 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Câmbio', 'cambio', 'text', TIPOS_CAMBIO)}
         {campo('Cor', 'cor')}
         {campo('Nº Portas', 'portas', 'number')}
-        {campo('Local', 'local', 'text', CONCELHOS)}
+        <div className="col-span-2">
+          <SeletorLocalizacao
+            distrito={form.distrito}
+            concelho={form.local}
+            onChange={(d, c) => setForm((prev) => ({ ...prev, distrito: d, local: c }))}
+          />
+        </div>
       </div>
 
       <div className="mb-4">

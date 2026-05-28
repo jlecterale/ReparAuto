@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/providers/AppProvider';
-import { CONCELHOS } from '@/lib/constants';
 import { createUserProfile } from '@/lib/db';
+import { getDistritoForConcelho } from '@/lib/geo';
+import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
 import {
   validarTelefone,
@@ -20,6 +21,7 @@ export default function SetupPerfil() {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [distrito, setDistrito] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
@@ -37,6 +39,8 @@ export default function SetupPerfil() {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
+      const d = getDistritoForConcelho(cpLookup.localidade);
+      if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
@@ -60,6 +64,7 @@ export default function SetupPerfil() {
       setNome(user.nome || '');
       setTelefone(user.telefone || '');
       setLocalidade(user.localidade || '');
+      setDistrito(user.distrito || getDistritoForConcelho(user.localidade || '') || '');
       setCodigoPostal(user.codigoPostal || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
@@ -127,6 +132,7 @@ export default function SetupPerfil() {
         nome: nome.trim(),
         telefone: telefone.trim(),
         localidade: localidade.trim(),
+        distrito: distrito.trim() || undefined,
         codigoPostal: codigoPostal.trim(),
         morada: morada.trim(),
         nif: nif.trim(),
@@ -212,33 +218,25 @@ export default function SetupPerfil() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Localidade <span className="text-red-400">*</span>
+              Localização <span className="text-red-400">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="text"
-                list="concelhos-list"
-                placeholder="Ex: Braga, Porto, Lisboa..."
-                value={localidade}
-                onChange={(e) => {
-                  setLocalidade(e.target.value);
-                  lookupTriggered.current = true;
-                }}
-                onBlur={() => handleBlur('localidade')}
-                className={inputClasse('localidade')}
-              />
-              <datalist id="concelhos-list">
-                {CONCELHOS.map((c) => (
-                  <option key={c} value={c} />
-                ))}
-              </datalist>
-              <i className="fa-solid fa-location-dot absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-              {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
-                <p className="text-[10px] text-green-600 mt-0.5">
-                  <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente pelo código postal
-                </p>
-              )}
-            </div>
+            <SeletorLocalizacao
+              distrito={distrito}
+              concelho={localidade}
+              onChange={(d, c) => {
+                setDistrito(d);
+                setLocalidade(c);
+                lookupTriggered.current = true;
+                handleBlur('localidade');
+              }}
+              obrigatorio
+              erro={touched['localidade'] && !localidade.trim()}
+            />
+            {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
+              <p className="text-[10px] text-green-600 mt-1">
+                <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente pelo código postal
+              </p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

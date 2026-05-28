@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
+import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
 export default function usePecas() {
@@ -9,6 +10,10 @@ export default function usePecas() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
+  const [advDistrito, setAdvDistrito] = useState('');
+  const [advConcelho, setAdvConcelho] = useState('');
+  const [advRaioCentro, setAdvRaioCentro] = useState('');
+  const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
 
   useEffect(() => {
     const unsub = subscribePecas(
@@ -48,8 +53,25 @@ export default function usePecas() {
       lista = lista.filter((p) => p.estado === filtroEstado);
     }
 
+    if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
+      const centro = getCoordenadas(advRaioCentro);
+      if (centro) {
+        lista = lista.filter((p) => {
+          const coords = p.coordenadas ?? getCoordenadas(p.local);
+          if (!coords) return false;
+          return haversineKm(centro, coords) <= advRaioKm!;
+        });
+      }
+    } else if (advConcelho) {
+      lista = lista.filter((p) => p.local?.toLowerCase() === advConcelho.toLowerCase());
+    } else if (advDistrito) {
+      lista = lista.filter(
+        (p) => (p.distrito ?? getDistritoForConcelho(p.local)) === advDistrito
+      );
+    }
+
     return lista;
-  }, [pecas, filtroTipo, searchTerm, filtroCategoria, filtroEstado]);
+  }, [pecas, filtroTipo, searchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -83,6 +105,14 @@ export default function usePecas() {
     setFiltroCategoria,
     filtroEstado,
     setFiltroEstado,
+    advDistrito,
+    setAdvDistrito,
+    advConcelho,
+    setAdvConcelho,
+    advRaioCentro,
+    setAdvRaioCentro,
+    advRaioKm,
+    setAdvRaioKm,
     publicarPeca,
     eliminarPeca,
     getPecaPorId,

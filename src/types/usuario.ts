@@ -10,6 +10,7 @@ export interface Usuario {
   email: string;
   telefone: string;
   localidade: string;
+  distrito?: string;
   codigoPostal: string;
   morada: string;
   nif: string;

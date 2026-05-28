@@ -21,6 +21,8 @@ export interface Carro {
   cor: string;
   portas: number;
   local: string;
+  distrito?: string;
+  coordenadas?: { lat: number; lng: number };
   descricao: string;
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
@@ -61,6 +63,7 @@ export interface CarroFormData {
   cambio: Cambio;
   portas: string;
   localizacao: string;
+  localizacaoDistrito: string;
   preco: string;
   descricao: string;
   estadoVeiculo: EstadoVeiculo;
