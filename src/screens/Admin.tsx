@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { ChartBar, Users, List, StarHalf, MagnifyingGlass, Flag, ShieldCheck, CircleNotch, ArrowsClockwise, type Icon } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -21,6 +22,7 @@ import {
   getDenunciasIntencao,
   updateDenunciaIntencaoStatus,
 } from '@/lib/db';
+import Button from '@/components/ui/Button';
 import AdminStats from '@/components/admin/AdminStats';
 import UserTable from '@/components/admin/UserTable';
 import ListingsTable from '@/components/admin/ListingsTable';
@@ -299,20 +301,20 @@ export default function Admin() {
     }
   };
 
-  const tabs = [
-    { key: 'visao-geral' as TabAdmin, label: 'Visão Geral', icon: 'fa-solid fa-chart-simple' },
-    { key: 'utilizadores' as TabAdmin, label: 'Utilizadores', icon: 'fa-solid fa-users' },
-    { key: 'anuncios' as TabAdmin, label: 'Anúncios', icon: 'fa-solid fa-list' },
-    { key: 'avaliacoes' as TabAdmin, label: `Avaliações${reviewsPendentes > 0 ? ` (${reviewsPendentes})` : ''}`, icon: 'fa-solid fa-star-half-stroke' },
-    { key: 'intencoes' as TabAdmin, label: `Intenções${intencoesDenunciasPendentes > 0 ? ` (${intencoesDenunciasPendentes})` : ''}`, icon: 'fa-solid fa-magnifying-glass' },
-    { key: 'denuncias' as TabAdmin, label: `Denúncias${reportsPendentes > 0 ? ` (${reportsPendentes})` : ''}`, icon: 'fa-solid fa-flag' },
-    { key: 'verificacoes' as TabAdmin, label: `Verificações${verificationsPendentes > 0 ? ` (${verificationsPendentes})` : ''}`, icon: 'fa-solid fa-shield-halved' },
+  const tabs: { key: TabAdmin; label: string; Icon: Icon }[] = [
+    { key: 'visao-geral', label: 'Visão Geral', Icon: ChartBar },
+    { key: 'utilizadores', label: 'Utilizadores', Icon: Users },
+    { key: 'anuncios', label: 'Anúncios', Icon: List },
+    { key: 'avaliacoes', label: `Avaliações${reviewsPendentes > 0 ? ` (${reviewsPendentes})` : ''}`, Icon: StarHalf },
+    { key: 'intencoes', label: `Intenções${intencoesDenunciasPendentes > 0 ? ` (${intencoesDenunciasPendentes})` : ''}`, Icon: MagnifyingGlass },
+    { key: 'denuncias', label: `Denúncias${reportsPendentes > 0 ? ` (${reportsPendentes})` : ''}`, Icon: Flag },
+    { key: 'verificacoes', label: `Verificações${verificationsPendentes > 0 ? ` (${verificationsPendentes})` : ''}`, Icon: ShieldCheck },
   ];
 
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <i className="fa-solid fa-spinner fa-spin text-3xl text-accent"></i>
+        <CircleNotch className="animate-spin text-3xl text-accent" />
       </div>
     );
   }
@@ -320,15 +322,17 @@ export default function Admin() {
   return (
     <div className="page-enter">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-extrabold text-brand-900 flex items-center gap-2">
-          <i className="fa-solid fa-shield-halved text-accent"></i> Painel de Administração
+        <h1 className="text-2xl font-extrabold text-fg-heading flex items-center gap-2">
+          <ShieldCheck className="text-accent" /> Painel de Administração
         </h1>
-        <button
+        <Button
+          tipo="secundario"
+          tamanho="sm"
+          icone={<ArrowsClockwise />}
           onClick={carregarDados}
-          className="text-xs font-bold text-slate-500 hover:text-accent transition px-3 py-1.5 rounded-xl border border-slate-300 hover:border-accent"
         >
-          <i className="fa-solid fa-rotate mr-1"></i> Atualizar
-        </button>
+          Atualizar
+        </Button>
       </div>
 
       <div className="flex gap-1 mb-6 bg-slate-100 rounded-xl p-1">
@@ -337,10 +341,10 @@ export default function Admin() {
             key={t.key}
             onClick={() => setTab(t.key)}
             className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition ${
-              tab === t.key ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'
+              tab === t.key ? 'bg-white text-accent shadow-sm' : 'text-fg-subtle hover:text-fg-heading'
             }`}
           >
-            <i className={t.icon}></i> {t.label}
+            <t.Icon /> {t.label}
           </button>
         ))}
       </div>
@@ -358,8 +362,8 @@ export default function Admin() {
 
       {tab === 'utilizadores' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 className="text-lg font-extrabold text-brand-900 mb-4">
-            <i className="fa-solid fa-users mr-2 text-accent"></i> Gestão de Utilizadores
+          <h2 className="text-lg font-extrabold text-fg-heading mb-4">
+            <Users className="mr-2 text-accent" /> Gestão de Utilizadores
           </h2>
           <UserTable users={users} onRoleChange={handleRoleChange} />
         </div>
@@ -367,8 +371,8 @@ export default function Admin() {
 
       {tab === 'anuncios' && (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-          <h2 className="text-lg font-extrabold text-brand-900 mb-4">
-            <i className="fa-solid fa-list mr-2 text-accent"></i> Gestão de Anúncios
+          <h2 className="text-lg font-extrabold text-fg-heading mb-4">
+            <List className="mr-2 text-accent" /> Gestão de Anúncios
           </h2>
           <ListingsTable
             carros={carrosOrdenados}
@@ -402,32 +406,29 @@ export default function Admin() {
       {tab === 'intencoes' && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-            <h2 className="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">
-              <i className="fa-solid fa-magnifying-glass text-accent"></i> Gestão de Intenções de Compra
+            <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+              <MagnifyingGlass className="text-accent" /> Gestão de Intenções de Compra
             </h2>
             {intencoesAdmin.length === 0 ? (
-              <p className="text-sm text-slate-500">Nenhuma intenção encontrada.</p>
+              <p className="text-sm text-fg-subtle">Nenhuma intenção encontrada.</p>
             ) : (
               <div className="space-y-2">
                 {intencoesAdmin.map((intencao) => (
                   <div key={intencao.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-200">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-brand-900 truncate">{intencao.titulo}</p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm font-bold text-fg-heading truncate">{intencao.titulo}</p>
+                      <p className="text-xs text-fg-subtle">
                         {intencao.criterios.marca} {intencao.criterios.modelo} • {intencao.status} • {intencao.stats.visualizacoes} visualizações
                       </p>
                     </div>
                     <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                       {intencao.status === 'ativa' && (
-                        <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'pausada')}
-                          className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition">Pausar</button>
+                        <Button tipo="aviso" tamanho="sm" onClick={() => handleUpdateIntencaoStatus(intencao.id, 'pausada')}>Pausar</Button>
                       )}
                       {intencao.status === 'pausada' && (
-                        <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'ativa')}
-                          className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">Ativar</button>
+                        <Button tipo="verde" tamanho="sm" onClick={() => handleUpdateIntencaoStatus(intencao.id, 'ativa')}>Ativar</Button>
                       )}
-                      <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'deletada')}
-                        className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">Remover</button>
+                      <Button tipo="perigo" tamanho="sm" onClick={() => handleUpdateIntencaoStatus(intencao.id, 'deletada')}>Remover</Button>
                     </div>
                   </div>
                 ))}
@@ -436,24 +437,22 @@ export default function Admin() {
           </div>
 
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
-            <h2 className="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">
-              <i className="fa-solid fa-flag text-red-500"></i> Denúncias de Intenções
+            <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+              <Flag className="text-red-600" /> Denúncias de Intenções
             </h2>
             {denunciasIntencao.length === 0 ? (
-              <p className="text-sm text-slate-500">Nenhuma denúncia pendente.</p>
+              <p className="text-sm text-fg-subtle">Nenhuma denúncia pendente.</p>
             ) : (
               <div className="space-y-2">
                 {denunciasIntencao.map((denuncia) => (
                   <div key={denuncia.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-200">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-brand-900">Motivo: {denuncia.motivo}</p>
-                      <p className="text-xs text-slate-500">{denuncia.descricao} • Status: {denuncia.status}</p>
+                      <p className="text-sm font-bold text-fg-heading">Motivo: {denuncia.motivo}</p>
+                      <p className="text-xs text-fg-subtle">{denuncia.descricao} • Status: {denuncia.status}</p>
                     </div>
                     <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                      <button onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'remocao')}
-                        className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">Remover Intenção</button>
-                      <button onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'aviso')}
-                        className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition">Avisar</button>
+                      <Button tipo="perigo" tamanho="sm" onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'remocao')}>Remover Intenção</Button>
+                      <Button tipo="aviso" tamanho="sm" onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'aviso')}>Avisar</Button>
                     </div>
                   </div>
                 ))}

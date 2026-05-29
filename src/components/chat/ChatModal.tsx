@@ -1,5 +1,6 @@
 'use client';
 
+import { ChatCircleDots, CircleNotch, PaperPlaneTilt, X } from '@phosphor-icons/react';
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/providers/AppProvider';
 
@@ -46,26 +47,26 @@ export default function ChatModal() {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
           <div>
-            <h3 className="font-extrabold text-brand-900 text-sm">Chat com {chatVendedorNome}</h3>
-            <p className="text-xs text-slate-500">{chatListingTitle}</p>
+            <h3 className="font-extrabold text-fg-heading text-sm">Chat com {chatVendedorNome}</h3>
+            <p className="text-xs text-fg-subtle">{chatListingTitle}</p>
           </div>
           <button
             onClick={fecharChat}
-            className="text-slate-400 hover:text-slate-600 transition p-1"
+            className="text-slate-400 hover:text-fg-muted transition p-1"
             aria-label="Fechar chat"
           >
-            <i className="fa-solid fa-xmark text-xl"></i>
+            <X className="text-xl" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[300px] max-h-[50vh]">
           {carregandoConversa ? (
             <div className="flex items-center justify-center py-8">
-              <i className="fa-solid fa-spinner fa-spin text-accent text-xl"></i>
+              <CircleNotch className="animate-spin text-accent text-xl" />
             </div>
           ) : conversa.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
-              <i className="fa-solid fa-comment-dots text-3xl mb-2"></i>
+            <div className="text-center py-8 text-fg-subtle">
+              <ChatCircleDots className="text-3xl mb-2" />
               <p className="text-sm font-semibold">Nenhuma mensagem ainda</p>
               <p className="text-xs mt-1">Envie a primeira mensagem para {chatVendedorNome}.</p>
             </div>
@@ -78,13 +79,13 @@ export default function ChatModal() {
                     className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
                       minha
                         ? 'bg-accent text-white rounded-br-md'
-                        : 'bg-slate-100 text-slate-800 rounded-bl-md'
+                        : 'bg-slate-100 text-fg rounded-bl-md'
                     }`}
                   >
                     <p>{msg.mensagem}</p>
                     <p
                       className={`text-[10px] mt-1 ${
-                        minha ? 'text-white/70' : 'text-slate-400'
+                        minha ? 'text-white/70' : 'text-fg-subtle'
                       }`}
                     >
                       {msg.lida ? '✓✓ Lida' : '✓ Enviada'}
@@ -113,7 +114,7 @@ export default function ChatModal() {
               className="bg-accent hover:bg-accent-hover disabled:bg-slate-300 text-white px-4 py-2 rounded-xl transition flex items-center justify-center"
               aria-label="Enviar mensagem"
             >
-              <i className={`fa-solid ${enviando ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
+              {enviando ? <CircleNotch className="animate-spin" /> : <PaperPlaneTilt />}
             </button>
           </div>
         </div>

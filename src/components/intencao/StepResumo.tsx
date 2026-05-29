@@ -12,8 +12,8 @@ function Detail({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
     <div className="flex justify-between py-1.5 border-b border-slate-100 last:border-0">
-      <span className="text-xs text-slate-500">{label}</span>
-      <span className="text-xs font-semibold text-slate-800 text-right max-w-[60%]">{value}</span>
+      <span className="text-xs text-fg-subtle">{label}</span>
+      <span className="text-xs font-semibold text-fg text-right max-w-[60%]">{value}</span>
     </div>
   );
 }
@@ -25,7 +25,7 @@ export default function StepResumo({ form, aceiteTermos, onToggleTermos }: StepR
   return (
     <div className="space-y-4">
       <div className="bg-slate-50 rounded-xl p-4 space-y-1">
-        <h4 className="text-sm font-extrabold text-brand-900 mb-2">Resumo da Intenção</h4>
+        <h4 className="text-sm font-extrabold text-fg-heading mb-2">Resumo da Intenção</h4>
         <Detail label="Marca / Modelo" value={`${c.marca} ${c.modelo}`} />
         <Detail label="Ano" value={c.anoMaximo ? `${c.anoMinimo} – ${c.anoMaximo}` : `A partir de ${c.anoMinimo}`} />
         <Detail label="Orçamento" value={c.precoMinimo ? `${formatarPreco(c.precoMinimo)} – ${formatarPreco(c.precoMaximo)}` : `Até ${formatarPreco(c.precoMaximo)}`} />
@@ -49,7 +49,7 @@ export default function StepResumo({ form, aceiteTermos, onToggleTermos }: StepR
           onChange={onToggleTermos}
           className="mt-0.5 rounded text-accent focus:ring-accent"
         />
-        <span className="text-slate-600">
+        <span className="text-fg-muted">
           Concordo com os <span className="text-accent font-semibold">Termos de Utilização</span> e autorizo vendedores a contactar-me sobre a minha intenção de compra.
         </span>
       </label>

@@ -21,7 +21,7 @@ function MultiToggle({ label, options, selected, onChange }: {
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold text-slate-500 mb-2">{label}</label>
+      <label className="block text-xs font-bold text-fg-subtle mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
           const on = selected.includes(opt);
@@ -31,7 +31,7 @@ function MultiToggle({ label, options, selected, onChange }: {
               type="button"
               onClick={() => onChange(on ? selected.filter((v) => v !== opt) : [...selected, opt])}
               className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
-                on ? 'bg-accent text-white border-accent' : 'bg-white text-slate-600 border-slate-300 hover:border-accent'
+                on ? 'bg-accent text-white border-accent' : 'bg-white text-fg-muted border-slate-300 hover:border-accent'
               }`}
             >
               {opt}

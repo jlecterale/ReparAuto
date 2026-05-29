@@ -1,8 +1,26 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, type ReactNode } from 'react';
+import {
+  CheckCircle,
+  Clock,
+  XCircle,
+  ShieldCheck,
+  IdentificationCard,
+  Storefront,
+  FileImage,
+  X,
+  CloudArrowUp,
+  Camera,
+  WarningCircle,
+  PaperPlaneTilt,
+  Lock,
+} from '@phosphor-icons/react';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
+import Alert from '@/components/ui/Alert';
+import Button from '@/components/ui/Button';
+import type { AlertTipo } from '@/types/ui';
 import type { Verification, VerificationInput, TipoVerificacao, TipoDocumento } from '@/types/verification';
 
 interface VerificationRequestProps {
@@ -46,34 +64,30 @@ export default function VerificationRequest({
 
   if (verificado) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center gap-3">
-        <i className="fa-solid fa-circle-check text-blue-500 text-xl"></i>
-        <div>
-          <p className="font-semibold text-blue-900 text-sm">Conta Verificada</p>
-          <p className="text-xs text-blue-600">A sua identidade foi verificada pela equipa ReparAuto.</p>
-        </div>
-      </div>
+      <Alert tipo="info" icone={<CheckCircle />} titulo="Conta Verificada" className="!items-center">
+        A sua identidade foi verificada pela equipa ReparAuto.
+      </Alert>
     );
   }
 
   if (verification && verification.status !== 'rejeitado') {
-    const statusMap: Record<string, { cor: string; icon: string; texto: string }> = {
-      pendente: { cor: 'bg-yellow-50 border-yellow-200', icon: 'fa-solid fa-clock text-yellow-500', texto: 'O seu pedido de verificação está em análise. Os documentos enviados serão apagados após a decisão.' },
-      aprovado: { cor: 'bg-green-50 border-green-200', icon: 'fa-solid fa-circle-check text-green-500', texto: 'O seu pedido foi aprovado!' },
+    const statusMap: Record<string, { tipo: AlertTipo; icon: ReactNode; texto: string }> = {
+      pendente: { tipo: 'aviso', icon: <Clock />, texto: 'O seu pedido de verificação está em análise. Os documentos enviados serão apagados após a decisão.' },
+      aprovado: { tipo: 'sucesso', icon: <CheckCircle />, texto: 'O seu pedido foi aprovado!' },
     };
     const status = statusMap[verification.status] || statusMap.pendente;
 
     return (
-      <div className={`${status.cor} border rounded-xl p-4 flex items-center gap-3`}>
-        <i className={`${status.icon} text-xl`}></i>
-        <div>
-          <p className="font-semibold text-brand-900 text-sm">Verificação {verification.status === 'pendente' ? 'em análise' : 'aprovada'}</p>
-          <p className="text-xs text-slate-600">{status.texto}</p>
-          {verification.notasAdmin && (
-            <p className="text-xs text-slate-500 mt-1 italic">Notas: {verification.notasAdmin}</p>
-          )}
-        </div>
-      </div>
+      <Alert
+        tipo={status.tipo}
+        icone={status.icon}
+        titulo={`Verificação ${verification.status === 'pendente' ? 'em análise' : 'aprovada'}`}
+      >
+        {status.texto}
+        {verification.notasAdmin && (
+          <span className="block mt-1 italic opacity-80">Notas: {verification.notasAdmin}</span>
+        )}
+      </Alert>
     );
   }
 
@@ -141,20 +155,19 @@ export default function VerificationRequest({
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
       {verification?.status === 'rejeitado' && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-          <p className="text-xs text-red-700 font-semibold">
-            <i className="fa-solid fa-circle-xmark mr-1"></i>
+        <Alert tipo="erro" icone={<XCircle />} className="!p-3 !rounded-lg mb-3">
+          <span className="font-semibold">
             O seu pedido anterior foi rejeitado.
             {verification.notasAdmin && <span className="font-normal italic"> Motivo: {verification.notasAdmin}</span>}
-          </p>
-          <p className="text-xs text-red-600 mt-1">Pode submeter um novo pedido abaixo.</p>
-        </div>
+          </span>
+          <span className="block mt-1">Pode submeter um novo pedido abaixo.</span>
+        </Alert>
       )}
-      <h4 className="font-bold text-brand-900 text-sm mb-2 flex items-center gap-2">
-        <i className="fa-solid fa-shield-halved text-accent"></i>
+      <h4 className="font-bold text-fg-heading text-sm mb-2 flex items-center gap-2">
+        <ShieldCheck className="text-accent" />
         Verificar Conta
       </h4>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="text-xs text-fg-subtle mb-3">
         Envie um documento de identificação e uma foto sua com o documento para obter o selo de conta verificada.
         Os ficheiros são apagados após a análise.
       </p>
@@ -166,26 +179,26 @@ export default function VerificationRequest({
           className={`flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition ${
             tipo === 'identidade'
               ? 'border-accent bg-accent/5 text-accent'
-              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              : 'border-slate-200 text-fg-muted hover:border-slate-300'
           }`}
         >
-          <i className="fa-solid fa-id-card mr-1"></i> Identidade
+          <IdentificationCard className="mr-1" /> Identidade
         </button>
         <button
           onClick={() => setTipo('profissional')}
           className={`flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition ${
             tipo === 'profissional'
               ? 'border-accent bg-accent/5 text-accent'
-              : 'border-slate-200 text-slate-600 hover:border-slate-300'
+              : 'border-slate-200 text-fg-muted hover:border-slate-300'
           }`}
         >
-          <i className="fa-solid fa-store mr-1"></i> Profissional
+          <Storefront className="mr-1" /> Profissional
         </button>
       </div>
 
       {/* Tipo de documento */}
       <div className="mb-3">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Tipo de Documento</label>
+        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-1 block">Tipo de Documento</label>
         <select
           value={tipoDocumento}
           onChange={(e) => setTipoDocumento(e.target.value as TipoDocumento)}
@@ -199,7 +212,7 @@ export default function VerificationRequest({
 
       {/* Documento upload */}
       <div className="mb-3">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">
+        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-1 block">
           Foto do Documento
         </label>
         <div
@@ -210,20 +223,20 @@ export default function VerificationRequest({
         >
           {docFile ? (
             <div className="flex items-center justify-center gap-2">
-              <i className="fa-solid fa-file-image text-green-500"></i>
+              <FileImage className="text-green-600" />
               <span className="text-xs font-semibold text-green-700 truncate max-w-[200px]">{docFile.name}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); setDocFile(null); }}
                 className="text-red-400 hover:text-red-600 text-xs ml-1"
               >
-                <i className="fa-solid fa-xmark"></i>
+                <X />
               </button>
             </div>
           ) : (
             <>
-              <i className="fa-solid fa-cloud-arrow-up text-slate-400 text-xl mb-1"></i>
-              <p className="text-xs text-slate-500">Clique para enviar foto do documento</p>
-              <p className="text-[10px] text-slate-400">Imagem até 5MB (JPG, PNG)</p>
+              <CloudArrowUp className="text-slate-400 text-xl mb-1" />
+              <p className="text-xs text-fg-subtle">Clique para enviar foto do documento</p>
+              <p className="text-[10px] text-fg-subtle">Imagem até 5MB (JPG, PNG)</p>
             </>
           )}
         </div>
@@ -238,7 +251,7 @@ export default function VerificationRequest({
 
       {/* Selfie upload */}
       <div className="mb-3">
-        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">
+        <label className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-1 block">
           Selfie com o Documento
         </label>
         <div
@@ -249,20 +262,20 @@ export default function VerificationRequest({
         >
           {selfieFile ? (
             <div className="flex items-center justify-center gap-2">
-              <i className="fa-solid fa-camera text-green-500"></i>
+              <Camera className="text-green-600" />
               <span className="text-xs font-semibold text-green-700 truncate max-w-[200px]">{selfieFile.name}</span>
               <button
                 onClick={(e) => { e.stopPropagation(); setSelfieFile(null); }}
                 className="text-red-400 hover:text-red-600 text-xs ml-1"
               >
-                <i className="fa-solid fa-xmark"></i>
+                <X />
               </button>
             </div>
           ) : (
             <>
-              <i className="fa-solid fa-camera text-slate-400 text-xl mb-1"></i>
-              <p className="text-xs text-slate-500">Clique para enviar selfie segurando o documento</p>
-              <p className="text-[10px] text-slate-400">Imagem até 5MB (JPG, PNG)</p>
+              <Camera className="text-slate-400 text-xl mb-1" />
+              <p className="text-xs text-fg-subtle">Clique para enviar selfie segurando o documento</p>
+              <p className="text-[10px] text-fg-subtle">Imagem até 5MB (JPG, PNG)</p>
             </>
           )}
         </div>
@@ -277,7 +290,7 @@ export default function VerificationRequest({
 
       {erro && (
         <p className="text-xs text-red-500 mb-3 flex items-center gap-1">
-          <i className="fa-solid fa-circle-exclamation"></i> {erro}
+          <WarningCircle /> {erro}
         </p>
       )}
 
@@ -286,24 +299,24 @@ export default function VerificationRequest({
           <div className="w-full bg-slate-200 rounded-full h-1.5">
             <div className="bg-accent h-1.5 rounded-full transition-all" style={{ width: `${progresso}%` }}></div>
           </div>
-          <p className="text-[10px] text-slate-400 text-center mt-1">A enviar... {progresso}%</p>
+          <p className="text-[10px] text-fg-subtle text-center mt-1">A enviar... {progresso}%</p>
         </div>
       )}
 
-      <button
-        onClick={handleSubmit}
+      <Button
+        tipo="primario"
+        tamanho="md"
+        blocoCompleto
+        carregando={enviando}
         disabled={enviando || !docFile || !selfieFile}
-        className="w-full bg-accent hover:bg-accent-hover text-white font-bold text-xs py-2.5 rounded-lg transition disabled:opacity-50"
+        onClick={handleSubmit}
+        icone={<PaperPlaneTilt />}
       >
-        {enviando ? (
-          <><i className="fa-solid fa-spinner fa-spin mr-1"></i> A enviar...</>
-        ) : (
-          <><i className="fa-solid fa-paper-plane mr-1"></i> Pedir Verificação</>
-        )}
-      </button>
+        {enviando ? 'A enviar...' : 'Pedir Verificação'}
+      </Button>
 
-      <p className="text-[10px] text-slate-400 text-center mt-2">
-        <i className="fa-solid fa-lock mr-1"></i>
+      <p className="text-[10px] text-fg-subtle text-center mt-2">
+        <Lock className="mr-1" />
         Os documentos são armazenados de forma segura e apagados após a verificação (RGPD).
       </p>
     </div>

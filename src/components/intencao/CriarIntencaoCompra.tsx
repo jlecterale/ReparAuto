@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { Check, CheckCircle } from '@phosphor-icons/react';
+import { Fragment, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
+import Button from '@/components/ui/Button';
 import { gerarTituloIntencao, validarIntencaoCompra } from '@/lib/utils';
-import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepBasico from './StepBasico';
 import StepPrecoCombustivel from './StepPrecoCombustivel';
 import StepLocalizacao from './StepLocalizacao';
@@ -139,22 +140,22 @@ export default function CriarIntencaoCompra() {
   if (sucesso) {
     return (
       <div className="text-center py-12">
-        <i className="fa-solid fa-circle-check text-5xl text-green-500 mb-4"></i>
-        <h3 className="text-xl font-extrabold text-brand-900 mb-2">Intenção Publicada!</h3>
-        <p className="text-sm text-slate-500 mb-6">Vendedores podem agora ver a sua intenção e entrar em contacto.</p>
+        <CheckCircle className="text-5xl text-green-500 mb-4" />
+        <h3 className="text-xl font-extrabold text-fg-heading mb-2">Intenção Publicada!</h3>
+        <p className="text-sm text-fg-subtle mb-6">Vendedores podem agora ver a sua intenção e entrar em contacto.</p>
         <div className="flex flex-wrap gap-3 justify-center">
-          <button
+          <Button
+            tipo="primario"
             onClick={() => router.push('/minhas-intencoes')}
-            className="bg-accent text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-accent-hover transition"
           >
             Ver minhas intenções
-          </button>
-          <button
+          </Button>
+          <Button
+            tipo="secundario"
             onClick={() => { setSucesso(false); setForm(formInicial); setPasso(1); setAceiteTermos(false); }}
-            className="border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition"
           >
             Nova intenção
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -163,47 +164,72 @@ export default function CriarIntencaoCompra() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <h2 className="text-lg font-extrabold text-brand-900 mb-1">Criar Intenção de Compra</h2>
-        <p className="text-xs text-slate-500">Descreva o carro que procura e receba ofertas de vendedores.</p>
+        <h2 className="text-lg font-extrabold text-fg-heading mb-1">Criar Intenção de Compra</h2>
+        <p className="text-xs text-fg-subtle">Descreva o carro que procura e receba ofertas de vendedores.</p>
       </div>
 
-      <div className="flex items-center justify-between mb-4 text-xs font-bold text-slate-400">
-        {STEPS.map((label, i) => (
-          <span key={label} className={`${passo === i + 1 ? 'text-accent' : ''} ${i + 1 < passo ? 'text-green-500' : ''}`}>
-            {i + 1 < passo ? '✓' : passo === i + 1 ? `● ${label}` : `○ ${label}`}
-          </span>
-        ))}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2 text-xs font-bold">
+          <span className="text-accent">Passo {passo} de {STEPS.length}</span>
+          <span className="text-fg-muted">{STEPS[passo - 1]}</span>
+        </div>
+        <div className="flex items-center" aria-hidden="true">
+          {STEPS.map((label, i) => {
+            const num = i + 1;
+            const done = num < passo;
+            const active = num === passo;
+            return (
+              <Fragment key={label}>
+                <div
+                  title={label}
+                  className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-colors ${
+                    done
+                      ? 'bg-success-500 text-white'
+                      : active
+                        ? 'bg-accent text-white ring-4 ring-accent/20'
+                        : 'bg-slate-200 text-fg-subtle'
+                  }`}
+                >
+                  {done ? <Check weight="bold" /> : num}
+                </div>
+                {i < STEPS.length - 1 && (
+                  <div className={`h-1 flex-1 mx-1.5 rounded-full transition-colors ${done ? 'bg-success-500' : 'bg-slate-200'}`} />
+                )}
+              </Fragment>
+            );
+          })}
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg p-6">
         {passo === 1 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">O que você procura?</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">O que você procura?</h3>
             <StepBasico criterios={form.criterios} onChange={updateForm} />
           </>
         )}
         {passo === 2 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">Orçamento</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">Orçamento</h3>
             <StepPrecoCombustivel criterios={form.criterios} onChange={updateForm} />
           </>
         )}
         {passo === 3 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">Onde e até onde?</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">Onde e até onde?</h3>
             <StepLocalizacao criterios={form.criterios} onChange={updateForm} />
           </>
         )}
         {passo === 4 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">Preferências adicionais</h3>
-            <p className="text-xs text-slate-400 mb-4">(Opcional)</p>
+            <h3 className="font-extrabold text-fg-heading mb-4">Preferências adicionais</h3>
+            <p className="text-xs text-fg-subtle mb-4">(Opcional)</p>
             <StepPreferencias preferencias={form.preferencias || {}} onChange={updateForm} />
           </>
         )}
         {passo === 5 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">Como prefere ser contactado?</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">Como prefere ser contactado?</h3>
             <StepContato
               contatoPreferido={form.contatoPreferido}
               mostrarTelefone={form.mostrarTelefone}
@@ -214,7 +240,7 @@ export default function CriarIntencaoCompra() {
         )}
         {passo === 6 && (
           <>
-            <h3 className="font-extrabold text-brand-900 mb-4">Confirmar Intenção</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">Confirmar Intenção</h3>
             <StepResumo
               form={form}
               aceiteTermos={aceiteTermos}
@@ -224,30 +250,31 @@ export default function CriarIntencaoCompra() {
         )}
 
         <div className="flex justify-between mt-6 pt-4 border-t border-slate-200">
-          <button
+          <Button
+            tipo="terciario"
             onClick={() => setPasso(Math.max(1, passo - 1))}
             disabled={passo === 1}
-            className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition disabled:opacity-30"
           >
             ← Anterior
-          </button>
+          </Button>
           {passo < 6 ? (
-            <button
+            <Button
+              tipo="primario"
               onClick={() => setPasso(passo + 1)}
               disabled={!podeAvancar()}
-              className="bg-accent text-white px-5 py-2 text-sm font-bold rounded-xl hover:bg-accent-hover transition disabled:opacity-50"
             >
               Próximo →
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
+              tipo="verde"
               onClick={handlePublicar}
-              disabled={!podeAvancar() || publicando}
-              className="bg-green-600 text-white px-5 py-2 text-sm font-bold rounded-xl hover:bg-green-700 transition disabled:opacity-50 flex items-center gap-2"
+              disabled={!podeAvancar()}
+              carregando={publicando}
+              icone={<Check />}
             >
-              {publicando ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-check"></i>}
               Publicar Intenção
-            </button>
+            </Button>
           )}
         </div>
       </div>

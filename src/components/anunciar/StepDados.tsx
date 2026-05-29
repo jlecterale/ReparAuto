@@ -5,6 +5,7 @@ import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import type { CarroFormData } from '@/types/carro';
+import Button from '@/components/ui/Button';
 
 interface StepDadosProps {
   dados: CarroFormData;
@@ -41,7 +42,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
 
   const campo = (label: string, campoId: keyof CarroFormData, type = 'text', placeholder = '', options: string[] | null = null) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-500 mb-1">
+      <label className="block text-xs font-semibold text-fg-subtle mb-1">
         {label} <span className="text-red-500">*</span>
       </label>
       {options ? (
@@ -76,7 +77,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
       <h3 className="font-bold text-lg mb-3">📋 Dados do Veículo</h3>
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">
             Marca <span className="text-red-500">*</span>
           </label>
           <select
@@ -99,7 +100,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           )}
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">
             Modelo <span className="text-red-500">*</span>
           </label>
           <select
@@ -139,18 +140,22 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         </div>
       </div>
       <div className="flex gap-3">
-        <button
+        <Button
+          tipo="secundario"
+          tamanho="lg"
           onClick={onBack}
-          className="flex-1 bg-white hover:bg-slate-50 text-brand-700 font-bold py-3 rounded-xl transition border border-slate-300"
+          className="flex-1"
         >
           Voltar
-        </button>
-        <button
+        </Button>
+        <Button
+          tipo="primario"
+          tamanho="lg"
           onClick={validar}
-          className="flex-1 bg-accent hover:bg-accent-hover text-white font-bold py-3 rounded-xl transition"
+          className="flex-1"
         >
           Continuar
-        </button>
+        </Button>
       </div>
     </div>
   );

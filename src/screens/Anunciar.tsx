@@ -1,5 +1,6 @@
 'use client';
 
+import { CheckCircle } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -12,10 +13,7 @@ import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
 import PecaForm from '@/components/pecas/PecaForm';
-import CriarIntencaoCompra from '@/components/intencao/CriarIntencaoCompra';
 import type { CarroFormData } from '@/types/carro';
-
-type Modo = 'vender' | 'comprar';
 
 type CategoriaAnuncio = 'carro' | 'peca';
 
@@ -54,7 +52,6 @@ export default function Anunciar() {
   const { user } = auth;
   const toast = useToast();
 
-  const [modo, setModo] = useState<Modo>('vender');
   const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(null);
   const [passo, setPasso] = useState(0);
   const [publicado, setPublicado] = useState(false);
@@ -123,12 +120,12 @@ export default function Anunciar() {
     return (
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="text-center py-6">
-          <i className="fa-solid fa-circle-check text-green-500 text-5xl mb-3"></i>
-          <h3 className="text-xl font-extrabold text-brand-900">Anúncio enviado!</h3>
-          <p className="text-gray-500 text-sm mb-2">
+          <CheckCircle className="text-green-500 text-5xl mb-3" />
+          <h3 className="text-xl font-extrabold text-fg-heading">Anúncio enviado!</h3>
+          <p className="text-fg-subtle text-sm mb-2">
             O seu anúncio foi submetido com sucesso e está <strong>pendente de aprovação</strong> pela nossa equipa de administração.
           </p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-fg-subtle text-sm">
             {isPeca
               ? 'Assim que for aprovado, ficará visível na secção de Peças & Desmonte.'
               : 'Assim que for aprovado, ficará visível para todos. Pode acompanhar o estado em Perfil → Os Seus Carros Anunciados.'}
@@ -166,67 +163,52 @@ export default function Anunciar() {
 
   return (
     <div className="max-w-2xl mx-auto page-enter">
-      <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1">
-        <button onClick={() => setModo('vender')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition ${modo === 'vender' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
-          <i className="fa-solid fa-circle-plus"></i> Vender Carro / Peça
-        </button>
-        <button onClick={() => setModo('comprar')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition ${modo === 'comprar' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
-          <i className="fa-solid fa-magnifying-glass"></i> Procurar Carro
-        </button>
-      </div>
-
-      {modo === 'comprar' ? (
-        <CriarIntencaoCompra />
-      ) : (
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
-      <h2 className="text-2xl font-extrabold text-brand-900 mb-1">{titulo}</h2>
-      <p className="text-gray-500 text-sm mb-5">{subtitulo}</p>
+        <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
+        <p className="text-fg-subtle text-sm mb-5">{subtitulo}</p>
 
-      {passo === 0 && (
-        <StepCategoria onSelect={(cat) => { setCategoria(cat); setPasso(1); }} />
-      )}
+        {passo === 0 && (
+          <StepCategoria onSelect={(cat) => { setCategoria(cat); setPasso(1); }} />
+        )}
 
-      {categoria === 'carro' && passo >= 1 && (
-        <>
-          <StepIndicator passoAtual={passo} />
+        {categoria === 'carro' && passo >= 1 && (
+          <>
+            <StepIndicator passoAtual={passo} />
 
-          {passo === 1 && (
-            <StepFotos
-              fotos={fotos}
-              setFotos={setFotos}
-              onNext={() => setPasso(2)}
-              onBack={() => { setCategoria(null); setPasso(0); }}
-            />
-          )}
-          {passo === 2 && (
-            <StepDados
-              dados={dados}
-              setDados={setDados}
-              onNext={() => setPasso(3)}
-              onBack={() => setPasso(1)}
-            />
-          )}
-          {passo === 3 && (
-            <StepPreco
-              dados={dados}
-              setDados={setDados}
-              onBack={() => setPasso(2)}
-              onPublicar={handlePublicar}
-            />
-          )}
-        </>
-      )}
+            {passo === 1 && (
+              <StepFotos
+                fotos={fotos}
+                setFotos={setFotos}
+                onNext={() => setPasso(2)}
+                onBack={() => { setCategoria(null); setPasso(0); }}
+              />
+            )}
+            {passo === 2 && (
+              <StepDados
+                dados={dados}
+                setDados={setDados}
+                onNext={() => setPasso(3)}
+                onBack={() => setPasso(1)}
+              />
+            )}
+            {passo === 3 && (
+              <StepPreco
+                dados={dados}
+                setDados={setDados}
+                onBack={() => setPasso(2)}
+                onPublicar={handlePublicar}
+              />
+            )}
+          </>
+        )}
 
-      {categoria === 'peca' && passo === 1 && (
-        <PecaForm
-          onCancel={() => { setCategoria(null); setPasso(0); }}
-          onSuccess={() => setPublicado(true)}
-        />
-      )}
-    </div>
-      )}
+        {categoria === 'peca' && passo === 1 && (
+          <PecaForm
+            onCancel={() => { setCategoria(null); setPasso(0); }}
+            onSuccess={() => setPublicado(true)}
+          />
+        )}
+      </div>
     </div>
   );
 }

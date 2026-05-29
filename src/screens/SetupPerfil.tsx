@@ -1,5 +1,7 @@
 'use client';
 
+import { Check, CircleNotch, Storefront, User, UserPlus, WarningCircle } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -7,6 +9,7 @@ import { useApp } from '@/providers/AppProvider';
 import { createUserProfile } from '@/lib/db';
 import { getDistritoForConcelho } from '@/lib/geo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
 import {
   validarTelefone,
@@ -95,11 +98,16 @@ export default function SetupPerfil() {
 
   const inputClasse = (campo: string, extra = ''): string => {
     const valido = campoValido(campo);
-    const base = 'w-full border rounded-xl p-3 text-sm focus:outline-none transition';
-    if (valido === false) return `${base} border-red-400 bg-red-50 focus:border-red-500 ${extra}`;
-    if (valido === true) return `${base} border-green-400 bg-green-50/50 focus:border-green-500 ${extra}`;
-    return `${base} border-gray-300 focus:border-accent ${extra}`;
+    const base =
+      'w-full border rounded-xl px-3.5 py-3 text-sm text-fg-strong placeholder:text-fg-subtle ' +
+      'focus:outline-none focus:ring-3 focus:ring-accent/25 transition';
+    if (valido === false) return `${base} border-danger-500 bg-danger-50 focus:border-danger-500 ${extra}`;
+    if (valido === true) return `${base} border-success-500 bg-success-50/60 focus:border-success-600 ${extra}`;
+    return `${base} border-neutral-300 focus:border-accent ${extra}`;
   };
+
+  const labelCls = 'block text-xs font-bold text-fg mb-1.5';
+  const opcional = <span className="font-normal text-fg-subtle">(opcional)</span>;
 
   const handleSubmit = async () => {
     setErro('');
@@ -158,95 +166,106 @@ export default function SetupPerfil() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <i className="fa-solid fa-spinner fa-spin text-3xl text-accent"></i>
+        <CircleNotch className="animate-spin text-3xl text-accent" />
       </div>
     );
   }
 
   return (
-    <div className="page-enter max-w-2xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
-            <i className="fa-solid fa-user-plus"></i>
-          </div>
-          <h1 className="text-2xl font-extrabold text-brand-900">Completar Perfil</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Preencha os seus dados para começar a utilizar a plataforma.
-          </p>
+    <div className="page-enter max-w-4xl mx-auto px-1 py-2">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center text-white mx-auto mb-3 shadow-md">
+          <UserPlus size={30} weight="bold" />
         </div>
+        <h1 className="text-2xl font-extrabold text-fg-heading">Completar Perfil</h1>
+        <p className="text-sm text-fg-muted mt-1">
+          Preencha os seus dados para começar a utilizar a plataforma.
+        </p>
+      </div>
 
-        <div className="space-y-5">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Nome Completo <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: Carlos Santos"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              onBlur={() => handleBlur('nome')}
-              className={inputClasse('nome')}
-            />
-          </div>
+      <div className="space-y-8">
+        {/* ---- Dados pessoais ---- */}
+        <section className="space-y-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle pb-2 border-b border-neutral-200">
+            Dados pessoais
+          </h2>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={user?.email || ''}
-              disabled
-              className="w-full border border-gray-200 rounded-xl p-3 text-sm bg-slate-50 text-slate-400 cursor-not-allowed"
-            />
-            <p className="text-xs text-gray-400 mt-1">O email não pode ser alterado.</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Telemóvel <span className="text-red-400">*</span>
-            </label>
-            <input
-              type="tel"
-              placeholder="Ex: 912345678"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
-              onBlur={() => handleBlur('telefone')}
-              maxLength={9}
-              className={inputClasse('telefone')}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Localização <span className="text-red-400">*</span>
-            </label>
-            <SeletorLocalizacao
-              distrito={distrito}
-              concelho={localidade}
-              onChange={(d, c) => {
-                setDistrito(d);
-                setLocalidade(c);
-                lookupTriggered.current = true;
-                handleBlur('localidade');
-              }}
-              obrigatorio
-              erro={touched['localidade'] && !localidade.trim()}
-            />
-            {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
-              <p className="text-[10px] text-green-600 mt-1">
-                <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente pelo código postal
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                Código Postal
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>
+                Nome Completo <span className="text-danger-500">*</span>
               </label>
+              <input
+                type="text"
+                placeholder="Ex: Carlos Santos"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                onBlur={() => handleBlur('nome')}
+                className={inputClasse('nome')}
+              />
+            </div>
+
+            <div>
+              <label className={labelCls}>Email</label>
+              <input
+                type="email"
+                value={user?.email || ''}
+                disabled
+                className="w-full border border-neutral-200 rounded-xl px-3.5 py-3 text-sm bg-neutral-100 text-fg-subtle cursor-not-allowed"
+              />
+              <p className="text-xs text-fg-subtle mt-1.5">O email não pode ser alterado.</p>
+            </div>
+
+            <div>
+              <label className={labelCls}>
+                Telemóvel <span className="text-danger-500">*</span>
+              </label>
+              <input
+                type="tel"
+                placeholder="Ex: 912345678"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
+                onBlur={() => handleBlur('telefone')}
+                maxLength={9}
+                className={inputClasse('telefone')}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ---- Localização ---- */}
+        <section className="space-y-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle pb-2 border-b border-neutral-200">
+            Localização
+          </h2>
+
+          <div className="grid sm:grid-cols-2 gap-5">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>
+                Distrito e Concelho <span className="text-danger-500">*</span>
+              </label>
+              <SeletorLocalizacao
+                distrito={distrito}
+                concelho={localidade}
+                onChange={(d, c) => {
+                  setDistrito(d);
+                  setLocalidade(c);
+                  lookupTriggered.current = true;
+                  handleBlur('localidade');
+                }}
+                obrigatorio
+                erro={touched['localidade'] && !localidade.trim()}
+              />
+              {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
+                <p className="text-xs font-medium text-success-700 mt-1.5 flex items-center gap-1">
+                  <Check weight="bold" /> Preenchido automaticamente pelo código postal
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className={labelCls}>Código Postal</label>
               <div className="relative">
                 <input
                   type="text"
@@ -270,14 +289,13 @@ export default function SetupPerfil() {
                   className={inputClasse('codigoPostal', 'pr-10')}
                 />
                 {cpLookup.loading && (
-                  <i className="fa-solid fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-accent"></i>
+                  <CircleNotch className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-accent" />
                 )}
               </div>
             </div>
+
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">
-                NIF <span className="text-xs text-gray-400">(opcional)</span>
-              </label>
+              <label className={labelCls}>NIF {opcional}</label>
               <input
                 type="text"
                 placeholder="123456789"
@@ -288,20 +306,16 @@ export default function SetupPerfil() {
                 className={inputClasse('nif')}
               />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Morada <span className="text-xs text-gray-400">(opcional)</span>
-            </label>
-            <div className="relative">
+            <div className="sm:col-span-2">
+              <label className={labelCls}>Morada {opcional}</label>
               <input
                 type="text"
                 list="ruas-list"
                 placeholder="Rua, número, bairro..."
                 value={morada}
                 onChange={(e) => setMorada(e.target.value)}
-                className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
+                className={inputClasse('morada')}
               />
               <datalist id="ruas-list">
                 {cpLookup.ruas.map((r) => (
@@ -310,62 +324,70 @@ export default function SetupPerfil() {
               </datalist>
             </div>
           </div>
+        </section>
+
+        {/* ---- Conta ---- */}
+        <section className="space-y-5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-fg-subtle pb-2 border-b border-neutral-200">
+            Conta
+          </h2>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-2">
-              Tipo de Conta
-            </label>
+            <label className={labelCls}>Tipo de Conta</label>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setTipoConta('particular')}
+                aria-pressed={tipoConta === 'particular'}
                 className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition flex items-center justify-center gap-2 ${
                   tipoConta === 'particular'
-                    ? 'border-accent bg-accent/5 text-accent'
-                    : 'border-gray-200 text-slate-500 hover:border-gray-300'
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-neutral-200 text-fg-muted hover:border-neutral-300 hover:bg-neutral-50'
                 }`}
               >
-                <i className="fa-solid fa-user"></i> Particular
+                <User weight={tipoConta === 'particular' ? 'fill' : 'regular'} /> Particular
               </button>
               <button
                 type="button"
                 onClick={() => setTipoConta('profissional')}
+                aria-pressed={tipoConta === 'profissional'}
                 className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition flex items-center justify-center gap-2 ${
                   tipoConta === 'profissional'
-                    ? 'border-accent bg-accent/5 text-accent'
-                    : 'border-gray-200 text-slate-500 hover:border-gray-300'
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-neutral-200 text-fg-muted hover:border-neutral-300 hover:bg-neutral-50'
                 }`}
               >
-                <i className="fa-solid fa-store"></i> Profissional
+                <Storefront weight={tipoConta === 'profissional' ? 'fill' : 'regular'} /> Profissional
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Biografia <span className="text-xs text-gray-400">(opcional)</span>
-            </label>
+            <label className={labelCls}>Biografia {opcional}</label>
             <textarea
               placeholder="Fale um pouco sobre si..."
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               maxLength={500}
               rows={3}
-              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent resize-none"
+              className="w-full border border-neutral-300 rounded-xl px-3.5 py-3 text-sm text-fg-strong placeholder:text-fg-subtle focus:outline-none focus:ring-3 focus:ring-accent/25 focus:border-accent resize-none transition"
             />
-            <p className="text-xs text-gray-400 text-right">{bio.length}/500</p>
+            <p className="text-xs text-fg-subtle text-right mt-1">{bio.length}/500</p>
           </div>
 
-          <div className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
+          <div className="flex items-center justify-between bg-white border border-neutral-200 rounded-xl p-3.5">
             <div>
-              <p className="text-sm font-semibold text-brand-900">Notificações</p>
-              <p className="text-xs text-gray-500">Receber atualizações sobre anúncios e mensagens</p>
+              <p className="text-sm font-bold text-fg-heading">Notificações</p>
+              <p className="text-xs text-fg-muted">Receber atualizações sobre anúncios e mensagens</p>
             </div>
             <button
               type="button"
               onClick={() => setNotificacoes(!notificacoes)}
-              className={`w-12 h-6 rounded-full transition relative ${
-                notificacoes ? 'bg-accent' : 'bg-gray-300'
+              role="switch"
+              aria-checked={notificacoes}
+              aria-label="Notificações"
+              className={`w-12 h-6 rounded-full transition relative flex-shrink-0 ${
+                notificacoes ? 'bg-accent' : 'bg-neutral-300'
               }`}
             >
               <span
@@ -375,32 +397,30 @@ export default function SetupPerfil() {
               />
             </button>
           </div>
+        </section>
 
-          {erro && (
-            <p className="text-xs text-red-500 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-              <i className="fa-solid fa-circle-exclamation mr-1"></i> {erro}
-            </p>
-          )}
+        {erro && (
+          <Alert tipo="erro" icone={<WarningCircle />} className="!p-3 !rounded-lg !items-center font-semibold">
+            {erro}
+          </Alert>
+        )}
 
-          <button
+        <div className="space-y-3">
+          <Button
+            tipo="primario"
+            tamanho="lg"
+            blocoCompleto
+            icone={<Check weight="bold" />}
             onClick={handleSubmit}
             disabled={saving}
-            className={`w-full font-bold py-3 rounded-xl transition text-white ${
-              saving
-                ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                : 'bg-accent hover:bg-accent-hover'
-            }`}
+            carregando={saving}
           >
-            {saving ? (
-              <><i className="fa-solid fa-spinner fa-spin mr-2"></i> A guardar...</>
-            ) : (
-              <><i className="fa-solid fa-check mr-2"></i> Concluir Registo</>
-            )}
-          </button>
+            {saving ? 'A guardar...' : 'Concluir Registo'}
+          </Button>
 
-          <p className="text-xs text-gray-400 text-center">
+          <p className="text-xs text-fg-subtle text-center">
             Ao continuar, concorda com os{' '}
-            <Link href="/termos" className="text-accent font-semibold hover:underline">Termos de Utilização</Link>.
+            <Link href="/termos" className="text-accent font-bold hover:underline">Termos de Utilização</Link>.
           </p>
         </div>
       </div>

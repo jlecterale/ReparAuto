@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, type Icon } from '@phosphor-icons/react';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { getCoordenadas } from '@/lib/geo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import Button from '@/components/ui/Button';
 
 interface PecaFormProps {
   onSuccess?: () => void;
@@ -105,15 +107,15 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-2">
+        <label className="block text-xs font-bold text-fg-subtle mb-2">
           O QUE PRETENDE ANUNCIAR? <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-3 gap-2">
-          {[
-            { value: 'venda', icon: 'fa-solid fa-gears', label: 'Venda de Peça' },
-            { value: 'desmonte', icon: 'fa-solid fa-car', label: 'Desmonte' },
-            { value: 'procura', icon: 'fa-solid fa-magnifying-glass', label: 'Procura-se' },
-          ].map((opt) => (
+          {([
+            { value: 'venda', Icon: GearSix, label: 'Venda de Peça' },
+            { value: 'desmonte', Icon: Car, label: 'Desmonte' },
+            { value: 'procura', Icon: MagnifyingGlass, label: 'Procura-se' },
+          ] as { value: string; Icon: Icon; label: string }[]).map((opt) => (
             <label
               key={opt.value}
               className={`flex flex-col items-center justify-center p-3 border-2 rounded-xl hover:border-accent cursor-pointer transition text-center select-none ${
@@ -130,15 +132,15 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
                 onChange={() => atualizar('tipo', opt.value)}
                 className="hidden"
               />
-              <i className={`${opt.icon} text-lg text-slate-500 mb-1`}></i>
-              <span className="text-xs font-bold text-slate-700">{opt.label}</span>
+              <opt.Icon size={20} className="text-fg-subtle mb-1" />
+              <span className="text-xs font-bold text-fg">{opt.label}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">
+        <label className="block text-xs font-bold text-fg-subtle mb-1">
           Título do Anúncio <span className="text-red-500">*</span>
         </label>
         <input
@@ -152,7 +154,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
             Categoria <span className="text-red-500">*</span>
           </label>
           <select
@@ -166,7 +168,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
             Estado da Peça <span className="text-red-500">*</span>
           </label>
           <select
@@ -183,7 +185,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
             Marca do Carro Compatível <span className="text-red-500">*</span>
           </label>
           <input
@@ -195,7 +197,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
             Preço (€) {form.tipo !== 'procura' ? <span className="text-red-500">*</span> : '(opcional)'}
           </label>
           <input
@@ -209,7 +211,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">Localização</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">Localização</label>
         <SeletorLocalizacao
           distrito={form.localizacaoDistrito}
           concelho={form.localizacao}
@@ -221,7 +223,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">Descrição (opcional)</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">Descrição (opcional)</label>
         <textarea
           rows={4}
           placeholder="Descreva o estado da peça, compatibilidade, etc."
@@ -232,12 +234,12 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-        <span className="block text-xs font-bold text-slate-500 mb-2 flex items-center gap-1">
-          <i className="fa-solid fa-address-card text-blue-500"></i> Contacto do Vendedor
+        <span className="block text-xs font-bold text-fg-subtle mb-2 flex items-center gap-1">
+          <IdentificationCard className="text-blue-600" /> Contacto do Vendedor
         </span>
         <div className="space-y-2">
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">WhatsApp / Telefone</label>
+            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">WhatsApp / Telefone</label>
             <input
               type="tel"
               placeholder="912345678"
@@ -246,7 +248,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
               className="w-full border border-gray-300 rounded-xl p-2 text-sm focus:outline-none focus:border-green-500"
             />
           </div>
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 select-none">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-fg-muted select-none">
             <input
               type="checkbox"
               checked={telefoneDiferente}
@@ -262,7 +264,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">Telefone</label>
+              <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">Telefone</label>
               <input
                 type="tel"
                 placeholder="912345678"
@@ -273,7 +275,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
             </div>
           )}
           <div>
-            <label className="block text-[10px] font-semibold text-slate-500 mb-0.5">Email de Contacto</label>
+            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">Email de Contacto</label>
             <input
               type="email"
               placeholder="seu@email.com"
@@ -291,19 +293,22 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       <div className="flex gap-3">
         {onCancel && (
-          <button
+          <Button
+            tipo="secundario"
             onClick={onCancel}
-            className="flex-1 bg-white hover:bg-slate-50 text-brand-700 font-semibold py-2.5 rounded-xl transition border border-slate-300 text-sm"
+            className="flex-1"
           >
             Voltar
-          </button>
+          </Button>
         )}
-        <button
+        <Button
+          tipo="primario"
+          icone={<PlusCircle />}
           onClick={submit}
-          className="flex-1 bg-accent hover:bg-accent-hover text-white font-semibold py-2.5 rounded-xl transition text-sm"
+          className="flex-1"
         >
-          <i className="fa-solid fa-circle-plus mr-1"></i> Publicar Anúncio
-        </button>
+          Publicar Anúncio
+        </Button>
       </div>
     </div>
   );

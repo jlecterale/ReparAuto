@@ -1,9 +1,12 @@
 'use client';
 
+import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
+import Badge from '@/components/ui/Badge';
+import Alert from '@/components/ui/Alert';
 import type { Carro } from '@/types/carro';
 
 export default function CarCard({ carro }: { carro: Carro }) {
@@ -28,20 +31,12 @@ export default function CarCard({ carro }: { carro: Carro }) {
           return <div className="w-full h-full flex items-center justify-center text-5xl">{fotoData.emoji}</div>;
         })() : (
           <div className="w-full h-full flex items-center justify-center text-slate-400 text-4xl">
-            <i className="fa-solid fa-car"></i>
+            <Car />
           </div>
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {isNovo && (
-            <span className="bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">
-              Novo
-            </span>
-          )}
-          {isLowCost && (
-            <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">
-              Low-Cost
-            </span>
-          )}
+          {isNovo && <Badge cor="green" variante="solid" className="shadow">Novo</Badge>}
+          {isLowCost && <Badge cor="accent" variante="solid" className="shadow">Low-Cost</Badge>}
         </div>
         <button
           onClick={(e) => {
@@ -51,18 +46,18 @@ export default function CarCard({ carro }: { carro: Carro }) {
           className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition shadow ${
             isFavorito(carro.id)
               ? 'bg-red-500 text-white'
-              : 'bg-white/80 text-slate-600 hover:bg-white'
+              : 'bg-white/80 text-fg-muted hover:bg-white'
           }`}
         >
-          <i className={`fa-solid fa-heart ${isFavorito(carro.id) ? '' : 'text-slate-400'}`}></i>
+          <Heart weight={isFavorito(carro.id) ? 'fill' : 'regular'} className={isFavorito(carro.id) ? '' : 'text-slate-400'} />
         </button>
       </div>
 
       <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-extrabold text-brand-900 text-base leading-tight mb-1">
+        <h3 className="font-extrabold text-fg-heading text-base leading-tight mb-1">
           {carro.marca} {carro.modelo}
         </h3>
-        <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
+        <div className="flex items-center gap-2 text-xs text-fg-subtle mb-2">
           <span>{carro.anoFabricacao}</span>
           <span className="w-1 h-1 rounded-full bg-slate-300"></span>
           <span>{carro.km?.toLocaleString('pt-PT')} km</span>
@@ -70,8 +65,8 @@ export default function CarCard({ carro }: { carro: Carro }) {
           <span>{carro.combustivel}</span>
         </div>
         {carro.vendedorNome && (
-          <div className="flex items-center gap-1 text-[10px] text-slate-400 mb-1">
-            <i className="fa-solid fa-user"></i>
+          <div className="flex items-center gap-1 text-[11px] text-fg-muted mb-1">
+            <User />
             <span className="truncate">{carro.vendedorNome}</span>
           </div>
         )}
@@ -79,16 +74,19 @@ export default function CarCard({ carro }: { carro: Carro }) {
           <span className="text-xl font-extrabold text-accent">
             {formatarPreco(carro.preco)}
           </span>
-          <span className="text-xs text-slate-400 flex items-center gap-1">
-            <i className="fa-solid fa-location-dot"></i>
+          <span className="text-xs text-fg-muted flex items-center gap-1">
+            <MapPin />
             {carro.local || 'Portugal'}
           </span>
         </div>
         {carro.estadoVeiculo === 'manutencao' && (
-          <div className="mt-2 text-xs font-semibold text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-2 py-1 flex items-center gap-1">
-            <i className="fa-solid fa-tools"></i>
+          <Alert
+            tipo="aviso"
+            icone={<Wrench />}
+            className="mt-2 !p-2 !rounded-lg !items-center font-semibold"
+          >
             Precisa de manutenção
-          </div>
+          </Alert>
         )}
       </div>
     </div>

@@ -1,5 +1,7 @@
+import { Check, CircleNotch, Star, StarHalf, Trash, X } from '@phosphor-icons/react';
 import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import type { Review, StatusReview } from '@/types/review';
 
 interface ReviewsQueueProps {
@@ -14,10 +16,12 @@ function StarRating({ nota }: { nota: number }) {
   return (
     <span className="inline-flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
-        <i
+        <Star
           key={star}
-          className={`fa-star text-[10px] ${star <= nota ? 'fa-solid text-yellow-400' : 'fa-regular text-slate-300'}`}
-        ></i>
+          size={11}
+          weight={star <= nota ? 'fill' : 'regular'}
+          className={star <= nota ? 'text-yellow-500' : 'text-slate-300'}
+        />
       ))}
     </span>
   );
@@ -39,7 +43,7 @@ export default function ReviewsQueue({ reviews, loading, onApprove, onReject, on
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <i className="fa-solid fa-spinner fa-spin text-2xl text-accent"></i>
+        <CircleNotch className="animate-spin text-2xl text-accent" />
       </div>
     );
   }
@@ -51,16 +55,14 @@ export default function ReviewsQueue({ reviews, loading, onApprove, onReject, on
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-extrabold text-brand-900 flex items-center gap-2">
-          <i className="fa-solid fa-star-half-stroke text-yellow-400"></i> Avaliações
-          {pendentes.length > 0 && (
-            <span className="bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendentes.length}</span>
-          )}
+        <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
+          <StarHalf className="text-yellow-400" /> Avaliações
+          {pendentes.length > 0 && <Badge cor="yellow" variante="solid">{pendentes.length}</Badge>}
         </h3>
       </div>
 
       {sorted.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6 bg-slate-50 rounded-xl">
+        <p className="text-sm text-fg-subtle text-center py-6 bg-slate-50 rounded-xl">
           Nenhuma avaliação submetida.
         </p>
       ) : (
@@ -72,16 +74,16 @@ export default function ReviewsQueue({ reviews, loading, onApprove, onReject, on
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <Badge cor={statusColors[review.status] as any}>{statusLabels[review.status]}</Badge>
                     <StarRating nota={review.nota} />
-                    <span className="text-[10px] text-slate-400">{formatarDataHora(review.dataCriacao)}</span>
+                    <span className="text-[10px] text-fg-subtle">{formatarDataHora(review.dataCriacao)}</span>
                   </div>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-fg-subtle">
                     <strong>De:</strong> {review.autorNome} ({review.autorUid.slice(0, 8)}...)
                   </p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-fg-subtle">
                     <strong>Para:</strong> {review.vendedorEmail}
                   </p>
                   {review.comentario && (
-                    <p className="text-sm text-slate-700 mt-2 bg-slate-50 rounded-lg p-2">{review.comentario}</p>
+                    <p className="text-sm text-fg mt-2 bg-slate-50 rounded-lg p-2">{review.comentario}</p>
                   )}
                 </div>
               </div>
@@ -89,26 +91,33 @@ export default function ReviewsQueue({ reviews, loading, onApprove, onReject, on
               <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
                 {review.status === 'pendente' && (
                   <>
-                    <button
+                    <Button
+                      tipo="verde"
+                      tamanho="sm"
+                      icone={<Check />}
                       onClick={() => onApprove(review.id)}
-                      className="text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition"
                     >
-                      <i className="fa-solid fa-check mr-1"></i> Aprovar
-                    </button>
-                    <button
+                      Aprovar
+                    </Button>
+                    <Button
+                      tipo="perigo"
+                      tamanho="sm"
+                      icone={<X />}
                       onClick={() => onReject(review.id)}
-                      className="text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition"
                     >
-                      <i className="fa-solid fa-xmark mr-1"></i> Rejeitar
-                    </button>
+                      Rejeitar
+                    </Button>
                   </>
                 )}
-                <button
+                <Button
+                  tipo="secundario"
+                  tamanho="sm"
+                  icone={<Trash />}
                   onClick={() => onDelete(review.id)}
-                  className="text-xs font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg transition ml-auto"
+                  className="ml-auto"
                 >
-                  <i className="fa-solid fa-trash-can mr-1"></i> Eliminar
-                </button>
+                  Eliminar
+                </Button>
               </div>
             </div>
           ))}

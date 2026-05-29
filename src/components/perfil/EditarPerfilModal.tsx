@@ -1,7 +1,10 @@
 'use client';
 
+import { Check, CircleNotch, WarningCircle } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
 import { useState, useEffect, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
+import Alert from '@/components/ui/Alert';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
@@ -150,7 +153,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
     <Modal show={show} onClose={onClose} titulo="Editar Perfil" tamanho="md">
       <div className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Nome Completo</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">Nome Completo</label>
           <input
             type="text"
             value={nome}
@@ -161,7 +164,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Telemóvel</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">Telemóvel</label>
           <input
             type="tel"
             value={telefone}
@@ -173,7 +176,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Localização</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">Localização</label>
           <SeletorLocalizacao
             distrito={distrito}
             concelho={localidade}
@@ -185,14 +188,14 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           />
           {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
             <p className="text-[10px] text-green-600 mt-1">
-              <i className="fa-solid fa-check mr-0.5"></i> Preenchido automaticamente pelo código postal
+              <Check className="mr-0.5" /> Preenchido automaticamente pelo código postal
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Código Postal</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">Código Postal</label>
             <div className="relative">
               <input
                 type="text"
@@ -215,12 +218,12 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
                 className={inputClasse('codigoPostal', 'pr-10')}
               />
               {cpLookup.loading && (
-                <i className="fa-solid fa-spinner fa-spin absolute right-3 top-1/2 -translate-y-1/2 text-accent"></i>
+                <CircleNotch className="animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-accent" />
               )}
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">NIF</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">NIF</label>
             <input
               type="text"
               value={nif}
@@ -233,7 +236,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Morada</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">Morada</label>
           <div className="relative">
             <input
               type="text"
@@ -251,7 +254,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-2">Tipo de Conta</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-2">Tipo de Conta</label>
           <div className="flex gap-3">
             <button
               type="button"
@@ -259,7 +262,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
               className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
                 tipoConta === 'particular'
                   ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-slate-500'
+                  : 'border-gray-200 text-fg-subtle'
               }`}
             >
               Particular
@@ -270,7 +273,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
               className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
                 tipoConta === 'profissional'
                   ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-slate-500'
+                  : 'border-gray-200 text-fg-subtle'
               }`}
             >
               Profissional
@@ -279,7 +282,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Biografia</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">Biografia</label>
           <textarea
             value={bio}
             onChange={(e) => setBio(e.target.value)}
@@ -287,13 +290,13 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             rows={2}
             className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent resize-none"
           />
-          <p className="text-xs text-gray-400 text-right">{bio.length}/500</p>
+          <p className="text-xs text-fg-subtle text-right">{bio.length}/500</p>
         </div>
 
         <div className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
           <div>
-            <p className="text-sm font-semibold text-brand-900">Notificações</p>
-            <p className="text-xs text-gray-500">Receber atualizações sobre anúncios</p>
+            <p className="text-sm font-semibold text-fg-heading">Notificações</p>
+            <p className="text-xs text-fg-subtle">Receber atualizações sobre anúncios</p>
           </div>
           <button
             type="button"
@@ -311,26 +314,22 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         {erro && (
-          <p className="text-xs text-red-500 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            <i className="fa-solid fa-circle-exclamation mr-1"></i> {erro}
-          </p>
+          <Alert tipo="erro" icone={<WarningCircle />} className="!p-3 !rounded-lg !items-center font-semibold">
+            {erro}
+          </Alert>
         )}
 
-        <button
+        <Button
+          tipo="primario"
+          tamanho="lg"
+          blocoCompleto
+          icone={<Check />}
           onClick={handleSave}
           disabled={saving}
-          className={`w-full font-bold py-3 rounded-xl transition text-white ${
-            saving
-              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-              : 'bg-accent hover:bg-accent-hover'
-          }`}
+          carregando={saving}
         >
-          {saving ? (
-            <><i className="fa-solid fa-spinner fa-spin mr-2"></i> A guardar...</>
-          ) : (
-            <><i className="fa-solid fa-check mr-2"></i> Guardar Alterações</>
-          )}
-        </button>
+          {saving ? 'A guardar...' : 'Guardar Alterações'}
+        </Button>
       </div>
     </Modal>
   );
