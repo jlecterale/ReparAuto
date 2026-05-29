@@ -143,3 +143,45 @@ export function formatarDataHora(data: { toDate?: () => Date; seconds?: number }
   if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT', opts);
   return '—';
 }
+
+export function gerarTituloIntencao(criterios: {
+  marca: string;
+  modelo: string;
+  precoMaximo: number;
+}): string {
+  return `Procuro: ${criterios.marca} ${criterios.modelo} até ${criterios.precoMaximo}€`;
+}
+
+export function validarIntencaoCompra(dados: Record<string, any>): { valido: boolean; erros: string[] } {
+  const erros: string[] = [];
+  const c = dados.criterios;
+
+  if (!c?.marca) erros.push('Marca é obrigatória');
+  if (!c?.modelo) erros.push('Modelo é obrigatório');
+  if (!c?.anoMinimo) erros.push('Ano mínimo é obrigatório');
+  if (!c?.precoMaximo) erros.push('Orçamento máximo é obrigatório');
+
+  if (c?.anoMinimo && c?.anoMaximo) {
+    if (c.anoMinimo > c.anoMaximo) erros.push('Ano mínimo não pode ser maior que o máximo');
+    if (c.anoMinimo < 1990) erros.push('Ano mínimo deve ser 1990 ou depois');
+    if (c.anoMaximo > new Date().getFullYear()) erros.push('Ano máximo não pode ser no futuro');
+  }
+
+  if (c?.precoMinimo && c?.precoMaximo) {
+    if (c.precoMinimo > c.precoMaximo) erros.push('Preço mínimo não pode ser maior que o máximo');
+    if (c.precoMaximo <= 0) erros.push('Orçamento máximo deve ser maior que 0');
+  }
+
+  if (c?.quilometragemMaxima != null && c.quilometragemMaxima < 0) {
+    erros.push('Quilometragem deve ser maior ou igual a 0');
+  }
+
+  if (!c?.combustivel || c.combustivel.length === 0) erros.push('Selecione ao menos um tipo de combustível');
+  if (!c?.tipoTransmissao || c.tipoTransmissao.length === 0) erros.push('Selecione ao menos um tipo de transmissão');
+  if (!c?.localizacao?.distrito) erros.push('Distrito é obrigatório');
+  if (c?.localizacao?.raio === undefined) erros.push('Raio de busca é obrigatório');
+  if (!dados.contatoPreferido) erros.push('Selecione forma de contacto preferida');
+  if (dados.descricao && dados.descricao.length > 500) erros.push('Descrição não pode ter mais de 500 caracteres');
+
+  return { valido: erros.length === 0, erros };
+}

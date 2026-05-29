@@ -40,6 +40,11 @@ export default function Header() {
           <Link href="/anunciar" className="hover:text-accent transition flex items-center gap-1 text-white">
             <i className="fa-solid fa-circle-plus"></i> Vender
           </Link>
+          {isLoggedIn && (
+            <Link href="/minhas-intencoes" className="hover:text-accent transition flex items-center gap-1 text-white">
+              <i className="fa-solid fa-magnifying-glass"></i> Comprar
+            </Link>
+          )}
           <Link href="/pecas" className="hover:text-accent transition flex items-center gap-1 text-white">
             <i className="fa-solid fa-gears"></i> Peças & Desmonte
           </Link>

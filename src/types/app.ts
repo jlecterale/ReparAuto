@@ -4,6 +4,7 @@ import type { FavoritosContextValue } from './favoritos';
 import type { Carro, FiltroAtivo, SortOrdem } from './carro';
 import type { Peca, FiltroTipoPeca } from './peca';
 import type { ChatContextValue } from './chat';
+import type { IntencaoContextValue } from './intencao';
 
 export interface CarrosContextValue {
   carros: Carro[];
@@ -66,6 +67,7 @@ export interface AppContextValue {
   pecas: PecasContextValue;
   favoritos: FavoritosContextValue;
   chat: ChatContextValue;
+  intencoes: IntencaoContextValue;
 }
 
 export interface AppProviderProps {

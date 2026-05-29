@@ -13,6 +13,15 @@ export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
 
+export const COMBUSTIVEIS_INTENCAO = ['gasolina', 'diesel', 'hibrido', 'eletrico', 'GPL', 'qualquer'];
+export const TRANSMISSOES_INTENCAO = ['manual', 'automatico', 'qualquer'];
+export const CORES_INTENCAO = ['branco', 'preto', 'prata', 'azul', 'vermelho', 'verde', 'cinzento', 'outro'];
+export const CARROCERIAS_INTENCAO = ['sedan', 'suv', 'hatchback', 'coupe', 'camionieta', 'monovolume'];
+export const ITENS_SERIE = ['GPS', 'Teto panorâmico', 'Couro', 'Ar condicionado', 'Vidros elétricos', 'Sensores estacionamento', 'Bluetooth'];
+export const STATUS_INTENCAO = ['ativa', 'pausada', 'expirada', 'deletada'] as const;
+export const CONTATO_PREFERIDO = ['chat', 'whatsapp', 'ambos'] as const;
+export const TEMPO_EXPIRACAO_INTENCAO_MS = 90 * 24 * 60 * 60 * 1000;
+
 // Listas
 export const CONCELHOS = getAllConcelhos();
 

@@ -12,7 +12,10 @@ import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
 import PecaForm from '@/components/pecas/PecaForm';
+import CriarIntencaoCompra from '@/components/intencao/CriarIntencaoCompra';
 import type { CarroFormData } from '@/types/carro';
+
+type Modo = 'vender' | 'comprar';
 
 type CategoriaAnuncio = 'carro' | 'peca';
 
@@ -51,6 +54,7 @@ export default function Anunciar() {
   const { user } = auth;
   const toast = useToast();
 
+  const [modo, setModo] = useState<Modo>('vender');
   const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(null);
   const [passo, setPasso] = useState(0);
   const [publicado, setPublicado] = useState(false);
@@ -161,7 +165,22 @@ export default function Anunciar() {
       : 'Preencha os dados abaixo';
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
+    <div className="max-w-2xl mx-auto page-enter">
+      <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1">
+        <button onClick={() => setModo('vender')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition ${modo === 'vender' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
+          <i className="fa-solid fa-circle-plus"></i> Vender Carro / Peça
+        </button>
+        <button onClick={() => setModo('comprar')}
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-lg transition ${modo === 'comprar' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
+          <i className="fa-solid fa-magnifying-glass"></i> Procurar Carro
+        </button>
+      </div>
+
+      {modo === 'comprar' ? (
+        <CriarIntencaoCompra />
+      ) : (
+      <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
       <h2 className="text-2xl font-extrabold text-brand-900 mb-1">{titulo}</h2>
       <p className="text-gray-500 text-sm mb-5">{subtitulo}</p>
 
@@ -205,6 +224,8 @@ export default function Anunciar() {
           onCancel={() => { setCategoria(null); setPasso(0); }}
           onSuccess={() => setPublicado(true)}
         />
+      )}
+    </div>
       )}
     </div>
   );

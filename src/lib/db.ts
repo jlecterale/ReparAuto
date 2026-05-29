@@ -26,6 +26,7 @@ import type { Notificacao, TipoNotificacao } from '@/types/notificacao';
 import type { Review, ReviewInput, StatusReview } from '@/types/review';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
+import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
 
 type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
 type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
@@ -1019,5 +1020,372 @@ export async function clearVerificationUrls(id: string): Promise<void> {
     } as any);
   } catch (err) {
     console.error('[DB] Erro ao limpar URLs de verificação:', err);
+  }
+}
+
+// ============ INTENCOES DE COMPRA ============
+
+function cleanUndefined(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) continue;
+    if (value !== null && typeof value === 'object' && !(value instanceof Timestamp)) {
+      result[key] = Array.isArray(value)
+        ? value.map((item: any) =>
+            item !== null && typeof item === 'object' && !(item instanceof Timestamp)
+              ? cleanUndefined(item)
+              : item,
+          )
+        : cleanUndefined(value);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
+const INTENCOES_COLLECTION = 'intencoes_compra';
+const CONTATOS_INTENCAO_COLLECTION = 'contatos_intencao';
+const DENUNCIAS_INTENCAO_COLLECTION = 'denuncias_intencao';
+
+export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<string> {
+  try {
+    const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
+    await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
+      id: intencaoId,
+      ...dados as any,
+      status: 'ativa',
+      prioritaria: false,
+      stats: {
+        visualizacoes: 0,
+        visualizacoes7Dias: 0,
+        contatos: 0,
+        contatos7Dias: 0,
+      },
+      criadaEm: Timestamp.now(),
+      atualizadaEm: Timestamp.now(),
+    }));
+    return intencaoId;
+  } catch (err) {
+    console.error('[DB] Erro ao criar intenção de compra:', err);
+    throw err;
+  }
+}
+
+export async function getIntencaoCompra(id: string): Promise<IntencaoCompra | null> {
+  try {
+    const docRef = doc(db, INTENCOES_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      await updateDoc(docRef as any, {
+        'stats.visualizacoes': increment(1),
+        'stats.visualizacoes7Dias': increment(1),
+      } as any);
+      return { id: snap.id, ...snap.data() } as IntencaoCompra;
+    }
+    return null;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar intenção:', err);
+    return null;
+  }
+}
+
+export async function getIntencoesPorUsuario(userId: string): Promise<IntencaoCompra[]> {
+  try {
+    const q = query(
+      collection(db, INTENCOES_COLLECTION),
+      where('userId', '==', userId),
+    );
+    const snap = await getDocs(q);
+    const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
+    results.sort((a, b) => {
+      const aTime = a.atualizadaEm?.toDate?.()?.getTime() || 0;
+      const bTime = b.atualizadaEm?.toDate?.()?.getTime() || 0;
+      return bTime - aTime;
+    });
+    return results;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar intenções do utilizador:', err);
+    return [];
+  }
+}
+
+export async function atualizarIntencaoCompra(id: string, userId: string, updates: Record<string, unknown>): Promise<void> {
+  try {
+    const docRef = doc(db, INTENCOES_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Intenção não encontrada');
+    const data = snap.data() as IntencaoCompra;
+    if (data.userId !== userId) throw new Error('Não autorizado');
+    await updateDoc(docRef as any, { ...updates, atualizadaEm: Timestamp.now() } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar intenção:', err);
+    throw err;
+  }
+}
+
+export async function deletarIntencaoCompra(id: string, userId: string): Promise<void> {
+  try {
+    const docRef = doc(db, INTENCOES_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Intenção não encontrada');
+    const data = snap.data() as IntencaoCompra;
+    if (data.userId !== userId) throw new Error('Não autorizado');
+    await updateDoc(docRef as any, {
+      status: 'deletada',
+      deletadaEm: Timestamp.now(),
+      atualizadaEm: Timestamp.now(),
+    } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao deletar intenção:', err);
+    throw err;
+  }
+}
+
+export async function pausarIntencaoCompra(id: string, userId: string): Promise<void> {
+  try {
+    const docRef = doc(db, INTENCOES_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Intenção não encontrada');
+    const data = snap.data() as IntencaoCompra;
+    if (data.userId !== userId) throw new Error('Não autorizado');
+    await updateDoc(docRef as any, {
+      status: 'pausada',
+      expiradoEm: Timestamp.now(),
+      atualizadaEm: Timestamp.now(),
+    } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao pausar intenção:', err);
+    throw err;
+  }
+}
+
+export async function reativarIntencaoCompra(id: string, userId: string): Promise<void> {
+  try {
+    const docRef = doc(db, INTENCOES_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Intenção não encontrada');
+    const data = snap.data() as IntencaoCompra;
+    if (data.userId !== userId) throw new Error('Não autorizado');
+    await updateDoc(docRef as any, {
+      status: 'ativa',
+      expiradoEm: null,
+      atualizadaEm: Timestamp.now(),
+    } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao reativar intenção:', err);
+    throw err;
+  }
+}
+
+export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId: string): Promise<IntencaoCompra[]> {
+  try {
+    const q = query(
+      collection(db, INTENCOES_COLLECTION),
+      where('status', '==', 'ativa'),
+      where('criterios.marca', '==', carro.marca),
+    );
+    const snap = await getDocs(q);
+    let resultados = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
+
+    resultados = resultados.filter((intencao) => {
+      if (intencao.userId === usuarioId) return false;
+      const c = intencao.criterios;
+
+      if (c.anoMinimo && carro.anoFabricacao && carro.anoFabricacao < c.anoMinimo) return false;
+      if (c.anoMaximo && carro.anoFabricacao && carro.anoFabricacao > c.anoMaximo) return false;
+      if (c.precoMinimo && carro.preco && carro.preco < c.precoMinimo) return false;
+      if (carro.preco && carro.preco > c.precoMaximo) return false;
+      if (c.combustivel && !c.combustivel.includes('qualquer') && !c.combustivel.includes(carro.combustivel?.toLowerCase())) return false;
+      if (c.tipoTransmissao && !c.tipoTransmissao.includes('qualquer') && !c.tipoTransmissao.includes(carro.cambio?.toLowerCase())) return false;
+      if (c.quilometragemMaxima && carro.km && carro.km > c.quilometragemMaxima) return false;
+      if (c.localizacao?.distrito && carro.local && carro.local !== c.localizacao.distrito) return false;
+
+      return true;
+    });
+
+    return resultados;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar intenções match:', err);
+    return [];
+  }
+}
+
+export async function iniciarContatoIntencao(
+  intencaoId: string,
+  vendedorId: string,
+  carroId?: string,
+  mensagem?: string,
+): Promise<string> {
+  try {
+    const contatoId = doc(collection(db, CONTATOS_INTENCAO_COLLECTION)).id;
+    const chatId = doc(collection(db, 'messages')).id;
+
+    await setDoc(doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId), {
+      id: contatoId,
+      intencaoId,
+      vendedorId,
+      carroId: carroId || null,
+      titulo: carroId ? 'Tenho um carro para você!' : 'Interesse em sua intenção',
+      descricao: mensagem || null,
+      precoOferido: null,
+      status: 'aberto',
+      chatId,
+      marcadoComoRelevante: false,
+      criadoEm: Timestamp.now(),
+      atualizadoEm: Timestamp.now(),
+    });
+
+    if (mensagem) {
+      await setDoc(doc(db, 'messages', chatId), {
+        listingId: intencaoId,
+        listingType: 'intencao',
+        listingTitle: '',
+        fromUid: vendedorId,
+        fromNome: '',
+        toUid: '',
+        toNome: '',
+        participants: [vendedorId],
+        mensagem,
+        lida: false,
+        dataCriacao: Timestamp.now(),
+      });
+    }
+
+    await updateDoc(doc(db, INTENCOES_COLLECTION, intencaoId) as any, {
+      'stats.contatos': increment(1),
+      'stats.contatos7Dias': increment(1),
+    } as any);
+
+    return contatoId;
+  } catch (err) {
+    console.error('[DB] Erro ao iniciar contato:', err);
+    throw err;
+  }
+}
+
+export async function getContatosPorIntencao(intencaoId: string): Promise<ContatoIntencao[]> {
+  try {
+    const q = query(
+      collection(db, CONTATOS_INTENCAO_COLLECTION),
+      where('intencaoId', '==', intencaoId),
+    );
+    const snap = await getDocs(q);
+    const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as ContatoIntencao));
+    results.sort((a, b) => {
+      const aTime = a.criadoEm?.toDate?.()?.getTime() || 0;
+      const bTime = b.criadoEm?.toDate?.()?.getTime() || 0;
+      return bTime - aTime;
+    });
+    return results;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar contatos:', err);
+    return [];
+  }
+}
+
+export async function marcarContatoRelevante(contatoId: string, userId: string): Promise<void> {
+  try {
+    const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw new Error('Contato não encontrado');
+    await updateDoc(docRef as any, {
+      marcadoComoRelevante: true,
+      atualizadoEm: Timestamp.now(),
+    } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao marcar contato relevante:', err);
+    throw err;
+  }
+}
+
+export async function rejeitarContato(contatoId: string, userId: string): Promise<void> {
+  try {
+    const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
+    await updateDoc(docRef as any, {
+      status: 'rejeitado',
+      atualizadoEm: Timestamp.now(),
+    } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao rejeitar contato:', err);
+    throw err;
+  }
+}
+
+// ============ DENUNCIAS INTENCAO ============
+
+export async function addDenunciaIntencao(data: {
+  intencaoId: string;
+  denunciantId: string;
+  motivo: string;
+  descricao: string;
+}): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, DENUNCIAS_INTENCAO_COLLECTION), {
+      ...data,
+      status: 'aberta',
+      criadaEm: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] Erro ao criar denúncia de intenção:', err);
+    throw err;
+  }
+}
+
+export async function getDenunciasIntencao(): Promise<DenunciaIntencao[]> {
+  try {
+    const q = query(collection(db, DENUNCIAS_INTENCAO_COLLECTION), orderBy('criadaEm', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as DenunciaIntencao));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar denúncias:', err);
+    return [];
+  }
+}
+
+export async function updateDenunciaIntencaoStatus(
+  id: string,
+  status: string,
+  investigadorId: string,
+  acaoTomada?: string,
+  notas?: string,
+): Promise<void> {
+  try {
+    const updates: Record<string, unknown> = { status, investigadorId };
+    if (status === 'resolvida') {
+      updates.resolvidaEm = Timestamp.now();
+    }
+    if (acaoTomada) updates.acaoTomada = acaoTomada;
+    if (notas) updates.notas = notas;
+    await updateDoc(doc(db, DENUNCIAS_INTENCAO_COLLECTION, id) as any, updates as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar denúncia:', err);
+    throw err;
+  }
+}
+
+export async function getAllIntencoesAdmin(): Promise<IntencaoCompra[]> {
+  try {
+    const snap = await getDocs(collection(db, INTENCOES_COLLECTION));
+    const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
+    results.sort((a, b) => {
+      const aTime = a.atualizadaEm?.toDate?.()?.getTime() || 0;
+      const bTime = b.atualizadaEm?.toDate?.()?.getTime() || 0;
+      return bTime - aTime;
+    });
+    return results;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar intenções (admin):', err);
+    return [];
+  }
+}
+
+export async function updateIntencaoStatus(id: string, status: string): Promise<void> {
+  try {
+    await updateDoc(doc(db, INTENCOES_COLLECTION, id) as any, { status, atualizadaEm: Timestamp.now() } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar status da intenção:', err);
+    throw err;
   }
 }

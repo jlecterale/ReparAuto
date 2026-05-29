@@ -1,6 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type ListingType = 'carro' | 'peca';
+export type ListingType = 'carro' | 'peca' | 'intencao';
 
 export interface Mensagem {
   id: string;

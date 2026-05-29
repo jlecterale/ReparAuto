@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
-import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca } from '@/lib/db';
+import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario } from '@/lib/db';
+import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -28,6 +29,7 @@ export default function ProfileLoggedIn() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [meusCarros, setMeusCarros] = useState<Carro[]>([]);
   const [minhasPecas, setMinhasPecas] = useState<Peca[]>([]);
+  const [minhasIntencoes, setMinhasIntencoes] = useState<IntencaoCompra[]>([]);
   const [loading, setLoading] = useState(true);
   const [editCarro, setEditCarro] = useState<Carro | null>(null);
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
@@ -39,12 +41,14 @@ export default function ProfileLoggedIn() {
   const carregar = useCallback(async () => {
     if (!user?.email) return;
     setLoading(true);
-    const [carrosData, pecasData] = await Promise.all([
+    const [carrosData, pecasData, intencoesData] = await Promise.all([
       getCarrosByCreator(user.email),
       getPecasByCreator(user.email),
+      getIntencoesPorUsuario(user.uid).catch(() => []),
     ]);
     setMeusCarros(carrosData);
     setMinhasPecas(pecasData);
+    setMinhasIntencoes(intencoesData.filter((i: IntencaoCompra) => i.status === 'ativa'));
     setLoading(false);
   }, [user?.email]);
 
@@ -349,6 +353,28 @@ export default function ProfileLoggedIn() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* My Purchase Intentions */}
+      <div className="bg-white rounded-2xl shadow-lg p-6">
+        <h4 className="font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+          <i className="fa-solid fa-magnifying-glass text-accent"></i> Minhas Intenções de Compra
+        </h4>
+        {minhasIntencoes.length === 0 ? (
+          <div className="text-center py-6 text-slate-400 text-sm bg-slate-50 rounded-xl">
+            <p>Nenhuma intenção de compra ativa.</p>
+            <button onClick={() => router.push('/anunciar')} className="mt-2 text-accent hover:text-accent-hover font-semibold text-xs">
+              <i className="fa-solid fa-circle-plus mr-1"></i> Criar intenção
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-slate-500 mb-2">{minhasIntencoes.length} intenção(ões) ativa(s)</p>
+            <button onClick={() => router.push('/minhas-intencoes')} className="text-xs font-bold text-accent hover:text-accent-hover">
+              <i className="fa-solid fa-arrow-right mr-1"></i> Ver todas as intenções
+            </button>
           </div>
         )}
       </div>

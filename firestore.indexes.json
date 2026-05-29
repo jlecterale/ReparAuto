@@ -15,6 +15,41 @@
         { "fieldPath": "vendedorEmail", "order": "ASCENDING" },
         { "fieldPath": "dataCriacao", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "intencoes_compra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "atualizadaEm", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "intencoes_compra",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "criterios.marca", "order": "ASCENDING" },
+        { "fieldPath": "atualizadaEm", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contatos_intencao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "intencaoId", "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contatos_intencao",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "vendedorId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "DESCENDING" }
+      ]
     }
   ]
 }

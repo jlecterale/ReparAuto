@@ -16,6 +16,10 @@ import {
   updateCarro,
   updatePeca,
   criarNotificacao,
+  getAllIntencoesAdmin,
+  updateIntencaoStatus,
+  getDenunciasIntencao,
+  updateDenunciaIntencaoStatus,
 } from '@/lib/db';
 import AdminStats from '@/components/admin/AdminStats';
 import UserTable from '@/components/admin/UserTable';
@@ -30,8 +34,9 @@ import type { Usuario, Role } from '@/types/usuario';
 import type { Carro} from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import type { StatusAnuncio } from '@/types/carro';
+import type { IntencaoCompra, DenunciaIntencao } from '@/types/intencao';
 
-type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'denuncias' | 'verificacoes' | 'avaliacoes';
+type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'denuncias' | 'verificacoes' | 'avaliacoes' | 'intencoes';
 
 export default function Admin() {
   const { auth } = useApp();
@@ -45,6 +50,8 @@ export default function Admin() {
   const [users, setUsers] = useState<Usuario[]>([]);
   const [carros, setCarros] = useState<Carro[]>([]);
   const [pecas, setPecas] = useState<Peca[]>([]);
+  const [intencoesAdmin, setIntencoesAdmin] = useState<IntencaoCompra[]>([]);
+  const [denunciasIntencao, setDenunciasIntencao] = useState<DenunciaIntencao[]>([]);
   const [loading, setLoading] = useState(true);
   const { reports, loading: reportsLoading, carregar: carregarReports, atualizarStatus: atualizarStatusReport } = useReports();
   const { reviews: adminReviews, loading: reviewsAdminLoading, carregar: carregarReviews, atualizarStatus: atualizarStatusReview, remover: removerReview } = useReviewsAdmin();
@@ -78,14 +85,18 @@ export default function Admin() {
   const carregarDados = async () => {
     setLoading(true);
     try {
-      const [u, c, p] = await Promise.all([
+      const [u, c, p, i, d] = await Promise.all([
         getAllUsers(),
         getAllCarrosAdmin(),
         getAllPecasAdmin(),
+        getAllIntencoesAdmin(),
+        getDenunciasIntencao(),
       ]);
       setUsers(u);
       setCarros(c);
       setPecas(p);
+      setIntencoesAdmin(i);
+      setDenunciasIntencao(d);
       carregarReports();
       carregarReviews();
       carregarVerifications();
@@ -213,6 +224,16 @@ export default function Admin() {
     setStatusFilter(filter ?? null);
   };
 
+  const handleUpdateIntencaoStatus = async (id: string, status: string) => {
+    try {
+      await updateIntencaoStatus(id, status);
+      setIntencoesAdmin((prev) => prev.map((i) => (i.id === id ? { ...i, status: status as any } : i)));
+      toast?.sucesso(`Intenção ${status}.`);
+    } catch { toast?.erro('Erro ao atualizar intenção.'); }
+  };
+
+  const intencoesDenunciasPendentes = denunciasIntencao.filter((d) => d.status === 'aberta').length;
+
   const reportsPendentes = reports.filter((r) => r.status === 'pendente').length;
   const reviewsPendentes = adminReviews.filter((r) => r.status === 'pendente').length;
   const verificationsPendentes = verifications.filter((v) => v.status === 'pendente').length;
@@ -283,6 +304,7 @@ export default function Admin() {
     { key: 'utilizadores' as TabAdmin, label: 'Utilizadores', icon: 'fa-solid fa-users' },
     { key: 'anuncios' as TabAdmin, label: 'Anúncios', icon: 'fa-solid fa-list' },
     { key: 'avaliacoes' as TabAdmin, label: `Avaliações${reviewsPendentes > 0 ? ` (${reviewsPendentes})` : ''}`, icon: 'fa-solid fa-star-half-stroke' },
+    { key: 'intencoes' as TabAdmin, label: `Intenções${intencoesDenunciasPendentes > 0 ? ` (${intencoesDenunciasPendentes})` : ''}`, icon: 'fa-solid fa-magnifying-glass' },
     { key: 'denuncias' as TabAdmin, label: `Denúncias${reportsPendentes > 0 ? ` (${reportsPendentes})` : ''}`, icon: 'fa-solid fa-flag' },
     { key: 'verificacoes' as TabAdmin, label: `Verificações${verificationsPendentes > 0 ? ` (${verificationsPendentes})` : ''}`, icon: 'fa-solid fa-shield-halved' },
   ];
@@ -374,6 +396,70 @@ export default function Admin() {
             onReject={handleRejectReview}
             onDelete={handleDeleteReview}
           />
+        </div>
+      )}
+
+      {tab === 'intencoes' && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <h2 className="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+              <i className="fa-solid fa-magnifying-glass text-accent"></i> Gestão de Intenções de Compra
+            </h2>
+            {intencoesAdmin.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhuma intenção encontrada.</p>
+            ) : (
+              <div className="space-y-2">
+                {intencoesAdmin.map((intencao) => (
+                  <div key={intencao.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-200">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-brand-900 truncate">{intencao.titulo}</p>
+                      <p className="text-xs text-slate-500">
+                        {intencao.criterios.marca} {intencao.criterios.modelo} • {intencao.status} • {intencao.stats.visualizacoes} visualizações
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      {intencao.status === 'ativa' && (
+                        <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'pausada')}
+                          className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition">Pausar</button>
+                      )}
+                      {intencao.status === 'pausada' && (
+                        <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'ativa')}
+                          className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">Ativar</button>
+                      )}
+                      <button onClick={() => handleUpdateIntencaoStatus(intencao.id, 'deletada')}
+                        className="text-xs px-2 py-1 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">Remover</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+            <h2 className="text-lg font-extrabold text-brand-900 mb-4 flex items-center gap-2">
+              <i className="fa-solid fa-flag text-red-500"></i> Denúncias de Intenções
+            </h2>
+            {denunciasIntencao.length === 0 ? (
+              <p className="text-sm text-slate-500">Nenhuma denúncia pendente.</p>
+            ) : (
+              <div className="space-y-2">
+                {denunciasIntencao.map((denuncia) => (
+                  <div key={denuncia.id} className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-200">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-brand-900">Motivo: {denuncia.motivo}</p>
+                      <p className="text-xs text-slate-500">{denuncia.descricao} • Status: {denuncia.status}</p>
+                    </div>
+                    <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+                      <button onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'remocao')}
+                        className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">Remover Intenção</button>
+                      <button onClick={() => updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'aviso')}
+                        className="text-xs px-2 py-1 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200 transition">Avisar</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

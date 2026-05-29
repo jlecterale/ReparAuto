@@ -165,11 +165,15 @@ export function useChat(uid: string | null, nome: string = '') {
           lida: false,
           dataCriacao: Timestamp.now(),
         });
-        incrementCampo(
-          chatListingType === 'carro' ? 'cars' : 'parts',
-          chatListingId,
-          'contagemMensagens',
-        );
+        if (chatListingType === 'intencao') {
+          await incrementCampo('intencoes_compra', chatListingId, 'stats.contatos');
+        } else {
+          await incrementCampo(
+            chatListingType === 'carro' ? 'cars' : 'parts',
+            chatListingId,
+            'contagemMensagens',
+          );
+        }
       } catch (err) {
         console.error('[Chat] Erro ao enviar mensagem:', err);
         throw err;

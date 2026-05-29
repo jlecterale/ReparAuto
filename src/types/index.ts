@@ -36,3 +36,8 @@ export type {
 export type { Review, ReviewInput, StatusReview } from './review';
 export type { Report, ReportInput, MotivoReport, StatusReport, TipoReport } from './report';
 export type { Verification, VerificationInput, StatusVerificacao, TipoVerificacao } from './verification';
+
+export type {
+  IntencaoCompra, IntencaoCompraInput, StatusIntencao, ContatoPreferido, ContatoIntencao, ContatoIntencaoInput,
+  NotificacaoIntencao, DenunciaIntencao, IntencaoContextValue, StatusContato, StatusDenunciaIntencao, AcaoDenuncia,
+} from './intencao';
