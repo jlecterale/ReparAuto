@@ -1,5 +1,7 @@
 'use client';
 
+import { Bell, CaretRight } from '@phosphor-icons/react';
+import Badge from '@/components/ui/Badge';
 import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import useNotificacoes from '@/hooks/useNotificacoes';
@@ -29,18 +31,22 @@ export default function NotificationBell() {
         className="relative text-white hover:text-accent transition"
         aria-label="Notificações"
       >
-        <i className="fa-solid fa-bell text-xl"></i>
+        <Bell className="text-xl" />
         {naoLidas > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold w-4.5 h-4.5 flex items-center justify-center rounded-full min-w-[18px] min-h-[18px] leading-none">
+          <Badge
+            cor="red"
+            variante="solid"
+            className="absolute -top-1.5 -right-1.5 justify-center !px-1 min-w-[18px] min-h-[18px] !text-[10px] leading-none shadow"
+          >
             {naoLidas > 99 ? '99+' : naoLidas}
-          </span>
+          </Badge>
         )}
       </button>
 
       {open && (
         <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 max-h-[70vh] flex flex-col">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-            <h3 className="text-sm font-extrabold text-brand-900">Notificações</h3>
+            <h3 className="text-sm font-extrabold text-fg-heading">Notificações</h3>
             {naoLidas > 0 && (
               <button
                 onClick={marcarTodasLidas}
@@ -53,7 +59,7 @@ export default function NotificationBell() {
 
           <div className="overflow-y-auto flex-1">
             {notificacoes.length === 0 ? (
-              <p className="text-center text-slate-400 text-sm py-8">Nenhuma notificação.</p>
+              <p className="text-center text-fg-subtle text-sm py-8">Nenhuma notificação.</p>
             ) : (
               notificacoes.map((n) => (
                 <button
@@ -72,12 +78,12 @@ export default function NotificationBell() {
                     n.tipo === 'rejeitado' ? 'bg-red-500' : 'bg-blue-500'
                   } ${n.lida ? 'opacity-0' : ''}`} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-brand-900">{n.titulo}</p>
-                    <p className="text-xs text-slate-600">{n.mensagem}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">{formatarData(n.dataCriacao)}</p>
+                    <p className="text-xs font-bold text-fg-heading">{n.titulo}</p>
+                    <p className="text-xs text-fg-muted">{n.mensagem}</p>
+                    <p className="text-[10px] text-fg-subtle mt-0.5">{formatarData(n.dataCriacao)}</p>
                   </div>
                   {n.link && (
-                    <i className="fa-solid fa-chevron-right text-slate-300 mt-1 text-xs flex-shrink-0"></i>
+                    <CaretRight className="text-slate-300 mt-1 text-xs flex-shrink-0" />
                   )}
                 </button>
               ))

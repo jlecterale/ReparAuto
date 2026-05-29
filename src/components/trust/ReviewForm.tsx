@@ -1,6 +1,9 @@
 'use client';
 
+import { Clock, PaperPlaneTilt, Star, StarHalf, WarningCircle } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
 import { useState } from 'react';
+import Alert from '@/components/ui/Alert';
 import type { ReviewInput } from '@/types/review';
 
 interface ReviewFormProps {
@@ -59,18 +62,16 @@ export default function ReviewForm({
 
   if (enviado) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
-        <i className="fa-solid fa-clock text-yellow-500 text-xl mb-2"></i>
-        <p className="text-sm font-semibold text-yellow-800">Avaliação enviada!</p>
-        <p className="text-xs text-yellow-600 mt-1">A sua avaliação será visível após aprovação pela equipa ReparAuto.</p>
-      </div>
+      <Alert tipo="aviso" align="center" icone={<Clock />} titulo="Avaliação enviada!">
+        A sua avaliação será visível após aprovação pela equipa ReparAuto.
+      </Alert>
     );
   }
 
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-      <h4 className="font-bold text-brand-900 text-sm mb-3">
-        <i className="fa-solid fa-star-half-stroke text-accent mr-1"></i>
+      <h4 className="font-bold text-fg-heading text-sm mb-3">
+        <StarHalf className="text-accent mr-1" />
         Avaliar Vendedor
       </h4>
 
@@ -85,15 +86,14 @@ export default function ReviewForm({
             onMouseLeave={() => setHoverNota(0)}
             className="text-2xl transition-transform hover:scale-110"
           >
-            <i
-              className={`fa-star ${
-                star <= (hoverNota || nota) ? 'fa-solid text-yellow-400' : 'fa-regular text-slate-300'
-              }`}
-            ></i>
+            <Star
+              weight={star <= (hoverNota || nota) ? 'fill' : 'regular'}
+              className={star <= (hoverNota || nota) ? 'text-yellow-500' : 'text-slate-300'}
+            />
           </button>
         ))}
         {nota > 0 && (
-          <span className="text-xs text-slate-500 ml-2 font-semibold">
+          <span className="text-xs text-fg-subtle ml-2 font-semibold">
             {nota === 1 && 'Mau'}
             {nota === 2 && 'Razoável'}
             {nota === 3 && 'Bom'}
@@ -113,23 +113,22 @@ export default function ReviewForm({
 
       {erro && (
         <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
-          <i className="fa-solid fa-circle-exclamation"></i> {erro}
+          <WarningCircle /> {erro}
         </p>
       )}
 
       <div className="flex items-center justify-between mt-3">
-        <span className="text-[10px] text-slate-400">{comentario.length}/500</span>
-        <button
-          onClick={handleSubmit}
+        <span className="text-[10px] text-fg-subtle">{comentario.length}/500</span>
+        <Button
+          tipo="primario"
+          tamanho="sm"
+          carregando={enviando}
           disabled={nota === 0 || enviando}
-          className="bg-accent hover:bg-accent-hover text-white font-bold text-xs px-4 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleSubmit}
+          icone={<PaperPlaneTilt />}
         >
-          {enviando ? (
-            <><i className="fa-solid fa-spinner fa-spin mr-1"></i> A enviar...</>
-          ) : (
-            <><i className="fa-solid fa-paper-plane mr-1"></i> Enviar Avaliação</>
-          )}
-        </button>
+          {enviando ? 'A enviar...' : 'Enviar Avaliação'}
+        </Button>
       </div>
     </div>
   );

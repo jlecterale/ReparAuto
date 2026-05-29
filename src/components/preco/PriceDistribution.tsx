@@ -1,5 +1,6 @@
 'use client';
 
+import { ChartBar } from '@phosphor-icons/react';
 import {
   Bar,
   BarChart,
@@ -22,8 +23,8 @@ export default function PriceDistribution({ precos, height = 220, bucketCount = 
 
   if (!data.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-sm">
-        <i className="fa-solid fa-chart-column text-3xl mb-2"></i>
+      <div className="flex flex-col items-center justify-center py-10 text-fg-muted text-sm">
+        <ChartBar size={32} className="mb-2 text-fg-subtle" />
         <p>Não há anúncios suficientes para mostrar a distribuição.</p>
       </div>
     );

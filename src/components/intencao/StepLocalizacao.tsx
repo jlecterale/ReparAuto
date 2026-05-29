@@ -19,7 +19,7 @@ export default function StepLocalizacao({ criterios, onChange }: StepLocalizacao
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">Distrito *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">Distrito *</label>
         <select
           value={criterios.localizacao.distrito}
           onChange={(e) => onChange('criterios.localizacao.distrito', e.target.value)}
@@ -31,8 +31,8 @@ export default function StepLocalizacao({ criterios, onChange }: StepLocalizacao
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">
-          Raio de busca (km) * <span className="font-normal text-slate-400">— 0 = apenas este distrito</span>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">
+          Raio de busca (km) * <span className="font-normal text-fg-subtle">— 0 = apenas este distrito</span>
         </label>
         <input
           type="range"
@@ -43,7 +43,7 @@ export default function StepLocalizacao({ criterios, onChange }: StepLocalizacao
           onChange={(e) => onChange('criterios.localizacao.raio', Number(e.target.value))}
           className="w-full accent-accent"
         />
-        <div className="flex justify-between text-xs text-slate-400 mt-1">
+        <div className="flex justify-between text-xs text-fg-subtle mt-1">
           <span>0 km</span>
           <span className="font-bold text-accent">{criterios.localizacao.raio} km</span>
           <span>200 km</span>
@@ -51,7 +51,7 @@ export default function StepLocalizacao({ criterios, onChange }: StepLocalizacao
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">Quilometragem máxima (km) *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">Quilometragem máxima (km) *</label>
         <input
           type="number"
           min={0}

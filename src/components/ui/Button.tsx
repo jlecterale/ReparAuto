@@ -1,28 +1,58 @@
 import type { ButtonProps } from '@/types/ui';
 
+/**
+ * Canonical action button for ReparAuto.
+ *
+ * Variants (`tipo`):
+ *  - `primario`   — main call to action (brand orange, white text)
+ *  - `secundario` — secondary action (white surface, blue label, border)
+ *  - `terciario`  — low-emphasis action (transparent, tinted hover)
+ *  - `perigo`     — destructive / error action (red, white text)
+ *  - `verde`      — positive confirmation (green, white text)
+ *  - `azul`       — informational / chat action (brand blue, white text)
+ *  - `aviso`      — cautionary action (amber, dark text)
+ *  - `escuro`     — high-emphasis dark CTA (navy, white text)
+ *  - `ghost`      — for dark / photo backgrounds (translucent, white text)
+ *
+ * All variants meet WCAG AA (≥4.5:1) for their label text.
+ */
 export default function Button({
   children,
-  onClick,
   tipo = 'primario',
   tamanho = 'md',
-  disabled = false,
   icone = null,
+  iconeFim = null,
+  blocoCompleto = false,
+  carregando = false,
+  disabled = false,
   className = '',
   type = 'button',
+  ...rest
 }: ButtonProps) {
   const base =
-    'font-bold rounded-xl transition flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-3 focus-visible:ring-accent focus-visible:ring-offset-2';
+    'relative font-bold rounded-xl transition flex items-center justify-center gap-2 ' +
+    'focus:outline-none focus-visible:ring-3 focus-visible:ring-accent focus-visible:ring-offset-2 ' +
+    // Disabled: a clearly-muted grey button with readable label (~5.4:1) instead
+    // of a washed-out, low-contrast translucent fill.
+    'disabled:cursor-not-allowed disabled:shadow-none disabled:bg-neutral-200 ' +
+    'disabled:text-fg-muted disabled:border-transparent';
 
   const variantes: Record<string, string> = {
-    primario: 'bg-accent hover:bg-accent-hover text-white shadow-md hover:shadow-lg',
-    secundario: 'bg-white hover:bg-slate-50 text-brand-700 border border-slate-300',
-    ghost: 'bg-transparent hover:bg-white/10 text-white border border-white/20',
-    perigo: 'bg-red-600 hover:bg-red-700 text-white',
-    verde: 'bg-green-600 hover:bg-green-700 text-white',
+    primario: 'bg-accent hover:bg-accent-hover text-white shadow-sm hover:shadow-md',
+    secundario:
+      'bg-white hover:bg-neutral-50 text-primary-700 border border-neutral-300 hover:border-neutral-400 shadow-xs',
+    terciario:
+      'bg-transparent text-primary-700 hover:bg-primary-50 active:bg-primary-100',
+    perigo: 'bg-danger-600 hover:bg-danger-700 text-white shadow-sm hover:shadow-md',
+    verde: 'bg-success-700 hover:bg-success-800 text-white shadow-sm hover:shadow-md',
+    azul: 'bg-primary-600 hover:bg-primary-700 text-white shadow-sm hover:shadow-md',
+    aviso: 'bg-warning-400 hover:bg-warning-500 text-fg-strong shadow-sm hover:shadow-md',
+    escuro: 'bg-primary-900 hover:bg-primary-800 text-white shadow-sm hover:shadow-md',
+    ghost: 'bg-white/10 hover:bg-white/20 text-white border border-white/25',
   };
 
   const tamanhos: Record<string, string> = {
-    sm: 'px-3 py-1.5 text-xs',
+    sm: 'px-3.5 py-1.5 text-xs',
     md: 'px-5 py-2.5 text-sm',
     lg: 'px-6 py-3 text-base',
   };
@@ -30,14 +60,26 @@ export default function Button({
   return (
     <button
       type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`${base} ${variantes[tipo] || variantes.primario} ${tamanhos[tamanho] || tamanhos.md} ${
-        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-      } ${className}`}
+      disabled={disabled || carregando}
+      aria-busy={carregando || undefined}
+      className={`${base} ${variantes[tipo] || variantes.primario} ${
+        tamanhos[tamanho] || tamanhos.md
+      } ${blocoCompleto ? 'w-full' : ''} ${className}`}
+      {...rest}
     >
-      {icone && <i className={icone}></i>}
-      {children}
+      {carregando && (
+        <span
+          className="absolute inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"
+          aria-hidden="true"
+        />
+      )}
+      <span
+        className={`inline-flex items-center gap-2 ${carregando ? 'invisible' : ''}`}
+      >
+        {icone}
+        {children}
+        {iconeFim}
+      </span>
     </button>
   );
 }

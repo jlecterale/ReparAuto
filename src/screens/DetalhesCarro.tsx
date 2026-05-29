@@ -1,5 +1,6 @@
 'use client';
 
+import { ArrowLeft, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, TextAlignLeft, Warning, Wrench } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -16,6 +17,8 @@ import usePriceIndicator from '@/hooks/usePriceIndicator';
 import { formatarPreco as fmt } from '@/lib/utils';
 import { PRICE_DISCLAIMERS, PRICE_THRESHOLDS } from '@/lib/constants';
 import Badge from '@/components/ui/Badge';
+import Alert from '@/components/ui/Alert';
+import Button from '@/components/ui/Button';
 import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
 import type { Carro } from '@/types/carro';
@@ -61,7 +64,7 @@ export default function DetalhesCarro() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <i className="fa-solid fa-spinner fa-spin text-3xl text-accent"></i>
+        <CircleNotch className="animate-spin text-3xl text-accent" />
       </div>
     );
   }
@@ -69,15 +72,18 @@ export default function DetalhesCarro() {
   if (bloqueado) {
     return (
       <div className="text-center py-12">
-        <i className="fa-solid fa-lock text-4xl text-slate-300 mb-3"></i>
-        <p className="font-semibold text-slate-600">Anúncio não disponível</p>
-        <p className="text-sm text-slate-400 mt-1">Este anúncio está pendente de aprovação.</p>
-        <button
+        <Lock className="text-4xl text-slate-300 mb-3" />
+        <p className="font-semibold text-fg-muted">Anúncio não disponível</p>
+        <p className="text-sm text-fg-subtle mt-1">Este anúncio está pendente de aprovação.</p>
+        <Button
+          tipo="terciario"
+          tamanho="sm"
+          icone={<ArrowLeft />}
           onClick={() => router.push('/')}
-          className="mt-4 text-accent hover:text-accent-hover font-semibold text-sm"
+          className="mt-4"
         >
-          <i className="fa-solid fa-arrow-left mr-1"></i> Voltar à página inicial
-        </button>
+          Voltar à página inicial
+        </Button>
       </div>
     );
   }
@@ -85,14 +91,17 @@ export default function DetalhesCarro() {
   if (!carro) {
     return (
       <div className="text-center py-12">
-        <i className="fa-solid fa-triangle-exclamation text-4xl text-slate-300 mb-3"></i>
-        <p className="font-semibold text-slate-600">Anúncio não encontrado</p>
-        <button
+        <Warning className="text-4xl text-slate-300 mb-3" />
+        <p className="font-semibold text-fg-muted">Anúncio não encontrado</p>
+        <Button
+          tipo="terciario"
+          tamanho="sm"
+          icone={<ArrowLeft />}
           onClick={() => router.push('/')}
-          className="mt-4 text-accent hover:text-accent-hover font-semibold text-sm"
+          className="mt-4"
         >
-          <i className="fa-solid fa-arrow-left mr-1"></i> Voltar à página inicial
-        </button>
+          Voltar à página inicial
+        </Button>
       </div>
     );
   }
@@ -102,25 +111,28 @@ export default function DetalhesCarro() {
 
   return (
     <div className="page-enter">
-      <button
+      <Button
+        tipo="terciario"
+        tamanho="sm"
+        icone={<ArrowLeft />}
         onClick={() => router.back()}
-        className="mb-3 text-brand-700 hover:text-accent font-semibold text-sm flex items-center gap-1"
+        className="mb-3"
       >
-        <i className="fa-solid fa-arrow-left"></i> Voltar
-      </button>
+        Voltar
+      </Button>
 
       <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-brand-900">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-fg-heading">
               {carro.marca} {carro.modelo}
             </h1>
-            <p className="text-slate-500 text-sm mt-1">
+            <p className="text-fg-subtle text-sm mt-1">
               {carro.anoFabricacao} • {carro.km?.toLocaleString('pt-PT')} km • {carro.local || 'Portugal'}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {isLowCost && <Badge cor="accent">Low-Cost</Badge>}
+            {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
             <button
@@ -128,10 +140,10 @@ export default function DetalhesCarro() {
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${
                 isFavorito(carro.id)
                   ? 'bg-red-50 text-red-600 border-red-200'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  : 'bg-white text-fg-muted border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <i className={`fa-solid fa-heart ${isFavorito(carro.id) ? '' : 'text-slate-400'}`}></i>
+              <Heart weight={isFavorito(carro.id) ? 'fill' : 'regular'} className={isFavorito(carro.id) ? '' : 'text-slate-400'} />
               {isFavorito(carro.id) ? 'Favorito' : 'Favoritar'}
             </button>
             <ShareButton
@@ -151,7 +163,7 @@ export default function DetalhesCarro() {
               {carro.fotos.length > 1 && (
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
                   <span className="text-white bg-black/50 px-3 py-1.5 rounded-full text-xs font-semibold opacity-0 group-hover:opacity-100 transition">
-                    <i className="fa-solid fa-expand mr-1"></i> Ver {carro.fotos.length} fotos
+                    <ArrowsOut className="mr-1" /> Ver {carro.fotos.length} fotos
                   </span>
                 </div>
               )}
@@ -175,10 +187,9 @@ export default function DetalhesCarro() {
         <div className="flex flex-col sm:flex-row gap-6 mb-6">
           <div className="flex-1">
             {carro.estadoVeiculo === 'manutencao' && (
-              <div className="text-xs font-semibold text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2 flex items-center gap-2">
-                <i className="fa-solid fa-tools"></i>
+              <Alert tipo="aviso" icone={<Wrench />} className="!p-3 !rounded-lg !items-center font-semibold">
                 Este veículo precisa de manutenção/reparações
-              </div>
+              </Alert>
             )}
           </div>
           <StatusPanel carro={carro} />
@@ -186,25 +197,24 @@ export default function DetalhesCarro() {
 
         {carro.descricao && (
           <div className="mb-6">
-            <h3 className="font-extrabold text-brand-900 mb-2 flex items-center gap-2">
-              <i className="fa-solid fa-align-left text-accent"></i> Descrição
+            <h3 className="font-extrabold text-fg-heading mb-2 flex items-center gap-2">
+              <TextAlignLeft className="text-accent" /> Descrição
             </h3>
             <div
-              className="text-sm text-slate-700 leading-relaxed"
+              className="text-sm text-fg leading-relaxed"
               dangerouslySetInnerHTML={{ __html: renderDescricao(carro.descricao) }}
             />
           </div>
         )}
 
         {priceInfo.indicator !== 'indisponivel' && priceInfo.stats && (
-          <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <div className="mb-6 bg-neutral-50 border border-neutral-200 rounded-xl p-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div>
-                <h3 className="font-extrabold text-brand-900 flex items-center gap-2 mb-1">
-                  <i className="fa-solid fa-chart-line text-accent"></i>
-                  Análise de preço
+                <h3 className="font-extrabold text-fg-heading flex items-center gap-2 mb-1">
+                  <ChartLineUp className="text-accent" /> Análise de preço
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-fg-muted">
                   Comparado com {priceInfo.sampleSize}{' '}
                   {priceInfo.sampleSize === 1 ? 'anúncio similar' : 'anúncios similares'} no ReparAuto.
                 </p>
@@ -218,25 +228,24 @@ export default function DetalhesCarro() {
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs">
               <div className="bg-white rounded-lg p-2">
-                <p className="text-[10px] text-slate-500">Mínimo</p>
-                <p className="font-bold text-green-600">{fmt(priceInfo.stats.min)}</p>
+                <p className="text-[10px] text-fg-muted">Mínimo</p>
+                <p className="font-bold text-success-700">{fmt(priceInfo.stats.min)}</p>
               </div>
               <div className="bg-white rounded-lg p-2">
-                <p className="text-[10px] text-slate-500">Mediana do mercado</p>
-                <p className="font-bold text-brand-900">{fmt(priceInfo.stats.median)}</p>
+                <p className="text-[10px] text-fg-muted">Mediana do mercado</p>
+                <p className="font-bold text-fg-heading">{fmt(priceInfo.stats.median)}</p>
               </div>
               <div className="bg-white rounded-lg p-2">
-                <p className="text-[10px] text-slate-500">Máximo</p>
-                <p className="font-bold text-red-600">{fmt(priceInfo.stats.max)}</p>
+                <p className="text-[10px] text-fg-muted">Máximo</p>
+                <p className="font-bold text-danger-700">{fmt(priceInfo.stats.max)}</p>
               </div>
             </div>
             {priceInfo.sampleSize < PRICE_THRESHOLDS.lowConfidenceSampleSize && (
-              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mt-3">
-                <i className="fa-solid fa-circle-info mr-1" aria-hidden="true"></i>
+              <Alert tipo="aviso" icone={<Info />} className="mt-3 !p-2 !text-xs">
                 {PRICE_DISCLAIMERS.lowConfidence}
-              </p>
+              </Alert>
             )}
-            <p className="text-[10px] text-slate-400 mt-2">{PRICE_DISCLAIMERS.badge}</p>
+            <p className="text-[10px] text-fg-muted mt-2">{PRICE_DISCLAIMERS.badge}</p>
           </div>
         )}
 

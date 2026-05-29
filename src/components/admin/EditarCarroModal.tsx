@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
@@ -72,7 +73,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     options: string[] | null = null
   ) => (
     <div>
-      <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>
+      <label className="block text-xs font-semibold text-fg-subtle mb-1">{label}</label>
       {options ? (
         <select
           value={form[campoId as keyof typeof form] as string}
@@ -117,7 +118,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       </div>
 
       <div className="mb-4">
-        <label className="block text-xs font-semibold text-slate-500 mb-1">Descrição</label>
+        <label className="block text-xs font-semibold text-fg-subtle mb-1">Descrição</label>
         <textarea
           rows={4}
           value={form.descricao}
@@ -127,9 +128,9 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       </div>
 
       <div className="mb-4">
-        <label className="block text-xs font-semibold text-slate-500 mb-2">Estado do Veículo</label>
+        <label className="block text-xs font-semibold text-fg-subtle mb-2">Estado do Veículo</label>
         <div className="flex gap-4">
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-fg">
             <input
               type="radio"
               name="estadoVeiculo"
@@ -140,7 +141,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
             />
             Pronto para rodar
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-fg">
             <input
               type="radio"
               name="estadoVeiculo"
@@ -155,19 +156,20 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       </div>
 
       <div className="flex gap-3 justify-end border-t border-slate-200 pt-4">
-        <button
+        <Button
+          tipo="secundario"
           onClick={onClose}
-          className="px-4 py-2 text-sm font-bold rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 transition"
         >
           Cancelar
-        </button>
-        <button
+        </Button>
+        <Button
+          tipo="primario"
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-2 text-sm font-bold rounded-xl bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
+          carregando={saving}
         >
           {saving ? 'A guardar...' : 'Guardar Alterações'}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

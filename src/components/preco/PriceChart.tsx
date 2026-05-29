@@ -1,5 +1,6 @@
 'use client';
 
+import { ChartLineUp } from '@phosphor-icons/react';
 import {
   CartesianGrid,
   Legend,
@@ -20,8 +21,8 @@ interface Props {
 export default function PriceChart({ snapshots, height = 240 }: Props) {
   if (!snapshots || snapshots.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-slate-400 text-sm">
-        <i className="fa-solid fa-chart-line text-3xl mb-2"></i>
+      <div className="flex flex-col items-center justify-center py-10 text-fg-muted text-sm">
+        <ChartLineUp size={32} className="mb-2 text-fg-subtle" />
         <p>Ainda não há histórico de preços para este modelo.</p>
       </div>
     );

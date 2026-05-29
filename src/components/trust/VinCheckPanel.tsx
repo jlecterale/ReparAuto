@@ -1,6 +1,8 @@
 'use client';
 
+import { Barcode, CheckCircle, CircleNotch, MagnifyingGlass, XCircle } from '@phosphor-icons/react';
 import { useState } from 'react';
+import Alert from '@/components/ui/Alert';
 import useVinCheck from '@/hooks/useVinCheck';
 
 export default function VinCheckPanel() {
@@ -14,10 +16,10 @@ export default function VinCheckPanel() {
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm">
-      <h3 className="font-extrabold text-brand-900 mb-3 flex items-center gap-2">
-        <i className="fa-solid fa-barcode text-accent"></i> Verificar VIN
+      <h3 className="font-extrabold text-fg-heading mb-3 flex items-center gap-2">
+        <Barcode className="text-accent" /> Verificar VIN
       </h3>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="text-xs text-fg-subtle mb-3">
         Introduza o número de chassis (VIN) para verificar informações básicas do veículo.
         Esta verificação é apenas indicativa e não substitui uma consulta oficial.
       </p>
@@ -39,50 +41,43 @@ export default function VinCheckPanel() {
           disabled={loading || !vin.trim()}
           className="bg-accent hover:bg-accent-hover text-white font-bold text-xs px-4 py-2 rounded-lg transition disabled:opacity-50"
         >
-          {loading ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-search"></i>}
+          {loading ? <CircleNotch className="animate-spin" /> : <MagnifyingGlass />}
         </button>
       </form>
 
       {resultado && (
-        <div className={`rounded-xl p-4 border ${resultado.valido ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-          {resultado.valido ? (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <i className="fa-solid fa-circle-check text-green-500"></i>
-                <span className="font-bold text-green-800 text-sm">VIN válido</span>
+        resultado.valido ? (
+          <Alert tipo="sucesso" icone={<CheckCircle />} titulo="VIN válido">
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <div className="bg-white rounded-lg p-2 border border-green-100">
+                <p className="text-[10px] text-fg-subtle uppercase font-bold">VIN</p>
+                <p className="font-mono font-semibold text-fg-heading">{resultado.vin}</p>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              {resultado.marca && (
                 <div className="bg-white rounded-lg p-2 border border-green-100">
-                  <p className="text-[10px] text-slate-400 uppercase font-bold">VIN</p>
-                  <p className="font-mono font-semibold text-brand-900">{resultado.vin}</p>
+                  <p className="text-[10px] text-fg-subtle uppercase font-bold">Marca</p>
+                  <p className="font-semibold text-fg-heading">{resultado.marca}</p>
                 </div>
-                {resultado.marca && (
-                  <div className="bg-white rounded-lg p-2 border border-green-100">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">Marca</p>
-                    <p className="font-semibold text-brand-900">{resultado.marca}</p>
-                  </div>
-                )}
-                {resultado.ano && (
-                  <div className="bg-white rounded-lg p-2 border border-green-100">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">Ano</p>
-                    <p className="font-semibold text-brand-900">{resultado.ano}</p>
-                  </div>
-                )}
-                {resultado.pais && (
-                  <div className="bg-white rounded-lg p-2 border border-green-100">
-                    <p className="text-[10px] text-slate-400 uppercase font-bold">País de Origem</p>
-                    <p className="font-semibold text-brand-900">{resultado.pais}</p>
-                  </div>
-                )}
-              </div>
+              )}
+              {resultado.ano && (
+                <div className="bg-white rounded-lg p-2 border border-green-100">
+                  <p className="text-[10px] text-fg-subtle uppercase font-bold">Ano</p>
+                  <p className="font-semibold text-fg-heading">{resultado.ano}</p>
+                </div>
+              )}
+              {resultado.pais && (
+                <div className="bg-white rounded-lg p-2 border border-green-100">
+                  <p className="text-[10px] text-fg-subtle uppercase font-bold">País de Origem</p>
+                  <p className="font-semibold text-fg-heading">{resultado.pais}</p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <i className="fa-solid fa-circle-xmark text-red-500"></i>
-              <span className="text-sm text-red-800 font-semibold">{resultado.erro}</span>
-            </div>
-          )}
-        </div>
+          </Alert>
+        ) : (
+          <Alert tipo="erro" icone={<XCircle />} className="!items-center font-semibold">
+            {resultado.erro}
+          </Alert>
+        )
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import { CircleNotch, Star, Trash } from '@phosphor-icons/react';
 import { formatarData } from '@/lib/utils';
 import type { Review } from '@/types/review';
 import UserAvatar from '@/components/ui/UserAvatar';
@@ -15,10 +16,12 @@ function StarRating({ nota }: { nota: number }) {
   return (
     <div className="flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
-        <i
+        <Star
           key={star}
-          className={`fa-star text-xs ${star <= nota ? 'fa-solid text-yellow-400' : 'fa-regular text-slate-300'}`}
-        ></i>
+          size={14}
+          weight={star <= nota ? 'fill' : 'regular'}
+          className={star <= nota ? 'text-yellow-500' : 'text-slate-300'}
+        />
       ))}
     </div>
   );
@@ -28,7 +31,7 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
   if (loading) {
     return (
       <div className="flex items-center justify-center py-6">
-        <i className="fa-solid fa-spinner fa-spin text-xl text-accent"></i>
+        <CircleNotch className="animate-spin text-xl text-accent" />
       </div>
     );
   }
@@ -38,17 +41,17 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
       {total > 0 && (
         <div className="flex items-center gap-3 mb-4 bg-slate-50 rounded-xl p-3">
           <div className="text-center">
-            <p className="text-2xl font-extrabold text-brand-900">{media}</p>
+            <p className="text-2xl font-extrabold text-fg-heading">{media}</p>
             <StarRating nota={Math.round(media)} />
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-fg-subtle">
             <p className="font-semibold">{total} {total === 1 ? 'avaliação' : 'avaliações'}</p>
           </div>
         </div>
       )}
 
       {total === 0 && (
-        <p className="text-sm text-slate-400 text-center py-4">
+        <p className="text-sm text-fg-subtle text-center py-4">
           Ainda não existem avaliações para este vendedor.
         </p>
       )}
@@ -62,10 +65,10 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
                   <UserAvatar user={{ nome: review.autorNome, foto: review.autorFoto } as any} size="sm" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-brand-900">{review.autorNome}</p>
+                  <p className="text-sm font-semibold text-fg-heading">{review.autorNome}</p>
                   <div className="flex items-center gap-2">
                     <StarRating nota={review.nota} />
-                    <span className="text-[10px] text-slate-400">{formatarData(review.dataCriacao)}</span>
+                    <span className="text-[10px] text-fg-subtle">{formatarData(review.dataCriacao)}</span>
                   </div>
                 </div>
               </div>
@@ -75,12 +78,12 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
                   className="text-xs text-red-400 hover:text-red-600 transition"
                   title="Eliminar avaliação"
                 >
-                  <i className="fa-solid fa-trash-can"></i>
+                  <Trash />
                 </button>
               )}
             </div>
             {review.comentario && (
-              <p className="text-sm text-slate-600 mt-2 leading-relaxed">{review.comentario}</p>
+              <p className="text-sm text-fg-muted mt-2 leading-relaxed">{review.comentario}</p>
             )}
           </div>
         ))}

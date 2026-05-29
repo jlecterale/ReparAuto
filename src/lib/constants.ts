@@ -1,3 +1,4 @@
+import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
 
 // ============ CONSTANTES REPARAUTO ============
@@ -108,51 +109,42 @@ export const PRICE_LABELS: Record<
   indisponivel: 'Sem dados suficientes',
 };
 
+// Uses semantic tokens from the design system. Icons are rendered by the
+// PriceIndicatorBadge component (Phosphor) — kept out of constants so this
+// file stays icon-library agnostic.
 export const PRICE_COLORS: Record<
   'excelente' | 'bom' | 'justo' | 'acima' | 'sobrevalorizado' | 'indisponivel',
-  { bg: string; text: string; border: string; icon: string; hex: string }
+  { bg: string; text: string; border: string }
 > = {
   excelente: {
-    bg: 'bg-green-100',
-    text: 'text-green-800',
-    border: 'border-green-300',
-    icon: 'fa-solid fa-rocket',
-    hex: '#15803d',
+    bg: 'bg-success-100',
+    text: 'text-success-800',
+    border: 'border-success-300',
   },
   bom: {
-    bg: 'bg-green-50',
-    text: 'text-green-700',
-    border: 'border-green-200',
-    icon: 'fa-solid fa-arrow-trend-down',
-    hex: '#16a34a',
+    bg: 'bg-success-50',
+    text: 'text-success-700',
+    border: 'border-success-200',
   },
   justo: {
-    bg: 'bg-blue-50',
-    text: 'text-blue-700',
-    border: 'border-blue-200',
-    icon: 'fa-solid fa-equals',
-    hex: '#2563eb',
+    bg: 'bg-primary-50',
+    text: 'text-primary-700',
+    border: 'border-primary-200',
   },
   acima: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    border: 'border-amber-200',
-    icon: 'fa-solid fa-arrow-trend-up',
-    hex: '#d97706',
+    bg: 'bg-warning-50',
+    text: 'text-warning-700',
+    border: 'border-warning-200',
   },
   sobrevalorizado: {
-    bg: 'bg-red-50',
-    text: 'text-red-700',
-    border: 'border-red-200',
-    icon: 'fa-solid fa-triangle-exclamation',
-    hex: '#dc2626',
+    bg: 'bg-danger-50',
+    text: 'text-danger-700',
+    border: 'border-danger-200',
   },
   indisponivel: {
-    bg: 'bg-slate-50',
-    text: 'text-slate-600',
-    border: 'border-slate-200',
-    icon: 'fa-solid fa-circle-question',
-    hex: '#64748b',
+    bg: 'bg-neutral-50',
+    text: 'text-fg-muted',
+    border: 'border-neutral-200',
   },
 };
 
@@ -167,11 +159,11 @@ export const PRICE_DISCLAIMERS = {
     'Estimativa com baixa confiança — poucos anúncios comparáveis disponíveis.',
 };
 
-export const BADGES_CONFIANCA = [
-  { key: 'verificado', label: 'Verificado', icon: 'fa-solid fa-circle-check', cor: 'text-blue-500' },
-  { key: 'profissional', label: 'Profissional', icon: 'fa-solid fa-store', cor: 'text-purple-500' },
-  { key: 'top_vendedor', label: 'Top Vendedor', icon: 'fa-solid fa-star', cor: 'text-yellow-500' },
-  { key: 'respostas_rapidas', label: 'Respostas Rápidas', icon: 'fa-solid fa-bolt', cor: 'text-green-500' },
+export const BADGES_CONFIANCA: { key: string; label: string; Icon: Icon; cor: string }[] = [
+  { key: 'verificado', label: 'Verificado', Icon: CheckCircle, cor: 'text-blue-600' },
+  { key: 'profissional', label: 'Profissional', Icon: Storefront, cor: 'text-purple-600' },
+  { key: 'top_vendedor', label: 'Top Vendedor', Icon: Star, cor: 'text-yellow-600' },
+  { key: 'respostas_rapidas', label: 'Respostas Rápidas', Icon: Lightning, cor: 'text-green-600' },
 ];
 
 // ============ TEXTOS DAS POLÍTICAS ============

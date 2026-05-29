@@ -1,11 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Funnel, PencilSimpleLine, Check, X, Trash } from '@phosphor-icons/react';
 import type { Carro, StatusAnuncio } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import { formatarPreco, formatarData } from '@/lib/utils';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import type { BadgeCor } from '@/types/ui';
 import EditarCarroModal from './EditarCarroModal';
 import EditarPecaModal from './EditarPecaModal';
+
+const STATUS_BADGE: Record<StatusAnuncio, { cor: BadgeCor; label: string }> = {
+  aprovado: { cor: 'green', label: 'Aprovado' },
+  pendente: { cor: 'yellow', label: 'Pendente' },
+  rejeitado: { cor: 'red', label: 'Rejeitado' },
+};
 
 interface ListingsTableProps {
   carros: Carro[];
@@ -58,7 +68,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
         <button
           onClick={() => setTab('carros')}
           className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            tab === 'carros' ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            tab === 'carros' ? 'bg-accent text-white' : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
           }`}
         >
           Carros ({carrosFiltrados.length})
@@ -66,22 +76,22 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
         <button
           onClick={() => setTab('pecas')}
           className={`px-4 py-2 text-xs font-bold rounded-xl transition ${
-            tab === 'pecas' ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            tab === 'pecas' ? 'bg-accent text-white' : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
           }`}
         >
           Peças ({pecasFiltrados.length})
         </button>
         {statusFilter && (
-          <span className="ml-auto text-xs font-semibold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <i className="fa-solid fa-filter"></i> Filtrando: {statusFilter === 'pendente' ? 'Pendentes' : statusFilter === 'aprovado' ? 'Aprovados' : 'Rejeitados'}
-          </span>
+          <Badge cor="yellow" tamanho="md" className="ml-auto">
+            <Funnel /> Filtrando: {statusFilter === 'pendente' ? 'Pendentes' : statusFilter === 'aprovado' ? 'Aprovados' : 'Rejeitados'}
+          </Badge>
         )}
       </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+            <tr className="text-left text-xs font-bold text-fg-subtle uppercase tracking-wider border-b border-slate-200">
               <th className="pb-3 pr-4">ID</th>
               <th className="pb-3 pr-4">Título</th>
               <th className="pb-3 pr-4">Preço</th>
@@ -95,143 +105,153 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
               {tab === 'carros'
               ? carrosFiltrados.map((c) => (
                   <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                    <td className="py-3 pr-4 font-mono text-xs text-slate-400 max-w-[80px] truncate">{c.id}</td>
-                    <td className="py-3 pr-4 font-medium text-brand-900">
+                    <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{c.id}</td>
+                    <td className="py-3 pr-4 font-medium text-fg-heading">
                       {c.marca} {c.modelo}
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco)}</td>
-                    <td className="py-3 pr-4 text-slate-600 text-xs">{c.criador}</td>
-                    <td className="py-3 pr-4 text-slate-500 text-xs">{formatarData(c.dataCriacao)}</td>
+                    <td className="py-3 pr-4 text-fg-muted text-xs">{c.criador}</td>
+                    <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(c.dataCriacao)}</td>
                     <td className="py-3 pr-4">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                        c.status === 'aprovado' ? 'bg-green-100 text-green-700' :
-                        c.status === 'pendente' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {c.status === 'aprovado' ? 'Aprovado' : c.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
-                      </span>
+                      <Badge cor={STATUS_BADGE[c.status].cor}>{STATUS_BADGE[c.status].label}</Badge>
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-1 flex-wrap">
-                        <button
+                        <Button
+                          tipo="terciario"
+                          tamanho="sm"
                           onClick={() => setEditCarro(c)}
                           disabled={!!actionLoading[c.id]}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 transition px-2 py-1 rounded-lg hover:bg-blue-50 disabled:opacity-40"
+                          icone={<PencilSimpleLine />}
                           title="Editar"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         >
-                          <i className="fa-solid fa-pen-to-square mr-1"></i>Editar
-                        </button>
+                          Editar
+                        </Button>
                         {c.status !== 'aprovado' && (
-                          <button
+                          <Button
+                            tipo="verde"
+                            tamanho="sm"
                             onClick={async () => {
                               setActionLoading((p) => ({ ...p, [c.id]: true }));
                               await onApproveCarro(c.id);
                               setActionLoading((p) => ({ ...p, [c.id]: false }));
                             }}
                             disabled={!!actionLoading[c.id]}
-                            className="text-xs font-bold text-green-600 hover:text-green-800 transition px-2 py-1 rounded-lg hover:bg-green-50 disabled:opacity-40"
+                            carregando={!!actionLoading[c.id]}
+                            icone={<Check />}
                             title="Aprovar"
                           >
-                            {actionLoading[c.id] ? <i className="fa-solid fa-spinner fa-spin mr-1"></i> : <i className="fa-solid fa-check mr-1"></i>}Aprovar
-                          </button>
+                            Aprovar
+                          </Button>
                         )}
                         {c.status !== 'rejeitado' && (
-                          <button
+                          <Button
+                            tipo="perigo"
+                            tamanho="sm"
                             onClick={async () => {
                               setActionLoading((p) => ({ ...p, [c.id]: true }));
                               await onRejectCarro(c.id);
                               setActionLoading((p) => ({ ...p, [c.id]: false }));
                             }}
                             disabled={!!actionLoading[c.id]}
-                            className="text-xs font-bold text-red-500 hover:text-red-700 transition px-2 py-1 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                            carregando={!!actionLoading[c.id]}
+                            icone={<X />}
                             title="Rejeitar"
                           >
-                            {actionLoading[c.id] ? <i className="fa-solid fa-spinner fa-spin mr-1"></i> : <i className="fa-solid fa-xmark mr-1"></i>}Rejeitar
-                          </button>
+                            Rejeitar
+                          </Button>
                         )}
-                        <button
+                        <Button
+                          tipo="perigo"
+                          tamanho="sm"
                           onClick={() => setConfirmDelete({ tipo: 'carro', id: c.id, titulo: `${c.marca} ${c.modelo}` })}
                           disabled={!!actionLoading[c.id]}
-                          className="text-xs font-bold text-red-500 hover:text-red-700 transition px-2 py-1 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                          icone={<Trash />}
                           title="Eliminar"
                         >
-                          <i className="fa-solid fa-trash-can mr-1"></i>Eliminar
-                        </button>
+                          Eliminar
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))
               : pecasFiltrados.map((p) => (
                   <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                    <td className="py-3 pr-4 font-mono text-xs text-slate-400 max-w-[80px] truncate">{p.id}</td>
-                    <td className="py-3 pr-4 font-medium text-brand-900">{p.titulo}</td>
+                    <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{p.id}</td>
+                    <td className="py-3 pr-4 font-medium text-fg-heading">{p.titulo}</td>
                     <td className="py-3 pr-4 font-bold text-accent">
                       {p.preco != null && p.preco > 0 ? formatarPreco(p.preco) : '—'}
                     </td>
-                    <td className="py-3 pr-4 text-slate-600 text-xs">{p.criador}</td>
-                    <td className="py-3 pr-4 text-slate-500 text-xs">{formatarData(p.dataCriacao)}</td>
+                    <td className="py-3 pr-4 text-fg-muted text-xs">{p.criador}</td>
+                    <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(p.dataCriacao)}</td>
                     <td className="py-3 pr-4">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                        p.status === 'aprovado' ? 'bg-green-100 text-green-700' :
-                        p.status === 'pendente' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                        {p.status === 'aprovado' ? 'Aprovado' : p.status === 'pendente' ? 'Pendente' : 'Rejeitado'}
-                      </span>
+                      <Badge cor={STATUS_BADGE[p.status].cor}>{STATUS_BADGE[p.status].label}</Badge>
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-1 flex-wrap">
-                        <button
+                        <Button
+                          tipo="terciario"
+                          tamanho="sm"
                           onClick={() => setEditPeca(p)}
                           disabled={!!actionLoading[p.id]}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 transition px-2 py-1 rounded-lg hover:bg-blue-50 disabled:opacity-40"
+                          icone={<PencilSimpleLine />}
                           title="Editar"
+                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         >
-                          <i className="fa-solid fa-pen-to-square mr-1"></i>Editar
-                        </button>
+                          Editar
+                        </Button>
                         {p.status !== 'aprovado' && (
-                          <button
+                          <Button
+                            tipo="verde"
+                            tamanho="sm"
                             onClick={async () => {
                               setActionLoading((prev) => ({ ...prev, [p.id]: true }));
                               await onApprovePeca(p.id);
                               setActionLoading((prev) => ({ ...prev, [p.id]: false }));
                             }}
                             disabled={!!actionLoading[p.id]}
-                            className="text-xs font-bold text-green-600 hover:text-green-800 transition px-2 py-1 rounded-lg hover:bg-green-50 disabled:opacity-40"
+                            carregando={!!actionLoading[p.id]}
+                            icone={<Check />}
                             title="Aprovar"
                           >
-                            {actionLoading[p.id] ? <i className="fa-solid fa-spinner fa-spin mr-1"></i> : <i className="fa-solid fa-check mr-1"></i>}Aprovar
-                          </button>
+                            Aprovar
+                          </Button>
                         )}
                         {p.status !== 'rejeitado' && (
-                          <button
+                          <Button
+                            tipo="perigo"
+                            tamanho="sm"
                             onClick={async () => {
                               setActionLoading((prev) => ({ ...prev, [p.id]: true }));
                               await onRejectPeca(p.id);
                               setActionLoading((prev) => ({ ...prev, [p.id]: false }));
                             }}
                             disabled={!!actionLoading[p.id]}
-                            className="text-xs font-bold text-red-500 hover:text-red-700 transition px-2 py-1 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                            carregando={!!actionLoading[p.id]}
+                            icone={<X />}
                             title="Rejeitar"
                           >
-                            {actionLoading[p.id] ? <i className="fa-solid fa-spinner fa-spin mr-1"></i> : <i className="fa-solid fa-xmark mr-1"></i>}Rejeitar
-                          </button>
+                            Rejeitar
+                          </Button>
                         )}
-                        <button
+                        <Button
+                          tipo="perigo"
+                          tamanho="sm"
                           onClick={() => setConfirmDelete({ tipo: 'peca', id: p.id, titulo: p.titulo })}
                           disabled={!!actionLoading[p.id]}
-                          className="text-xs font-bold text-red-500 hover:text-red-700 transition px-2 py-1 rounded-lg hover:bg-red-50 disabled:opacity-40"
+                          icone={<Trash />}
                           title="Eliminar"
                         >
-                          <i className="fa-solid fa-trash-can mr-1"></i>Eliminar
-                        </button>
+                          Eliminar
+                        </Button>
                       </div>
                     </td>
                   </tr>
                 ))}
             {(tab === 'carros' ? carrosFiltrados.length === 0 : pecasFiltrados.length === 0) && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-slate-400 text-sm">
+                <td colSpan={7} className="py-8 text-center text-fg-subtle text-sm">
                   Nenhum anúncio encontrado.
                 </td>
               </tr>
@@ -264,24 +284,25 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
           onClick={() => setConfirmDelete(null)}
         >
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-extrabold text-brand-900 mb-2">Eliminar anúncio</h3>
-            <p className="text-sm text-slate-600 mb-4">
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">Eliminar anúncio</h3>
+            <p className="text-sm text-fg-muted mb-4">
               Tem a certeza que deseja eliminar o anúncio <strong>{confirmDelete.titulo}</strong>? Esta ação é irreversível.
             </p>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
+                tipo="secundario"
                 onClick={() => setConfirmDelete(null)}
-                className="px-4 py-2 text-sm font-bold rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 transition"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                tipo="perigo"
                 onClick={handleDelete}
                 disabled={deleting}
-                className="px-4 py-2 text-sm font-bold rounded-xl bg-red-600 text-white hover:bg-red-700 transition disabled:opacity-50"
+                carregando={deleting}
               >
                 {deleting ? 'A eliminar...' : 'Eliminar'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

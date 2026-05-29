@@ -41,7 +41,7 @@ export default function BrandModelSelect({
   return (
     <>
       <div>
-        <label htmlFor="brand-select" className="block text-xs font-bold text-slate-600 mb-1">
+        <label htmlFor="brand-select" className="block text-xs font-bold text-fg mb-1">
           {marcaLabel}
         </label>
         <select
@@ -52,7 +52,7 @@ export default function BrandModelSelect({
             onMarcaChange(e.target.value);
             onModeloChange('');
           }}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+          className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
         >
           <option value="">{marcaPlaceholder}</option>
           {marcas.map((m) => (
@@ -64,7 +64,7 @@ export default function BrandModelSelect({
       </div>
 
       <div>
-        <label htmlFor="model-select" className="block text-xs font-bold text-slate-600 mb-1">
+        <label htmlFor="model-select" className="block text-xs font-bold text-fg mb-1">
           {modeloLabel}
         </label>
         <select
@@ -73,7 +73,7 @@ export default function BrandModelSelect({
           disabled={!marca}
           required={required}
           onChange={(e) => onModeloChange(e.target.value)}
-          className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent disabled:bg-slate-100 disabled:text-slate-400"
+          className="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 disabled:bg-slate-100 disabled:text-fg-subtle disabled:cursor-not-allowed"
         >
           <option value="">{modeloPlaceholder}</option>
           {modelos.map((m) => (

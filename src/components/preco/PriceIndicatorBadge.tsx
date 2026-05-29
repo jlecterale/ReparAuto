@@ -1,5 +1,14 @@
 'use client';
 
+import {
+  Equals,
+  Question,
+  Rocket,
+  TrendDown,
+  TrendUp,
+  Warning,
+  type Icon,
+} from '@phosphor-icons/react';
 import { PRICE_COLORS, PRICE_LABELS, PRICE_THRESHOLDS } from '@/lib/constants';
 import type { PriceIndicator } from '@/types/preco';
 
@@ -10,6 +19,15 @@ interface Props {
   diffEuros?: number;
   compact?: boolean;
 }
+
+const INDICATOR_ICONS: Record<PriceIndicator, Icon> = {
+  excelente: Rocket,
+  bom: TrendDown,
+  justo: Equals,
+  acima: TrendUp,
+  sobrevalorizado: Warning,
+  indisponivel: Question,
+};
 
 function shortLabel(indicator: PriceIndicator): string {
   switch (indicator) {
@@ -31,6 +49,7 @@ export default function PriceIndicatorBadge({
 }: Props) {
   const cor = PRICE_COLORS[indicator];
   const label = PRICE_LABELS[indicator];
+  const IconEl = INDICATOR_ICONS[indicator];
   const pct = Math.round(Math.abs(deviation) * 100);
   const isLowConfidence =
     typeof sampleSize === 'number' &&
@@ -48,10 +67,10 @@ export default function PriceIndicatorBadge({
       <span
         role="img"
         aria-label={ariaLabel}
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${cor.bg} ${cor.text} ${cor.border}`}
         title={label}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${cor.bg} ${cor.text} ${cor.border}`}
       >
-        <i className={cor.icon} aria-hidden="true"></i>
+        <IconEl size={12} weight="fill" aria-hidden="true" />
         {shortLabel(indicator)}
       </span>
     );
@@ -66,7 +85,7 @@ export default function PriceIndicatorBadge({
       aria-label={ariaLabel}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border ${cor.bg} ${cor.text} ${cor.border}`}
     >
-      <i className={cor.icon} aria-hidden="true"></i>
+      <IconEl size={16} weight="fill" aria-hidden="true" />
       <span>{label}</span>
       {indicator !== 'indisponivel' && typeof diffEuros === 'number' && diffEuros !== 0 && (
         <span className="opacity-80">

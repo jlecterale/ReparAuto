@@ -1,16 +1,26 @@
 'use client';
 
+import { Car, Lightning, MagnifyingGlass, MapPin, Question, SlidersHorizontal, TrendDown, TrendUp } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
+import SegmentedControl from '@/components/ui/SegmentedControl';
 import { formatarPreco } from '@/lib/utils';
 import { buscarIntencoesMatch } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
 
 type TipoGrid = 'carros' | 'intencoes';
+
+const quickChips = [
+  { label: 'Todas as Ofertas', value: 'qualquer' },
+  { label: 'Destaques Low-Cost', value: 'lowcost' },
+  { label: 'Até 500€', value: '500' },
+  { label: 'Até 1.000€', value: '1000' },
+] as const;
 
 export default function CarGrid() {
   const { carros, auth } = useApp();
@@ -20,6 +30,7 @@ export default function CarGrid() {
   const {
     carrosFiltrados,
     filtroAtivo,
+    setFiltroAtivo,
     searchQuery,
     setSearchQuery,
     advPriceMin,
@@ -88,199 +99,233 @@ export default function CarGrid() {
   }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
 
   return (
-    <>
-      <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1">
-        <button onClick={() => setTipo('carros')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${tipo === 'carros' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
-          <i className="fa-solid fa-car"></i> Carros à Venda
-        </button>
-        <button onClick={() => setTipo('intencoes')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 text-xs font-bold rounded-lg transition ${tipo === 'intencoes' ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}>
-          <i className="fa-solid fa-magnifying-glass"></i> Intenções de Compra
-        </button>
-      </div>
+    <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
+      {/* ============ FILTER PANEL (left column) ============ */}
+      <aside className="mb-6 lg:mb-0 lg:sticky lg:top-5 space-y-3">
+        {/* Mode toggle */}
+        <SegmentedControl<TipoGrid>
+          ariaLabel="Alternar entre carros e intenções de compra"
+          value={tipo}
+          onChange={setTipo}
+          options={[
+            { value: 'carros', label: 'Carros', icone: <Car weight="fill" /> },
+            { value: 'intencoes', label: 'Intenções', icone: <MagnifyingGlass /> },
+          ]}
+        />
 
-      {tipo === 'carros' ? (
-        <>
-          <div className="mb-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
-                <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input
-                  type="text"
-                  placeholder="Ex: Renault Clio, Peugeot 206..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-full bg-white text-slate-700 placeholder-slate-400 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
-                />
-              </div>
-              <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 px-3 py-2 rounded-full transition flex items-center justify-center gap-1 text-xs font-semibold flex-shrink-0"
-              >
-                <i className="fa-solid fa-sliders"></i> Filtros
-              </button>
+        {tipo === 'carros' && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
+            {/* Search */}
+            <div className="relative">
+              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+              <input
+                type="text"
+                placeholder="Ex: Renault Clio..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
+              />
             </div>
 
-            {showAdvanced && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-slate-700 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">Preço Mínimo (€)</label>
-                    <input
-                      type="number" placeholder="Mínimo"
-                      value={advPriceMin ?? ''}
-                      onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-1">Preço Máximo (€)</label>
-                    <input
-                      type="number" placeholder="Máximo"
-                      value={advPriceMax ?? ''}
-                      onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-700 placeholder-slate-400 focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                </div>
+            {/* Quick chips */}
+            <div className="space-y-2">
+              <span className="block text-xs font-bold text-fg-subtle uppercase tracking-wide">Ofertas rápidas</span>
+              <div className="flex flex-wrap gap-2">
+                {quickChips.map((chip) => (
+                  <button
+                    key={chip.value}
+                    onClick={() => setFiltroAtivo(filtroAtivo === chip.value ? null : chip.value as 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                      filtroAtivo === chip.value
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            {/* Advanced filters toggle (mobile only) */}
+            <Button
+              tipo="secundario"
+              tamanho="sm"
+              blocoCompleto
+              icone={<SlidersHorizontal />}
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="lg:hidden"
+            >
+              {showAdvanced ? 'Ocultar filtros' : 'Mais filtros'}
+            </Button>
+
+            {/* Advanced filters */}
+            <div className={`${showAdvanced ? 'block' : 'hidden'} lg:block space-y-4 border-t border-slate-100 pt-4`}>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                      <i className="fa-solid fa-location-dot text-accent"></i> Localização
-                    </span>
-                    <label className="flex items-center gap-1.5 text-xs text-slate-600 cursor-pointer select-none">
-                      <input type="checkbox" checked={raioMode}
-                        onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
-                        className="rounded text-accent focus:ring-accent" />
-                      Pesquisar por raio
-                    </label>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
+                  <input
+                    type="number" placeholder="Mínimo"
+                    value={advPriceMin ?? ''}
+                    onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
+                  <input
+                    type="number" placeholder="Máximo"
+                    value={advPriceMax ?? ''}
+                    onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold text-fg-subtle flex items-center gap-1">
+                    <MapPin className="text-accent" /> Localização
+                  </span>
+                </div>
+                <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
+                  <input type="checkbox" checked={raioMode}
+                    onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
+                    className="rounded text-accent focus:ring-accent" />
+                  Pesquisar por raio
+                </label>
+                {!raioMode ? (
+                  <div className="space-y-2">
+                    <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                      <option value="">Todos os distritos</option>
+                      {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
+                      disabled={!advDistrito}
+                      className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
+                      <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                      {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                    </select>
                   </div>
-                  {!raioMode ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-accent">
-                        <option value="">Todos os distritos</option>
-                        {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                      <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
-                        disabled={!advDistrito}
-                        className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}>
-                        <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
-                        {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-                      </select>
+                ) : (
+                  <div className="space-y-2">
+                    <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                      <option value="">Selecionar distrito</option>
+                      {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
+                      disabled={!raioDist}
+                      className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
+                      <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                      {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                    </select>
+                    <div className="flex items-center gap-2">
+                      <input type="number" min={1} max={500} placeholder="Raio km"
+                        value={advRaioKm ?? ''}
+                        onChange={(e) => setAdvRaioKm(e.target.value ? Number(e.target.value) : null)}
+                        className="w-24 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent" />
+                      <span className="text-xs text-fg-subtle truncate">de {advRaioCentro || '—'}</span>
                     </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
-                          className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-accent">
-                          <option value="">Selecionar distrito</option>
-                          {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
-                        </select>
-                        <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
-                          disabled={!raioDist}
-                          className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'text-slate-700'}`}>
-                          <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
-                          {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-                        </select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input type="number" min={1} max={500} placeholder="Raio em km"
-                          value={advRaioKm ?? ''}
-                          onChange={(e) => setAdvRaioKm(e.target.value ? Number(e.target.value) : null)}
-                          className="w-32 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-700 focus:outline-none focus:border-accent" />
-                        <span className="text-xs text-slate-500">km a partir de {advRaioCentro || '—'}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
+              </div>
 
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200 text-xs">
-                  <span className="block text-xs font-bold text-slate-500 mr-2">Ordenar por preço:</span>
-                  <button type="button" onClick={() => setSortOrdem('crescente')}
-                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-700'}`}>
-                    <i className="fa-solid fa-arrow-trend-up"></i> Preço mais baixo
+              <div className="border-t border-slate-100 pt-3">
+                <span className="block text-xs font-bold text-fg-subtle mb-2">Ordenar por preço</span>
+                <div className="flex flex-col gap-2">
+                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'crescente' ? null : 'crescente')}
+                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                    <TrendUp /> Mais baixo
                   </button>
-                  <button type="button" onClick={() => setSortOrdem('decrescente')}
-                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-slate-700'}`}>
-                    <i className="fa-solid fa-arrow-trend-down"></i> Preço mais caro
+                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'decrescente' ? null : 'decrescente')}
+                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                    <TrendDown /> Mais caro
                   </button>
                 </div>
+              </div>
 
-                <div className="flex justify-between items-center gap-2 pt-2 border-t border-slate-200 text-xs">
-                  <button onClick={() => { limparFiltrosAvancados(); setShowAdvanced(false); }}
-                    className="border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold px-4 py-2 rounded-xl transition">Limpar</button>
-                  <button onClick={() => setShowAdvanced(false)}
-                    className="bg-accent hover:bg-accent-hover text-white font-bold px-4 py-2 rounded-xl transition">Aplicar Filtros</button>
-                </div>
+              <Button
+                tipo="secundario"
+                tamanho="sm"
+                blocoCompleto
+                onClick={limparFiltrosAvancados}
+              >
+                Limpar filtros
+              </Button>
+            </div>
+          </div>
+        )}
+      </aside>
+
+      {/* ============ RESULTS (right column) ============ */}
+      <section className="min-w-0">
+        {tipo === 'carros' ? (
+          <>
+            <h2 id="ofertas" className="scroll-mt-20 sm:scroll-mt-24 text-xl font-bold text-fg-heading mb-3 flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2"><Lightning className="text-accent" /> Oportunidades</span>
+              <span className="text-xs bg-slate-200 text-fg px-3 py-1 rounded-full font-medium">{getFiltroLabel()}</span>
+            </h2>
+
+            {carros.loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+                {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">
+                <Car size={48} className="mb-3 text-slate-300" />
+                <p className="font-semibold">Nenhum anúncio encontrado</p>
+                <p className="text-sm">Tente alterar os filtros ou pesquisa.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
+                {filtered.map((carro) => <CarCard key={carro.id} carro={carro} />)}
               </div>
             )}
-          </div>
-
-          <h2 id="ofertas" className="text-xl font-bold text-brand-900 mb-3 flex items-center justify-between">
-            <span className="flex items-center gap-2"><i className="fa-solid fa-bolt text-accent"></i> Oportunidades</span>
-            <span className="text-xs bg-slate-200 text-slate-700 px-3 py-1 rounded-full font-medium">{getFiltroLabel()}</span>
-          </h2>
-
-          {carros.loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              <i className="fa-solid fa-car-side text-4xl mb-3 text-slate-300"></i>
-              <p className="font-semibold">Nenhum anúncio encontrado</p>
-              <p className="text-sm">Tente alterar os filtros ou pesquisa.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {filtered.map((carro) => <CarCard key={carro.id} carro={carro} />)}
-            </div>
-          )}
-        </>
-      ) : (
-        <div>
-          <h2 className="text-xl font-bold text-brand-900 mb-4 flex items-center gap-2">
-            <i className="fa-solid fa-magnifying-glass text-accent"></i> Intenções de Compra
-          </h2>
-          {loadingIntencoes ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 3 }).map((_, i) => <CarCardSkeleton key={i} />)}
-            </div>
-          ) : intencoesMatch.length === 0 ? (
-            <div className="text-center py-12 text-slate-500">
-              <i className="fa-solid fa-circle-question text-4xl mb-3 text-slate-300"></i>
-              <p className="font-semibold">Nenhuma intenção de compra ativa</p>
-              <p className="text-sm">Compradores ainda não publicaram intenções.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {intencoesMatch.map((intencao) => (
-                <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 transition flex flex-col">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-brand-900 text-sm mb-2">{intencao.titulo}</h3>
-                    <div className="space-y-1 text-xs text-slate-600">
-                      <p><span className="text-slate-400">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
-                      <p><span className="text-slate-400">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
-                      <p><span className="text-slate-400">Combustível:</span> {intencao.criterios.combustivel.join(', ')}</p>
-                      <p><span className="text-slate-400">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
-                      <p><span className="text-slate-400">Km máx:</span> {intencao.criterios.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold text-fg-heading mb-4 flex items-center gap-2">
+              <MagnifyingGlass className="text-accent" /> Intenções de Compra
+            </h2>
+            {loadingIntencoes ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => <CarCardSkeleton key={i} />)}
+              </div>
+            ) : intencoesMatch.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">
+                <Question size={48} className="mb-3 text-slate-300" />
+                <p className="font-semibold">Nenhuma intenção de compra ativa</p>
+                <p className="text-sm">Compradores ainda não publicaram intenções.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {intencoesMatch.map((intencao) => (
+                  <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 transition flex flex-col">
+                    <div className="flex-1">
+                      <h3 className="font-bold text-fg-heading text-sm mb-2">{intencao.titulo}</h3>
+                      <div className="space-y-1 text-xs text-fg-muted">
+                        <p><span className="text-fg-subtle">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
+                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
+                        <p><span className="text-fg-subtle">Combustível:</span> {intencao.criterios.combustivel.join(', ')}</p>
+                        <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
+                        <p><span className="text-fg-subtle">Km máx:</span> {intencao.criterios.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      <Link href={`/anunciar?intencao=${intencao.id}`}
+                        className="block text-center text-xs font-bold bg-accent text-white px-3 py-2 rounded-xl hover:bg-accent-hover transition">
+                        Tenho um que se adequa
+                      </Link>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-slate-100">
-                    <Link href={`/anunciar?intencao=${intencao.id}`}
-                      className="block text-center text-xs font-bold bg-accent text-white px-3 py-2 rounded-xl hover:bg-accent-hover transition">
-                      Tenho um que se adequa
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+    </div>
   );
 }

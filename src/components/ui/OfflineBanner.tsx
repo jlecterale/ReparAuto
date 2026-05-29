@@ -1,5 +1,6 @@
 'use client';
 
+import { CellSignalLow, WifiHigh, WifiSlash } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import useNetworkStatus from '@/hooks/useNetworkStatus';
 
@@ -40,17 +41,17 @@ export default function OfflineBanner() {
     >
       {!online ? (
         <>
-          <i className="fa-solid fa-wifi-slash mr-1.5"></i>
+          <WifiSlash className="mr-1.5" />
           Sem ligação à Internet — a mostrar dados em cache
         </>
       ) : showReconnected ? (
         <>
-          <i className="fa-solid fa-wifi mr-1.5"></i>
+          <WifiHigh className="mr-1.5" />
           Ligação restabelecida
         </>
       ) : isSlow ? (
         <>
-          <i className="fa-solid fa-signal-weak mr-1.5"></i>
+          <CellSignalLow className="mr-1.5" />
           Ligação lenta — algumas imagens podem demorar a carregar
         </>
       ) : null}

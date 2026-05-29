@@ -1,9 +1,12 @@
 'use client';
 
+import { CaretDown, CaretUp, Check, CircleNotch, Flag, MagnifyingGlass, X } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { MOTIVOS_DENUNCIA } from '@/lib/constants';
 import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
 import type { Report, StatusReport } from '@/types/report';
 
 interface ReportsQueueProps {
@@ -34,7 +37,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <i className="fa-solid fa-spinner fa-spin text-2xl text-accent"></i>
+        <CircleNotch className="animate-spin text-2xl text-accent" />
       </div>
     );
   }
@@ -45,11 +48,9 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-extrabold text-brand-900 flex items-center gap-2">
-          <i className="fa-solid fa-flag text-red-500"></i> Denúncias
-          {pendentes > 0 && (
-            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendentes}</span>
-          )}
+        <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
+          <Flag className="text-red-500" /> Denúncias
+          {pendentes > 0 && <Badge cor="red" variante="solid">{pendentes}</Badge>}
         </h3>
       </div>
 
@@ -59,7 +60,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
             key={f}
             onClick={() => setFilter(f)}
             className={`text-xs font-semibold px-3 py-1.5 rounded-full whitespace-nowrap transition ${
-              filter === f ? 'bg-accent text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              filter === f ? 'bg-accent text-white' : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
             }`}
           >
             {f === 'todos' ? 'Todos' : statusLabels[f]}
@@ -69,7 +70,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6 bg-slate-50 rounded-xl">
+        <p className="text-sm text-fg-subtle text-center py-6 bg-slate-50 rounded-xl">
           Nenhuma denúncia {filter !== 'todos' ? `com estado "${statusLabels[filter as StatusReport]}"` : ''}.
         </p>
       ) : (
@@ -84,17 +85,17 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Badge cor={statusColors[report.status] as any}>{statusLabels[report.status]}</Badge>
-                      <span className="text-xs font-semibold text-slate-600">{motivoLabel}</span>
-                      <span className="text-[10px] text-slate-400">{formatarDataHora(report.dataCriacao)}</span>
+                      <span className="text-xs font-semibold text-fg-muted">{motivoLabel}</span>
+                      <span className="text-[10px] text-fg-subtle">{formatarDataHora(report.dataCriacao)}</span>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-fg-subtle">
                       <strong>Tipo:</strong> {report.alvoTipo} • <strong>ID:</strong> {report.alvoId.slice(0, 12)}...
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-fg-subtle">
                       <strong>Denunciante:</strong> {report.denuncianteEmail}
                     </p>
                     {report.descricao && (
-                      <p className="text-sm text-slate-700 mt-2 bg-slate-50 rounded-lg p-2">{report.descricao}</p>
+                      <p className="text-sm text-fg mt-2 bg-slate-50 rounded-lg p-2">{report.descricao}</p>
                     )}
                   </div>
                   <button
@@ -104,7 +105,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
                     }}
                     className="text-xs text-accent hover:text-accent-hover font-semibold ml-3"
                   >
-                    <i className={`fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                    {isExpanded ? <CaretUp /> : <CaretDown />}
                   </button>
                 </div>
 
@@ -118,34 +119,39 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
                     />
                     <div className="flex gap-2">
                       {report.status === 'pendente' && (
-                        <button
+                        <Button
+                          tipo="azul"
+                          tamanho="sm"
+                          icone={<MagnifyingGlass />}
                           onClick={() => onUpdateStatus(report.id, 'em_analise', notas)}
-                          className="text-xs font-bold bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg transition"
                         >
-                          <i className="fa-solid fa-magnifying-glass mr-1"></i> Em Análise
-                        </button>
+                          Em Análise
+                        </Button>
                       )}
-                      <button
+                      <Button
+                        tipo="verde"
+                        tamanho="sm"
+                        icone={<Check />}
                         onClick={() => onUpdateStatus(report.id, 'resolvido', notas)}
-                        className="text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition"
                       >
-                        <i className="fa-solid fa-check mr-1"></i> Resolver
-                      </button>
-                      <button
+                        Resolver
+                      </Button>
+                      <Button
+                        tipo="perigo"
+                        tamanho="sm"
+                        icone={<X />}
                         onClick={() => onUpdateStatus(report.id, 'rejeitado', notas)}
-                        className="text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition"
                       >
-                        <i className="fa-solid fa-xmark mr-1"></i> Rejeitar
-                      </button>
+                        Rejeitar
+                      </Button>
                     </div>
                   </div>
                 )}
 
                 {report.notasAdmin && (
-                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                    <p className="text-[10px] text-yellow-700 font-bold uppercase">Notas Admin</p>
-                    <p className="text-xs text-yellow-800">{report.notasAdmin}</p>
-                  </div>
+                  <Alert tipo="aviso" titulo="Notas Admin" className="mt-2 !p-2 !rounded-lg">
+                    {report.notasAdmin}
+                  </Alert>
                 )}
               </div>
             );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { ChatCircle, CheckCircle, Car, type Icon } from '@phosphor-icons/react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
@@ -44,32 +45,32 @@ export default function NotificationPreferences({ uid }: { uid: string }) {
 
   if (loading) return null;
 
-  const items: { key: keyof Preferences; icon: string; label: string; desc: string }[] = [
-    { key: 'mensagens', icon: 'fa-comment', label: 'Mensagens', desc: 'Novas mensagens de compradores/vendedores' },
-    { key: 'aprovacao', icon: 'fa-check-circle', label: 'Estado do anúncio', desc: 'Aprovação ou rejeição dos seus anúncios' },
-    { key: 'novosAnuncios', icon: 'fa-car', label: 'Novos anúncios', desc: 'Quando carros do seu interesse forem publicados' },
+  const items: { key: keyof Preferences; Icon: Icon; label: string; desc: string }[] = [
+    { key: 'mensagens', Icon: ChatCircle, label: 'Mensagens', desc: 'Novas mensagens de compradores/vendedores' },
+    { key: 'aprovacao', Icon: CheckCircle, label: 'Estado do anúncio', desc: 'Aprovação ou rejeição dos seus anúncios' },
+    { key: 'novosAnuncios', Icon: Car, label: 'Novos anúncios', desc: 'Quando carros do seu interesse forem publicados' },
   ];
 
   return (
     <div className="space-y-3">
-      {items.map(({ key, icon, label, desc }) => (
+      {items.map(({ key, Icon, label, desc }) => (
         <div key={key} className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
           <div className="flex items-center gap-3">
-            <i className={`fa-solid ${icon} text-accent text-sm`}></i>
+            <Icon size={18} className="text-accent shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-brand-900">{label}</p>
-              <p className="text-xs text-slate-400">{desc}</p>
+              <p className="text-sm font-semibold text-fg-heading">{label}</p>
+              <p className="text-xs text-fg-subtle">{desc}</p>
             </div>
           </div>
           <button
             onClick={() => toggle(key)}
-            className={`relative w-10 h-6 rounded-full transition ${prefs[key] ? 'bg-accent' : 'bg-slate-300'}`}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${prefs[key] ? 'bg-accent' : 'bg-slate-300'}`}
             role="switch"
             aria-checked={prefs[key]}
             aria-label={label}
           >
             <span
-              className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${prefs[key] ? 'translate-x-4.5' : 'translate-x-0.5'}`}
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${prefs[key] ? 'translate-x-5' : 'translate-x-0.5'}`}
             />
           </button>
         </div>

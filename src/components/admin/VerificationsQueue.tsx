@@ -1,8 +1,11 @@
 'use client';
 
+import { CaretDown, CaretUp, Check, CircleNotch, File, IdentificationCard, ShieldCheck, Storefront, Trash, X } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
 import type { Verification, StatusVerificacao } from '@/types/verification';
 
 interface VerificationsQueueProps {
@@ -37,7 +40,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
   if (loading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <i className="fa-solid fa-spinner fa-spin text-2xl text-accent"></i>
+        <CircleNotch className="animate-spin text-2xl text-accent" />
       </div>
     );
   }
@@ -47,16 +50,14 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-extrabold text-brand-900 flex items-center gap-2">
-          <i className="fa-solid fa-shield-halved text-blue-500"></i> Verificações
-          {pendentes > 0 && (
-            <span className="bg-blue-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendentes}</span>
-          )}
+        <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
+          <ShieldCheck className="text-blue-500" /> Verificações
+          {pendentes > 0 && <Badge cor="blue" variante="solid">{pendentes}</Badge>}
         </h3>
       </div>
 
       {verifications.length === 0 ? (
-        <p className="text-sm text-slate-400 text-center py-6 bg-slate-50 rounded-xl">
+        <p className="text-sm text-fg-subtle text-center py-6 bg-slate-50 rounded-xl">
           Nenhum pedido de verificação.
         </p>
       ) : (
@@ -70,18 +71,18 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                   <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Badge cor={statusColors[v.status] as any}>{statusLabels[v.status]}</Badge>
-                      <span className="text-xs font-semibold text-slate-600 capitalize">
-                        <i className={`fa-solid ${v.tipo === 'profissional' ? 'fa-store' : 'fa-id-card'} mr-1`}></i>
+                      <span className="text-xs font-semibold text-fg-muted capitalize">
+                        {v.tipo === 'profissional' ? <Storefront className="mr-1" /> : <IdentificationCard className="mr-1" />}
                         {v.tipo}
                       </span>
-                      <span className="text-[10px] text-slate-400">{formatarDataHora(v.dataPedido)}</span>
+                      <span className="text-[10px] text-fg-subtle">{formatarDataHora(v.dataPedido)}</span>
                     </div>
-                    <p className="text-sm font-semibold text-brand-900">{v.nome}</p>
-                    <p className="text-xs text-slate-500">{v.email}</p>
-                    {v.nif && <p className="text-xs text-slate-500">NIF: {v.nif}</p>}
+                    <p className="text-sm font-semibold text-fg-heading">{v.nome}</p>
+                    <p className="text-xs text-fg-subtle">{v.email}</p>
+                    {v.nif && <p className="text-xs text-fg-subtle">NIF: {v.nif}</p>}
                     {v.tipoDocumento && (
-                      <p className="text-xs text-slate-500">
-                        <i className="fa-solid fa-file mr-1"></i>
+                      <p className="text-xs text-fg-subtle">
+                        <File className="mr-1" />
                         {tipoDocLabels[v.tipoDocumento] || v.tipoDocumento}
                       </p>
                     )}
@@ -93,7 +94,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                     }}
                     className="text-xs text-accent hover:text-accent-hover font-semibold ml-3"
                   >
-                    <i className={`fa-solid ${isExpanded ? 'fa-chevron-up' : 'fa-chevron-down'}`}></i>
+                    {isExpanded ? <CaretUp /> : <CaretDown />}
                   </button>
                 </div>
 
@@ -103,7 +104,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                     {v.documentoUrl && v.selfieUrl && (
                       <div className="grid grid-cols-2 gap-3 mb-3">
                         <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Documento</p>
+                          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-1">Documento</p>
                           <div
                             className="w-full h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-80 transition"
                             onClick={() => setImageModal(v.documentoUrl)}
@@ -112,7 +113,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                           </div>
                         </div>
                         <div>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Selfie c/ Documento</p>
+                          <p className="text-[10px] font-bold text-fg-subtle uppercase tracking-wider mb-1">Selfie c/ Documento</p>
                           <div
                             className="w-full h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 cursor-pointer hover:opacity-80 transition"
                             onClick={() => setImageModal(v.selfieUrl)}
@@ -124,8 +125,8 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                     )}
 
                     {!v.documentoUrl && !v.selfieUrl && v.status !== 'pendente' && (
-                      <p className="text-xs text-slate-400 italic mb-3">
-                        <i className="fa-solid fa-trash-can mr-1"></i> Documentos apagados após decisão.
+                      <p className="text-xs text-fg-subtle italic mb-3">
+                        <Trash className="mr-1" /> Documentos apagados após decisão.
                       </p>
                     )}
 
@@ -138,18 +139,22 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                           className="w-full border border-slate-300 rounded-lg p-2 text-xs resize-none h-16 focus:outline-none focus:ring-2 focus:ring-accent/30 mb-2"
                         />
                         <div className="flex gap-2">
-                          <button
+                          <Button
+                            tipo="verde"
+                            tamanho="sm"
+                            icone={<Check />}
                             onClick={() => onUpdateStatus(v.id, v.uid, 'aprovado', notas)}
-                            className="text-xs font-bold bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg transition"
                           >
-                            <i className="fa-solid fa-check mr-1"></i> Aprovar
-                          </button>
-                          <button
+                            Aprovar
+                          </Button>
+                          <Button
+                            tipo="perigo"
+                            tamanho="sm"
+                            icone={<X />}
                             onClick={() => onUpdateStatus(v.id, v.uid, 'rejeitado', notas)}
-                            className="text-xs font-bold bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg transition"
                           >
-                            <i className="fa-solid fa-xmark mr-1"></i> Rejeitar
-                          </button>
+                            Rejeitar
+                          </Button>
                         </div>
                       </>
                     )}
@@ -157,10 +162,9 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
                 )}
 
                 {v.notasAdmin && (
-                  <div className="mt-2 bg-yellow-50 border border-yellow-200 rounded-lg p-2">
-                    <p className="text-[10px] text-yellow-700 font-bold uppercase">Notas Admin</p>
-                    <p className="text-xs text-yellow-800">{v.notasAdmin}</p>
-                  </div>
+                  <Alert tipo="aviso" titulo="Notas Admin" className="mt-2 !p-2 !rounded-lg">
+                    {v.notasAdmin}
+                  </Alert>
                 )}
               </div>
             );
@@ -177,9 +181,9 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
           <div className="relative max-w-2xl max-h-[90vh]">
             <button
               onClick={() => setImageModal(null)}
-              className="absolute -top-3 -right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg text-slate-600 hover:text-red-500 transition z-10"
+              className="absolute -top-3 -right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg text-fg-muted hover:text-red-500 transition z-10"
             >
-              <i className="fa-solid fa-xmark"></i>
+              <X />
             </button>
             <img src={imageModal} alt="Documento ampliado" className="max-w-full max-h-[85vh] rounded-xl shadow-2xl" />
           </div>
