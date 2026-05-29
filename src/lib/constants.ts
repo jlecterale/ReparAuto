@@ -1,3 +1,4 @@
+import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
 
 // ============ CONSTANTES REPARAUTO ============
@@ -71,11 +72,11 @@ export const MOTIVOS_DENUNCIA = [
   { value: 'outro' as const, label: 'Outro motivo' },
 ];
 
-export const BADGES_CONFIANCA = [
-  { key: 'verificado', label: 'Verificado', icon: 'fa-solid fa-circle-check', cor: 'text-blue-500' },
-  { key: 'profissional', label: 'Profissional', icon: 'fa-solid fa-store', cor: 'text-purple-500' },
-  { key: 'top_vendedor', label: 'Top Vendedor', icon: 'fa-solid fa-star', cor: 'text-yellow-500' },
-  { key: 'respostas_rapidas', label: 'Respostas Rápidas', icon: 'fa-solid fa-bolt', cor: 'text-green-500' },
+export const BADGES_CONFIANCA: { key: string; label: string; Icon: Icon; cor: string }[] = [
+  { key: 'verificado', label: 'Verificado', Icon: CheckCircle, cor: 'text-blue-600' },
+  { key: 'profissional', label: 'Profissional', Icon: Storefront, cor: 'text-purple-600' },
+  { key: 'top_vendedor', label: 'Top Vendedor', Icon: Star, cor: 'text-yellow-600' },
+  { key: 'respostas_rapidas', label: 'Respostas Rápidas', Icon: Lightning, cor: 'text-green-600' },
 ];
 
 // ============ TEXTOS DAS POLÍTICAS ============

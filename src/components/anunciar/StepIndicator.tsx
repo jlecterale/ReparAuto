@@ -1,3 +1,4 @@
+import { Check } from '@phosphor-icons/react';
 import { Fragment } from 'react';
 
 export default function StepIndicator({ passoAtual }: { passoAtual: number }) {
@@ -17,7 +18,7 @@ export default function StepIndicator({ passoAtual }: { passoAtual: number }) {
             }`}
             title={step.label}
           >
-            {passoAtual > step.num ? <i className="fa-solid fa-check"></i> : step.num}
+            {passoAtual > step.num ? <Check /> : step.num}
           </div>
           {i < steps.length - 1 && (
             <div

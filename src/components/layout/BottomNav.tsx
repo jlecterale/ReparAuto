@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
+import { MagnifyingGlass, PlusCircle, GearSix, ShieldCheck, User, type Icon } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 
 export default function BottomNav() {
@@ -14,26 +15,30 @@ export default function BottomNav() {
     return pathname.startsWith(path);
   };
 
-  const items = [
-    { path: '/', icon: 'fa-solid fa-magnifying-glass', label: 'Pesquisar' },
-    { path: '/anunciar', icon: 'fa-solid fa-plus-circle', label: 'Anunciar' },
-    { path: '/pecas', icon: 'fa-solid fa-gears', label: 'Peças' },
-    ...(auth.isAdmin ? [{ path: '/admin', icon: 'fa-solid fa-shield-halved', label: 'Admin' }] : []),
-    { path: '/perfil', icon: 'fa-solid fa-user', label: 'Perfil' },
+  const items: { path: string; Icon: Icon; label: string }[] = [
+    { path: '/', Icon: MagnifyingGlass, label: 'Pesquisar' },
+    { path: '/anunciar', Icon: PlusCircle, label: 'Anunciar' },
+    { path: '/pecas', Icon: GearSix, label: 'Peças' },
+    ...(auth.isAdmin ? [{ path: '/admin', Icon: ShieldCheck, label: 'Admin' }] : []),
+    { path: '/perfil', Icon: User, label: 'Perfil' },
   ];
 
   return (
     <nav className="bottom-nav" id="bottomNav">
-      {items.map((item) => (
-        <button
-          key={item.path}
-          onClick={() => router.push(item.path)}
-          className={isActive(item.path) ? 'active' : ''}
-        >
-          <i className={item.icon}></i>
-          {item.label}
-        </button>
-      ))}
+      {items.map((item) => {
+        const active = isActive(item.path);
+        return (
+          <button
+            key={item.path}
+            onClick={() => router.push(item.path)}
+            className={active ? 'active' : ''}
+            aria-current={active ? 'page' : undefined}
+          >
+            <item.Icon size={24} weight={active ? 'fill' : 'regular'} />
+            {item.label}
+          </button>
+        );
+      })}
     </nav>
   );
 }

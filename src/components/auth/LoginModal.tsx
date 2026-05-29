@@ -1,7 +1,11 @@
 'use client';
 
+import { GoogleLogo, WarningCircle, Eye, EyeSlash } from '@phosphor-icons/react';
 import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
+import Alert from '@/components/ui/Alert';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 
@@ -19,6 +23,7 @@ export default function LoginModal({ show, onClose }: LoginModalProps) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
 
@@ -77,86 +82,96 @@ export default function LoginModal({ show, onClose }: LoginModalProps) {
   return (
     <Modal show={show} onClose={onClose} titulo={modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
       <div className="space-y-4">
-        <button
+        <Button
+          tipo="secundario"
+          tamanho="lg"
+          blocoCompleto
+          icone={<GoogleLogo className="text-red-500" />}
+          carregando={loading}
           onClick={handleGoogle}
           disabled={loading}
-          className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 rounded-xl transition flex items-center justify-center gap-2"
         >
-          <i className="fa-brands fa-google text-red-500"></i>
-          {loading ? 'A carregar...' : 'Continuar com Google'}
-        </button>
+          Continuar com Google
+        </Button>
 
-        <div className="flex items-center gap-3 text-xs text-gray-400">
-          <hr className="flex-1 border-gray-200" />
+        <div className="flex items-center gap-3 text-xs font-semibold text-fg-subtle">
+          <hr className="flex-1 border-neutral-200" />
           <span>ou</span>
-          <hr className="flex-1 border-gray-200" />
+          <hr className="flex-1 border-neutral-200" />
         </div>
 
         {modo === 'registar' && (
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Nome Completo</label>
-            <input
-              type="text"
-              placeholder="Ex: Carlos Santos"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
-            />
-          </div>
+          <Input
+            label="Nome Completo"
+            name="nome"
+            type="text"
+            autoComplete="name"
+            placeholder="Ex: Carlos Santos"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+          />
         )}
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Endereço de E-mail</label>
-          <input
-            type="email"
-            placeholder="Ex: carlos@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
+        <Input
+          label="Endereço de E-mail"
+          name="email"
+          type="email"
+          autoComplete="email"
+          placeholder="Ex: carlos@email.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Palavra-passe</label>
-          <input
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
+        <Input
+          label="Palavra-passe"
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
+          placeholder="Mínimo 6 caracteres"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
+          iconeFim={
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="p-1.5 rounded-lg text-fg-subtle hover:text-fg hover:bg-neutral-100 transition"
+              aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
+            >
+              {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
+            </button>
+          }
+        />
 
         {erro && (
-          <p className="text-xs text-red-500 font-semibold bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            <i className="fa-solid fa-circle-exclamation mr-1"></i> {erro}
-          </p>
+          <Alert tipo="erro" icone={<WarningCircle />} className="!p-3 !rounded-lg !items-center font-semibold">
+            {erro}
+          </Alert>
         )}
 
-        <button
-          onClick={handleSubmit}
+        <Button
+          tipo="primario"
+          tamanho="lg"
+          blocoCompleto
+          carregando={loading}
           disabled={loading || !email.trim() || !password.trim()}
-          className={`w-full font-bold py-3 rounded-xl transition ${
-            loading || !email.trim() || !password.trim()
-              ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-              : 'bg-accent hover:bg-accent-hover text-white'
-          }`}
+          onClick={handleSubmit}
         >
-          {loading ? 'A processar...' : modo === 'login' ? 'Entrar' : 'Criar Conta'}
-        </button>
+          {modo === 'login' ? 'Entrar' : 'Criar Conta'}
+        </Button>
 
-        <p className="text-xs text-gray-400 text-center">
+        <p className="text-sm text-fg-subtle text-center">
           {modo === 'login' ? (
             <>
               Ainda não tem conta?{' '}
-              <button onClick={() => { setModo('registar'); setErro(''); }} className="text-accent font-semibold hover:underline">
+              <button onClick={() => { setModo('registar'); setErro(''); }} className="text-accent font-bold hover:underline">
                 Registar-se
               </button>
             </>
           ) : (
             <>
               Já tem conta?{' '}
-              <button onClick={() => { setModo('login'); setErro(''); }} className="text-accent font-semibold hover:underline">
+              <button onClick={() => { setModo('login'); setErro(''); }} className="text-accent font-bold hover:underline">
                 Entrar
               </button>
             </>

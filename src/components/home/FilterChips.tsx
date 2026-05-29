@@ -22,7 +22,7 @@ export default function FilterChips() {
           className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex-shrink-0 ${
             filtroAtivo === chip.value
               ? 'bg-accent text-white border-accent'
-              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+              : 'bg-white text-fg border-slate-200 hover:bg-slate-50'
           }`}
         >
           {chip.label}

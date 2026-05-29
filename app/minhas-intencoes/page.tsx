@@ -1,11 +1,13 @@
 'use client';
 
+import { ChatCircle, CircleNotch, Eye, MagnifyingGlass, Pause, Play, Plus, Trash, Tray, Users, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { formatarPreco } from '@/lib/utils';
 import type { IntencaoCompra } from '@/types/intencao';
+import Button from '@/components/ui/Button';
 
 type TabStatus = 'ativas' | 'pausadas' | 'expiradas';
 
@@ -38,9 +40,9 @@ export default function MinhasIntencoes() {
   if (!isLoggedIn) {
     return (
       <div className="text-center py-16">
-        <i className="fa-solid fa-circle-exclamation text-4xl text-slate-300 mb-4"></i>
-        <p className="font-semibold text-slate-600">Faça login para ver as suas intenções.</p>
-        <button onClick={() => router.push('/perfil')} className="mt-3 bg-accent text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-accent-hover transition">Entrar</button>
+        <WarningCircle className="text-4xl text-slate-300 mb-4" />
+        <p className="font-semibold text-fg-muted">Faça login para ver as suas intenções.</p>
+        <Button tipo="primario" onClick={() => router.push('/perfil')} className="mt-3">Entrar</Button>
       </div>
     );
   }
@@ -86,18 +88,18 @@ export default function MinhasIntencoes() {
   return (
     <div className="max-w-2xl mx-auto page-enter">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-extrabold text-brand-900 flex items-center gap-2">
-          <i className="fa-solid fa-magnifying-glass text-accent"></i> Minhas Intenções
+        <h1 className="text-xl font-extrabold text-fg-heading flex items-center gap-2">
+          <MagnifyingGlass className="text-accent" /> Minhas Intenções
         </h1>
-        <button onClick={() => router.push('/anunciar')} className="bg-accent text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-accent-hover transition">
-          <i className="fa-solid fa-plus mr-1"></i> Nova Intenção
-        </button>
+        <Button tipo="primario" tamanho="sm" icone={<Plus />} onClick={() => router.push('/comprar')}>
+          Nova Intenção
+        </Button>
       </div>
 
       <div className="flex gap-1 mb-4 bg-slate-100 rounded-xl p-1">
         {tabs.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${tab === t.key ? 'bg-white text-accent shadow-sm' : 'text-slate-500 hover:text-brand-900'}`}
+            className={`flex-1 text-xs font-bold py-2 rounded-lg transition ${tab === t.key ? 'bg-white text-accent shadow-sm' : 'text-fg-subtle hover:text-fg-heading'}`}
           >
             {t.label}
           </button>
@@ -106,60 +108,66 @@ export default function MinhasIntencoes() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <i className="fa-solid fa-spinner fa-spin text-2xl text-accent"></i>
+          <CircleNotch className="animate-spin text-2xl text-accent" />
         </div>
       ) : filtradas.length === 0 ? (
-        <div className="text-center py-12 text-slate-400 bg-white rounded-2xl shadow-sm border border-slate-200">
-          <i className="fa-solid fa-inbox text-4xl mb-3 text-slate-300"></i>
-          <p className="font-semibold text-slate-500">Nenhuma intenção {tab}</p>
-          <p className="text-xs mt-1">Crie uma intenção de compra para começar.</p>
+        <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-slate-200">
+          <Tray className="text-4xl mb-3 text-slate-300" />
+          <p className="font-semibold text-fg-subtle">Nenhuma intenção {tab}</p>
+          <p className="text-xs mt-1 text-fg-subtle">Crie uma intenção de compra para começar.</p>
         </div>
       ) : (
         <div className="space-y-3">
           {filtradas.map((intencao) => (
             <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/30 transition">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-brand-900 text-sm">{intencao.titulo}</h3>
+                <h3 className="font-bold text-fg-heading text-sm">{intencao.titulo}</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   intencao.status === 'ativa' ? 'bg-green-100 text-green-700' :
-                  intencao.status === 'pausada' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-slate-500'
+                  intencao.status === 'pausada' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-fg-subtle'
                 }`}>
                   {intencao.status}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600 mb-3">
+              <div className="grid grid-cols-2 gap-2 text-xs text-fg-muted mb-3">
                 <span>Ano: {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</span>
                 <span>Preço: {formatarPreco(intencao.criterios.precoMaximo)}</span>
                 <span>Combustível: {intencao.criterios.combustivel.join(', ')}</span>
                 <span>Local: {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-slate-400 mb-3">
-                <span><i className="fa-solid fa-eye mr-1"></i>{intencao.stats.visualizacoes}</span>
-                <span><i className="fa-solid fa-comment mr-1"></i>{intencao.stats.contatos} contactos</span>
+              <div className="flex items-center gap-3 text-xs text-fg-subtle mb-3">
+                <span><Eye className="mr-1" />{intencao.stats.visualizacoes}</span>
+                <span><ChatCircle className="mr-1" />{intencao.stats.contatos} contactos</span>
               </div>
 
               <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
-                <button onClick={() => router.push(`/intencao/${intencao.id}/contatos`)}
-                  className="text-xs font-bold bg-accent text-white px-3 py-1.5 rounded-lg hover:bg-accent-hover transition">
-                  <i className="fa-solid fa-users mr-1"></i> Ver contactos
-                </button>
+                <Button
+                  tipo="primario"
+                  tamanho="sm"
+                  icone={<Users />}
+                  onClick={() => router.push(`/intencao/${intencao.id}/contatos`)}
+                >
+                  Ver contactos
+                </Button>
                 {intencao.status === 'ativa' ? (
-                  <button onClick={() => handlePause(intencao.id)}
-                    className="text-xs font-bold border border-slate-300 text-slate-600 px-3 py-1.5 rounded-lg hover:bg-slate-50 transition">
-                    <i className="fa-solid fa-pause mr-1"></i> Pausar
-                  </button>
+                  <Button
+                    tipo="secundario"
+                    tamanho="sm"
+                    icone={<Pause />}
+                    onClick={() => handlePause(intencao.id)}
+                  >
+                    Pausar
+                  </Button>
                 ) : intencao.status === 'pausada' ? (
-                  <button onClick={() => handleResume(intencao.id)}
-                    className="text-xs font-bold border border-green-300 text-green-600 px-3 py-1.5 rounded-lg hover:bg-green-50 transition">
-                    <i className="fa-solid fa-play mr-1"></i> Reativar
-                  </button>
+                  <Button tipo="verde" tamanho="sm" icone={<Play />} onClick={() => handleResume(intencao.id)}>
+                    Reativar
+                  </Button>
                 ) : null}
-                <button onClick={() => setConfirmDelete(intencao.id)}
-                  className="text-xs font-bold border border-red-200 text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition">
-                  <i className="fa-solid fa-trash-can mr-1"></i> Remover
-                </button>
+                <Button tipo="perigo" tamanho="sm" icone={<Trash />} onClick={() => setConfirmDelete(intencao.id)}>
+                  Remover
+                </Button>
               </div>
             </div>
           ))}
@@ -169,11 +177,11 @@ export default function MinhasIntencoes() {
       {confirmDelete && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h4 className="font-bold text-brand-900 mb-2">Remover Intenção</h4>
-            <p className="text-sm text-slate-600 mb-4">Tem certeza? Esta ação não pode ser desfeita.</p>
+            <h4 className="font-bold text-fg-heading mb-2">Remover Intenção</h4>
+            <p className="text-sm text-fg-muted mb-4">Tem certeza? Esta ação não pode ser desfeita.</p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
-              <button onClick={handleDelete} className="px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg transition">Remover</button>
+              <Button tipo="terciario" onClick={() => setConfirmDelete(null)}>Cancelar</Button>
+              <Button tipo="perigo" onClick={handleDelete}>Remover</Button>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+import { User } from '@phosphor-icons/react';
 import type { Usuario } from '@/types/usuario';
 
 const AVATAR_COLORS = [
@@ -49,7 +50,7 @@ export default function UserAvatar({ user, size = 'md', className = '' }: UserAv
     <div
       className={`${sizeClasses[size]} ${cor} rounded-full flex items-center justify-center text-white flex-shrink-0 ${className}`}
     >
-      <i className="fa-solid fa-user"></i>
+      <User />
     </div>
   );
 }

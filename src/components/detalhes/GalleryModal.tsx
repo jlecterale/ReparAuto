@@ -1,5 +1,6 @@
 'use client';
 
+import { CaretLeft, CaretRight, HandPointing } from '@phosphor-icons/react';
 import { useState, useCallback, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import FotoRender from '@/components/ui/FotoRender';
@@ -81,28 +82,28 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
           <FotoRender foto={fotos[indice]} classes="w-full h-full object-cover" />
         </div>
 
-        <p className="text-[10px] text-slate-400 text-center block sm:hidden">
-          <i className="fa-solid fa-hand-pointer mr-1"></i> Deslize para navegar &middot; Belisque para zoom
+        <p className="text-[10px] text-fg-subtle text-center block sm:hidden">
+          <HandPointing className="mr-1" /> Deslize para navegar &middot; Belisque para zoom
         </p>
 
         {fotos.length > 1 && (
           <div className="flex items-center justify-between gap-2">
             <button
               onClick={goPrev}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+              className="bg-slate-100 hover:bg-slate-200 text-fg px-3 py-1.5 rounded-lg text-sm font-semibold transition"
               aria-label="Foto anterior"
             >
-              <i className="fa-solid fa-chevron-left mr-1"></i> Anterior
+              <CaretLeft className="mr-1" /> Anterior
             </button>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-fg-subtle font-medium">
               {indice + 1} / {fotos.length}
             </span>
             <button
               onClick={goNext}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition"
+              className="bg-slate-100 hover:bg-slate-200 text-fg px-3 py-1.5 rounded-lg text-sm font-semibold transition"
               aria-label="Próxima foto"
             >
-              Seguinte <i className="fa-solid fa-chevron-right ml-1"></i>
+              Seguinte <CaretRight className="ml-1" />
             </button>
           </div>
         )}

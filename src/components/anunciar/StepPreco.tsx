@@ -1,8 +1,10 @@
 'use client';
 
+import { IdentificationCard, Invoice, RoadHorizon } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
 import type { CarroFormData } from '@/types/carro';
+import Button from '@/components/ui/Button';
 
 interface StepPrecoProps {
   dados: CarroFormData;
@@ -66,7 +68,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
       <h3 className="font-bold text-lg mb-3">💰 Preço, Descrição & Estado</h3>
 
       <div className="mb-4">
-        <label className="block text-sm font-semibold text-brand-900 mb-1">
+        <label className="block text-sm font-semibold text-fg-heading mb-1">
           Preço (€) <span className="text-red-500">*</span>
         </label>
         <input
@@ -79,11 +81,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
           }`}
         />
         {erros.preco && <span className="text-xs text-red-500 mt-1 block">O preço deve ser superior a 0.</span>}
-        <p className="text-xs text-gray-400 mt-1">{getSugestaoPreco(dados.preco)}</p>
+        <p className="text-xs text-fg-subtle mt-1">{getSugestaoPreco(dados.preco)}</p>
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-semibold text-brand-900 mb-1">
+        <label className="block text-sm font-semibold text-fg-heading mb-1">
           Descrição do Carro <span className="text-red-500">*</span>
         </label>
         <textarea
@@ -99,11 +101,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
-        <span className="block text-sm font-bold text-brand-900 mb-2">
+        <span className="block text-sm font-bold text-fg-heading mb-2">
           Estado do Veículo <span className="text-red-500">*</span>
         </span>
         <div className="flex gap-4 mb-3">
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-fg">
             <input
               type="radio"
               name="estadoVeiculo"
@@ -114,7 +116,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
             />
             Pronto para rodar
           </label>
-          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-700">
+          <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-fg">
             <input
               type="radio"
               name="estadoVeiculo"
@@ -131,11 +133,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
           <div className="mt-3 pt-3 border-t border-slate-200 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-white border border-slate-200 rounded-xl p-3 shadow-inner">
               <div>
-                <span className="block text-xs font-bold text-slate-500 mb-2">
-                  <i className="fa-solid fa-road mr-1 text-slate-400"></i> Estado de Circulação
+                <span className="block text-xs font-bold text-fg-subtle mb-2">
+                  <RoadHorizon className="mr-1 text-slate-400" /> Estado de Circulação
                 </span>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-fg">
                     <input
                       type="radio"
                       name="rodando"
@@ -146,7 +148,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                     />
                     Sim (A rodar)
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-fg">
                     <input
                       type="radio"
                       name="rodando"
@@ -160,11 +162,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                 </div>
               </div>
               <div>
-                <span className="block text-xs font-bold text-slate-500 mb-2">
-                  <i className="fa-solid fa-file-invoice mr-1 text-slate-400"></i> Inspeção (IPO)
+                <span className="block text-xs font-bold text-fg-subtle mb-2">
+                  <Invoice className="mr-1 text-slate-400" /> Inspeção (IPO)
                 </span>
                 <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-fg">
                     <input
                       type="radio"
                       name="inspecao"
@@ -175,7 +177,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                     />
                     Com Inspeção
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-fg">
                     <input
                       type="radio"
                       name="inspecao"
@@ -191,7 +193,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
             </div>
 
             <div>
-              <span className="block text-xs font-bold text-slate-500 mb-2">
+              <span className="block text-xs font-bold text-fg-subtle mb-2">
                 Tipo de manutenção necessária (múltipla escolha)
               </span>
               <div className="grid grid-cols-2 gap-2 text-xs">
@@ -220,7 +222,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
             </div>
 
             <div className="bg-white border border-slate-200 rounded-lg p-3">
-              <span className="block text-xs font-bold text-slate-500 mb-1.5">
+              <span className="block text-xs font-bold text-fg-subtle mb-1.5">
                 Orçamento preexistente (opcional)
               </span>
               <textarea
@@ -231,7 +233,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                 className="w-full border border-slate-200 focus:border-accent rounded-lg p-2 text-xs focus:outline-none transition"
               />
               <div className="flex flex-col sm:flex-row gap-3 mt-2 text-xs">
-                <label className="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                <label className="flex items-center gap-1.5 cursor-pointer text-fg-muted">
                   <input
                     type="checkbox"
                     checked={!!dados.incluirMecanicoNome}
@@ -240,7 +242,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                   />
                   Incluir nome do mecânico / oficina
                 </label>
-                <label className="flex items-center gap-1.5 cursor-pointer text-slate-600">
+                <label className="flex items-center gap-1.5 cursor-pointer text-fg-muted">
                   <input
                     type="checkbox"
                     checked={!!dados.incluirMecanicoTelefone}
@@ -276,16 +278,16 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
       </div>
 
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
-        <span className="block text-sm font-bold text-brand-900 mb-3 flex items-center gap-2">
-          <i className="fa-solid fa-address-card text-blue-500"></i> Contacto do Vendedor
+        <span className="block text-sm font-bold text-fg-heading mb-3 flex items-center gap-2">
+          <IdentificationCard className="text-blue-500" /> Contacto do Vendedor
         </span>
         <div className="space-y-2">
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">
               WhatsApp / Telefone <span className="text-green-600">(recomendado)</span>
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-slate-600">+</span>
+              <span className="text-sm font-bold text-fg-muted">+</span>
               <input
                 type="tel"
                 placeholder="351 912 345 678"
@@ -294,9 +296,9 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
                 className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-green-500"
               />
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">Nº com código do país (ex: 351912345678)</p>
+            <p className="text-[10px] text-fg-subtle mt-0.5">Nº com código do país (ex: 351912345678)</p>
           </div>
-          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 select-none">
+          <label className="flex items-center gap-2 cursor-pointer text-xs text-fg-muted select-none">
             <input
               type="checkbox"
               checked={telefoneDiferente}
@@ -312,7 +314,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-xs font-semibold text-slate-500 mb-1">Telefone</label>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">Telefone</label>
               <input
                 type="tel"
                 placeholder="912 345 678"
@@ -323,7 +325,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
             </div>
           )}
           <div>
-            <label className="block text-xs font-semibold text-slate-500 mb-1">Email de Contacto</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">Email de Contacto</label>
             <input
               type="email"
               placeholder="seu@email.com"
@@ -336,18 +338,22 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
       </div>
 
       <div className="flex gap-3">
-        <button
+        <Button
+          tipo="secundario"
+          tamanho="lg"
           onClick={onBack}
-          className="flex-1 bg-white hover:bg-slate-50 text-brand-700 font-bold py-3 rounded-xl transition border border-slate-300"
+          className="flex-1"
         >
           Voltar
-        </button>
-        <button
+        </Button>
+        <Button
+          tipo="verde"
+          tamanho="lg"
           onClick={validar}
-          className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition"
+          className="flex-1"
         >
           ✅ Publicar Anúncio
-        </button>
+        </Button>
       </div>
     </div>
   );

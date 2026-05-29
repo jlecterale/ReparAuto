@@ -1,8 +1,10 @@
 'use client';
 
+import { Calendar, Envelope, Phone, User, WhatsappLogo } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { formatarPreco, obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import type { Carro } from '@/types/carro';
 
 export default function StatusPanel({ carro }: { carro: Carro | null }) {
@@ -23,14 +25,14 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
         </span>
         {carro.preco <= 2000 && (
           <div className="mt-1">
-            <Badge cor="accent">Low-Cost</Badge>
+            <Badge cor="accent" variante="solid">Low-Cost</Badge>
           </div>
         )}
       </div>
 
       <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
-        <p className="text-xs font-semibold text-slate-500 flex items-center gap-1">
-          <i className="fa-solid fa-user text-slate-400"></i>
+        <p className="text-xs font-semibold text-fg-subtle flex items-center gap-1">
+          <User className="text-slate-400" />
           {carro.vendedorNome || carro.criador || 'Anunciante'}
         </p>
 
@@ -41,19 +43,15 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
           >
-            <i className="fa-brands fa-whatsapp text-lg"></i>
+            <WhatsappLogo className="text-lg" />
             Falar por WhatsApp
           </a>
         )}
 
         {temTelefone && !mostrarTelefone && (
-          <button
-            onClick={() => setMostrarTelefone(true)}
-            className="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-accent font-semibold py-2.5 px-4 rounded-xl transition border border-accent text-sm"
-          >
-            <i className="fa-solid fa-phone"></i>
+          <Button tipo="primario" blocoCompleto onClick={() => setMostrarTelefone(true)} icone={<Phone />}>
             Ver Telefone
-          </button>
+          </Button>
         )}
 
         {temTelefone && mostrarTelefone && (
@@ -61,23 +59,23 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
             href={`tel:${carro.vendedorTelefone}`}
             className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
           >
-            <i className="fa-solid fa-phone"></i>
+            <Phone />
             {carro.vendedorTelefone}
           </a>
         )}
 
         <a
           href={`mailto:${email}`}
-          className="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2.5 px-4 rounded-xl transition border border-slate-300 text-sm"
+          className="flex items-center justify-center gap-2 w-full bg-white hover:bg-slate-50 text-fg font-semibold py-2.5 px-4 rounded-xl transition border border-slate-300 text-sm"
         >
-          <i className="fa-solid fa-envelope"></i>
+          <Envelope />
           Enviar Email
         </a>
       </div>
 
       <div className="mt-4 pt-4 border-t border-slate-100">
-        <p className="text-xs text-slate-400 flex items-center gap-1">
-          <i className="fa-solid fa-calendar"></i>
+        <p className="text-xs text-fg-subtle flex items-center gap-1">
+          <Calendar />
           Publicado em {new Date((carro.dataCriacao as any)?.toDate?.() || carro.dataCriacao || Date.now()).toLocaleDateString('pt-PT')}
         </p>
       </div>

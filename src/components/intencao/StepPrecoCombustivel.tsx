@@ -35,7 +35,7 @@ export default function StepPrecoCombustivel({ criterios, onChange }: StepPrecoC
             type="button"
             onClick={() => toggleArray(field, opt)}
             className={`px-3 py-1.5 text-xs font-bold rounded-full border transition ${
-              selected ? 'bg-accent text-white border-accent' : 'bg-white text-slate-600 border-slate-300 hover:border-accent'
+              selected ? 'bg-accent text-white border-accent' : 'bg-white text-fg-muted border-slate-300 hover:border-accent'
             }`}
           >
             {opt}
@@ -49,7 +49,7 @@ export default function StepPrecoCombustivel({ criterios, onChange }: StepPrecoC
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">Preço mínimo (€)</label>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">Preço mínimo (€)</label>
           <input
             type="number"
             min={0}
@@ -60,7 +60,7 @@ export default function StepPrecoCombustivel({ criterios, onChange }: StepPrecoC
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-slate-500 mb-1">Preço máximo * (€)</label>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">Preço máximo * (€)</label>
           <input
             type="number"
             min={0}
@@ -73,12 +73,12 @@ export default function StepPrecoCombustivel({ criterios, onChange }: StepPrecoC
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-2">Combustível *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-2">Combustível *</label>
         {renderCheckboxes('combustivel', COMBUSTIVEIS_INTENCAO)}
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-2">Transmissão *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-2">Transmissão *</label>
         {renderCheckboxes('tipoTransmissao', TRANSMISSOES_INTENCAO)}
       </div>
     </div>

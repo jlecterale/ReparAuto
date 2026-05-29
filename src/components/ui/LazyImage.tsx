@@ -1,5 +1,6 @@
 'use client';
 
+import { Image } from '@phosphor-icons/react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getCachedLqip, cacheLqip, generateLqipFromImage } from '@/lib/lqip';
 
@@ -63,7 +64,7 @@ export default function LazyImage({ src, alt, className = '', lqip }: LazyImageP
       )}
       {error && (
         <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 text-3xl">
-          <i className="fa-solid fa-image"></i>
+          <Image />
         </div>
       )}
       {inView && !error && (

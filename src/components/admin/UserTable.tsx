@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Usuario, Role } from '@/types/usuario';
 import { formatarData } from '@/lib/utils';
+import Button from '@/components/ui/Button';
 
 interface UserTableProps {
   users: Usuario[];
@@ -28,7 +29,7 @@ export default function UserTable({ users, onRoleChange }: UserTableProps) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
+            <tr className="text-left text-xs font-bold text-fg-subtle uppercase tracking-wider border-b border-slate-200">
               <th className="pb-3 pr-4">UID</th>
               <th className="pb-3 pr-4">Nome</th>
               <th className="pb-3 pr-4">Email</th>
@@ -40,17 +41,17 @@ export default function UserTable({ users, onRoleChange }: UserTableProps) {
           <tbody>
             {users.map((u) => (
               <tr key={u.uid} className="border-b border-slate-100 hover:bg-slate-50 transition">
-                <td className="py-3 pr-4 font-mono text-xs text-slate-400 max-w-[100px] truncate">{u.uid}</td>
-                <td className="py-3 pr-4 font-medium text-brand-900">{u.nome || '—'}</td>
-                <td className="py-3 pr-4 text-slate-600">{u.email}</td>
+                <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[100px] truncate">{u.uid}</td>
+                <td className="py-3 pr-4 font-medium text-fg-heading">{u.nome || '—'}</td>
+                <td className="py-3 pr-4 text-fg-muted">{u.email}</td>
                 <td className="py-3 pr-4">
                   <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-                    u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'
+                    u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-fg-muted'
                   }`}>
                     {u.role}
                   </span>
                 </td>
-                <td className="py-3 pr-4 text-slate-500 text-xs">
+                <td className="py-3 pr-4 text-fg-subtle text-xs">
                   {u.dataCriacao ? formatarData(u.dataCriacao) : '—'}
                 </td>
                 <td className="py-3">
@@ -73,7 +74,7 @@ export default function UserTable({ users, onRoleChange }: UserTableProps) {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-slate-400 text-sm">
+                <td colSpan={6} className="py-8 text-center text-fg-subtle text-sm">
                   Nenhum utilizador encontrado.
                 </td>
               </tr>
@@ -85,24 +86,25 @@ export default function UserTable({ users, onRoleChange }: UserTableProps) {
       {confirm && (
         <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4" onClick={() => setConfirm(null)}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-extrabold text-brand-900 mb-2">Confirmar alteração</h3>
-            <p className="text-sm text-slate-600 mb-4">
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">Confirmar alteração</h3>
+            <p className="text-sm text-fg-muted mb-4">
               Pretende alterar o role de <strong>{confirm.nome}</strong> para <strong>{confirm.role}</strong>?
             </p>
             <div className="flex gap-3 justify-end">
-              <button
+              <Button
+                tipo="secundario"
                 onClick={() => setConfirm(null)}
-                className="px-4 py-2 text-sm font-bold rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 transition"
               >
                 Cancelar
-              </button>
-              <button
+              </Button>
+              <Button
+                tipo="primario"
                 onClick={() => handleRoleChange(confirm.uid, confirm.role)}
                 disabled={loadingUid === confirm.uid}
-                className="px-4 py-2 text-sm font-bold rounded-xl bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
+                carregando={loadingUid === confirm.uid}
               >
                 {loadingUid === confirm.uid ? 'A alterar...' : 'Confirmar'}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

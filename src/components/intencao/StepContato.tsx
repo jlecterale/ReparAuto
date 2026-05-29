@@ -1,5 +1,7 @@
 'use client';
 
+import { ChatCircleDots, WhatsappLogo, Chats, type Icon } from '@phosphor-icons/react';
+
 interface StepContatoProps {
   contatoPreferido: 'chat' | 'whatsapp' | 'ambos';
   mostrarTelefone: boolean;
@@ -11,13 +13,13 @@ export default function StepContato({ contatoPreferido, mostrarTelefone, descric
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-2">Forma de contacto preferida *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-2">Forma de contacto preferida *</label>
         <div className="space-y-2">
-          {[
-            { value: 'chat', label: 'Chat do app', icon: 'fa-solid fa-comment-dots' },
-            { value: 'whatsapp', label: 'WhatsApp', icon: 'fa-brands fa-whatsapp' },
-            { value: 'ambos', label: 'Ambos', icon: 'fa-solid fa-comments' },
-          ].map((opt) => (
+          {([
+            { value: 'chat', label: 'Chat do app', Icon: ChatCircleDots },
+            { value: 'whatsapp', label: 'WhatsApp', Icon: WhatsappLogo },
+            { value: 'ambos', label: 'Ambos', Icon: Chats },
+          ] as { value: string; label: string; Icon: Icon }[]).map((opt) => (
             <label
               key={opt.value}
               className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
@@ -32,8 +34,8 @@ export default function StepContato({ contatoPreferido, mostrarTelefone, descric
                 onChange={(e) => onChange('contatoPreferido', e.target.value)}
                 className="text-accent focus:ring-accent"
               />
-              <i className={`${opt.icon} text-lg text-accent w-6`}></i>
-              <span className="text-sm font-semibold text-slate-700">{opt.label}</span>
+              <opt.Icon size={22} className="text-accent shrink-0" />
+              <span className="text-sm font-semibold text-fg">{opt.label}</span>
             </label>
           ))}
         </div>
@@ -50,8 +52,8 @@ export default function StepContato({ contatoPreferido, mostrarTelefone, descric
       </label>
 
       <div>
-        <label className="block text-xs font-bold text-slate-500 mb-1">
-          Descrição adicional <span className="font-normal text-slate-400">(opcional, máx. 500 caracteres)</span>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">
+          Descrição adicional <span className="font-normal text-fg-subtle">(opcional, máx. 500 caracteres)</span>
         </label>
         <textarea
           value={descricao}
@@ -61,7 +63,7 @@ export default function StepContato({ contatoPreferido, mostrarTelefone, descric
           placeholder="Ex: Compro para uso pessoal, urgente, etc."
           className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent resize-none"
         />
-        <p className="text-xs text-slate-400 mt-1 text-right">{descricao.length}/500</p>
+        <p className="text-xs text-fg-subtle mt-1 text-right">{descricao.length}/500</p>
       </div>
     </div>
   );

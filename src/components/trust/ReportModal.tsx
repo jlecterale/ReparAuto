@@ -1,5 +1,7 @@
 'use client';
 
+import { CheckCircle, Flag, WarningCircle, X } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import { MOTIVOS_DENUNCIA } from '@/lib/constants';
 import type { MotivoReport, TipoReport } from '@/types/report';
@@ -61,30 +63,31 @@ export default function ReportModal({ show, onClose, alvoTipo, onSubmit }: Repor
       >
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-extrabold text-brand-900 flex items-center gap-2">
-              <i className="fa-solid fa-flag text-red-500"></i>
+            <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
+              <Flag className="text-red-500" />
               Denunciar {tipoLabel}
             </h3>
-            <button onClick={handleClose} className="text-slate-400 hover:text-slate-600 transition">
-              <i className="fa-solid fa-xmark text-lg"></i>
+            <button onClick={handleClose} className="text-slate-400 hover:text-fg-muted transition">
+              <X className="text-lg" />
             </button>
           </div>
 
           {enviado ? (
             <div className="text-center py-6">
-              <i className="fa-solid fa-circle-check text-green-500 text-3xl mb-3"></i>
-              <p className="font-semibold text-brand-900">Denúncia enviada!</p>
-              <p className="text-sm text-slate-500 mt-1">A nossa equipa irá analisar a sua denúncia brevemente.</p>
-              <button
+              <CheckCircle className="text-green-500 text-3xl mb-3" />
+              <p className="font-semibold text-fg-heading">Denúncia enviada!</p>
+              <p className="text-sm text-fg-subtle mt-1">A nossa equipa irá analisar a sua denúncia brevemente.</p>
+              <Button
+                tipo="primario"
                 onClick={handleClose}
-                className="mt-4 bg-accent hover:bg-accent-hover text-white font-bold text-sm px-6 py-2 rounded-xl transition"
+                className="mt-4"
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           ) : (
             <>
-              <p className="text-sm text-slate-600 mb-4">
+              <p className="text-sm text-fg-muted mb-4">
                 Selecione o motivo da denúncia. A equipa da ReparAuto irá analisar o caso e tomar as medidas necessárias.
               </p>
 
@@ -106,7 +109,7 @@ export default function ReportModal({ show, onClose, alvoTipo, onSubmit }: Repor
                       onChange={() => setMotivo(m.value)}
                       className="accent-accent"
                     />
-                    <span className="text-sm font-medium text-brand-900">{m.label}</span>
+                    <span className="text-sm font-medium text-fg-heading">{m.label}</span>
                   </label>
                 ))}
               </div>
@@ -121,28 +124,28 @@ export default function ReportModal({ show, onClose, alvoTipo, onSubmit }: Repor
 
               {erro && (
                 <p className="text-xs text-red-500 mb-3 flex items-center gap-1">
-                  <i className="fa-solid fa-circle-exclamation"></i> {erro}
+                  <WarningCircle /> {erro}
                 </p>
               )}
 
               <div className="flex gap-3">
-                <button
+                <Button
+                  tipo="secundario"
                   onClick={handleClose}
-                  className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm py-2.5 rounded-xl transition"
+                  className="flex-1"
                 >
                   Cancelar
-                </button>
-                <button
-                  onClick={handleSubmit}
+                </Button>
+                <Button
+                  tipo="perigo"
+                  carregando={enviando}
                   disabled={!motivo || enviando}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold text-sm py-2.5 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleSubmit}
+                  icone={<Flag />}
+                  className="flex-1"
                 >
-                  {enviando ? (
-                    <><i className="fa-solid fa-spinner fa-spin mr-1"></i> A enviar...</>
-                  ) : (
-                    <><i className="fa-solid fa-flag mr-1"></i> Enviar Denúncia</>
-                  )}
-                </button>
+                  {enviando ? 'A enviar...' : 'Enviar Denúncia'}
+                </Button>
               </div>
             </>
           )}

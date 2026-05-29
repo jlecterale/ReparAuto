@@ -1,3 +1,4 @@
+import { Star } from '@phosphor-icons/react';
 import { BADGES_CONFIANCA } from '@/lib/constants';
 
 interface SellerBadgesProps {
@@ -25,13 +26,13 @@ export default function SellerBadges({
       <div className="flex items-center gap-1.5 flex-wrap">
         {activeBadges.map((badge) => (
           <span key={badge.key} className={`${badge.cor} text-xs`} title={badge.label}>
-            <i className={badge.icon}></i>
+            <badge.Icon weight="fill" />
           </span>
         ))}
         {!!totalAvaliacoes && totalAvaliacoes > 0 && (
-          <span className="text-xs text-yellow-500 flex items-center gap-0.5" title={`${mediaAvaliacoes} de 5 (${totalAvaliacoes} avaliações)`}>
-            <i className="fa-solid fa-star"></i>
-            <span className="text-slate-600 font-semibold">{mediaAvaliacoes}</span>
+          <span className="text-xs text-yellow-600 flex items-center gap-0.5" title={`${mediaAvaliacoes} de 5 (${totalAvaliacoes} avaliações)`}>
+            <Star weight="fill" />
+            <span className="text-fg font-semibold">{mediaAvaliacoes}</span>
           </span>
         )}
       </div>
@@ -45,14 +46,14 @@ export default function SellerBadges({
           key={badge.key}
           className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200`}
         >
-          <i className={`${badge.icon} ${badge.cor}`}></i>
-          <span className="text-slate-700">{badge.label}</span>
+          <badge.Icon weight="fill" className={badge.cor} />
+          <span className="text-fg">{badge.label}</span>
         </span>
       ))}
       {!!totalAvaliacoes && totalAvaliacoes > 0 && (
         <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-yellow-50 border border-yellow-200">
-          <i className="fa-solid fa-star text-yellow-500"></i>
-          <span className="text-slate-700">{mediaAvaliacoes} ({totalAvaliacoes})</span>
+          <Star weight="fill" className="text-yellow-600" />
+          <span className="text-fg">{mediaAvaliacoes} ({totalAvaliacoes})</span>
         </span>
       )}
     </div>

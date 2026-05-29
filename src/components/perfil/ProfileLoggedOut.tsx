@@ -1,18 +1,38 @@
+import { SignIn, UserCircle, Heart } from '@phosphor-icons/react';
+import Button from '@/components/ui/Button';
+
 export default function ProfileLoggedOut({ onLogin }: { onLogin: () => void }) {
   return (
-    <div className="max-w-md mx-auto bg-white rounded-2xl shadow-lg p-6 text-center">
-      <i className="fa-solid fa-circle-user text-6xl text-brand-300 mb-3"></i>
-      <h2 className="text-xl font-extrabold text-brand-900">Área do Utilizador</h2>
-      <p className="text-gray-500 text-sm mb-5">
-        Faça login para gerir os seus anúncios e consultar favoritos de forma persistente.
-      </p>
-      <button
-        onClick={onLogin}
-        className="w-full bg-brand-900 hover:bg-brand-800 text-white font-bold py-3 rounded-xl mb-3 transition"
-      >
-        <i className="fa-solid fa-right-to-bracket mr-2"></i> Entrar ou Criar Conta
-      </button>
-      <p className="text-xs text-gray-400">Ao entrar, concorda com os Termos da ReparAuto.</p>
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl ring-1 ring-neutral-100 p-8 text-center">
+        <div className="mx-auto w-20 h-20 rounded-full bg-primary-50 flex items-center justify-center mb-5">
+          <UserCircle size={48} weight="duotone" className="text-primary-600" />
+        </div>
+
+        <h2 className="text-2xl font-extrabold text-fg-heading">Área do Utilizador</h2>
+        <p className="text-fg-subtle text-sm mt-2 mb-6 leading-relaxed">
+          Faça login para gerir os seus anúncios e consultar favoritos de forma persistente.
+        </p>
+
+        <Button
+          tipo="escuro"
+          tamanho="lg"
+          blocoCompleto
+          onClick={onLogin}
+          icone={<SignIn size={20} weight="bold" />}
+        >
+          Entrar ou Criar Conta
+        </Button>
+
+        <p className="mt-5 inline-flex items-center gap-1.5 text-xs text-fg-subtle">
+          <Heart size={14} weight="fill" className="text-accent" />
+          Os seus favoritos ficam guardados na sua conta.
+        </p>
+
+        <p className="text-[11px] text-fg-subtle mt-4">
+          Ao entrar, concorda com os Termos da ReparAuto.
+        </p>
+      </div>
     </div>
   );
 }

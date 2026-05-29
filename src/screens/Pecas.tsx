@@ -1,5 +1,6 @@
 'use client';
 
+import { GearSix, PlusCircle, Wrench } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -10,6 +11,7 @@ import DetalhesPecaModal from '@/components/pecas/DetalhesPecaModal';
 import DesmancharCarroModal from '@/components/pecas/DesmancharCarroModal';
 import { getPecaPorId } from '@/lib/db';
 import type { Peca } from '@/types/peca';
+import Button from '@/components/ui/Button';
 
 export default function Pecas() {
   const { pecas } = useApp();
@@ -53,26 +55,34 @@ export default function Pecas() {
               Compra, venda e procura de peças automóveis ou veículos completos para desmantelamento.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <button
+              <Button
+                tipo="primario"
+                icone={<PlusCircle />}
                 onClick={() => setCriarModalAberto(true)}
-                className="bg-accent hover:bg-accent-hover text-white font-bold px-5 py-2.5 rounded-full transition text-sm sm:text-base shadow-md flex items-center gap-2"
+                className="rounded-full shadow-md"
               >
-                <i className="fa-solid fa-circle-plus"></i> Publicar Peça ou Pedido
-              </button>
-              <button
+                Publicar Peça ou Pedido
+              </Button>
+              <Button
+                tipo="secundario"
+                icone={<Wrench />}
                 onClick={() => setDesmancharAberto(true)}
-                className="bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-5 py-2.5 rounded-full transition text-sm sm:text-base flex items-center gap-2"
+                className="rounded-full !bg-white/10 hover:!bg-white/20 !border-white/30 !text-white"
               >
-                <i className="fa-solid fa-car-burst"></i> Desmanchar Carro
-              </button>
+                Desmanchar Carro
+              </Button>
             </div>
           </div>
         </div>
-        <i className="fa-solid fa-gears absolute right-[-20px] bottom-[-20px] text-white/5 text-[15rem] pointer-events-none transform -rotate-12"></i>
+        <GearSix className="absolute right-[-20px] bottom-[-20px] text-white/5 text-[15rem] pointer-events-none transform -rotate-12" />
       </div>
 
-      <PecasFilter total={filtered.length} />
-      <PecasGrid onDetalhes={(peca: Peca) => setDetalhesPeca(peca)} />
+      <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
+        <PecasFilter total={filtered.length} />
+        <section className="min-w-0">
+          <PecasGrid onDetalhes={(peca: Peca) => setDetalhesPeca(peca)} />
+        </section>
+      </div>
 
       <CriarPecaModal
         show={criarModalAberto}
