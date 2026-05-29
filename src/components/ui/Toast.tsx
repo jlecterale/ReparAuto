@@ -1,5 +1,6 @@
 'use client';
 
+import { X, CheckCircle, WarningCircle, Info, type Icon } from '@phosphor-icons/react';
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 
 type ToastTipo = 'sucesso' | 'erro' | 'info';
@@ -44,10 +45,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     info: 'bg-brand-700',
   };
 
-  const icons: Record<ToastTipo, string> = {
-    sucesso: 'fa-solid fa-check-circle',
-    erro: 'fa-solid fa-exclamation-circle',
-    info: 'fa-solid fa-info-circle',
+  const icons: Record<ToastTipo, Icon> = {
+    sucesso: CheckCircle,
+    erro: WarningCircle,
+    info: Info,
   };
 
   return (
@@ -59,13 +60,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={toast.id}
             className={`${cores[toast.tipo] || cores.info} text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-2.5 text-sm font-medium custom-toast page-enter`}
           >
-            <i className={icons[toast.tipo] || icons.info}></i>
+            {(() => { const Ico = icons[toast.tipo] || icons.info; return <Ico size={18} weight="fill" className="shrink-0" />; })()}
             <span>{toast.message}</span>
             <button
               onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
               className="ml-auto text-white/70 hover:text-white transition"
             >
-              <i className="fa-solid fa-times"></i>
+              <X />
             </button>
           </div>
         ))}

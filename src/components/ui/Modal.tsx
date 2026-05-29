@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from '@phosphor-icons/react';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 interface ModalProps {
@@ -51,12 +52,12 @@ export default function Modal({ show, onClose, titulo, children, tamanho = 'md' 
     >
       <div className={`bg-white rounded-2xl shadow-2xl w-full ${tamanhos[tamanho] || tamanhos.md} max-h-[90vh] flex flex-col page-enter`}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
-          <h3 className="text-lg font-extrabold text-brand-900">{titulo}</h3>
+          <h3 className="text-lg font-extrabold text-fg-heading">{titulo}</h3>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition"
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-fg-subtle hover:text-fg transition"
           >
-            <i className="fa-solid fa-times"></i>
+            <X />
           </button>
         </div>
         <div className="p-5 overflow-y-auto flex-1">
