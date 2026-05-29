@@ -27,6 +27,13 @@ import type { Review, ReviewInput, StatusReview } from '@/types/review';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
+import type {
+  PriceSnapshot,
+  PriceSnapshotInput,
+  SavedSearch,
+  SavedSearchInput,
+} from '@/types/preco';
+import { normalizeMarca, normalizeModelo } from '@/lib/priceUtils';
 
 type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
 type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
@@ -1386,6 +1393,133 @@ export async function updateIntencaoStatus(id: string, status: string): Promise<
     await updateDoc(doc(db, INTENCOES_COLLECTION, id) as any, { status, atualizadaEm: Timestamp.now() } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da intenção:', err);
+    throw err;
+  }
+}
+
+// ============ PRICE INTELLIGENCE ============
+
+const PRICE_SNAPSHOTS_COLLECTION = 'priceSnapshots';
+const SAVED_SEARCHES_COLLECTION = 'savedSearches';
+
+export async function getCarrosSimilares(
+  marca: string,
+  modelo: string,
+  options?: { anoMin?: number; anoMax?: number; excludeId?: string },
+): Promise<Carro[]> {
+  try {
+    const q = query(
+      collection(db, CARROS_COLLECTION),
+      where('marca', '==', marca),
+    );
+    const snap = await getDocs(q);
+    const modeloNorm = normalizeModelo(modelo);
+    const baseToken = modeloNorm.split(' ')[0];
+    return snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as Carro))
+      .filter((c) => c.status === 'aprovado')
+      .filter((c) => {
+        if (options?.excludeId && c.id === options.excludeId) return false;
+        if (!normalizeModelo(c.modelo).includes(baseToken)) return false;
+        if (options?.anoMin && c.anoFabricacao < options.anoMin) return false;
+        if (options?.anoMax && c.anoFabricacao > options.anoMax) return false;
+        return true;
+      });
+  } catch (err) {
+    console.error('[DB] Erro ao buscar carros similares:', err);
+    return [];
+  }
+}
+
+export async function savePriceSnapshot(data: PriceSnapshotInput): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, PRICE_SNAPSHOTS_COLLECTION), {
+      ...data,
+      modeloNormalizado: normalizeModelo(data.modelo),
+      dataCriacao: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] Erro ao gravar snapshot de preço:', err);
+    throw err;
+  }
+}
+
+export async function getPriceSnapshots(
+  marca: string,
+  modelo: string,
+  limit?: number,
+): Promise<PriceSnapshot[]> {
+  try {
+    const modeloNorm = normalizeModelo(modelo);
+    const q = query(
+      collection(db, PRICE_SNAPSHOTS_COLLECTION),
+      where('marca', '==', marca),
+      where('modeloNormalizado', '==', modeloNorm),
+      orderBy('dataCriacao', 'asc'),
+    );
+    const snap = await getDocs(q);
+    let snaps = snap.docs.map((d) => ({ id: d.id, ...d.data() } as PriceSnapshot));
+    if (limit && snaps.length > limit) {
+      snaps = snaps.slice(snaps.length - limit);
+    }
+    return snaps;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar histórico de preços:', err);
+    return [];
+  }
+}
+
+export async function addSavedSearch(data: SavedSearchInput): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, SAVED_SEARCHES_COLLECTION), {
+      ...data,
+      dataCriacao: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] Erro ao gravar pesquisa:', err);
+    throw err;
+  }
+}
+
+export async function getSavedSearches(uid: string): Promise<SavedSearch[]> {
+  try {
+    const q = query(
+      collection(db, SAVED_SEARCHES_COLLECTION),
+      where('uid', '==', uid),
+    );
+    const snap = await getDocs(q);
+    const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SavedSearch));
+    results.sort((a, b) => {
+      const at = a.dataCriacao?.toDate?.()?.getTime() || 0;
+      const bt = b.dataCriacao?.toDate?.()?.getTime() || 0;
+      return bt - at;
+    });
+    return results;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar pesquisas guardadas:', err);
+    return [];
+  }
+}
+
+export async function deleteSavedSearch(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, SAVED_SEARCHES_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao eliminar pesquisa:', err);
+    throw err;
+  }
+}
+
+export async function updateSavedSearch(
+  id: string,
+  updates: Partial<SavedSearchInput>,
+): Promise<void> {
+  try {
+    await updateDoc(doc(db, SAVED_SEARCHES_COLLECTION, id) as any, updates as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar pesquisa:', err);
     throw err;
   }
 }

@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
+import PriceIndicatorBadge from '@/components/preco/PriceIndicatorBadge';
+import usePriceIndicator from '@/hooks/usePriceIndicator';
 import type { Carro } from '@/types/carro';
 
 export default function CarCard({ carro }: { carro: Carro }) {
@@ -13,6 +15,7 @@ export default function CarCard({ carro }: { carro: Carro }) {
 
   const isLowCost = carro.preco <= 2000;
   const isNovo = carro.dataAprovacao && (Date.now() - carro.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
+  const priceInfo = usePriceIndicator(carro);
 
   return (
     <div
@@ -84,6 +87,15 @@ export default function CarCard({ carro }: { carro: Carro }) {
             {carro.local || 'Portugal'}
           </span>
         </div>
+        {priceInfo.indicator !== 'indisponivel' && (
+          <div className="mt-2">
+            <PriceIndicatorBadge
+              indicator={priceInfo.indicator}
+              deviation={priceInfo.deviation}
+              compact
+            />
+          </div>
+        )}
         {carro.estadoVeiculo === 'manutencao' && (
           <div className="mt-2 text-xs font-semibold text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg px-2 py-1 flex items-center gap-1">
             <i className="fa-solid fa-tools"></i>

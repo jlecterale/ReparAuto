@@ -71,6 +71,59 @@ export const MOTIVOS_DENUNCIA = [
   { value: 'outro' as const, label: 'Outro motivo' },
 ];
 
+// ============ PRICE INTELLIGENCE ============
+export const PRICE_THRESHOLDS = {
+  abaixo: -0.10,
+  acima: 0.10,
+  minSampleSize: 3,
+  similarYearRange: 2,
+  similarKmRange: 50000,
+} as const;
+
+export const PRICE_LABELS: Record<'abaixo' | 'justo' | 'acima' | 'indisponivel', string> = {
+  abaixo: 'Abaixo do mercado',
+  justo: 'Preço justo',
+  acima: 'Acima do mercado',
+  indisponivel: 'Sem dados de mercado',
+};
+
+export const PRICE_COLORS: Record<'abaixo' | 'justo' | 'acima' | 'indisponivel', {
+  bg: string;
+  text: string;
+  border: string;
+  icon: string;
+  hex: string;
+}> = {
+  abaixo: {
+    bg: 'bg-green-50',
+    text: 'text-green-700',
+    border: 'border-green-200',
+    icon: 'fa-solid fa-arrow-trend-down',
+    hex: '#16a34a',
+  },
+  justo: {
+    bg: 'bg-blue-50',
+    text: 'text-blue-700',
+    border: 'border-blue-200',
+    icon: 'fa-solid fa-equals',
+    hex: '#2563eb',
+  },
+  acima: {
+    bg: 'bg-red-50',
+    text: 'text-red-700',
+    border: 'border-red-200',
+    icon: 'fa-solid fa-arrow-trend-up',
+    hex: '#dc2626',
+  },
+  indisponivel: {
+    bg: 'bg-slate-50',
+    text: 'text-slate-600',
+    border: 'border-slate-200',
+    icon: 'fa-solid fa-circle-question',
+    hex: '#64748b',
+  },
+};
+
 export const BADGES_CONFIANCA = [
   { key: 'verificado', label: 'Verificado', icon: 'fa-solid fa-circle-check', cor: 'text-blue-500' },
   { key: 'profissional', label: 'Profissional', icon: 'fa-solid fa-store', cor: 'text-purple-500' },

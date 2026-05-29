@@ -17,7 +17,7 @@ export default function BottomNav() {
   const items = [
     { path: '/', icon: 'fa-solid fa-magnifying-glass', label: 'Pesquisar' },
     { path: '/anunciar', icon: 'fa-solid fa-plus-circle', label: 'Anunciar' },
-    { path: '/pecas', icon: 'fa-solid fa-gears', label: 'Peças' },
+    { path: '/mercado', icon: 'fa-solid fa-chart-line', label: 'Mercado' },
     ...(auth.isAdmin ? [{ path: '/admin', icon: 'fa-solid fa-shield-halved', label: 'Admin' }] : []),
     { path: '/perfil', icon: 'fa-solid fa-user', label: 'Perfil' },
   ];

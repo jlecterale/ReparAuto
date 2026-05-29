@@ -48,6 +48,7 @@ export interface Carro {
   visualizacoes?: number;
   contagemMensagens?: number;
   contagemFavoritos?: number;
+  priceIndicator?: 'abaixo' | 'justo' | 'acima' | 'indisponivel';
 }
 
 export type CarroInput = Omit<Carro, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };

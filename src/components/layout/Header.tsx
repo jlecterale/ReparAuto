@@ -48,6 +48,12 @@ export default function Header() {
           <Link href="/pecas" className="hover:text-accent transition flex items-center gap-1 text-white">
             <i className="fa-solid fa-gears"></i> Peças & Desmonte
           </Link>
+          <Link href="/mercado" className="hover:text-accent transition flex items-center gap-1 text-white">
+            <i className="fa-solid fa-chart-line"></i> Mercado
+          </Link>
+          <Link href="/avaliar-veiculo" className="hover:text-accent transition flex items-center gap-1 text-white">
+            <i className="fa-solid fa-calculator"></i> Avaliar
+          </Link>
           {auth.isAdmin && (
             <Link href="/admin" className="hover:text-accent transition flex items-center gap-1 text-white">
               <i className="fa-solid fa-shield-halved"></i> Admin

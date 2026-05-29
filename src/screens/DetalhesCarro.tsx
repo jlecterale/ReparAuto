@@ -10,6 +10,10 @@ import StatusPanel from '@/components/detalhes/StatusPanel';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
+import PriceIndicatorBadge from '@/components/preco/PriceIndicatorBadge';
+import MarketWidget from '@/components/preco/MarketWidget';
+import usePriceIndicator from '@/hooks/usePriceIndicator';
+import { formatarPreco as fmt } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
@@ -93,6 +97,7 @@ export default function DetalhesCarro() {
   }
 
   const isLowCost = carro.preco <= 2000;
+  const priceInfo = usePriceIndicator(carro);
 
   return (
     <div className="page-enter">
@@ -189,6 +194,48 @@ export default function DetalhesCarro() {
             />
           </div>
         )}
+
+        {priceInfo.indicator !== 'indisponivel' && (
+          <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 className="font-extrabold text-brand-900 flex items-center gap-2 mb-1">
+                  <i className="fa-solid fa-chart-line text-accent"></i>
+                  Análise de preço
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Comparado com {priceInfo.sampleSize}{' '}
+                  {priceInfo.sampleSize === 1 ? 'anúncio similar' : 'anúncios similares'} no ReparAuto.
+                </p>
+              </div>
+              <PriceIndicatorBadge
+                indicator={priceInfo.indicator}
+                deviation={priceInfo.deviation}
+                sampleSize={priceInfo.sampleSize}
+              />
+            </div>
+            {priceInfo.stats && (
+              <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs">
+                <div className="bg-white rounded-lg p-2">
+                  <p className="text-[10px] text-slate-500">Mínimo</p>
+                  <p className="font-bold text-green-600">{fmt(priceInfo.stats.min)}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2">
+                  <p className="text-[10px] text-slate-500">Mediana do mercado</p>
+                  <p className="font-bold text-brand-900">{fmt(priceInfo.stats.median)}</p>
+                </div>
+                <div className="bg-white rounded-lg p-2">
+                  <p className="text-[10px] text-slate-500">Máximo</p>
+                  <p className="font-bold text-red-600">{fmt(priceInfo.stats.max)}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mb-6">
+          <MarketWidget marca={carro.marca} modelo={carro.modelo} title="Ver mercado deste modelo" />
+        </div>
 
         <TechnicalSheet carro={carro} />
 
