@@ -1,21 +1,45 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import PecasFilter from '@/components/pecas/PecasFilter';
 import PecasGrid from '@/components/pecas/PecasGrid';
 import CriarPecaModal from '@/components/pecas/CriarPecaModal';
 import DetalhesPecaModal from '@/components/pecas/DetalhesPecaModal';
 import DesmancharCarroModal from '@/components/pecas/DesmancharCarroModal';
+import { getPecaPorId } from '@/lib/db';
 import type { Peca } from '@/types/peca';
 
 export default function Pecas() {
   const { pecas } = useApp();
-  const { pecasFiltradas } = pecas;
+  const { pecasFiltradas, pecas: allPecas } = pecas;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pecaIdFromQuery = searchParams?.get('peca') ?? null;
 
   const [criarModalAberto, setCriarModalAberto] = useState(false);
   const [desmancharAberto, setDesmancharAberto] = useState(false);
   const [detalhesPeca, setDetalhesPeca] = useState<Peca | null>(null);
+
+  useEffect(() => {
+    if (!pecaIdFromQuery) return;
+    const local = allPecas.find((p) => p.id === pecaIdFromQuery);
+    if (local) {
+      setDetalhesPeca(local);
+      return;
+    }
+    let cancelled = false;
+    getPecaPorId(pecaIdFromQuery).then((p) => {
+      if (!cancelled && p) setDetalhesPeca(p);
+    });
+    return () => { cancelled = true; };
+  }, [pecaIdFromQuery, allPecas]);
+
+  const closeDetalhes = () => {
+    setDetalhesPeca(null);
+    if (pecaIdFromQuery) router.replace('/pecas');
+  };
 
   const filtered = pecasFiltradas;
 
@@ -60,7 +84,7 @@ export default function Pecas() {
       />
       <DetalhesPecaModal
         show={!!detalhesPeca}
-        onClose={() => setDetalhesPeca(null)}
+        onClose={closeDetalhes}
         peca={detalhesPeca}
       />
     </div>

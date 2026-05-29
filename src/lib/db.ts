@@ -535,6 +535,25 @@ export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   }
 }
 
+export async function addPecasBatch(dadosList: Record<string, unknown>[]): Promise<string[]> {
+  if (dadosList.length === 0) return [];
+  try {
+    const batch = writeBatch(db);
+    const ids: string[] = [];
+    const now = Timestamp.now();
+    for (const dados of dadosList) {
+      const ref = doc(collection(db, PECAS_COLLECTION));
+      batch.set(ref, { ...dados, status: 'pendente', dataCriacao: now });
+      ids.push(ref.id);
+    }
+    await batch.commit();
+    return ids;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar peças em lote:', err);
+    throw err;
+  }
+}
+
 export async function deletePeca(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, PECAS_COLLECTION, id));
@@ -679,37 +698,19 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
 export async function matchAndNotifyForPeca(peca: Peca): Promise<number> {
   try {
     if (peca.tipo === 'procura') return 0;
-    const qProcuras = query(
-      collection(db, PECAS_COLLECTION),
+    const { pecasShareCompatibility } = await import('./compatibility');
+    const constraints = [
       where('status', '==', 'aprovado'),
       where('tipo', '==', 'procura'),
-    );
+    ];
+    if (peca.categoria) {
+      constraints.push(where('categoria', '==', peca.categoria));
+    }
+    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
     const snap = await getDocs(qProcuras);
     const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    const matchesProcura = (oferta: Peca, procura: Peca): boolean => {
-      if (procura.categoria && oferta.categoria && procura.categoria !== oferta.categoria) return false;
-      const ofertaCompats = oferta.compatibilidades || [];
-      const procuraCompats = procura.compatibilidades || [];
-      if (procuraCompats.length > 0 && ofertaCompats.length > 0) {
-        return procuraCompats.some((pc) =>
-          ofertaCompats.some((oc) => {
-            if (pc.marca.toLowerCase() !== oc.marca.toLowerCase()) return false;
-            if (pc.modelo && oc.modelo) {
-              const a = pc.modelo.toLowerCase();
-              const b = oc.modelo.toLowerCase();
-              if (!a.includes(b) && !b.includes(a)) return false;
-            }
-            return true;
-          }),
-        );
-      }
-      if (procura.marcaCarro && oferta.marcaCarro) {
-        return procura.marcaCarro.toLowerCase() === oferta.marcaCarro.toLowerCase();
-      }
-      return false;
-    };
     const matches = procuras.filter(
-      (p) => p.criadorUid && p.criadorUid !== peca.criadorUid && matchesProcura(peca, p),
+      (p) => p.criadorUid && p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
     );
     const seen = new Set<string>();
     let notified = 0;
@@ -719,15 +720,37 @@ export async function matchAndNotifyForPeca(peca: Peca): Promise<number> {
       await criarNotificacao(
         procura.criadorUid,
         'info',
-        'Peça encontrada!',
-        `Foi publicada uma peça que corresponde ao seu pedido "${procura.titulo}".`,
-        `/pecas`,
+        'Peça encontrada para o seu pedido!',
+        `"${peca.titulo}" corresponde ao seu pedido "${procura.titulo}".`,
+        `/pecas?peca=${peca.id}`,
       );
       notified++;
     }
     return notified;
   } catch (err) {
     console.error('[DB] Erro em matchAndNotifyForPeca:', err);
+    return 0;
+  }
+}
+
+export async function countProcurasForPeca(peca: Peca): Promise<number> {
+  try {
+    const { pecasShareCompatibility } = await import('./compatibility');
+    const constraints = [
+      where('status', '==', 'aprovado'),
+      where('tipo', '==', 'procura'),
+    ];
+    if (peca.categoria) {
+      constraints.push(where('categoria', '==', peca.categoria));
+    }
+    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
+    const snap = await getDocs(qProcuras);
+    const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
+    return procuras.filter(
+      (p) => p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
+    ).length;
+  } catch (err) {
+    console.error('[DB] Erro em countProcurasForPeca:', err);
     return 0;
   }
 }

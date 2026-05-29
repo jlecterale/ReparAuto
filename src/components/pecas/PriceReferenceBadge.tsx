@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { subscribePecas } from '@/lib/db';
+import { useMemo } from 'react';
+import { useApp } from '@/providers/AppProvider';
 import { formatarPreco } from '@/lib/utils';
 import type { Peca } from '@/types/peca';
 
@@ -56,7 +56,7 @@ function buildComparison(peca: Peca, similares: Peca[]): Comparison | null {
 
   if (pool.length < 2) return null;
 
-  const precos = pool.map((p) => p.preco as number).sort((a, b) => a - b);
+  const precos = pool.map((p) => p.preco as number);
   const media = precos.reduce((s, n) => s + n, 0) / precos.length;
   const ratio = peca.preco / media;
 
@@ -92,17 +92,8 @@ const colorClasses: Record<Comparison['color'], string> = {
 };
 
 export default function PriceReferenceBadge({ peca }: Props) {
-  const [pecas, setPecas] = useState<Peca[]>([]);
-
-  useEffect(() => {
-    const unsub = subscribePecas(
-      (data) => setPecas(data),
-      () => {},
-    );
-    return unsub;
-  }, []);
-
-  const cmp = buildComparison(peca, pecas);
+  const { pecas } = useApp();
+  const cmp = useMemo(() => buildComparison(peca, pecas.pecas), [peca, pecas.pecas]);
   if (!cmp) return null;
 
   return (

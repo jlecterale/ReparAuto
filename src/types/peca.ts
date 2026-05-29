@@ -31,6 +31,7 @@ export interface Peca {
   modeloCarro?: string;
   compatibilidades?: CompatibilityEntry[];
   precoNovoReferencia?: number;
+  numeroOEM?: string;
   preco: number | null;
   estado: string;
   local: string;

@@ -6,8 +6,9 @@ import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { useApp } from '@/providers/AppProvider';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
-import { addPeca, getAdminUsers, criarNotificacao } from '@/lib/db';
+import { addPecasBatch, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { getCoordenadas } from '@/lib/geo';
+import { pickDefined } from '@/lib/compatibility';
 import type { CompatibilityEntry } from '@/types/peca';
 
 interface Props {
@@ -117,21 +118,22 @@ export default function DesmancharCarroModal({ show, onClose }: Props) {
       const primaria = compatibilidades[0];
       const loteId = `lote-${Date.now()}-${newId()}`;
       const coords = localizacao ? getCoordenadas(localizacao) : undefined;
+      const marcaModelo = `${primaria.marca}${primaria.modelo ? ' ' + primaria.modelo : ''}`;
 
-      for (const p of validParts) {
+      const docs = validParts.map((p) => {
         const precoNum = p.preco ? Number(p.preco) : null;
         const precoNovoNum = p.precoNovoReferencia ? Number(p.precoNovoReferencia) : null;
-        await addPeca({
+        return pickDefined({
           tipo: 'desmonte',
-          titulo: `${p.titulo} - ${primaria.marca} ${primaria.modelo || ''}`.trim(),
+          titulo: `${p.titulo.trim()} - ${marcaModelo}`,
           categoria: p.categoria,
           estado: p.estado,
           marcaCarro: primaria.marca,
           modeloCarro: primaria.modelo || undefined,
           compatibilidades,
-          ...(precoNovoNum && precoNovoNum > 0 ? { precoNovoReferencia: precoNovoNum } : {}),
+          precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
           preco: precoNum,
-          descricao: descricaoVeiculo,
+          descricao: descricaoVeiculo || '',
           local: localizacao,
           distrito: localizacaoDistrito || undefined,
           coordenadas: coords,
@@ -143,7 +145,9 @@ export default function DesmancharCarroModal({ show, onClose }: Props) {
           vendedorWhatsApp: vendedorWhatsApp || null,
           vendedorEmail: user?.email || null,
         });
-      }
+      });
+
+      await addPecasBatch(docs);
 
       const admins = await getAdminUsers();
       admins.forEach((a) => {

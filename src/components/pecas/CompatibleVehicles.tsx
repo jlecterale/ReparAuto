@@ -1,11 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { subscribeCarros } from '@/lib/db';
+import { useApp } from '@/providers/AppProvider';
 import { carMatchesPeca } from '@/lib/compatibility';
 import { formatarPreco } from '@/lib/utils';
-import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
 interface Props {
@@ -14,29 +13,15 @@ interface Props {
 }
 
 export default function CompatibleVehicles({ peca, limit = 8 }: Props) {
-  const [carros, setCarros] = useState<Carro[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { carros } = useApp();
+  const { carros: allCarros, loading } = carros;
 
-  useEffect(() => {
-    const unsub = subscribeCarros(
-      (data) => {
-        setCarros(data);
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
-    return unsub;
-  }, []);
+  const compativeis = useMemo(
+    () => allCarros.filter((c) => carMatchesPeca(c, peca)).slice(0, limit),
+    [allCarros, peca, limit],
+  );
 
-  const compativeis = carros.filter((c) => carMatchesPeca(c, peca)).slice(0, limit);
-
-  if (loading) {
-    return null;
-  }
-
-  if (compativeis.length === 0) {
-    return null;
-  }
+  if (loading || compativeis.length === 0) return null;
 
   return (
     <div className="pt-3 border-t border-slate-200">

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
-import { getUserByEmail, incrementCampo } from '@/lib/db';
+import { getUserByEmail, incrementCampo, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
 import { formatCompatibilityEntry } from '@/lib/compatibility';
 import CompatibleVehicles from '@/components/pecas/CompatibleVehicles';
@@ -26,6 +26,7 @@ interface DetalhesPecaModalProps {
 export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaModalProps) {
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [vendedorUid, setVendedorUid] = useState<string | null>(null);
+  const [procurasCount, setProcurasCount] = useState<number>(0);
   const { auth, chat } = useApp();
   const { user } = auth;
   const { abrirChat } = chat;
@@ -44,6 +45,18 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
       sessionStorage.setItem(key, '1');
       incrementCampo('parts', peca.id, 'visualizacoes');
     }
+  }, [peca?.id]);
+
+  useEffect(() => {
+    if (!peca || peca.tipo === 'procura') {
+      setProcurasCount(0);
+      return;
+    }
+    let cancelled = false;
+    countProcurasForPeca(peca).then((n) => {
+      if (!cancelled) setProcurasCount(n);
+    });
+    return () => { cancelled = true; };
   }, [peca?.id]);
 
   if (!peca) return null;
@@ -73,7 +86,17 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
 
         <h3 className="text-xl font-extrabold text-brand-900">{peca.titulo}</h3>
 
-        <PriceReferenceBadge peca={peca} />
+        <div className="flex flex-wrap items-center gap-2">
+          <PriceReferenceBadge peca={peca} />
+          {procurasCount > 0 && (
+            <div className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg px-3 py-1.5 text-xs font-bold">
+              <i className="fa-solid fa-fire"></i>
+              {procurasCount === 1
+                ? '1 pessoa procura esta peça'
+                : `${procurasCount} pessoas procuram esta peça`}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm bg-slate-50 rounded-xl p-4">
           <div>
@@ -92,6 +115,12 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
             <span className="text-xs font-semibold text-slate-500">Localização</span>
             <p className="font-semibold text-brand-800">{peca.local || 'Portugal'}</p>
           </div>
+          {peca.numeroOEM && (
+            <div className="col-span-2">
+              <span className="text-xs font-semibold text-slate-500">Referência OEM</span>
+              <p className="font-mono font-semibold text-brand-800 text-sm">{peca.numeroOEM}</p>
+            </div>
+          )}
         </div>
 
         {peca.compatibilidades && peca.compatibilidades.length > 0 && (

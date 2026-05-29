@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Pecas from '@/screens/Pecas';
 
@@ -17,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <Pecas />;
+  return (
+    <Suspense fallback={null}>
+      <Pecas />
+    </Suspense>
+  );
 }

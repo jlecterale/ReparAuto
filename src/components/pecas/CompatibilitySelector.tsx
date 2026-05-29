@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { formatCompatibilityEntry } from '@/lib/compatibility';
 import type { CompatibilityEntry } from '@/types/peca';
@@ -27,7 +27,10 @@ export default function CompatibilitySelector({ value, onChange, required, maxEn
   const [draft, setDraft] = useState<CompatibilityEntry>(emptyDraft);
   const [erro, setErro] = useState('');
 
-  const modelos = draft.marca ? getModelos(draft.marca) : [];
+  const modelos = useMemo(
+    () => (draft.marca ? getModelos(draft.marca) : []),
+    [draft.marca, getModelos],
+  );
 
   const update = (field: keyof CompatibilityEntry, val: string) => {
     setErro('');
@@ -168,7 +171,7 @@ export default function CompatibilitySelector({ value, onChange, required, maxEn
         </div>
         <div className="sm:col-span-2 flex items-center justify-between gap-2">
           {erro ? (
-            <p className="text-xs text-red-500 font-semibold">{erro}</p>
+            <p className="text-xs text-red-500 font-semibold" role="alert" aria-live="polite">{erro}</p>
           ) : (
             <p className="text-[11px] text-slate-500">
               Adicione todas as marcas/modelos onde a peça encaixa.

@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
-import { subscribePecas } from '@/lib/db';
+import { useApp } from '@/providers/AppProvider';
 import { pecaCompatibleWithCar } from '@/lib/compatibility';
 import { formatarPreco } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
@@ -16,21 +16,13 @@ interface Props {
 }
 
 export default function CompatibleParts({ carro, onSelect, limit = 12 }: Props) {
-  const [pecas, setPecas] = useState<Peca[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pecas } = useApp();
+  const { pecas: allPecas, loading } = pecas;
 
-  useEffect(() => {
-    const unsub = subscribePecas(
-      (data) => {
-        setPecas(data);
-        setLoading(false);
-      },
-      () => setLoading(false),
-    );
-    return unsub;
-  }, []);
-
-  const compativeis = pecas.filter((p) => pecaCompatibleWithCar(p, carro)).slice(0, limit);
+  const compativeis = useMemo(
+    () => allPecas.filter((p) => pecaCompatibleWithCar(p, carro)).slice(0, limit),
+    [allPecas, carro, limit],
+  );
 
   if (loading) {
     return (
