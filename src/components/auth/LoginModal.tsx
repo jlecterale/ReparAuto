@@ -12,9 +12,10 @@ import { useToast } from '@/components/ui/Toast';
 interface LoginModalProps {
   show: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-export default function LoginModal({ show, onClose }: LoginModalProps) {
+export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps) {
   const { auth } = useApp();
   const { login, registar, loginGoogle } = auth;
   const toast = useToast();
@@ -56,6 +57,7 @@ export default function LoginModal({ show, onClose }: LoginModalProps) {
       setEmail('');
       setPassword('');
       onClose();
+      onSuccess?.();
     } catch (err: any) {
       const msg = traduzirErroFirebase(err.code);
       setErro(msg);
@@ -71,6 +73,7 @@ export default function LoginModal({ show, onClose }: LoginModalProps) {
       await loginGoogle();
       toast?.sucesso('Login com Google efetuado!');
       onClose();
+      onSuccess?.();
     } catch (err: any) {
       const msg = traduzirErroFirebase(err.code);
       setErro(msg);

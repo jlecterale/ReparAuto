@@ -7,7 +7,6 @@ import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo } from '@/lib/db';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
-import StatusPanel from '@/components/detalhes/StatusPanel';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
@@ -124,9 +123,14 @@ export default function DetalhesCarro() {
             <p className="text-fg-subtle text-sm mt-1">
               {carro.anoFabricacao} • {carro.km?.toLocaleString('pt-PT')} km • {carro.local || 'Portugal'}
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-accent">
+                {formatarPreco(carro.preco)}
+              </span>
+              {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
             <button
@@ -178,15 +182,12 @@ export default function DetalhesCarro() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-6 mb-6">
-          <div className="flex-1">
-            {carro.estadoVeiculo === 'manutencao' && (
-              <Alert tipo="aviso" icone={<Wrench />} className="!p-3 !rounded-lg !items-center font-semibold">
-                Este veículo precisa de manutenção/reparações
-              </Alert>
-            )}
-          </div>
-          <StatusPanel carro={carro} />
+        <div className="mb-6">
+          {carro.estadoVeiculo === 'manutencao' && (
+            <Alert tipo="aviso" icone={<Wrench />} className="!p-3 !rounded-lg !items-center font-semibold">
+              Este veículo precisa de manutenção/reparações
+            </Alert>
+          )}
         </div>
 
         {carro.descricao && (

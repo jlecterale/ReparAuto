@@ -25,9 +25,10 @@ interface DetalhesPecaModalProps {
 export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaModalProps) {
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [vendedorUid, setVendedorUid] = useState<string | null>(null);
-  const { auth, chat } = useApp();
+  const { auth, chat, loginModal } = useApp();
   const { user } = auth;
   const { abrirChat } = chat;
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   useEffect(() => {
     if (!peca) return;
@@ -156,13 +157,13 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           )}
 
           {!temChat && !user && (
-            <a
-              href="#/perfil"
+            <button
+              onClick={() => loginModal.openLoginModal(currentPath)}
               className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-2.5 px-4 rounded-xl transition text-sm"
             >
               <SignIn />
               Faça login para enviar mensagem
-            </a>
+            </button>
           )}
         </div>
       </div>

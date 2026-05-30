@@ -111,6 +111,9 @@ export default function CriarIntencaoCompra() {
       toast?.erro(validacao.erros[0]);
       return;
     }
+    if ((form.contatoPreferido === 'whatsapp' || form.contatoPreferido === 'ambos') && !auth.user.telefone) {
+      toast?.info('Adicione um telefone no seu perfil para ser contactado por WhatsApp.');
+    }
     setPublicando(true);
     try {
       const titulo = gerarTituloIntencao(form.criterios);
@@ -125,8 +128,8 @@ export default function CriarIntencaoCompra() {
         mostrarTelefone: form.mostrarTelefone,
         vendedorNome: auth.user.nome,
         vendedorEmail: auth.user.email,
-        vendedorTelefone: auth.user.telefone || null,
-        vendedorWhatsApp: auth.user.telefone || null,
+        vendedorTelefone: auth.user.telefone?.replace(/\s/g, '') || null,
+        vendedorWhatsApp: auth.user.telefone?.replace(/\s/g, '') || null,
         prioritaria: false,
       };
       if (form.descricao) dados.descricao = form.descricao;

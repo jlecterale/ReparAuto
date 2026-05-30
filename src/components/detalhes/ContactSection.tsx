@@ -20,9 +20,10 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [vendedorProfile, setVendedorProfile] = useState<Usuario | null>(null);
-  const { auth, chat } = useApp();
+  const { auth, chat, loginModal } = useApp();
   const { user } = auth;
   const { abrirChat } = chat;
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   const vendedorEmail = carro?.vendedorEmail || carro?.criador;
   const { reviews, loading: reviewsLoading, media, total, criar: criarReview, remover: removerReview } = useReviews(vendedorEmail);
@@ -79,7 +80,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {temWhatsApp && (
+          {temWhatsApp ? (
             <a
               href={gerarLinkWhatsApp(whatsapp, `${carro.marca} ${carro.modelo}`)}
               target="_blank"
@@ -89,9 +90,17 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
               <WhatsappLogo className="text-lg" />
               WhatsApp
             </a>
+          ) : (
+            <div
+              title="Vendedor não disponibilizou WhatsApp"
+              className="flex items-center justify-center gap-2 bg-green-100 text-green-300 font-bold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
+            >
+              <WhatsappLogo className="text-lg" />
+              WhatsApp indisponível
+            </div>
           )}
 
-          {temEmail && (
+          {temEmail ? (
             <a
               href={`mailto:${email}`}
               className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-3 px-4 rounded-xl transition border border-slate-300 text-sm"
@@ -99,6 +108,14 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
               <Envelope />
               Enviar Email
             </a>
+          ) : (
+            <div
+              title="Vendedor não disponibilizou email"
+              className="flex items-center justify-center gap-2 bg-white text-fg-subtle font-semibold py-3 px-4 rounded-xl border border-slate-200 text-sm cursor-not-allowed"
+            >
+              <Envelope />
+              Email indisponível
+            </div>
           )}
         </div>
 
@@ -118,6 +135,16 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
               {carro.vendedorTelefone}
             </a>
           )}
+
+          {!temTelefone && (
+            <div
+              title="Vendedor não disponibilizou telefone"
+              className="flex items-center justify-center gap-2 w-full bg-slate-100 text-fg-subtle font-semibold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
+            >
+              <Phone />
+              Telefone indisponível
+            </div>
+          )}
         </div>
 
         <div className="mt-3">
@@ -134,13 +161,13 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
           )}
 
           {!temChat && !user && (
-            <a
-              href="#/perfil"
+            <button
+              onClick={() => loginModal.openLoginModal(currentPath)}
               className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-3 px-4 rounded-xl transition text-sm"
             >
               <SignIn />
               Faça login para enviar mensagem
-            </a>
+            </button>
           )}
         </div>
       </div>

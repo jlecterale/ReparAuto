@@ -23,7 +23,7 @@ const quickChips = [
 ] as const;
 
 export default function CarGrid() {
-  const { carros, auth, chat } = useApp();
+  const { carros, auth, chat, loginModal } = useApp();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
@@ -313,16 +313,18 @@ export default function CarGrid() {
                 {intencoesMatch.map((intencao) => {
                   const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
                   const email = intencao.vendedorEmail || '';
-                  const temWhatsApp = !!whatsapp && (intencao.contatoPreferido === 'whatsapp' || intencao.contatoPreferido === 'ambos');
+                  const temWhatsApp = !!whatsapp;
                   const temTelefone = !!intencao.vendedorTelefone && intencao.mostrarTelefone;
                   const isOwn = user?.uid === intencao.userId;
                   const temChat = !!user && !!intencao.userId && !isOwn;
                   const mostrarTel = telefonesVisiveis.has(intencao.id);
 
                   return (
-                  <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 transition flex flex-col">
+                  <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 hover:shadow-md transition-all flex flex-col">
                     <div className="flex-1">
-                      <h3 className="font-bold text-fg-heading text-sm mb-2">{intencao.titulo}</h3>
+                      <Link href={`/intencao/${intencao.id}`} className="hover:text-accent transition-colors">
+                        <h3 className="font-bold text-fg-heading text-sm mb-2">{intencao.titulo}</h3>
+                      </Link>
                       <div className="space-y-1 text-xs text-fg-muted">
                         <p><span className="text-fg-subtle">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
                         <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
@@ -390,14 +392,20 @@ export default function CarGrid() {
                         </Button>
                       )}
                       {!user && (
-                        <Link
-                          href="/perfil"
+                        <button
+                          onClick={() => loginModal.openLoginModal('/')}
                           className="flex items-center justify-center gap-1.5 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-1.5 px-3 rounded-xl transition text-xs"
                         >
                           <SignIn size={14} />
                           Faça login para contactar
-                        </Link>
+                        </button>
                       )}
+                      <Link
+                        href={`/intencao/${intencao.id}`}
+                        className="block text-center text-xs text-accent font-semibold hover:underline pt-1"
+                      >
+                        Ver detalhes completos →
+                      </Link>
                     </div>
                   </div>
                   );
