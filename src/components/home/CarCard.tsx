@@ -35,7 +35,7 @@ export default function CarCard({ carro }: { carro: Carro }) {
           </div>
         )}
         <div className="absolute top-2 left-2 flex flex-col gap-1">
-          {isNovo && <Badge cor="green" variante="solid" className="shadow">Novo</Badge>}
+          {isNovo && <Badge cor="green" variante="solid" className="shadow">Novidade</Badge>}
           {isLowCost && <Badge cor="accent" variante="solid" className="shadow">Low-Cost</Badge>}
         </div>
         <button
