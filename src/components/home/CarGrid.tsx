@@ -3,6 +3,7 @@
 import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
@@ -389,13 +390,13 @@ export default function CarGrid() {
                         </Button>
                       )}
                       {!user && (
-                        <a
-                          href="#/perfil"
+                        <Link
+                          href="/perfil"
                           className="flex items-center justify-center gap-1.5 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-1.5 px-3 rounded-xl transition text-xs"
                         >
                           <SignIn size={14} />
                           Faça login para contactar
-                        </a>
+                        </Link>
                       )}
                     </div>
                   </div>
