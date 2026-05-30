@@ -1178,10 +1178,15 @@ export async function reativarIntencaoCompra(id: string, userId: string): Promis
 
 export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId: string): Promise<IntencaoCompra[]> {
   try {
+    const filters: any[] = [where('status', '==', 'ativa')];
+
+    if (carro.categoria && carro.categoria !== 'todos') {
+      filters.push(where('categoria', '==', carro.categoria));
+    }
+
     const q = query(
       collection(db, INTENCOES_COLLECTION),
-      where('status', '==', 'ativa'),
-      where('criterios.marca', '==', carro.marca),
+      ...filters,
     );
     const snap = await getDocs(q);
     let resultados = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
@@ -1189,7 +1194,11 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
     resultados = resultados.filter((intencao) => {
       if (intencao.userId === usuarioId) return false;
       const c = intencao.criterios;
+      const cat = intencao.categoria;
 
+      if (cat === 'pecas') return true;
+
+      if (carro.marca && c.marca && c.marca !== carro.marca) return false;
       if (c.anoMinimo && carro.anoFabricacao && carro.anoFabricacao < c.anoMinimo) return false;
       if (c.anoMaximo && carro.anoFabricacao && carro.anoFabricacao > c.anoMaximo) return false;
       if (c.precoMinimo && carro.preco && carro.preco < c.precoMinimo) return false;
@@ -1197,7 +1206,7 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
       if (c.combustivel && !c.combustivel.includes('qualquer') && !c.combustivel.includes(carro.combustivel?.toLowerCase())) return false;
       if (c.tipoTransmissao && !c.tipoTransmissao.includes('qualquer') && !c.tipoTransmissao.includes(carro.cambio?.toLowerCase())) return false;
       if (c.quilometragemMaxima && carro.km && carro.km > c.quilometragemMaxima) return false;
-      if (c.localizacao?.distrito && carro.local && carro.local !== c.localizacao.distrito) return false;
+      if (c.localizacao?.distrito && c.localizacao.distrito !== 'todo_portugal' && carro.local && carro.local !== c.localizacao.distrito) return false;
 
       return true;
     });

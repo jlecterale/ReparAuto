@@ -7,7 +7,10 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import { gerarTituloIntencao, validarIntencaoCompra } from '@/lib/utils';
+import { CATEGORIAS_INTENCAO } from '@/lib/constants';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import type { CategoriaIntencao } from '@/types/intencao';
+import StepCategoria from './StepCategoria';
 import StepBasico from './StepBasico';
 import StepPrecoCombustivel from './StepPrecoCombustivel';
 import StepLocalizacao from './StepLocalizacao';
@@ -15,9 +18,10 @@ import StepPreferencias from './StepPreferencias';
 import StepContato from './StepContato';
 import StepResumo from './StepResumo';
 
-const STEPS = ['Básico', 'Preço & Combustível', 'Localização', 'Preferências', 'Contacto', 'Resumo'];
+const STEPS = ['Categoria', 'Básico', 'Orçamento', 'Localização', 'Preferências', 'Contacto', 'Resumo'];
 
 interface FormState {
+  categoria: CategoriaIntencao | null;
   criterios: {
     marca: string;
     modelo: string;
@@ -46,6 +50,7 @@ interface FormState {
 }
 
 const formInicial: FormState = {
+  categoria: null,
   criterios: {
     marca: '',
     modelo: '',
@@ -65,7 +70,7 @@ const formInicial: FormState = {
 };
 
 export default function CriarIntencaoCompra() {
-  const [passo, setPasso] = useState(1);
+  const [passo, setPasso] = useState(0);
   const [form, setForm] = useState<FormState>(formInicial);
   const [aceiteTermos, setAceiteTermos] = useState(false);
   const [publicando, setPublicando] = useState(false);
@@ -88,12 +93,22 @@ export default function CriarIntencaoCompra() {
     });
   };
 
+  const isVeiculo = form.categoria === 'carro' || form.categoria === 'moto' || form.categoria === 'viatura_comercial';
+
   const podeAvancar = (): boolean => {
     const c = form.criterios;
     switch (passo) {
-      case 1: return !!c.marca && !!c.modelo && !!c.anoMinimo;
-      case 2: return !!c.precoMaximo && c.combustivel.length > 0 && c.tipoTransmissao.length > 0;
-      case 3: return !!c.localizacao.distrito && !!c.quilometragemMaxima;
+      case 0: return !!form.categoria;
+      case 1: {
+        if (form.categoria === 'pecas') return !!form.descricao?.trim();
+        return !!c.marca && !!c.modelo && !!c.anoMinimo;
+      }
+      case 2: {
+        if (!c.precoMaximo) return false;
+        if (isVeiculo) return c.combustivel.length > 0 && c.tipoTransmissao.length > 0;
+        return true;
+      }
+      case 3: return !!c.localizacao.distrito;
       case 4: return true;
       case 5: return !!form.contatoPreferido;
       case 6: return aceiteTermos;
@@ -116,9 +131,14 @@ export default function CriarIntencaoCompra() {
     }
     setPublicando(true);
     try {
-      const titulo = gerarTituloIntencao(form.criterios);
+      const titulo = gerarTituloIntencao({
+        categoria: form.categoria || undefined,
+        criterios: form.criterios,
+        descricao: form.descricao,
+      });
       const dados: Record<string, any> = {
         userId: auth.user.uid,
+        categoria: form.categoria,
         titulo,
         criterios: {
           ...form.criterios,
@@ -165,7 +185,7 @@ export default function CriarIntencaoCompra() {
           </Button>
           <Button
             tipo="secundario"
-            onClick={() => { setSucesso(false); setForm(formInicial); setPasso(1); setAceiteTermos(false); }}
+            onClick={() => { setSucesso(false); setForm(formInicial); setPasso(0); setAceiteTermos(false); }}
           >
             Nova intenção
           </Button>
@@ -174,57 +194,128 @@ export default function CriarIntencaoCompra() {
     );
   }
 
+  const catLabel = form.categoria
+    ? CATEGORIAS_INTENCAO.find(c => c.value === form.categoria)?.label
+    : null;
+
   return (
     <div className="max-w-lg mx-auto">
       <div className="mb-6">
-        <h2 className="text-lg font-extrabold text-fg-heading mb-1">Criar Intenção de Compra</h2>
-        <p className="text-xs text-fg-subtle">Descreva o carro que procura e receba ofertas de vendedores.</p>
+        <h2 className="text-lg font-extrabold text-fg-heading mb-1">
+          {passo === 0 ? 'Criar Intenção de Compra' : `Nova Intenção${catLabel ? ` — ${catLabel}` : ''}`}
+        </h2>
+        <p className="text-xs text-fg-subtle">
+          {passo === 0
+            ? 'Escolha o que procura e receba ofertas de vendedores.'
+            : form.categoria === 'pecas'
+              ? 'Descreva a peça que precisa e receba propostas de quem tem.'
+              : 'Descreva o veículo que procura e receba ofertas de vendedores.'}
+        </p>
       </div>
 
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2 text-xs font-bold">
-          <span className="text-accent">Passo {passo} de {STEPS.length}</span>
-          <span className="text-fg-muted">{STEPS[passo - 1]}</span>
+      {passo > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2 text-xs font-bold">
+            <span className="text-accent">Passo {passo} de {STEPS.length - 1}</span>
+            <span className="text-fg-muted">{STEPS[passo]}</span>
+          </div>
+          <div className="flex items-center" aria-hidden="true">
+            {STEPS.slice(1).map((label, i) => {
+              const num = i + 1;
+              const done = num < passo;
+              const active = num === passo;
+              return (
+                <Fragment key={label}>
+                  <div
+                    title={label}
+                    className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-colors ${
+                      done
+                        ? 'bg-success-500 text-white'
+                        : active
+                          ? 'bg-accent text-white ring-4 ring-accent/20'
+                          : 'bg-slate-200 text-fg-subtle'
+                    }`}
+                  >
+                    {done ? <Check weight="bold" /> : num}
+                  </div>
+                  {i < STEPS.slice(1).length - 1 && (
+                    <div className={`h-1 flex-1 mx-1.5 rounded-full transition-colors ${done ? 'bg-success-500' : 'bg-slate-200'}`} />
+                  )}
+                </Fragment>
+              );
+            })}
+          </div>
         </div>
-        <div className="flex items-center" aria-hidden="true">
-          {STEPS.map((label, i) => {
-            const num = i + 1;
-            const done = num < passo;
-            const active = num === passo;
-            return (
-              <Fragment key={label}>
-                <div
-                  title={label}
-                  className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-colors ${
-                    done
-                      ? 'bg-success-500 text-white'
-                      : active
-                        ? 'bg-accent text-white ring-4 ring-accent/20'
-                        : 'bg-slate-200 text-fg-subtle'
-                  }`}
-                >
-                  {done ? <Check weight="bold" /> : num}
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div className={`h-1 flex-1 mx-1.5 rounded-full transition-colors ${done ? 'bg-success-500' : 'bg-slate-200'}`} />
-                )}
-              </Fragment>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        {passo === 1 && (
+        {passo === 0 && (
           <>
-            <h3 className="font-extrabold text-fg-heading mb-4">O que você procura?</h3>
+            <h3 className="font-extrabold text-fg-heading mb-4">O que procura?</h3>
+            <StepCategoria
+              value={form.categoria}
+              onChange={(cat) => { updateForm('categoria', cat); }}
+            />
+          </>
+        )}
+        {passo === 1 && isVeiculo && (
+          <>
+            <h3 className="font-extrabold text-fg-heading mb-4">Detalhes do veículo</h3>
             <StepBasico criterios={form.criterios} onChange={updateForm} />
           </>
         )}
-        {passo === 2 && (
+        {passo === 1 && form.categoria === 'pecas' && (
+          <>
+            <h3 className="font-extrabold text-fg-heading mb-4">Descreva a peça</h3>
+            <div>
+              <label className="block text-xs font-bold text-fg mb-1.5">
+                Descrição da peça <span className="text-accent">*</span>
+              </label>
+              <textarea
+                value={form.descricao}
+                onChange={(e) => updateForm('descricao', e.target.value)}
+                placeholder="Ex: Farol dianteiro direito para Renault Clio 2015, motor 1.5 dCi"
+                maxLength={500}
+                rows={4}
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition resize-none"
+              />
+              <p className="text-xs text-fg-subtle mt-1 text-right">{form.descricao.length}/500</p>
+            </div>
+          </>
+        )}
+        {passo === 2 && isVeiculo && (
           <>
             <h3 className="font-extrabold text-fg-heading mb-4">Orçamento</h3>
             <StepPrecoCombustivel criterios={form.criterios} onChange={updateForm} />
+          </>
+        )}
+        {passo === 2 && form.categoria === 'pecas' && (
+          <>
+            <h3 className="font-extrabold text-fg-heading mb-4">Orçamento</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-fg-subtle mb-1">Preço mínimo (€)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="0"
+                  value={form.criterios.precoMinimo ?? ''}
+                  onChange={(e) => updateForm('criterios.precoMinimo', e.target.value ? Number(e.target.value) : undefined)}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-fg-subtle mb-1">Preço máximo * (€)</label>
+                <input
+                  type="number"
+                  min={0}
+                  placeholder="Ex: 500"
+                  value={form.criterios.precoMaximo || ''}
+                  onChange={(e) => updateForm('criterios.precoMaximo', Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
+                />
+              </div>
+            </div>
           </>
         )}
         {passo === 3 && (
@@ -233,11 +324,29 @@ export default function CriarIntencaoCompra() {
             <StepLocalizacao criterios={form.criterios} onChange={updateForm} />
           </>
         )}
-        {passo === 4 && (
+        {passo === 4 && isVeiculo && (
           <>
             <h3 className="font-extrabold text-fg-heading mb-4">Preferências adicionais</h3>
             <p className="text-xs text-fg-subtle mb-4">(Opcional)</p>
             <StepPreferencias preferencias={form.preferencias || {}} onChange={updateForm} />
+          </>
+        )}
+        {passo === 4 && form.categoria === 'pecas' && (
+          <>
+            <h3 className="font-extrabold text-fg-heading mb-4">Detalhes adicionais</h3>
+            <p className="text-xs text-fg-subtle mb-4">(Opcional)</p>
+            <div>
+              <label className="block text-xs font-bold text-fg-subtle mb-1">Informação extra</label>
+              <textarea
+                value={form.descricao}
+                onChange={(e) => updateForm('descricao', e.target.value)}
+                placeholder="Ex: Estado de conservação, compatibilidade, urgência..."
+                maxLength={500}
+                rows={3}
+                className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition resize-none"
+              />
+              <p className="text-xs text-fg-subtle mt-1 text-right">{form.descricao.length}/500</p>
+            </div>
           </>
         )}
         {passo === 5 && (
@@ -265,8 +374,8 @@ export default function CriarIntencaoCompra() {
         <div className="flex justify-between mt-6 pt-4 border-t border-slate-200">
           <Button
             tipo="terciario"
-            onClick={() => setPasso(Math.max(1, passo - 1))}
-            disabled={passo === 1}
+            onClick={() => setPasso(Math.max(0, passo - 1))}
+            disabled={passo === 0}
           >
             ← Anterior
           </Button>

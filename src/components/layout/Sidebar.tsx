@@ -46,7 +46,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const navItems: { href: string; Icon: Icon; label: string }[] = [
     { href: '/', Icon: Car, label: 'Anúncios' },
     { href: '/anunciar', Icon: PlusCircle, label: 'Vender' },
-    { href: '/comprar', Icon: MagnifyingGlass, label: 'Comprar Carro' },
+    { href: '/comprar', Icon: MagnifyingGlass, label: 'Comprar' },
     { href: '/pecas', Icon: GearSix, label: 'Peças & Desmonte' },
     ...(isAdmin ? [{ href: '/admin', Icon: ShieldCheck, label: 'Admin' }] : []),
   ];

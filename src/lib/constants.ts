@@ -1,5 +1,6 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
+import type { CategoriaIntencao } from '@/types/intencao';
 
 // ============ CONSTANTES REPARAUTO ============
 
@@ -13,6 +14,13 @@ export const STORAGE_KEY_CARROS = 'carros_reparauto';
 export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
+
+export const CATEGORIAS_INTENCAO: { value: CategoriaIntencao; label: string; emoji: string }[] = [
+  { value: 'carro', label: 'Carro', emoji: '🚗' },
+  { value: 'moto', label: 'Moto', emoji: '🏍️' },
+  { value: 'viatura_comercial', label: 'Viatura Comercial', emoji: '🚐' },
+  { value: 'pecas', label: 'Peças', emoji: '⚙️' },
+];
 
 export const COMBUSTIVEIS_INTENCAO = ['gasolina', 'diesel', 'hibrido', 'eletrico', 'GPL', 'qualquer'];
 export const TRANSMISSOES_INTENCAO = ['manual', 'automatico', 'qualquer'];

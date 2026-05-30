@@ -144,42 +144,63 @@ export function formatarDataHora(data: { toDate?: () => Date; seconds?: number }
   return '—';
 }
 
-export function gerarTituloIntencao(criterios: {
-  marca: string;
-  modelo: string;
-  precoMaximo: number;
+export function gerarTituloIntencao(dados: {
+  categoria?: string;
+  criterios?: { marca?: string; modelo?: string; precoMaximo?: number };
+  descricao?: string;
 }): string {
-  return `Procuro: ${criterios.marca} ${criterios.modelo} até ${criterios.precoMaximo}€`;
+  const cat = dados.categoria || 'carro';
+  const prefixos: Record<string, string> = {
+    carro: 'Procuro carro',
+    moto: 'Procuro moto',
+    viatura_comercial: 'Procuro viatura comercial',
+    pecas: 'Procuro peça',
+  };
+  const prefixo = prefixos[cat] || 'Procuro';
+  if (cat === 'pecas') {
+    const txt = dados.descricao?.trim() ? `: ${dados.descricao.trim().slice(0, 60)}` : '';
+    return `${prefixo}${txt}`;
+  }
+  const m = dados.criterios?.marca || '';
+  const mo = dados.criterios?.modelo || '';
+  const p = dados.criterios?.precoMaximo ? ` até ${dados.criterios.precoMaximo}€` : '';
+  return `${prefixo}: ${m} ${mo}${p}`;
 }
 
 export function validarIntencaoCompra(dados: Record<string, any>): { valido: boolean; erros: string[] } {
   const erros: string[] = [];
   const c = dados.criterios;
+  const cat = dados.categoria;
 
-  if (!c?.marca) erros.push('Marca é obrigatória');
-  if (!c?.modelo) erros.push('Modelo é obrigatório');
-  if (!c?.anoMinimo) erros.push('Ano mínimo é obrigatório');
-  if (!c?.precoMaximo) erros.push('Orçamento máximo é obrigatório');
+  if (!cat) erros.push('Categoria é obrigatória');
 
-  if (c?.anoMinimo && c?.anoMaximo) {
-    if (c.anoMinimo > c.anoMaximo) erros.push('Ano mínimo não pode ser maior que o máximo');
-    if (c.anoMinimo < 1990) erros.push('Ano mínimo deve ser 1990 ou depois');
-    if (c.anoMaximo > new Date().getFullYear()) erros.push('Ano máximo não pode ser no futuro');
+  if (cat === 'pecas') {
+    if (!dados.descricao?.trim()) erros.push('Descrição da peça é obrigatória');
+  } else {
+    if (!c?.marca) erros.push('Marca é obrigatória');
+    if (!c?.modelo) erros.push('Modelo é obrigatório');
+    if (!c?.anoMinimo) erros.push('Ano mínimo é obrigatório');
+    if (c?.anoMinimo && c?.anoMaximo) {
+      if (c.anoMinimo > c.anoMaximo) erros.push('Ano mínimo não pode ser maior que o máximo');
+      if (c.anoMinimo < 1990) erros.push('Ano mínimo deve ser 1990 ou depois');
+      if (c.anoMaximo > new Date().getFullYear()) erros.push('Ano máximo não pode ser no futuro');
+    }
   }
 
+  if (!c?.precoMaximo) erros.push('Orçamento máximo é obrigatório');
   if (c?.precoMinimo && c?.precoMaximo) {
     if (c.precoMinimo > c.precoMaximo) erros.push('Preço mínimo não pode ser maior que o máximo');
     if (c.precoMaximo <= 0) erros.push('Orçamento máximo deve ser maior que 0');
   }
 
-  if (c?.quilometragemMaxima != null && c.quilometragemMaxima < 0) {
-    erros.push('Quilometragem deve ser maior ou igual a 0');
+  if (cat !== 'pecas') {
+    if (c?.quilometragemMaxima != null && c.quilometragemMaxima < 0) erros.push('Quilometragem deve ser maior ou igual a 0');
+    if (!c?.combustivel || c.combustivel.length === 0) erros.push('Selecione ao menos um tipo de combustível');
+    if (!c?.tipoTransmissao || c.tipoTransmissao.length === 0) erros.push('Selecione ao menos um tipo de transmissão');
   }
 
-  if (!c?.combustivel || c.combustivel.length === 0) erros.push('Selecione ao menos um tipo de combustível');
-  if (!c?.tipoTransmissao || c.tipoTransmissao.length === 0) erros.push('Selecione ao menos um tipo de transmissão');
   if (!c?.localizacao?.distrito) erros.push('Distrito é obrigatório');
-  if (c?.localizacao?.raio === undefined) erros.push('Raio de busca é obrigatório');
+  if (c?.localizacao?.distrito !== 'todo_portugal' && c?.localizacao?.raio === undefined) erros.push('Raio de busca é obrigatório');
   if (!dados.contatoPreferido) erros.push('Selecione forma de contacto preferida');
   if (dados.descricao && dados.descricao.length > 500) erros.push('Descrição não pode ter mais de 500 caracteres');
 

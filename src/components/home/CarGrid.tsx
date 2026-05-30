@@ -320,17 +320,34 @@ export default function CarGrid() {
                   const mostrarTel = telefonesVisiveis.has(intencao.id);
 
                   return (
-                  <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 hover:shadow-md transition-all flex flex-col">
+                   <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 hover:shadow-md transition-all flex flex-col">
                     <div className="flex-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block mb-1.5 ${
+                        intencao.categoria === 'carro' ? 'bg-blue-100 text-blue-700' :
+                        intencao.categoria === 'moto' ? 'bg-orange-100 text-orange-700' :
+                        intencao.categoria === 'viatura_comercial' ? 'bg-purple-100 text-purple-700' :
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {intencao.categoria === 'carro' ? '🚗 Carro' :
+                         intencao.categoria === 'moto' ? '🏍️ Moto' :
+                         intencao.categoria === 'viatura_comercial' ? '🚐 Comercial' :
+                         '⚙️ Peças'}
+                      </span>
                       <Link href={`/intencao/${intencao.id}`} className="hover:text-accent transition-colors">
                         <h3 className="font-bold text-fg-heading text-sm mb-2">{intencao.titulo}</h3>
                       </Link>
                       <div className="space-y-1 text-xs text-fg-muted">
-                        <p><span className="text-fg-subtle">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
+                        {intencao.categoria !== 'pecas' ? (
+                          <>
+                            <p><span className="text-fg-subtle">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
+                            <p><span className="text-fg-subtle">Combustível:</span> {intencao.criterios.combustivel.join(', ')}</p>
+                            <p><span className="text-fg-subtle">Km máx:</span> {intencao.criterios.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
+                          </>
+                        ) : (
+                          <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>
+                        )}
                         <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
-                        <p><span className="text-fg-subtle">Combustível:</span> {intencao.criterios.combustivel.join(', ')}</p>
                         <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
-                        <p><span className="text-fg-subtle">Km máx:</span> {intencao.criterios.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
                       </div>
                     </div>
                     <div className="mt-3 pt-3 border-t border-slate-100 space-y-2">

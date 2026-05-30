@@ -1,5 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 
+export type CategoriaIntencao = 'carro' | 'moto' | 'viatura_comercial' | 'pecas';
 export type StatusIntencao = 'pendente' | 'ativa' | 'pausada' | 'expirada' | 'deletada';
 export type ContatoPreferido = 'chat' | 'whatsapp' | 'ambos';
 export type StatusContato = 'aberto' | 'respondido' | 'aceito' | 'rejeitado' | 'finalizado';
@@ -10,6 +11,7 @@ export type TipoNotificacaoIntencao = 'nova_intencao_match' | 'intencao_recebeu_
 export interface IntencaoCompra {
   id: string;
   userId: string;
+  categoria: CategoriaIntencao;
   titulo: string;
   descricao?: string;
   criterios: {
