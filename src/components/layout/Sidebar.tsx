@@ -15,6 +15,7 @@ import {
   SignOut,
   User,
   X,
+  Wrench,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
@@ -48,6 +49,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     { href: '/anunciar', Icon: PlusCircle, label: 'Vender' },
     { href: '/comprar', Icon: MagnifyingGlass, label: 'Comprar' },
     { href: '/pecas', Icon: GearSix, label: 'Peças & Desmonte' },
+    { href: '/oficinas', Icon: Wrench, label: 'Oficinas & Mecânicos' },
     ...(isAdmin ? [{ href: '/admin', Icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 

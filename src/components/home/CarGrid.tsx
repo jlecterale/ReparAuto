@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo } from '@phosphor-icons/react';
+import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -10,10 +10,12 @@ import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import SegmentedControl from '@/components/ui/SegmentedControl';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
-import { buscarIntencoesMatch, getIntencoesAtivas } from '@/lib/db';
+import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
+import type { OficinaMecanico } from '@/types/oficina';
+import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
-type TipoGrid = 'carros' | 'intencoes';
+type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
 
 const quickChips = [
   { label: 'Todas as Ofertas', value: 'qualquer' },
@@ -28,6 +30,8 @@ export default function CarGrid() {
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
   const [telefonesVisiveis, setTelefonesVisiveis] = useState<Set<string>>(new Set());
+  const [oficinas, setOficinas] = useState<OficinaMecanico[]>([]);
+  const [loadingOficinas, setLoadingOficinas] = useState(false);
   const { user } = auth;
   const {
     carrosFiltrados,
@@ -91,21 +95,45 @@ export default function CarGrid() {
   };
 
   useEffect(() => {
-    if (tipo !== 'intencoes') return;
-    setLoadingIntencoes(true);
-    if (searchQuery) {
-      const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
-      buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-        .then(setIntencoesMatch)
-        .catch(() => setIntencoesMatch([]))
-        .finally(() => setLoadingIntencoes(false));
-    } else {
-      getIntencoesAtivas()
-        .then(setIntencoesMatch)
-        .catch(() => setIntencoesMatch([]))
-        .finally(() => setLoadingIntencoes(false));
+    if (tipo === 'intencoes') {
+      setLoadingIntencoes(true);
+      if (searchQuery) {
+        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
+        buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
+          .then(setIntencoesMatch)
+          .catch(() => setIntencoesMatch([]))
+          .finally(() => setLoadingIntencoes(false));
+      } else {
+        getIntencoesAtivas()
+          .then(setIntencoesMatch)
+          .catch(() => setIntencoesMatch([]))
+          .finally(() => setLoadingIntencoes(false));
+      }
+    } else if (tipo === 'oficinas') {
+      setLoadingOficinas(true);
+      const unsub = subscribeOficinas(
+        (data) => {
+          setOficinas(data);
+          setLoadingOficinas(false);
+        },
+        (err) => {
+          console.error(err);
+          setLoadingOficinas(false);
+        }
+      );
+      return unsub;
     }
   }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
+
+  const oficinasFiltradas = oficinas.filter((o) => {
+    const correspondeBusca = !searchQuery ||
+      (o.nome && o.nome.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (o.descricao && o.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+
+    return correspondeBusca && correspondeDistrito;
+  });
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -113,23 +141,27 @@ export default function CarGrid() {
       <aside className="mb-6 lg:mb-0 lg:sticky lg:top-5 space-y-3">
         {/* Mode toggle */}
         <SegmentedControl<TipoGrid>
-          ariaLabel="Alternar entre carros e intenções de compra"
+          ariaLabel="Alternar entre carros, intenções de compra e oficinas"
           value={tipo}
-          onChange={setTipo}
+          onChange={(val) => {
+            console.log('[CarGrid] Tab changed to:', val);
+            setTipo(val);
+          }}
           options={[
             { value: 'carros', label: 'Carros', icone: <Car weight="fill" /> },
             { value: 'intencoes', label: 'Intenções', icone: <MagnifyingGlass /> },
+            { value: 'oficinas', label: 'Oficinas', icone: <Wrench weight="fill" /> },
           ]}
         />
 
-        {tipo === 'carros' && (
+        {(tipo === 'carros' || tipo === 'oficinas') && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
             {/* Search */}
             <div className="relative">
               <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
               <input
                 type="text"
-                placeholder="Ex: Renault Clio..."
+                placeholder={tipo === 'oficinas' ? "Ex: Recar Garage..." : "Ex: Renault Clio..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
@@ -137,24 +169,26 @@ export default function CarGrid() {
             </div>
 
             {/* Quick chips */}
-            <div className="space-y-2">
-              <span className="block text-xs font-bold text-fg-subtle uppercase tracking-wide">Ofertas rápidas</span>
-              <div className="flex flex-wrap gap-2">
-                {quickChips.map((chip) => (
-                  <button
-                    key={chip.value}
-                    onClick={() => setFiltroAtivo(filtroAtivo === chip.value ? null : chip.value as 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                      filtroAtivo === chip.value
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+            {tipo === 'carros' && (
+              <div className="space-y-2">
+                <span className="block text-xs font-bold text-fg-subtle uppercase tracking-wide">Ofertas rápidas</span>
+                <div className="flex flex-wrap gap-2">
+                  {quickChips.map((chip) => (
+                    <button
+                      key={chip.value}
+                      onClick={() => setFiltroAtivo(filtroAtivo === chip.value ? null : chip.value as 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer')}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                        filtroAtivo === chip.value
+                          ? 'bg-accent text-white border-accent'
+                          : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Advanced filters toggle (mobile only) */}
             <Button
@@ -170,26 +204,28 @@ export default function CarGrid() {
 
             {/* Advanced filters */}
             <div className={`${showAdvanced ? 'block' : 'hidden'} lg:block space-y-4 border-t border-slate-100 pt-4`}>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
-                  <input
-                    type="number" placeholder="Mínimo"
-                    value={advPriceMin ?? ''}
-                    onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
-                  />
+              {tipo === 'carros' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
+                    <input
+                      type="number" placeholder="Mínimo"
+                      value={advPriceMin ?? ''}
+                      onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
+                    <input
+                      type="number" placeholder="Máximo"
+                      value={advPriceMax ?? ''}
+                      onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
-                  <input
-                    type="number" placeholder="Máximo"
-                    value={advPriceMax ?? ''}
-                    onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
-                  />
-                </div>
-              </div>
+              )}
 
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -241,19 +277,21 @@ export default function CarGrid() {
                 )}
               </div>
 
-              <div className="border-t border-slate-100 pt-3">
-                <span className="block text-xs font-bold text-fg-subtle mb-2">Ordenar por preço</span>
-                <div className="flex flex-col gap-2">
-                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'crescente' ? null : 'crescente')}
-                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
-                    <TrendUp /> Mais baixo
-                  </button>
-                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'decrescente' ? null : 'decrescente')}
-                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
-                    <TrendDown /> Mais caro
-                  </button>
+              {tipo === 'carros' && (
+                <div className="border-t border-slate-100 pt-3">
+                  <span className="block text-xs font-bold text-fg-subtle mb-2">Ordenar por preço</span>
+                  <div className="flex flex-col gap-2">
+                    <button type="button" onClick={() => setSortOrdem(sortOrdem === 'crescente' ? null : 'crescente')}
+                      className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                      <TrendUp /> Mais baixo
+                    </button>
+                    <button type="button" onClick={() => setSortOrdem(sortOrdem === 'decrescente' ? null : 'decrescente')}
+                      className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                      <TrendDown /> Mais caro
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <Button
                 tipo="secundario"
@@ -290,6 +328,66 @@ export default function CarGrid() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
                 {filtered.map((carro) => <CarCard key={carro.id} carro={carro} />)}
+              </div>
+            )}
+          </>
+        ) : tipo === 'oficinas' ? (
+          <>
+            <h2 className="text-xl font-bold text-fg-heading mb-4 flex items-center gap-2">
+              <Wrench className="text-accent" /> Oficinas & Mecânicos
+            </h2>
+            {loadingOficinas ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, i) => <CarCardSkeleton key={i} />)}
+              </div>
+            ) : oficinasFiltradas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">
+                <Wrench size={48} className="mb-3 text-slate-300" />
+                <p className="font-semibold">Nenhuma oficina encontrada</p>
+                <p className="text-sm">Tente alterar os filtros ou pesquisa.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {oficinasFiltradas.map((oficina) => (
+                  <div key={oficina.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 hover:shadow-md transition-all flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 border border-brand-100 dark:border-brand-900">
+                          {oficina.logoUrl ? (
+                            <img src={oficina.logoUrl} alt={oficina.nome || ''} className="w-full h-full object-cover rounded-lg" />
+                          ) : (
+                            oficina.nome ? oficina.nome.substring(0, 2).toUpperCase() : 'OF'
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/oficinas/detalhes/${oficina.id}`} className="hover:text-accent font-bold text-fg-heading text-sm truncate block">
+                            {oficina.nome || ''}
+                          </Link>
+                          <div className="flex items-center gap-1 text-[11px] text-fg-muted mt-0.5">
+                            <MapPin size={12} className="text-slate-400" />
+                            <span className="truncate">{oficina.localidade || ''}, {oficina.distrito || ''}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 mb-2 text-xs">
+                        <Star size={12} weight="fill" className="text-amber-500" />
+                        <span className="font-bold text-fg-strong">{oficina.mediaAvaliacoes?.toFixed(1) || '5.0'}</span>
+                        <span className="text-fg-muted">({oficina.totalAvaliacoes || 0})</span>
+                      </div>
+                      <p className="text-xs text-fg-muted line-clamp-2 mb-3">{oficina.descricao || ''}</p>
+                    </div>
+                    <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-1">
+                      {(oficina.especialidades || []).slice(0, 2).map((esp) => (
+                        <span key={esp} className="text-[10px] bg-brand-100 text-brand-700 px-2 py-0.5 rounded font-semibold">
+                          {ESPECIALIDADES_LABELS[esp]}
+                        </span>
+                      ))}
+                      <Link href={`/oficinas/detalhes/${oficina.id}`} className="w-full text-center text-xs font-bold text-accent hover:underline pt-2 mt-1">
+                        Ver detalhes completo →
+                      </Link>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </>

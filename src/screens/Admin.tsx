@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { ChartBar, Users, List, StarHalf, MagnifyingGlass, Flag, ShieldCheck, CircleNotch, ArrowsClockwise, type Icon } from '@phosphor-icons/react';
+import { ChartBar, Users, List, StarHalf, MagnifyingGlass, Flag, ShieldCheck, CircleNotch, ArrowsClockwise, Wrench, type Icon } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -21,6 +21,9 @@ import {
   updateIntencaoStatus,
   getDenunciasIntencao,
   updateDenunciaIntencaoStatus,
+  getAllOficinasAdmin,
+  updateOficinaStatus,
+  deleteOficina,
 } from '@/lib/db';
 import Button from '@/components/ui/Button';
 import AdminStats from '@/components/admin/AdminStats';
@@ -37,8 +40,11 @@ import type { Carro} from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import type { StatusAnuncio } from '@/types/carro';
 import type { IntencaoCompra, DenunciaIntencao } from '@/types/intencao';
+import type { OficinaMecanico } from '@/types/oficina';
+import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
-type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'denuncias' | 'verificacoes' | 'avaliacoes' | 'intencoes';
+
+type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'denuncias' | 'verificacoes' | 'avaliacoes' | 'intencoes' | 'oficinas';
 
 export default function Admin() {
   const { auth } = useApp();
@@ -54,6 +60,7 @@ export default function Admin() {
   const [pecas, setPecas] = useState<Peca[]>([]);
   const [intencoesAdmin, setIntencoesAdmin] = useState<IntencaoCompra[]>([]);
   const [denunciasIntencao, setDenunciasIntencao] = useState<DenunciaIntencao[]>([]);
+  const [oficinasAdmin, setOficinasAdmin] = useState<OficinaMecanico[]>([]);
   const [loading, setLoading] = useState(true);
   const { reports, loading: reportsLoading, carregar: carregarReports, atualizarStatus: atualizarStatusReport } = useReports();
   const { reviews: adminReviews, loading: reviewsAdminLoading, carregar: carregarReviews, atualizarStatus: atualizarStatusReview, remover: removerReview } = useReviewsAdmin();
@@ -96,18 +103,20 @@ export default function Admin() {
   const carregarDados = async () => {
     setLoading(true);
     try {
-      const [u, c, p, i, d] = await Promise.all([
+      const [u, c, p, i, d, o] = await Promise.all([
         getAllUsers(),
         getAllCarrosAdmin(),
         getAllPecasAdmin(),
         getAllIntencoesAdmin(),
         getDenunciasIntencao(),
+        getAllOficinasAdmin(),
       ]);
       setUsers(u);
       setCarros(c);
       setPecas(p);
       setIntencoesAdmin(i);
       setDenunciasIntencao(d);
+      setOficinasAdmin(o);
       carregarReports();
       carregarReviews();
       carregarVerifications();
@@ -276,6 +285,61 @@ export default function Admin() {
     } catch { toast?.erro('Erro ao rejeitar intenção.'); }
   };
 
+  const handleApproveOficina = async (id: string) => {
+    try {
+      const o = oficinasAdmin.find((of) => of.id === id);
+      await updateOficinaStatus(id, 'aprovado');
+      setOficinasAdmin((prev) => prev.map((of) => (of.id === id ? { ...of, status: 'aprovado' } : of)));
+      toast?.sucesso('Oficina aprovada!');
+      if (o) {
+        const criadorUser = users.find((u) => u.email === o.criador);
+        if (criadorUser) {
+          await criarNotificacao(
+            criadorUser.uid,
+            'info',
+            'Oficina aprovada!',
+            `A sua oficina "${o.nome}" foi aprovada e já está pública no diretório.`,
+            `/oficinas/detalhes/${id}`
+          );
+        }
+      }
+    } catch {
+      toast?.erro('Erro ao aprovar oficina.');
+    }
+  };
+
+  const handleRejectOficina = async (id: string) => {
+    try {
+      const o = oficinasAdmin.find((of) => of.id === id);
+      await updateOficinaStatus(id, 'rejeitado');
+      setOficinasAdmin((prev) => prev.map((of) => (of.id === id ? { ...of, status: 'rejeitado' } : of)));
+      toast?.sucesso('Oficina rejeitada.');
+      if (o) {
+        const criadorUser = users.find((u) => u.email === o.criador);
+        if (criadorUser) {
+          await criarNotificacao(
+            criadorUser.uid,
+            'info',
+            'Oficina rejeitada',
+            `O registo da sua oficina "${o.nome}" foi rejeitado pela administração.`
+          );
+        }
+      }
+    } catch {
+      toast?.erro('Erro ao rejeitar oficina.');
+    }
+  };
+
+  const handleDeleteOficina = async (id: string) => {
+    try {
+      await deleteOficina(id);
+      setOficinasAdmin((prev) => prev.filter((o) => o.id !== id));
+      toast?.sucesso('Oficina eliminada.');
+    } catch {
+      toast?.erro('Erro ao eliminar oficina.');
+    }
+  };
+
   const intencoesDenunciasPendentes = denunciasIntencao.filter((d) => d.status === 'aberta').length;
 
   const reportsPendentes = reports.filter((r) => r.status === 'pendente').length;
@@ -347,6 +411,7 @@ export default function Admin() {
     { key: 'visao-geral', label: 'Visão Geral', Icon: ChartBar },
     { key: 'utilizadores', label: 'Utilizadores', Icon: Users },
     { key: 'anuncios', label: 'Anúncios', Icon: List },
+    { key: 'oficinas', label: `Oficinas${oficinasAdmin.filter(o => o.status === 'pendente').length > 0 ? ` (${oficinasAdmin.filter(o => o.status === 'pendente').length})` : ''}`, Icon: Wrench },
     { key: 'avaliacoes', label: `Avaliações${reviewsPendentes > 0 ? ` (${reviewsPendentes})` : ''}`, Icon: StarHalf },
     { key: 'intencoes', label: `Intenções${intencoesDenunciasPendentes > 0 ? ` (${intencoesDenunciasPendentes})` : ''}`, Icon: MagnifyingGlass },
     { key: 'denuncias', label: `Denúncias${reportsPendentes > 0 ? ` (${reportsPendentes})` : ''}`, Icon: Flag },
@@ -509,6 +574,56 @@ export default function Admin() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {tab === 'oficinas' && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+          <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+            <Wrench className="text-accent" /> Moderação de Oficinas & Mecânicos
+          </h2>
+          {oficinasAdmin.length === 0 ? (
+            <p className="text-sm text-fg-subtle">Nenhuma oficina registada.</p>
+          ) : (
+            <div className="space-y-4">
+              {oficinasAdmin.map((oficina) => (
+                <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 rounded-2xl p-4 border border-slate-200 gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold text-fg-heading truncate">{oficina.nome}</p>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        oficina.status === 'aprovado' ? 'bg-green-100 text-green-700' :
+                        oficina.status === 'rejeitado' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>
+                        {oficina.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-fg-subtle mt-0.5">
+                      Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
+                    </p>
+                    <p className="text-xs text-fg-subtle mt-0.5 font-medium">
+                      Especialidades: {oficina.especialidades.map(e => ESPECIALIDADES_LABELS[e]).join(', ')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    {oficina.status === 'pendente' && (
+                      <>
+                        <Button tipo="verde" tamanho="sm" onClick={() => handleApproveOficina(oficina.id)}>Aprovar</Button>
+                        <Button tipo="perigo" tamanho="sm" onClick={() => handleRejectOficina(oficina.id)}>Rejeitar</Button>
+                      </>
+                    )}
+                    {oficina.status === 'aprovado' && (
+                      <Button tipo="aviso" tamanho="sm" onClick={() => handleRejectOficina(oficina.id)}>Desativar</Button>
+                    )}
+                    {oficina.status === 'rejeitado' && (
+                      <Button tipo="verde" tamanho="sm" onClick={() => handleApproveOficina(oficina.id)}>Ativar</Button>
+                    )}
+                    <Button tipo="perigo" tamanho="sm" onClick={() => handleDeleteOficina(oficina.id)}>Eliminar</Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

@@ -4,7 +4,7 @@ import '@/index.css';
 import Providers from './providers';
 import LayoutShell from '@/components/layout/LayoutShell';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://reparauto-site.web.app';
 
 export const viewport: Viewport = {
   width: 'device-width',
