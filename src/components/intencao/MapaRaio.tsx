@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { getCentroDistrito, CENTRO_PORTUGAL } from '@/lib/geo';
+import 'leaflet/dist/leaflet.css';
 
 interface MapaRaioProps {
   distrito: string;
@@ -81,7 +82,14 @@ export default function MapaRaio({ distrito, raio, onChange }: MapaRaioProps) {
     }
 
     if (d && d !== 'todo_portugal') {
-      markerRef.current = L.marker([center.lat, center.lng]).addTo(map);
+      markerRef.current = L.marker([center.lat, center.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: '<div style="width:14px;height:14px;background:#e11d48;border-radius:50%;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>',
+          iconSize: [14, 14],
+          iconAnchor: [7, 7],
+        }),
+      }).addTo(map);
 
       if (r > 0) {
         circleRef.current = L.circle([center.lat, center.lng], {
