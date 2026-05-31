@@ -45,7 +45,7 @@ export default function MapaRaio({ distrito, raio, onChange }: MapaRaioProps) {
       }).addTo(map);
 
       mapInstance.current = map;
-      atualizarMapa(map, L, distrito, raio);
+      atualizarMapa(map, L, distrito, raio, true);
     }
 
     init();
@@ -61,37 +61,50 @@ export default function MapaRaio({ distrito, raio, onChange }: MapaRaioProps) {
   useEffect(() => {
     if (!mapInstance.current) return;
     import('leaflet').then((L) => {
-      atualizarMapa(mapInstance.current, L, distrito, raio);
+      atualizarMapa(mapInstance.current, L, distrito, raio, true);
     });
-  }, [distrito, raio]);
+  }, [distrito]);
 
-  function atualizarMapa(map: any, L: any, d: string, r: number) {
+  useEffect(() => {
+    if (!mapInstance.current) return;
+    import('leaflet').then((L) => {
+      atualizarMapa(mapInstance.current, L, distrito, raio, false);
+    });
+  }, [raio]);
+
+  function atualizarMapa(map: any, L: any, d: string, r: number, resetView: boolean) {
     const centro = d && d !== 'todo_portugal' ? getCentroDistrito(d) : undefined;
     const center = centro || CENTRO_PORTUGAL;
 
-    map.setView([center.lat, center.lng], centro ? 10 : 7);
+    if (resetView) {
+      map.setView([center.lat, center.lng], centro ? 10 : 7);
 
-    if (markerRef.current) {
-      map.removeLayer(markerRef.current);
-      markerRef.current = null;
-    }
+      if (markerRef.current) {
+        map.removeLayer(markerRef.current);
+        markerRef.current = null;
+      }
 
-    if (circleRef.current) {
-      map.removeLayer(circleRef.current);
-      circleRef.current = null;
+      if (circleRef.current) {
+        map.removeLayer(circleRef.current);
+        circleRef.current = null;
+      }
+
+      if (d && d !== 'todo_portugal') {
+        markerRef.current = L.marker([center.lat, center.lng], {
+          icon: L.divIcon({
+            className: '',
+            html: '<div style="width:14px;height:14px;background:#e11d48;border-radius:50%;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7],
+          }),
+        }).addTo(map);
+      }
     }
 
     if (d && d !== 'todo_portugal') {
-      markerRef.current = L.marker([center.lat, center.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: '<div style="width:14px;height:14px;background:#e11d48;border-radius:50%;border:2px solid white;box-shadow:0 0 6px rgba(0,0,0,0.35)"></div>',
-          iconSize: [14, 14],
-          iconAnchor: [7, 7],
-        }),
-      }).addTo(map);
-
-      if (r > 0) {
+      if (circleRef.current) {
+        circleRef.current.setRadius(r * 1000);
+      } else if (r > 0) {
         circleRef.current = L.circle([center.lat, center.lng], {
           radius: r * 1000,
           color: '#e11d48',
@@ -99,7 +112,9 @@ export default function MapaRaio({ distrito, raio, onChange }: MapaRaioProps) {
           fillOpacity: 0.1,
           weight: 2,
         }).addTo(map);
+      }
 
+      if (resetView && r > 0 && circleRef.current) {
         map.fitBounds(circleRef.current.getBounds().pad(0.2));
       }
     }
