@@ -120,11 +120,14 @@ export default function Anunciar() {
       setPublicado(true);
       toast?.sucesso('Anúncio publicado com sucesso!');
 
-      const admins = await getAdminUsers();
-      const titulo = `${dados.marca} ${dados.modelo} (${dados.anoFabricacao})`;
-      admins.forEach((a) => {
-        criarNotificacao(a.uid, 'info', 'Novo anúncio pendente', `Um novo carro foi publicado: ${titulo}.`, `/detalhes/${(carro as any).id}`);
-      });
+      getAdminUsers()
+        .then((admins) => {
+          const titulo = `${dados.marca} ${dados.modelo} (${dados.anoFabricacao})`;
+          admins.forEach((a) => {
+            criarNotificacao(a.uid, 'info', 'Novo anúncio pendente', `Um novo carro foi publicado: ${titulo}.`, `/detalhes/${(carro as any).id}`);
+          });
+        })
+        .catch(() => {});
     } catch (err) {
       toast?.erro('Erro ao publicar anúncio. Tente novamente.');
       console.error('[Anunciar] Erro:', err);

@@ -103,10 +103,13 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorEmail: form.vendedorEmail || user?.email || null,
       });
 
-      const admins = await getAdminUsers();
-      admins.forEach((a) => {
-        criarNotificacao(a.uid, 'info', 'Nova peça pendente', `Uma nova peça foi publicada: ${form.titulo}.`, `/pecas`);
-      });
+      getAdminUsers()
+        .then((admins) => {
+          admins.forEach((a) => {
+            criarNotificacao(a.uid, 'info', 'Nova peça pendente', `Uma nova peça foi publicada: ${form.titulo}.`, `/pecas`);
+          });
+        })
+        .catch(() => {});
 
       if (fotoPreview) URL.revokeObjectURL(fotoPreview);
 

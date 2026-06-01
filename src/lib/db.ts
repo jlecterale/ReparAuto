@@ -518,12 +518,12 @@ export async function getCarroPorId(id: string): Promise<Carro | null> {
 
 export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
   try {
-    const docRef = await addDoc(collection(db, CARROS_COLLECTION), {
+    const docRef = await addDoc(collection(db, CARROS_COLLECTION), cleanUndefined({
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
-    });
-    return { id: docRef.id, ...dados, status: 'pendente' } as Carro;
+    }));
+    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Carro;
   } catch (err) {
     console.error('[DB] Erro ao adicionar carro:', err);
     throw err;
@@ -596,12 +596,12 @@ export async function getPecaPorId(id: string): Promise<Peca | null> {
 
 export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   try {
-    const docRef = await addDoc(collection(db, PECAS_COLLECTION), {
+    const docRef = await addDoc(collection(db, PECAS_COLLECTION), cleanUndefined({
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
-    });
-    return { id: docRef.id, ...dados, status: 'pendente' } as Peca;
+    }));
+    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
     throw err;
