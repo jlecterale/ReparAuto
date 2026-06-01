@@ -1,11 +1,12 @@
 'use client';
 
 import { CheckCircle } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { uploadFileToStorage } from '@/lib/upload';
 import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -57,6 +58,8 @@ export default function Anunciar() {
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
+  const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  const [uploading, setUploading] = useState(false);
   const [dados, setDados] = useState<CarroFormData>(() => ({
     ...initialDados,
     vendedorTelefone: user?.telefone || '',
@@ -70,14 +73,35 @@ export default function Anunciar() {
       return;
     }
 
+    setUploading(true);
+
     try {
+      // Upload pending photos to Firebase Storage
+      const fotosFinais: string[] = await Promise.all(
+        fotos.map(async (foto, index) => {
+          if (foto.startsWith('blob:')) {
+            const file = pendingFilesRef.current.get(foto);
+            if (file) {
+              const folder = `anuncios/${user.uid}`;
+              const ext = file.name.split('.').pop() || 'jpg';
+              const fileName = `${Date.now()}_${index}.${ext}`;
+              const downloadUrl = await uploadFileToStorage(file, folder, fileName);
+              URL.revokeObjectURL(foto);
+              pendingFilesRef.current.delete(foto);
+              return downloadUrl;
+            }
+          }
+          return foto; // keep emoji or existing URL as-is
+        }),
+      );
+
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
-        fotos,
+        fotos: fotosFinais,
         preco: Number(dados.preco),
         km: Number(dados.km),
         portas: Number(dados.portas),
@@ -104,6 +128,8 @@ export default function Anunciar() {
     } catch (err) {
       toast?.erro('Erro ao publicar anúncio. Tente novamente.');
       console.error('[Anunciar] Erro:', err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -179,6 +205,7 @@ export default function Anunciar() {
               <StepFotos
                 fotos={fotos}
                 setFotos={setFotos}
+                filesRef={pendingFilesRef}
                 onNext={() => setPasso(2)}
                 onBack={() => { setCategoria(null); setPasso(0); }}
               />
@@ -197,6 +224,7 @@ export default function Anunciar() {
                 setDados={setDados}
                 onBack={() => setPasso(2)}
                 onPublicar={handlePublicar}
+                carregando={uploading}
               />
             )}
           </>

@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { CaretLeft, CaretRight, UploadSimple, X } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
+import { CaretLeft, CaretRight, UploadSimple, Spinner, X } from '@phosphor-icons/react';
 import { EMOJIS_CARRO, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
+import { comprimirImagem } from '@/lib/compressImage';
 
 interface FotosEditorProps {
   fotos: string[];
@@ -11,15 +12,9 @@ interface FotosEditorProps {
   mostrarEmoji?: boolean;
   /** Show a "Capa" badge on the first photo. Defaults to true when max > 1. */
   mostrarCapa?: boolean;
+  /** Ref to collect pending File objects keyed by blob URL (for deferred upload). */
+  filesRef?: React.MutableRefObject<Map<string, File>>;
 }
-
-const lerComoDataURL = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(reader.error ?? new Error('Falha a ler ficheiro'));
-    reader.readAsDataURL(file);
-  });
 
 const reordenar = (fotos: string[], from: number, to: number): string[] => {
   if (from === to || from < 0 || to < 0 || from >= fotos.length || to >= fotos.length) {
@@ -37,11 +32,25 @@ export default function FotosEditor({
   max = 6,
   mostrarEmoji = true,
   mostrarCapa,
+  filesRef,
 }: FotosEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [comprimindo, setComprimindo] = useState(false);
+
+  // Revoke all tracked blob URLs on unmount to avoid memory leaks
+  useEffect(() => {
+    const currentMap = filesRef?.current;
+    return () => {
+      if (!currentMap) return;
+      currentMap.forEach((_, url) => {
+        if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+      });
+      currentMap.clear();
+    };
+  }, [filesRef]);
 
   const exibirCapa = mostrarCapa ?? max > 1;
   const podeReordenar = max > 1 && fotos.length > 1;
@@ -58,24 +67,38 @@ export default function FotosEditor({
     const oversize = candidatos.filter((f) => f.size > MAX_FOTO_SIZE_BYTES);
     const validos = candidatos.filter((f) => f.size <= MAX_FOTO_SIZE_BYTES);
 
-    try {
-      const dataURLs = await Promise.all(validos.map(lerComoDataURL));
-      if (dataURLs.length > 0) {
-        setFotos([...fotos, ...dataURLs].slice(0, max));
+    if (validos.length === 0) {
+      if (oversize.length > 0) {
+        setErro(`${oversize.length === 1 ? 'Uma imagem' : `${oversize.length} imagens`} excedeu o limite de ${MAX_FOTO_SIZE_MB} MB.`);
+      } else if (tooMany) {
+        setErro(`Só pode adicionar até ${max} fotos no total.`);
       }
-    } catch {
-      setErro('Não foi possível processar uma das imagens.');
       return;
     }
 
-    if (oversize.length > 0) {
-      setErro(
-        `${oversize.length === 1 ? 'Uma imagem excedeu' : `${oversize.length} imagens excederam`} o limite de ${MAX_FOTO_SIZE_MB} MB e ${oversize.length === 1 ? 'foi ignorada' : 'foram ignoradas'}.`,
-      );
-    } else if (tooMany) {
-      setErro(`Só pode adicionar até ${max} fotos no total.`);
-    } else {
-      setErro(null);
+    setComprimindo(true);
+    setErro(null);
+
+    try {
+      const compressed = await Promise.all(validos.map(comprimirImagem));
+
+      const newPhotos: string[] = [];
+      for (const blob of compressed) {
+        const compressedFile = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const url = URL.createObjectURL(compressedFile);
+        newPhotos.push(url);
+        filesRef?.current.set(url, compressedFile);
+      }
+
+      setFotos([...fotos, ...newPhotos].slice(0, max));
+
+      if (oversize.length > 0) {
+        setErro(`${oversize.length === 1 ? 'Uma imagem' : `${oversize.length} imagens`} excedeu o limite original de ${MAX_FOTO_SIZE_MB} MB mas foi comprimida.`);
+      }
+    } catch {
+      setErro('Erro ao comprimir imagem. Tente novamente.');
+    } finally {
+      setComprimindo(false);
     }
   };
 
@@ -86,6 +109,11 @@ export default function FotosEditor({
   };
 
   const removerFoto = (index: number) => {
+    const removed = fotos[index];
+    if (removed?.startsWith('blob:')) {
+      URL.revokeObjectURL(removed);
+      filesRef?.current.delete(removed);
+    }
     setFotos(fotos.filter((_, i) => i !== index));
     setErro(null);
   };
@@ -129,17 +157,18 @@ export default function FotosEditor({
       <div className="flex flex-col sm:flex-row gap-3 mb-3">
         <label
           className={`flex-1 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-fg font-semibold px-4 py-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border-dashed ${
-            podeAdicionar ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
+            podeAdicionar && !comprimindo ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
           }`}
         >
-          <UploadSimple /> Carregar Imagens Reais
+          {comprimindo ? <Spinner className="animate-spin" /> : <UploadSimple />}
+          {comprimindo ? 'A comprimir…' : 'Carregar Imagens Reais'}
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             className="hidden"
             multiple={max > 1}
-            disabled={!podeAdicionar}
+            disabled={!podeAdicionar || comprimindo}
             onChange={processarFotos}
           />
         </label>
@@ -169,7 +198,7 @@ export default function FotosEditor({
 
       <div className={`grid gap-3 ${max === 1 ? 'grid-cols-1' : 'grid-cols-3 sm:grid-cols-6'}`}>
         {fotos.map((foto, i) => {
-          const isImg = foto.startsWith('data:') || foto.startsWith('http');
+          const isImg = foto.startsWith('data:') || foto.startsWith('blob:') || foto.startsWith('http');
           const isDragging = draggingIndex === i;
           const isDragOver = dragOverIndex === i && draggingIndex !== i;
           return (
