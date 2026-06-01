@@ -16,6 +16,8 @@ export default function Footer() {
           <Link href="/privacidade" className="hover:text-white transition">Política de Privacidade</Link>
           <Link href="/cookies" className="hover:text-white transition">Política de Cookies</Link>
           <Link href="/seguranca" className="hover:text-white transition">Segurança</Link>
+          <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
+          <a href="mailto:recargaragesuporte@gmail.com" className="hover:text-white transition">Fale Conosco (recargaragesuporte@gmail.com)</a>
         </div>
       </div>
     </footer>

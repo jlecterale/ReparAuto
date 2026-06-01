@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { MagnifyingGlass, PlusCircle, GearSix, ShieldCheck, User, type Icon } from '@phosphor-icons/react';
+import { MagnifyingGlass, PlusCircle, GearSix, ShieldCheck, User, Wrench, type Icon } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 
 export default function BottomNav() {
@@ -19,6 +19,7 @@ export default function BottomNav() {
     { path: '/', Icon: MagnifyingGlass, label: 'Pesquisar' },
     { path: '/anunciar', Icon: PlusCircle, label: 'Anunciar' },
     { path: '/pecas', Icon: GearSix, label: 'Peças' },
+    { path: '/oficinas', Icon: Wrench, label: 'Oficinas' },
     ...(auth.isAdmin ? [{ path: '/admin', Icon: ShieldCheck, label: 'Admin' }] : []),
     { path: '/perfil', Icon: User, label: 'Perfil' },
   ];
