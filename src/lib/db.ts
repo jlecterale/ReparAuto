@@ -1129,11 +1129,13 @@ function cleanUndefined(obj: Record<string, any>): Record<string, any> {
     if (value === undefined) continue;
     if (value !== null && typeof value === 'object' && !(value instanceof Timestamp)) {
       result[key] = Array.isArray(value)
-        ? value.map((item: any) =>
-            item !== null && typeof item === 'object' && !(item instanceof Timestamp)
-              ? cleanUndefined(item)
-              : item,
-          )
+        ? value
+            .filter((item: any) => item !== undefined)
+            .map((item: any) =>
+                item !== null && typeof item === 'object' && !(item instanceof Timestamp)
+                  ? cleanUndefined(item)
+                  : item,
+              )
         : cleanUndefined(value);
     } else {
       result[key] = value;

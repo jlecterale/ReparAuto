@@ -77,23 +77,27 @@ export default function Anunciar() {
 
     try {
       // Upload pending photos to Firebase Storage
-      const fotosFinais: string[] = await Promise.all(
-        fotos.map(async (foto, index) => {
-          if (foto.startsWith('blob:')) {
-            const file = pendingFilesRef.current.get(foto);
-            if (file) {
-              const folder = `ads/${user.uid}`;
-              const ext = file.name.split('.').pop() || 'jpg';
-              const fileName = `${Date.now()}_${index}.${ext}`;
-              const downloadUrl = await uploadFileToStorage(file, folder, fileName);
-              URL.revokeObjectURL(foto);
-              pendingFilesRef.current.delete(foto);
-              return downloadUrl;
+      const fotosFinais: string[] = (
+        await Promise.all(
+          fotos.map(async (foto, index) => {
+            if (foto.startsWith('blob:')) {
+              const file = pendingFilesRef.current.get(foto);
+              if (file) {
+                const folder = `ads/${user.uid}`;
+                const ext = file.name.split('.').pop() || 'jpg';
+                const fileName = `${Date.now()}_${index}.${ext}`;
+                const downloadUrl = await uploadFileToStorage(file, folder, fileName);
+                URL.revokeObjectURL(foto);
+                pendingFilesRef.current.delete(foto);
+                return downloadUrl;
+              }
+              // blob sem ficheiro no Map → skip (não incluir no array)
+              return null;
             }
-          }
-          return foto; // keep emoji or existing URL as-is
-        }),
-      );
+            return foto; // keep emoji or existing URL as-is
+          }),
+        )
+      ).filter((f): f is string => f !== null);
 
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
@@ -129,7 +133,16 @@ export default function Anunciar() {
         })
         .catch(() => {});
     } catch (err) {
-      toast?.erro('Erro ao publicar anúncio. Tente novamente.');
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      const isPermission = msg.includes('permission') || msg.includes('unauthorized');
+      const isStorage = msg.includes('storage') || msg.includes('upload');
+      if (isPermission) {
+        toast?.erro('Erro de permissão. Faça login novamente e tente.');
+      } else if (isStorage) {
+        toast?.erro('Erro ao enviar fotos. Verifique o tamanho das imagens e tente novamente.');
+      } else {
+        toast?.erro('Erro ao publicar anúncio. Tente novamente.');
+      }
       console.error('[Anunciar] Erro:', err);
     } finally {
       setUploading(false);

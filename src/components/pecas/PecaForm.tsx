@@ -132,7 +132,16 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       onSuccess?.();
     } catch (err) {
-      setErro('Erro ao publicar. Tente novamente.');
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      const isPermission = msg.includes('permission') || msg.includes('unauthorized');
+      const isStorage = msg.includes('storage') || msg.includes('upload');
+      if (isPermission) {
+        setErro('Erro de permissão. Faça login novamente e tente.');
+      } else if (isStorage) {
+        setErro('Erro ao enviar foto. Verifique o tamanho da imagem e tente novamente.');
+      } else {
+        setErro('Erro ao publicar. Tente novamente.');
+      }
       console.error('[CriarPeca] Erro:', err);
     } finally {
       setFotoUploading(false);
