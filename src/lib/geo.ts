@@ -38,6 +38,16 @@ export function getCoordenadas(nome: string): { lat: number; lng: number } | und
   return undefined;
 }
 
+export function getCentroDistrito(distrito: string): { lat: number; lng: number } | undefined {
+  const concelhos = getConcelhos(distrito);
+  if (concelhos.length === 0) return undefined;
+  const lat = concelhos.reduce((s, c) => s + c.lat, 0) / concelhos.length;
+  const lng = concelhos.reduce((s, c) => s + c.lng, 0) / concelhos.length;
+  return { lat, lng };
+}
+
+export const CENTRO_PORTUGAL: { lat: number; lng: number } = { lat: 39.6, lng: -8.0 };
+
 export function getAllConcelhos(): string[] {
   return distritosDados
     .flatMap((d) => d.concelhos.map((c) => c.nome))

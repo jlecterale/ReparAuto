@@ -60,6 +60,12 @@ export interface PecasContextValue {
   recarregar: () => Promise<void>;
 }
 
+export interface LoginModalContextValue {
+  isOpen: boolean;
+  openLoginModal: (redirectTo?: string) => void;
+  closeLoginModal: () => void;
+}
+
 export interface AppContextValue {
   dbReady: boolean;
   auth: AuthContextValue;
@@ -68,6 +74,7 @@ export interface AppContextValue {
   favoritos: FavoritosContextValue;
   chat: ChatContextValue;
   intencoes: IntencaoContextValue;
+  loginModal: LoginModalContextValue;
 }
 
 export interface AppProviderProps {

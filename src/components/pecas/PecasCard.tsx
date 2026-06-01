@@ -34,7 +34,7 @@ export default function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes
             <Badge cor={config.cor}>
               <config.Icon className="mr-1" /> {config.label}
             </Badge>
-            {isNovo && <Badge cor="green" variante="solid">Novo</Badge>}
+            {isNovo && <Badge cor="green" variante="solid">Novidade</Badge>}
           </div>
           {peca.preco && (
             <span className="text-lg font-extrabold text-accent">

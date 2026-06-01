@@ -390,8 +390,26 @@ export default function ProfileLoggedIn() {
             </Button>
           </div>
         ) : (
-          <div className="space-y-2">
-            <p className="text-xs text-fg-subtle mb-2">{minhasIntencoes.length} intenção(ões) ativa(s)</p>
+          <div className="space-y-3">
+            <p className="text-xs text-fg-subtle">{minhasIntencoes.length} intenção(ões) ativa(s)</p>
+            <div className="flex flex-wrap gap-2">
+              {minhasIntencoes.slice(0, 3).map((int) => (
+                <div key={int.id} className="text-[11px] bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 flex items-center gap-1.5">
+                  <span className={`font-bold ${
+                    int.categoria === 'carro' ? 'text-blue-600' :
+                    int.categoria === 'moto' ? 'text-orange-600' :
+                    int.categoria === 'viatura_comercial' ? 'text-purple-600' :
+                    'text-emerald-600'
+                  }`}>
+                    {int.categoria === 'carro' ? '🚗' :
+                     int.categoria === 'moto' ? '🏍️' :
+                     int.categoria === 'viatura_comercial' ? '🚐' :
+                     '⚙️'}
+                  </span>
+                  <span className="text-fg-muted truncate max-w-[120px]">{int.titulo}</span>
+                </div>
+              ))}
+            </div>
             <Button
               tipo="terciario"
               tamanho="sm"

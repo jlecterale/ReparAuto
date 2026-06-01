@@ -1,13 +1,12 @@
 'use client';
 
-import { ArrowLeft, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, TextAlignLeft, Warning, Wrench } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
-import { getCarroPorId as getCarroPorIdDb, incrementCampo } from '@/lib/db';
+import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
-import StatusPanel from '@/components/detalhes/StatusPanel';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
@@ -21,6 +20,7 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
+import EditarCarroModal from '@/components/admin/EditarCarroModal';
 import type { Carro } from '@/types/carro';
 
 export default function DetalhesCarro() {
@@ -36,6 +36,9 @@ export default function DetalhesCarro() {
   const [bloqueado, setBloqueado] = useState(false);
   const [galeriaAberta, setGaleriaAberta] = useState(false);
   const [indiceGaleria, setIndiceGaleria] = useState(0);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     async function fetchCarro() {
@@ -60,6 +63,26 @@ export default function DetalhesCarro() {
     }
     fetchCarro();
   }, [id, user, isAdmin]);
+
+  const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
+    await updateCarro(id, { ...dados, status: 'pendente' });
+    setEditModalOpen(false);
+    const data = await getCarroPorIdDb(id);
+    if (data) setCarro(data);
+  };
+
+  const handleDelete = async () => {
+    if (!carro) return;
+    setDeleting(true);
+    try {
+      await deleteCarro(carro.id);
+      router.push('/');
+    } catch (err) {
+      console.error('[Detalhes] Erro ao eliminar:', err);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -130,9 +153,14 @@ export default function DetalhesCarro() {
             <p className="text-fg-subtle text-sm mt-1">
               {carro.anoFabricacao} • {carro.km?.toLocaleString('pt-PT')} km • {carro.local || 'Portugal'}
             </p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-2xl sm:text-3xl font-extrabold text-accent">
+                {formatarPreco(carro.preco)}
+              </span>
+              {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
             <button
@@ -150,6 +178,22 @@ export default function DetalhesCarro() {
               title={`${carro.marca} ${carro.modelo} - ReparAuto`}
               text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco)}`}
             />
+            {(carro.criador === user?.email || isAdmin) && (
+              <>
+                <button
+                  onClick={() => setEditModalOpen(true)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border border-blue-200 text-blue-600 hover:bg-blue-50 transition flex items-center gap-1"
+                >
+                  <PencilSimpleLine /> Editar
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1"
+                >
+                  <Trash /> Eliminar
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -184,15 +228,12 @@ export default function DetalhesCarro() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-6 mb-6">
-          <div className="flex-1">
-            {carro.estadoVeiculo === 'manutencao' && (
-              <Alert tipo="aviso" icone={<Wrench />} className="!p-3 !rounded-lg !items-center font-semibold">
-                Este veículo precisa de manutenção/reparações
-              </Alert>
-            )}
-          </div>
-          <StatusPanel carro={carro} />
+        <div className="mb-6">
+          {carro.estadoVeiculo === 'manutencao' && (
+            <Alert tipo="aviso" icone={<Wrench />} className="!p-3 !rounded-lg !items-center font-semibold">
+              Este veículo precisa de manutenção/reparações
+            </Alert>
+          )}
         </div>
 
         {carro.descricao && (
@@ -263,6 +304,34 @@ export default function DetalhesCarro() {
           <VinCheckPanel />
         </div>
       </div>
+
+      {editModalOpen && carro && (
+        <EditarCarroModal
+          show
+          carro={carro}
+          onClose={() => setEditModalOpen(false)}
+          onSave={handleSaveCarro}
+        />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h4 className="font-bold text-fg-heading mb-2">Eliminar Anúncio</h4>
+            <p className="text-sm text-fg-muted mb-4">
+              Tem certeza que deseja eliminar <strong>{carro.marca} {carro.modelo}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button tipo="secundario" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Cancelar
+              </Button>
+              <Button tipo="perigo" icone={<Trash />} onClick={handleDelete} disabled={deleting} carregando={deleting}>
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <GalleryModal
         show={galeriaAberta}

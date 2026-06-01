@@ -121,8 +121,21 @@ export default function MinhasIntencoes() {
           {filtradas.map((intencao) => (
             <div key={intencao.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/30 transition">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-bold text-fg-heading text-sm">{intencao.titulo}</h3>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                    intencao.categoria === 'carro' ? 'bg-blue-100 text-blue-700' :
+                    intencao.categoria === 'moto' ? 'bg-orange-100 text-orange-700' :
+                    intencao.categoria === 'viatura_comercial' ? 'bg-purple-100 text-purple-700' :
+                    'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    {intencao.categoria === 'carro' ? '🚗 Carro' :
+                     intencao.categoria === 'moto' ? '🏍️ Moto' :
+                     intencao.categoria === 'viatura_comercial' ? '🚐 Comercial' :
+                     '⚙️ Peças'}
+                  </span>
+                  <h3 className="font-bold text-fg-heading text-sm truncate">{intencao.titulo}</h3>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                   intencao.status === 'ativa' ? 'bg-green-100 text-green-700' :
                   intencao.status === 'pausada' ? 'bg-yellow-100 text-yellow-700' : 'bg-slate-100 text-fg-subtle'
                 }`}>
@@ -131,9 +144,15 @@ export default function MinhasIntencoes() {
               </div>
 
               <div className="grid grid-cols-2 gap-2 text-xs text-fg-muted mb-3">
-                <span>Ano: {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</span>
+                {intencao.categoria !== 'pecas' ? (
+                  <>
+                    <span>Ano: {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</span>
+                    <span>Combustível: {intencao.criterios.combustivel.join(', ')}</span>
+                  </>
+                ) : (
+                  <span className="col-span-2 italic text-fg-subtle">{intencao.descricao?.slice(0, 100)}</span>
+                )}
                 <span>Preço: {formatarPreco(intencao.criterios.precoMaximo)}</span>
-                <span>Combustível: {intencao.criterios.combustivel.join(', ')}</span>
                 <span>Local: {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</span>
               </div>
 

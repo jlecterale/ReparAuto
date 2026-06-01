@@ -11,9 +11,10 @@ interface StepPrecoProps {
   setDados: React.Dispatch<React.SetStateAction<CarroFormData>>;
   onBack: () => void;
   onPublicar: () => void;
+  carregando?: boolean;
 }
 
-export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepPrecoProps) {
+export default function StepPreco({ dados, setDados, onBack, onPublicar, carregando }: StepPrecoProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
@@ -350,9 +351,10 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar }: StepP
           tipo="verde"
           tamanho="lg"
           onClick={validar}
+          carregando={carregando}
           className="flex-1"
         >
-          ✅ Publicar Anúncio
+          {carregando ? 'A publicar…' : '✅ Publicar Anúncio'}
         </Button>
       </div>
     </div>

@@ -1,11 +1,12 @@
 'use client';
 
 import { CheckCircle } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { uploadFileToStorage } from '@/lib/upload';
 import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -57,6 +58,8 @@ export default function Anunciar() {
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
+  const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  const [uploading, setUploading] = useState(false);
   const [dados, setDados] = useState<CarroFormData>(() => ({
     ...initialDados,
     vendedorTelefone: user?.telefone || '',
@@ -70,14 +73,39 @@ export default function Anunciar() {
       return;
     }
 
+    setUploading(true);
+
     try {
+      // Upload pending photos to Firebase Storage
+      const fotosFinais: string[] = (
+        await Promise.all(
+          fotos.map(async (foto, index) => {
+            if (foto.startsWith('blob:')) {
+              const file = pendingFilesRef.current.get(foto);
+              if (file) {
+                const folder = `ads/${user.uid}`;
+                const ext = file.name.split('.').pop() || 'jpg';
+                const fileName = `${Date.now()}_${index}.${ext}`;
+                const downloadUrl = await uploadFileToStorage(file, folder, fileName);
+                URL.revokeObjectURL(foto);
+                pendingFilesRef.current.delete(foto);
+                return downloadUrl;
+              }
+              // blob sem ficheiro no Map → skip (não incluir no array)
+              return null;
+            }
+            return foto; // keep emoji or existing URL as-is
+          }),
+        )
+      ).filter((f): f is string => f !== null);
+
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
-        fotos,
+        fotos: fotosFinais,
         preco: Number(dados.preco),
         km: Number(dados.km),
         portas: Number(dados.portas),
@@ -96,14 +124,28 @@ export default function Anunciar() {
       setPublicado(true);
       toast?.sucesso('Anúncio publicado com sucesso!');
 
-      const admins = await getAdminUsers();
-      const titulo = `${dados.marca} ${dados.modelo} (${dados.anoFabricacao})`;
-      admins.forEach((a) => {
-        criarNotificacao(a.uid, 'info', 'Novo anúncio pendente', `Um novo carro foi publicado: ${titulo}.`, `/detalhes/${(carro as any).id}`);
-      });
+      getAdminUsers()
+        .then((admins) => {
+          const titulo = `${dados.marca} ${dados.modelo} (${dados.anoFabricacao})`;
+          admins.forEach((a) => {
+            criarNotificacao(a.uid, 'info', 'Novo anúncio pendente', `Um novo carro foi publicado: ${titulo}.`, `/detalhes/${(carro as any).id}`);
+          });
+        })
+        .catch(() => {});
     } catch (err) {
-      toast?.erro('Erro ao publicar anúncio. Tente novamente.');
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      const isPermission = msg.includes('permission') || msg.includes('unauthorized');
+      const isStorage = msg.includes('storage') || msg.includes('upload');
+      if (isPermission) {
+        toast?.erro('Erro de permissão. Faça login novamente e tente.');
+      } else if (isStorage) {
+        toast?.erro('Erro ao enviar fotos. Verifique o tamanho das imagens e tente novamente.');
+      } else {
+        toast?.erro('Erro ao publicar anúncio. Tente novamente.');
+      }
       console.error('[Anunciar] Erro:', err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -179,6 +221,7 @@ export default function Anunciar() {
               <StepFotos
                 fotos={fotos}
                 setFotos={setFotos}
+                filesRef={pendingFilesRef}
                 onNext={() => setPasso(2)}
                 onBack={() => { setCategoria(null); setPasso(0); }}
               />
@@ -197,6 +240,7 @@ export default function Anunciar() {
                 setDados={setDados}
                 onBack={() => setPasso(2)}
                 onPublicar={handlePublicar}
+                carregando={uploading}
               />
             )}
           </>

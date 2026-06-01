@@ -7,12 +7,17 @@ runConfig:
 
 env:
   - variable: NEXT_PUBLIC_SITE_URL
-    value: https://recargarage.com
+    value: https://reparauto-site.web.app
     availability:
       - BUILD
       - RUNTIME
   - variable: FIREBASE_PROJECT_ID
     value: reparauto-site
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: NEXT_PUBLIC_FIREBASE_VAPID_KEY
+    value: BBlbTzLEnn12xFE5y9EOW2bST1F6DkywEmonFJbO7qnVlAWFSioi7QY4i8o6XpIsmPYIbHBiptYB1EwRo4yvaT4
     availability:
       - BUILD
       - RUNTIME

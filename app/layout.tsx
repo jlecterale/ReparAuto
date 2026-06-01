@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next';
+import { Libre_Franklin } from 'next/font/google';
 import Script from 'next/script';
 import '@/index.css';
 import Providers from './providers';
 import LayoutShell from '@/components/layout/LayoutShell';
+
+const libreFranklin = Libre_Franklin({
+  subsets: ['latin'],
+  weight: ['400', '600', '700', '800'],
+  display: 'swap',
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
@@ -74,12 +81,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-PT">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <Script
           id="ld-org"
           type="application/ld+json"
@@ -87,7 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
       </head>
-      <body className="antialiased">
+      <body className={`${libreFranklin.className} antialiased`}>
         <Providers>
           <LayoutShell>{children}</LayoutShell>
         </Providers>

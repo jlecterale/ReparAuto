@@ -10,7 +10,7 @@ export interface Review {
   vendedorUid: string;
   vendedorEmail: string;
   anuncioId: string;
-  anuncioTipo: 'carro' | 'peca';
+  anuncioTipo: 'carro' | 'peca' | 'oficina';
   nota: number;
   comentario: string;
   status: StatusReview;

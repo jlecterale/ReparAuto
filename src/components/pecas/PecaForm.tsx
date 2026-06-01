@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, type Icon } from '@phosphor-icons/react';
-import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
+import { useEffect, useRef, useState } from 'react';
+import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, Spinner, UploadSimple, X, type Icon } from '@phosphor-icons/react';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { uploadFileToStorage } from '@/lib/upload';
+import { comprimirImagem } from '@/lib/compressImage';
 import { getCoordenadas } from '@/lib/geo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
@@ -39,6 +41,18 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [fotoUploading, setFotoUploading] = useState(false);
+  const [comprimindoFoto, setComprimindoFoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+    };
+  }, [fotoPreview]);
+
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
       const next = { ...prev, [campo]: valor };
@@ -60,7 +74,18 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       return;
     }
 
+    setFotoUploading(true);
+
     try {
+      // Upload photo to Storage if selected
+      let fotoUrl: string | undefined;
+      if (fotoFile) {
+        const folder = `ads/${user?.uid || 'anonimo'}`;
+        const ext = fotoFile.name.split('.').pop() || 'jpg';
+        const fileName = `${Date.now()}_peca.${ext}`;
+        fotoUrl = await uploadFileToStorage(fotoFile, folder, fileName);
+      }
+
       await publicarPeca({
         ...form,
         local: form.localizacao,
@@ -69,6 +94,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         localizacao: undefined,
         localizacaoDistrito: undefined,
         preco: form.preco ? Number(form.preco) : null,
+        foto: fotoUrl || undefined,
         criador: user?.email || '',
         criadorUid: user?.uid || '',
         vendedorNome: user?.nome || 'Anónimo',
@@ -77,10 +103,15 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorEmail: form.vendedorEmail || user?.email || null,
       });
 
-      const admins = await getAdminUsers();
-      admins.forEach((a) => {
-        criarNotificacao(a.uid, 'info', 'Nova peça pendente', `Uma nova peça foi publicada: ${form.titulo}.`, `/pecas`);
-      });
+      getAdminUsers()
+        .then((admins) => {
+          admins.forEach((a) => {
+            criarNotificacao(a.uid, 'info', 'Nova peça pendente', `Uma nova peça foi publicada: ${form.titulo}.`, `/pecas`);
+          });
+        })
+        .catch(() => {});
+
+      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
 
       setForm({
         tipo: 'venda',
@@ -96,11 +127,24 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorWhatsApp: '',
         vendedorEmail: '',
       });
+      setFotoFile(null);
+      setFotoPreview(null);
 
       onSuccess?.();
     } catch (err) {
-      setErro('Erro ao publicar. Tente novamente.');
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      const isPermission = msg.includes('permission') || msg.includes('unauthorized');
+      const isStorage = msg.includes('storage') || msg.includes('upload');
+      if (isPermission) {
+        setErro('Erro de permissão. Faça login novamente e tente.');
+      } else if (isStorage) {
+        setErro('Erro ao enviar foto. Verifique o tamanho da imagem e tente novamente.');
+      } else {
+        setErro('Erro ao publicar. Tente novamente.');
+      }
       console.error('[CriarPeca] Erro:', err);
+    } finally {
+      setFotoUploading(false);
     }
   };
 
@@ -233,6 +277,71 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         />
       </div>
 
+      {/* Photo upload */}
+      <div>
+        <label className="block text-xs font-bold text-fg-subtle mb-2">Foto do anúncio (opcional)</label>
+        <div className="flex items-start gap-3">
+          {fotoPreview ? (
+            <div className="relative w-24 h-24 flex-shrink-0">
+              <img
+                src={fotoPreview}
+                alt="Preview"
+                className="w-24 h-24 object-cover rounded-xl border border-neutral-200"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+                  setFotoPreview(null);
+                  setFotoFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                }}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger-600 text-white rounded-full flex items-center justify-center shadow"
+              >
+                <X size={10} weight="bold" />
+              </button>
+            </div>
+          ) : (
+            <label className={`flex-1 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 border-dashed text-fg font-semibold px-4 py-6 rounded-xl text-xs transition flex items-center justify-center gap-2 ${comprimindoFoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+              {comprimindoFoto ? <Spinner className="animate-spin" /> : <UploadSimple />}
+              {comprimindoFoto ? 'A comprimir…' : 'Carregar Foto'}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={comprimindoFoto}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > MAX_FOTO_SIZE_BYTES) {
+                    setErro(`A imagem excede o limite de ${MAX_FOTO_SIZE_MB} MB.`);
+                    return;
+                  }
+                  setErro('');
+                  setComprimindoFoto(true);
+                  try {
+                    const blob = await comprimirImagem(file);
+                    const compressedFile = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    setFotoFile(compressedFile);
+                    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+                    setFotoPreview(URL.createObjectURL(compressedFile));
+                  } catch {
+                    setErro('Erro ao comprimir imagem. A original será usada.');
+                    setFotoFile(file);
+                    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+                    setFotoPreview(URL.createObjectURL(file));
+                  } finally {
+                    setComprimindoFoto(false);
+                  }
+                }}
+              />
+            </label>
+          )}
+        </div>
+        <p className="text-[11px] text-fg-muted mt-1">Formatos JPG, PNG · até {MAX_FOTO_SIZE_MB} MB.</p>
+      </div>
+
       <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
         <span className="block text-xs font-bold text-fg-subtle mb-2 flex items-center gap-1">
           <IdentificationCard className="text-blue-600" /> Contacto do Vendedor
@@ -305,9 +414,10 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
           tipo="primario"
           icone={<PlusCircle />}
           onClick={submit}
+          carregando={fotoUploading}
           className="flex-1"
         >
-          Publicar Anúncio
+          {fotoUploading ? 'A publicar…' : 'Publicar Anúncio'}
         </Button>
       </div>
     </div>

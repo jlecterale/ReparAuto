@@ -1,11 +1,12 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
+import type { CategoriaIntencao } from '@/types/intencao';
 
 // ============ CONSTANTES REPARAUTO ============
 
 // Limites
 export const MAX_FOTOS_CARRO = 6;
-export const MAX_FOTO_SIZE_MB = 2;
+export const MAX_FOTO_SIZE_MB = 10;
 export const MAX_FOTO_SIZE_BYTES = MAX_FOTO_SIZE_MB * 1024 * 1024;
 export const DB_VERSION = '2.2';
 export const DB_VERSION_KEY = 'reparauto_db_version';
@@ -13,6 +14,13 @@ export const STORAGE_KEY_CARROS = 'carros_reparauto';
 export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
+
+export const CATEGORIAS_INTENCAO: { value: CategoriaIntencao; label: string; emoji: string }[] = [
+  { value: 'carro', label: 'Carro', emoji: '🚗' },
+  { value: 'moto', label: 'Moto', emoji: '🏍️' },
+  { value: 'viatura_comercial', label: 'Viatura Comercial', emoji: '🚐' },
+  { value: 'pecas', label: 'Peças', emoji: '⚙️' },
+];
 
 export const COMBUSTIVEIS_INTENCAO = ['gasolina', 'diesel', 'hibrido', 'eletrico', 'GPL', 'qualquer'];
 export const TRANSMISSOES_INTENCAO = ['manual', 'automatico', 'qualquer'];
@@ -408,7 +416,7 @@ export const TEXTOS_POLITICAS = {
       <p class='font-bold text-slate-800 mb-2'>5. Segurança no Armazenamento de Ficheiros (Storage)</p>
       <ul class='list-disc pl-5 mb-4 space-y-1'>
         <li><strong>Firebase Security Rules:</strong> O acesso ao Firebase Storage é protegido por regras que restringem a leitura a utilizadores autenticados e a escrita apenas ao proprietário do ficheiro.</li>
-        <li><strong>Validação de Upload:</strong> As regras do Storage verificam o tipo MIME e o tamanho máximo dos ficheiros (2 MB por imagem), impedindo o upload de ficheiros executáveis ou maliciosos.</li>
+        <li><strong>Validação de Upload:</strong> As regras do Storage verificam o tipo MIME e o tamanho máximo dos ficheiros (10 MB por imagem), impedindo o upload de ficheiros executáveis ou maliciosos.</li>
         <li><strong>Encriptação:</strong> Todos os ficheiros armazenados no Firebase Storage são encriptados em repouso com AES-256, gerido pela Google Cloud.</li>
       </ul>
 

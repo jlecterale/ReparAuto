@@ -40,6 +40,7 @@ type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeo
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
+const OFICINAS_COLLECTION = 'services';
 
 const defaultCarros: CarroSeed[] = [
   {
@@ -346,19 +347,91 @@ const defaultPecas: PecaSeed[] = [
   },
 ];
 
+const defaultOficinas = [
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Recar Garage & Prep',
+    descricao: 'Especialistas em eletrónica, reprogramação e preparação de motores para competição e estrada. Realizamos também serviços de estética automóvel e detalhe completo.',
+    responsavel: 'Filipe Antunes',
+    telefone: '912345678',
+    whatsapp: '351912345678',
+    email: 'contacto@recargarage.pt',
+    website: 'https://recargarage.pt',
+    distrito: 'Lisboa',
+    localidade: 'Lisboa',
+    morada: 'Avenida da República, 1420',
+    coordenadas: { latitude: 38.7436, longitude: -9.1443 },
+    especialidades: ['preparacao', 'eletronica', 'estetica_automotiva'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 4.8,
+    totalAvaliacoes: 5,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Oficina Mecânica Central Braga',
+    descricao: 'Oficina multimarcas com foco em mecânica convencional, diagnóstico computorizado, carregamento de ar condicionado e substituição de pneus.',
+    responsavel: 'João Silva',
+    telefone: '923456789',
+    whatsapp: '351923456789',
+    email: 'braga@mecanicacentral.pt',
+    website: 'https://mecanicacentralbraga.pt',
+    distrito: 'Braga',
+    localidade: 'Braga',
+    morada: 'Rua do Caires, 54',
+    coordenadas: { latitude: 41.5432, longitude: -8.4285 },
+    especialidades: ['mecanica_convencional', 'ar_condicionado', 'pneus'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 4.5,
+    totalAvaliacoes: 3,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Auto Pintura e Restauro Clássicos',
+    descricao: 'Oficina premium especializada em pintura automóvel de estufa, reparação de chapa e restauro completo de veículos clássicos.',
+    responsavel: 'Manuel Neves',
+    telefone: '934567890',
+    whatsapp: '351934567890',
+    email: 'manuel@autopinturaclassicos.pt',
+    distrito: 'Porto',
+    localidade: 'Vila Nova de Gaia',
+    morada: 'Zona Industrial de Grijó, Lote 12',
+    coordenadas: { latitude: 41.0254, longitude: -8.5786 },
+    especialidades: ['pintura', 'classicos_restauro'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 5.0,
+    totalAvaliacoes: 8,
+    dataCriacao: Timestamp.now(),
+  }
+];
+
 export async function initDatabase(): Promise<void> {
   try {
     const carrosSnap = await getDocs(collection(db, CARROS_COLLECTION));
     const pecasSnap = await getDocs(collection(db, PECAS_COLLECTION));
+    const oficinasSnap = await getDocs(collection(db, OFICINAS_COLLECTION));
 
-    const precisaSeed = carrosSnap.empty || pecasSnap.empty;
+    const precisaSeed = carrosSnap.empty || pecasSnap.empty || oficinasSnap.empty;
 
     if (precisaSeed) {
-      for (const carro of defaultCarros) {
-        await addDoc(collection(db, CARROS_COLLECTION), carro as DocumentData);
+      if (carrosSnap.empty) {
+        for (const carro of defaultCarros) {
+          await addDoc(collection(db, CARROS_COLLECTION), carro as DocumentData);
+        }
       }
-      for (const peca of defaultPecas) {
-        await addDoc(collection(db, PECAS_COLLECTION), peca as DocumentData);
+      if (pecasSnap.empty) {
+        for (const peca of defaultPecas) {
+          await addDoc(collection(db, PECAS_COLLECTION), peca as DocumentData);
+        }
+      }
+      if (oficinasSnap.empty) {
+        for (const oficina of defaultOficinas) {
+          await addDoc(collection(db, OFICINAS_COLLECTION), oficina as DocumentData);
+        }
       }
       localStorage.setItem(DB_VERSION_KEY, DB_VERSION);
       console.log('[DB] Seed data imported to Firestore');
@@ -452,12 +525,12 @@ export async function getCarroPorId(id: string): Promise<Carro | null> {
 
 export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
   try {
-    const docRef = await addDoc(collection(db, CARROS_COLLECTION), {
+    const docRef = await addDoc(collection(db, CARROS_COLLECTION), cleanUndefined({
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
-    });
-    return { id: docRef.id, ...dados, status: 'pendente' } as Carro;
+    }));
+    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Carro;
   } catch (err) {
     console.error('[DB] Erro ao adicionar carro:', err);
     throw err;
@@ -530,12 +603,12 @@ export async function getPecaPorId(id: string): Promise<Peca | null> {
 
 export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   try {
-    const docRef = await addDoc(collection(db, PECAS_COLLECTION), {
+    const docRef = await addDoc(collection(db, PECAS_COLLECTION), cleanUndefined({
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
-    });
-    return { id: docRef.id, ...dados, status: 'pendente' } as Peca;
+    }));
+    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
     throw err;
@@ -831,6 +904,31 @@ export function subscribeReviews(
   );
 }
 
+export function subscribeReviewsOficina(
+  oficinaId: string,
+  onData: (reviews: Review[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(
+    collection(db, REVIEWS_COLLECTION),
+    where('anuncioId', '==', oficinaId),
+    where('anuncioTipo', '==', 'oficina'),
+    orderBy('dataCriacao', 'desc'),
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
+      onData(all.filter((r) => r.status === 'aprovado'));
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de avaliações de oficina:', err);
+      onError?.(err);
+    },
+  );
+}
+
+
 export async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
   try {
     const q = query(
@@ -1038,11 +1136,13 @@ function cleanUndefined(obj: Record<string, any>): Record<string, any> {
     if (value === undefined) continue;
     if (value !== null && typeof value === 'object' && !(value instanceof Timestamp)) {
       result[key] = Array.isArray(value)
-        ? value.map((item: any) =>
-            item !== null && typeof item === 'object' && !(item instanceof Timestamp)
-              ? cleanUndefined(item)
-              : item,
-          )
+        ? value
+            .filter((item: any) => item !== undefined)
+            .map((item: any) =>
+                item !== null && typeof item === 'object' && !(item instanceof Timestamp)
+                  ? cleanUndefined(item)
+                  : item,
+              )
         : cleanUndefined(value);
     } else {
       result[key] = value;
@@ -1061,7 +1161,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
       ...dados as any,
-      status: 'ativa',
+      status: 'pendente',
       prioritaria: false,
       stats: {
         visualizacoes: 0,
@@ -1083,14 +1183,12 @@ export async function getIntencaoCompra(id: string): Promise<IntencaoCompra | nu
   try {
     const docRef = doc(db, INTENCOES_COLLECTION, id);
     const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      await updateDoc(docRef as any, {
-        'stats.visualizacoes': increment(1),
-        'stats.visualizacoes7Dias': increment(1),
-      } as any);
-      return { id: snap.id, ...snap.data() } as IntencaoCompra;
-    }
-    return null;
+    if (!snap.exists()) return null;
+    updateDoc(docRef as any, {
+      'stats.visualizacoes': increment(1),
+      'stats.visualizacoes7Dias': increment(1),
+    } as any).catch(() => {});
+    return { id: snap.id, ...snap.data() } as IntencaoCompra;
   } catch (err) {
     console.error('[DB] Erro ao buscar intenção:', err);
     return null;
@@ -1187,10 +1285,15 @@ export async function reativarIntencaoCompra(id: string, userId: string): Promis
 
 export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId: string): Promise<IntencaoCompra[]> {
   try {
+    const filters: any[] = [where('status', '==', 'ativa')];
+
+    if (carro.categoria && carro.categoria !== 'todos') {
+      filters.push(where('categoria', '==', carro.categoria));
+    }
+
     const q = query(
       collection(db, INTENCOES_COLLECTION),
-      where('status', '==', 'ativa'),
-      where('criterios.marca', '==', carro.marca),
+      ...filters,
     );
     const snap = await getDocs(q);
     let resultados = snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
@@ -1198,7 +1301,11 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
     resultados = resultados.filter((intencao) => {
       if (intencao.userId === usuarioId) return false;
       const c = intencao.criterios;
+      const cat = intencao.categoria;
 
+      if (cat === 'pecas') return true;
+
+      if (carro.marca && c.marca && c.marca !== carro.marca) return false;
       if (c.anoMinimo && carro.anoFabricacao && carro.anoFabricacao < c.anoMinimo) return false;
       if (c.anoMaximo && carro.anoFabricacao && carro.anoFabricacao > c.anoMaximo) return false;
       if (c.precoMinimo && carro.preco && carro.preco < c.precoMinimo) return false;
@@ -1206,7 +1313,7 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
       if (c.combustivel && !c.combustivel.includes('qualquer') && !c.combustivel.includes(carro.combustivel?.toLowerCase())) return false;
       if (c.tipoTransmissao && !c.tipoTransmissao.includes('qualquer') && !c.tipoTransmissao.includes(carro.cambio?.toLowerCase())) return false;
       if (c.quilometragemMaxima && carro.km && carro.km > c.quilometragemMaxima) return false;
-      if (c.localizacao?.distrito && carro.local && carro.local !== c.localizacao.distrito) return false;
+      if (c.localizacao?.distrito && c.localizacao.distrito !== 'todo_portugal' && carro.local && carro.local !== c.localizacao.distrito) return false;
 
       return true;
     });
@@ -1388,12 +1495,137 @@ export async function getAllIntencoesAdmin(): Promise<IntencaoCompra[]> {
   }
 }
 
+export async function getIntencoesAtivas(): Promise<IntencaoCompra[]> {
+  try {
+    const q = query(
+      collection(db, INTENCOES_COLLECTION),
+      where('status', '==', 'ativa'),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as IntencaoCompra));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar intenções ativas:', err);
+    return [];
+  }
+}
+
 export async function updateIntencaoStatus(id: string, status: string): Promise<void> {
   try {
     await updateDoc(doc(db, INTENCOES_COLLECTION, id) as any, { status, atualizadaEm: Timestamp.now() } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da intenção:', err);
     throw err;
+  }
+}
+
+
+// ============ OFICINAS E MECÂNICOS ============
+import type { OficinaMecanico } from '@/types/oficina';
+
+export async function getOficinas(): Promise<OficinaMecanico[]> {
+  try {
+    const q = query(collection(db, OFICINAS_COLLECTION), orderBy('dataCriacao', 'desc'));
+    const snap = await getDocs(q);
+    const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
+    return todas.filter((c) => c.status === 'aprovado');
+  } catch (err) {
+    console.error('[DB] Erro ao buscar oficinas:', err);
+    return [];
+  }
+}
+
+export function subscribeOficinas(
+  onData: (oficinas: OficinaMecanico[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(collection(db, OFICINAS_COLLECTION), orderBy('dataCriacao', 'desc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as OficinaMecanico);
+      onData(todas.filter((c) => c.status === 'aprovado'));
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de oficinas:', err);
+      onError?.(err);
+    },
+  );
+}
+
+export async function getOficinaPorId(id: string): Promise<OficinaMecanico | null> {
+  try {
+    const docRef = doc(db, OFICINAS_COLLECTION, id);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return { id: snap.id, ...snap.data() } as OficinaMecanico;
+    }
+    return null;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar oficina:', err);
+    return null;
+  }
+}
+
+export async function addOficina(dados: Record<string, unknown>): Promise<OficinaMecanico> {
+  try {
+    const docRef = await addDoc(collection(db, OFICINAS_COLLECTION), {
+      ...dados,
+      status: 'pendente',
+      dataCriacao: Timestamp.now(),
+    });
+    return { id: docRef.id, ...dados, status: 'pendente' } as OficinaMecanico;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar oficina:', err);
+    throw err;
+  }
+}
+
+export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
+  try {
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, dados as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar oficina:', err);
+    throw err;
+  }
+}
+
+export async function updateOficinaStatus(id: string, status: 'pendente' | 'aprovado' | 'rejeitado'): Promise<void> {
+  try {
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, { status } as any);
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar status da oficina:', err);
+    throw err;
+  }
+}
+
+export async function getOficinasByCreator(email: string): Promise<OficinaMecanico[]> {
+  try {
+    const q = query(collection(db, OFICINAS_COLLECTION), where('criador', '==', email));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar oficinas do criador:', err);
+    return [];
+  }
+}
+
+export async function deleteOficina(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, OFICINAS_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao eliminar oficina:', err);
+    throw err;
+  }
+}
+
+export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
+  try {
+    const q = query(collection(db, OFICINAS_COLLECTION), orderBy('dataCriacao', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar oficinas (admin):', err);
+    return [];
   }
 }
 

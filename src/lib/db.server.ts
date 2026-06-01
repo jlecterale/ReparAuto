@@ -2,6 +2,7 @@ import 'server-only';
 import { getAdminDb, ADMIN_PROJECT_ID } from './firebase.admin';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
+import type { IntencaoCompra } from '@/types/intencao';
 
 const REST_BASE = `https://firestore.googleapis.com/v1/projects/${ADMIN_PROJECT_ID}/databases/(default)/documents`;
 
@@ -120,4 +121,13 @@ export async function getPecasServer(): Promise<Peca[]> {
   const adminResult = await adminList<Peca>('parts');
   const all = adminResult ?? (await restList('parts')).map((d) => decodeDoc<Peca>(d));
   return all.filter((p) => p.status === 'aprovado');
+}
+
+const INTENCOES_COLLECTION = 'intencoes_compra';
+
+export async function getIntencaoPorIdServer(id: string): Promise<IntencaoCompra | null> {
+  const adminResult = await adminGet<IntencaoCompra>(INTENCOES_COLLECTION, id);
+  if (adminResult) return adminResult;
+  const doc = await restGet(INTENCOES_COLLECTION, id);
+  return doc ? decodeDoc<IntencaoCompra>(doc) : null;
 }

@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { CATEGORIAS_PECAS } from '@/lib/constants';
+import { useApp } from '@/providers/AppProvider';
+import FotosEditor from '@/components/anunciar/FotosEditor';
+import { uploadFileToStorage } from '@/lib/upload';
 import type { Peca, TipoPeca } from '@/types/peca';
 
 interface EditarPecaModalProps {
@@ -14,6 +17,9 @@ interface EditarPecaModalProps {
 }
 
 export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarPecaModalProps) {
+  const { auth } = useApp();
+  const pendingFilesRef = useRef<Map<string, File>>(new Map());
+
   const [form, setForm] = useState({
     tipo: peca.tipo,
     titulo: peca.titulo,
@@ -25,6 +31,7 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
     local: peca.local,
     descricao: peca.descricao,
   });
+  const [fotos, setFotos] = useState<string[]>(peca.foto ? [peca.foto] : []);
   const [saving, setSaving] = useState(false);
 
   const atualizar = (campo: string, valor: string) => {
@@ -34,6 +41,25 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
   const handleSave = async () => {
     setSaving(true);
     try {
+      let fotoFinal: string | null = null;
+      if (fotos[0]) {
+        if (fotos[0].startsWith('blob:')) {
+          const file = pendingFilesRef.current.get(fotos[0]);
+          if (file) {
+            const folder = `ads/${auth.user?.uid || 'admin'}`;
+            const ext = file.name.split('.').pop() || 'jpg';
+            const fileName = `${Date.now()}_peca.${ext}`;
+            fotoFinal = await uploadFileToStorage(file, folder, fileName);
+            URL.revokeObjectURL(fotos[0]);
+            pendingFilesRef.current.delete(fotos[0]);
+          } else {
+            fotoFinal = fotos[0];
+          }
+        } else {
+          fotoFinal = fotos[0];
+        }
+      }
+
       await onSave(peca.id, {
         tipo: form.tipo,
         titulo: form.titulo,
@@ -44,6 +70,7 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
         preco: form.preco ? Number(form.preco) : null,
         local: form.local,
         descricao: form.descricao,
+        foto: fotoFinal,
       });
       onClose();
     } catch (err) {
@@ -156,6 +183,11 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
               className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-bold text-fg-subtle mb-2">Foto</label>
+          <FotosEditor fotos={fotos} setFotos={setFotos} max={1} filesRef={pendingFilesRef} mostrarEmoji={false} />
         </div>
 
         <div>

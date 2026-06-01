@@ -15,10 +15,10 @@ service firebase.storage {
       return isAuthenticated() && (request.auth.token.admin == true || request.auth.uid == 'N4oCVnsPILZivmlgLo4jC7Bq8GU2');
     }
     
-    // REDUZIDO PARA 1MB: Valida se é imagem e se é menor que 1MB (1 * 1024 * 1024 bytes)
+    // Valida se é imagem e se é menor que 10MB (10 * 1024 * 1024 bytes)
     function isValidImage() {
       return request.resource.contentType.matches('image/.*') 
-             && request.resource.size < 1 * 1024 * 1024;
+             && request.resource.size < 10 * 1024 * 1024;
     }
 
     // ==========================================
@@ -32,6 +32,12 @@ service firebase.storage {
     }
 
     match /ads/{userId}/{allImages=**} {
+      allow read: if true;
+      allow write: if (isAuthenticated() && request.auth.uid == userId && isValidImage()) || isAdmin();
+      allow delete: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+    }
+
+    match /anuncios/{userId}/{allImages=**} {
       allow read: if true;
       allow write: if (isAuthenticated() && request.auth.uid == userId && isValidImage()) || isAdmin();
       allow delete: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
