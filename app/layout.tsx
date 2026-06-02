@@ -16,6 +16,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  // `cover` lets the WebView extend under the notch / status bar / home
+  // indicator so the `env(safe-area-inset-*)` values become non-zero and our
+  // layout can pad around them (otherwise content sits under the iOS notch).
+  viewportFit: 'cover',
   themeColor: '#074C92',
 };
 

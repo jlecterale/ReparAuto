@@ -325,7 +325,8 @@ button:not(:disabled):active,
   display: flex;
   justify-content: space-around;
   align-items: center;
-  padding: 10px 0 12px;
+  /* Pad for the iOS home indicator so the tab bar isn't clipped by it. */
+  padding: 10px 0 calc(12px + env(safe-area-inset-bottom));
   z-index: 50;
   box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
 }

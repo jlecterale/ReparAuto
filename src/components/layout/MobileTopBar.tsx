@@ -6,7 +6,7 @@ import NotificationBell from './NotificationBell';
 
 export default function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
-    <header className="lg:hidden sticky top-0 z-40 bg-brand-900 text-white shadow-lg">
+    <header className="lg:hidden sticky top-0 z-40 bg-brand-900 text-white shadow-lg pt-[env(safe-area-inset-top)]">
       <div className="px-4 py-3 flex items-center justify-between gap-3">
         <button
           onClick={onOpenMenu}

@@ -10,9 +10,14 @@
     "lint": "next lint",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:hosting": "firebase deploy --only apphosting",
-    "cap:sync": "npm run build:app && cap sync",
+    "firebase:config": "node scripts/copy-firebase-config.mjs",
+    "cap:sync": "npm run build:app && cap sync && npm run firebase:config",
     "cap:android": "npm run cap:sync && cap open android",
-    "cap:ios": "npm run cap:sync && cap open ios"
+    "cap:ios": "npm run cap:sync && cap open ios",
+    "debug:android": "npm run cap:sync && cap run android",
+    "debug:ios": "npm run cap:sync && cap run ios",
+    "debug:android:live": "cap run android --live-reload --external",
+    "debug:ios:live": "cap run ios --live-reload --external"
   },
   "dependencies": {
     "@capacitor-firebase/authentication": "^8.2.0",

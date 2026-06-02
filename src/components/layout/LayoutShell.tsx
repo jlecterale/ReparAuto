@@ -17,7 +17,9 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
       {/* Content column — offset by the fixed sidebar on desktop */}
       <div className="flex flex-col min-h-screen lg:pl-64">
         <MobileTopBar onOpenMenu={() => setDrawerOpen(true)} />
-        <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-5 pb-24 lg:pb-5">{children}</main>
+        <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-5">
+          {children}
+        </main>
         <Footer />
       </div>
 
