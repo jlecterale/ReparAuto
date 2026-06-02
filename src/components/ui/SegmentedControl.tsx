@@ -24,8 +24,8 @@ export default function SegmentedControl<T extends string = string>({
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const tamanhos = {
-    sm: 'px-2.5 py-1.5 text-xs gap-1.5',
-    md: 'px-3 py-2 text-sm gap-2',
+    sm: 'px-2.5 py-1.5 text-xs',
+    md: 'px-3 py-2 text-sm',
   } as const;
 
   function focusOption(index: number) {
@@ -66,7 +66,7 @@ export default function SegmentedControl<T extends string = string>({
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(opt.value)}
             onKeyDown={(e) => handleKey(e, i)}
-            className={`flex-1 flex items-center justify-center font-bold rounded-lg transition focus:outline-none focus-visible:ring-3 focus-visible:ring-accent ${
+            className={`flex-1 flex items-center justify-center gap-1.5 font-bold rounded-lg transition focus:outline-none focus-visible:ring-3 focus-visible:ring-accent [&>svg]:w-4 [&>svg]:h-4 [&>svg]:shrink-0 ${
               tamanhos[tamanho]
             } ${
               active
