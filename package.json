@@ -10,7 +10,9 @@
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:hosting": "firebase deploy --only apphosting",
     "import:pecas": "node scripts/importar-pecas.mjs",
-    "import:pecas:dry": "node scripts/importar-pecas.mjs --dry-run"
+    "import:pecas:dry": "node scripts/importar-pecas.mjs --dry-run",
+    "seed": "node scripts/seed-firestore.mjs",
+    "seed:dry": "node scripts/seed-firestore.mjs --dry-run"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

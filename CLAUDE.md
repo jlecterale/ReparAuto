@@ -12,6 +12,7 @@ npm run build        # Production build → .next/
 npm run start        # Run production build locally
 npx tsc --noEmit     # Type-check (strict mode)
 npm run deploy:rules # Deploy Firestore/Storage rules
+npm run seed         # Seed demo data into empty collections (Admin SDK)
 ```
 
 No test runner or formatter is configured.
@@ -51,13 +52,18 @@ src/
 
 ## Data Layer
 
-Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`.
+Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`, `intencoes_compra`, `contatos_intencao`, `denuncias_intencao`.
 Firebase Storage for images (1MB limit, 7 max for cars/services, 3 max for parts).
 localStorage fallback for anonymous favorites only (`favs_reparauto` key).
+
+Public listing queries filter `where('status' == 'aprovado')` server-side and sort by `dataCriacao` in memory (no composite index needed). Realtime car/part subscriptions are route-gated in `AppProvider` (`needsCarros`/`needsPecas`) — add the route there if a new screen reads those lists from context.
 
 Server-side reads (SSR/ISR) go through `src/lib/db.server.ts`:
 - First tries Firebase Admin SDK (uses Application Default Credentials — works automatically on App Hosting).
 - Falls back to the public Firestore REST API for local dev / unauthenticated environments. Only reads the public `cars`/`parts` collections allowed by `firestore.rules` (`allow read: if true`).
+- Per-id fetchers are wrapped in `React.cache` so `generateMetadata` and the page component share one fetch.
+
+Demo seed data lives in `scripts/seed-firestore.mjs` (`npm run seed`), not in client code.
 
 ## Conventions
 
@@ -120,7 +126,7 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/lib/firebase.ts` — Firebase Web SDK config (API keys are intentionally public per Firebase Web SDK convention)
 - `src/lib/firebase.admin.ts` — Firebase Admin SDK init (server-only, uses ADC in App Hosting)
 - `src/lib/db.server.ts` — server fetchers (Admin SDK with REST fallback) for SSR/ISR
-- `src/lib/db.ts` — all client-side Firestore CRUD and seed data
+- `src/lib/db.ts` — all client-side Firestore CRUD and realtime subscriptions
 - `src/lib/constants.ts` — concelhos, fuel types, categories, policy texts
 - `src/providers/AppProvider.tsx` — global state composition (client)
 - `next.config.ts` — security headers (CSP, HSTS, …), image domains
