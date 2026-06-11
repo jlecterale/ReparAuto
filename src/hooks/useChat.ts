@@ -42,17 +42,17 @@ export function useChat(uid: string | null, nome: string = '') {
       setMensagensNaoLidas(0);
       return;
     }
+    // Equality-only filters are served by merging single-field indexes, so
+    // the badge only streams the user's unread messages.
     const q = query(
       collection(db, MENSAGENS_COLLECTION),
-      where('participants', 'array-contains', uid),
+      where('toUid', '==', uid),
+      where('lida', '==', false),
     );
     unsubNaoLidas.current = onSnapshot(
       q,
       (snap) => {
-        const naoLidas = snap.docs
-          .map((d) => d.data() as Mensagem)
-          .filter((m) => m.toUid === uid && !m.lida);
-        setMensagensNaoLidas(naoLidas.length);
+        setMensagensNaoLidas(snap.size);
       },
       (err) => {
         console.error('[Chat] Erro ao ouvir mensagens não lidas:', err);
@@ -81,13 +81,13 @@ export function useChat(uid: string | null, nome: string = '') {
     const q = query(
       collection(db, MENSAGENS_COLLECTION),
       where('participants', 'array-contains', uid),
+      where('listingId', '==', chatListingId),
     );
     unsubConversa.current = onSnapshot(
       q,
       (snap) => {
         const msgs = snap.docs
           .map((d) => ({ id: d.id, ...d.data() }) as Mensagem)
-          .filter((m) => m.listingId === chatListingId)
           .sort((a, b) => a.dataCriacao.toMillis() - b.dataCriacao.toMillis());
         setConversa(msgs);
         setCarregandoConversa(false);
