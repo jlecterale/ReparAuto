@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Carro } from '@/types/carro';
@@ -34,6 +34,10 @@ export default function useCarros(active: boolean = true) {
     return unsub;
   }, [active]);
 
+  // Deferred so typing in the search box stays responsive while the
+  // filter pass runs at lower priority.
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
   const carrosFiltrados = useMemo(() => {
     let cs = [...carros];
 
@@ -47,8 +51,8 @@ export default function useCarros(active: boolean = true) {
       cs = cs.filter((c) => c.estadoVeiculo === 'manutencao');
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase().trim();
       cs = cs.filter(
         (c) =>
           c.marca?.toLowerCase().includes(q) ||
@@ -88,7 +92,7 @@ export default function useCarros(active: boolean = true) {
     }
 
     return cs;
-  }, [carros, filtroAtivo, searchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
+  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {

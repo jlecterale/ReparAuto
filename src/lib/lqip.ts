@@ -7,6 +7,7 @@ let cache: Record<string, string> | null = null;
 
 function getCache(): Record<string, string> {
   if (cache) return cache;
+  if (typeof window === 'undefined') return {};
   try {
     cache = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
   } catch {

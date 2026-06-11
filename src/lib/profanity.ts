@@ -24,10 +24,9 @@ function normalizar(texto: string): string {
     .replace(/[4]/g, 'a');
 }
 
+const PALAVRAS_NORMALIZADAS = PALAVRAS_PROIBIDAS.map(normalizar);
+
 export function contemProfanity(texto: string): boolean {
   const normalizado = normalizar(texto);
-  return PALAVRAS_PROIBIDAS.some((palavra) => {
-    const normalizada = normalizar(palavra);
-    return normalizado.includes(normalizada);
-  });
+  return PALAVRAS_NORMALIZADAS.some((palavra) => normalizado.includes(palavra));
 }

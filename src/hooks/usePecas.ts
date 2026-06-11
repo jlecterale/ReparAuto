@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
@@ -32,6 +32,10 @@ export default function usePecas(active: boolean = true) {
     return unsub;
   }, [active]);
 
+  // Deferred so typing in the search box stays responsive while the
+  // filter pass runs at lower priority.
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+
   const pecasFiltradas = useMemo(() => {
     let lista = [...pecas];
 
@@ -39,8 +43,8 @@ export default function usePecas(active: boolean = true) {
       lista = lista.filter((p) => p.tipo === filtroTipo);
     }
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
+    if (deferredSearchTerm.trim()) {
+      const term = deferredSearchTerm.toLowerCase().trim();
       lista = lista.filter(
         (p) =>
           p.titulo.toLowerCase().includes(term) ||
@@ -77,7 +81,7 @@ export default function usePecas(active: boolean = true) {
     }
 
     return lista;
-  }, [pecas, filtroTipo, searchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
