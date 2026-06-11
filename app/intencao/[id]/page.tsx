@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import { getIntencaoPorIdServer } from '@/lib/db.server';
 import DetalhesIntencao from '@/screens/DetalhesIntencao';
 
-export const dynamic = 'force-dynamic';
+// The page body is client-rendered; only generateMetadata reads Firestore,
+// so a short ISR window beats re-fetching on every request.
+export const revalidate = 300;
 
 type PageProps = { params: Promise<{ id: string }> };
 

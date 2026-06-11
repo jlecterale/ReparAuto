@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { getAdminDb, ADMIN_PROJECT_ID } from './firebase.admin';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
@@ -111,12 +112,14 @@ export async function getCarrosServer(): Promise<Carro[]> {
   return all.filter((c) => c.status === 'aprovado');
 }
 
-export async function getCarroPorIdServer(id: string): Promise<Carro | null> {
+// React.cache dedupes the generateMetadata + page-component fetch pair
+// within a single render.
+export const getCarroPorIdServer = cache(async (id: string): Promise<Carro | null> => {
   const adminResult = await adminGet<Carro>('cars', id);
   if (adminResult) return adminResult;
   const doc = await restGet('cars', id);
   return doc ? decodeDoc<Carro>(doc) : null;
-}
+});
 
 export async function getPecasServer(): Promise<Peca[]> {
   const adminResult = await adminList<Peca>('parts', 'aprovado');
@@ -126,9 +129,9 @@ export async function getPecasServer(): Promise<Peca[]> {
 
 const INTENCOES_COLLECTION = 'intencoes_compra';
 
-export async function getIntencaoPorIdServer(id: string): Promise<IntencaoCompra | null> {
+export const getIntencaoPorIdServer = cache(async (id: string): Promise<IntencaoCompra | null> => {
   const adminResult = await adminGet<IntencaoCompra>(INTENCOES_COLLECTION, id);
   if (adminResult) return adminResult;
   const doc = await restGet(INTENCOES_COLLECTION, id);
   return doc ? decodeDoc<IntencaoCompra>(doc) : null;
-}
+});
