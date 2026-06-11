@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { initDatabase } from '@/lib/db';
 import useAuth from '@/hooks/useAuth';
 import useCarros from '@/hooks/useCarros';
 import usePecas from '@/hooks/usePecas';
@@ -23,18 +22,11 @@ export function useApp(): AppContextValue {
 }
 
 export default function AppProvider({ children }: { children: ReactNode }) {
-  const [dbReady, setDbReady] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [loginRedirectTo, setLoginRedirectTo] = useState<string | undefined>();
 
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    initDatabase().then(() => {
-      setDbReady(true);
-    });
-  }, []);
 
   const auth = useAuth();
   const carros = useCarros();
@@ -71,7 +63,6 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   }, [loginRedirectTo, router]);
 
   const value: AppContextValue = {
-    dbReady,
     auth,
     carros,
     pecas,

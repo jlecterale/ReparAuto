@@ -8,8 +8,6 @@ import type { CategoriaIntencao } from '@/types/intencao';
 export const MAX_FOTOS_CARRO = 6;
 export const MAX_FOTO_SIZE_MB = 10;
 export const MAX_FOTO_SIZE_BYTES = MAX_FOTO_SIZE_MB * 1024 * 1024;
-export const DB_VERSION = '2.2';
-export const DB_VERSION_KEY = 'reparauto_db_version';
 export const STORAGE_KEY_CARROS = 'carros_reparauto';
 export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';

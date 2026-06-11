@@ -67,7 +67,6 @@ export interface LoginModalContextValue {
 }
 
 export interface AppContextValue {
-  dbReady: boolean;
   auth: AuthContextValue;
   carros: CarrosContextValue;
   pecas: PecasContextValue;
