@@ -44,10 +44,10 @@ export function renderDescricao(texto: string): string {
   if (!texto) return '';
 
   let escaped = texto
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
   escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
