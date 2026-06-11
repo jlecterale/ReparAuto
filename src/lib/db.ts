@@ -285,7 +285,7 @@ export async function getAdminUsers(): Promise<Usuario[]> {
 
 export async function updateCarro(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, dados as any);
+    await updateDoc(doc(db, CARROS_COLLECTION, id), dados);
   } catch (err) {
     console.error('[DB] Erro ao atualizar carro:', err);
     throw err;
@@ -294,7 +294,7 @@ export async function updateCarro(id: string, dados: Record<string, unknown>): P
 
 export async function updatePeca(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, dados as any);
+    await updateDoc(doc(db, PECAS_COLLECTION, id), dados);
   } catch (err) {
     console.error('[DB] Erro ao atualizar peça:', err);
     throw err;
@@ -307,7 +307,7 @@ export async function updateCarroStatus(id: string, status: StatusAnuncio): Prom
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, updates as any);
+    await updateDoc(doc(db, CARROS_COLLECTION, id), updates);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status do carro:', err);
     throw err;
@@ -320,7 +320,7 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, updates as any);
+    await updateDoc(doc(db, PECAS_COLLECTION, id), updates);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da peça:', err);
     throw err;
@@ -551,7 +551,7 @@ export async function getAllReviewsAdmin(): Promise<Review[]> {
 
 export async function updateReviewStatus(id: string, status: StatusReview): Promise<void> {
   try {
-    await updateDoc(doc(db, REVIEWS_COLLECTION, id) as any, { status } as any);
+    await updateDoc(doc(db, REVIEWS_COLLECTION, id), { status });
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da avaliação:', err);
     throw err;
@@ -627,7 +627,7 @@ export async function updateReportStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, REPORTS_COLLECTION, id) as any, updates as any);
+    await updateDoc(doc(db, REPORTS_COLLECTION, id), updates);
   } catch (err) {
     console.error('[DB] Erro ao atualizar denúncia:', err);
     throw err;
@@ -691,7 +691,7 @@ export async function updateVerificationStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id) as any, updates as any);
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), updates);
   } catch (err) {
     console.error('[DB] Erro ao atualizar verificação:', err);
     throw err;
@@ -712,10 +712,10 @@ export async function deleteVerificationFiles(documentoUrl: string, selfieUrl: s
 
 export async function clearVerificationUrls(id: string): Promise<void> {
   try {
-    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id) as any, {
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), {
       documentoUrl: '',
       selfieUrl: '',
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao limpar URLs de verificação:', err);
   }
@@ -753,7 +753,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
-      ...dados as any,
+      ...dados,
       status: 'pendente',
       prioritaria: false,
       stats: {
@@ -777,10 +777,10 @@ export async function getIntencaoCompra(id: string): Promise<IntencaoCompra | nu
     const docRef = doc(db, INTENCOES_COLLECTION, id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    updateDoc(docRef as any, {
+    updateDoc(docRef, {
       'stats.visualizacoes': increment(1),
       'stats.visualizacoes7Dias': increment(1),
-    } as any).catch(() => {});
+    }).catch(() => {});
     return { id: snap.id, ...snap.data() } as IntencaoCompra;
   } catch (err) {
     console.error('[DB] Erro ao buscar intenção:', err);
@@ -815,7 +815,7 @@ export async function atualizarIntencaoCompra(id: string, userId: string, update
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef as any, { ...updates, atualizadaEm: Timestamp.now() } as any);
+    await updateDoc(docRef, { ...updates, atualizadaEm: Timestamp.now() });
   } catch (err) {
     console.error('[DB] Erro ao atualizar intenção:', err);
     throw err;
@@ -829,11 +829,11 @@ export async function deletarIntencaoCompra(id: string, userId: string): Promise
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef as any, {
+    await updateDoc(docRef, {
       status: 'deletada',
       deletadaEm: Timestamp.now(),
       atualizadaEm: Timestamp.now(),
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao deletar intenção:', err);
     throw err;
@@ -847,11 +847,11 @@ export async function pausarIntencaoCompra(id: string, userId: string): Promise<
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef as any, {
+    await updateDoc(docRef, {
       status: 'pausada',
       expiradoEm: Timestamp.now(),
       atualizadaEm: Timestamp.now(),
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao pausar intenção:', err);
     throw err;
@@ -865,11 +865,11 @@ export async function reativarIntencaoCompra(id: string, userId: string): Promis
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef as any, {
+    await updateDoc(docRef, {
       status: 'ativa',
       expiradoEm: null,
       atualizadaEm: Timestamp.now(),
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao reativar intenção:', err);
     throw err;
@@ -960,10 +960,10 @@ export async function iniciarContatoIntencao(
     }
 
     // Counter bump must not fail the contact that was already created.
-    await updateDoc(doc(db, INTENCOES_COLLECTION, intencaoId) as any, {
+    await updateDoc(doc(db, INTENCOES_COLLECTION, intencaoId), {
       'stats.contatos': increment(1),
       'stats.contatos7Dias': increment(1),
-    } as any).catch((err) => {
+    }).catch((err) => {
       console.warn('[DB] Falha ao incrementar stats da intenção:', err);
     });
 
@@ -999,10 +999,10 @@ export async function marcarContatoRelevante(contatoId: string, userId: string):
     const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
     const snap = await getDoc(docRef);
     if (!snap.exists()) throw new Error('Contato não encontrado');
-    await updateDoc(docRef as any, {
+    await updateDoc(docRef, {
       marcadoComoRelevante: true,
       atualizadoEm: Timestamp.now(),
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao marcar contato relevante:', err);
     throw err;
@@ -1012,10 +1012,10 @@ export async function marcarContatoRelevante(contatoId: string, userId: string):
 export async function rejeitarContato(contatoId: string, userId: string): Promise<void> {
   try {
     const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
-    await updateDoc(docRef as any, {
+    await updateDoc(docRef, {
       status: 'rejeitado',
       atualizadoEm: Timestamp.now(),
-    } as any);
+    });
   } catch (err) {
     console.error('[DB] Erro ao rejeitar contato:', err);
     throw err;
@@ -1068,7 +1068,7 @@ export async function updateDenunciaIntencaoStatus(
     }
     if (acaoTomada) updates.acaoTomada = acaoTomada;
     if (notas) updates.notas = notas;
-    await updateDoc(doc(db, DENUNCIAS_INTENCAO_COLLECTION, id) as any, updates as any);
+    await updateDoc(doc(db, DENUNCIAS_INTENCAO_COLLECTION, id), updates);
   } catch (err) {
     console.error('[DB] Erro ao atualizar denúncia:', err);
     throw err;
@@ -1109,7 +1109,7 @@ export async function getIntencoesAtivas(): Promise<IntencaoCompra[]> {
 
 export async function updateIntencaoStatus(id: string, status: string): Promise<void> {
   try {
-    await updateDoc(doc(db, INTENCOES_COLLECTION, id) as any, { status, atualizadaEm: Timestamp.now() } as any);
+    await updateDoc(doc(db, INTENCOES_COLLECTION, id), { status, atualizadaEm: Timestamp.now() });
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da intenção:', err);
     throw err;
@@ -1179,7 +1179,7 @@ export async function addOficina(dados: Record<string, unknown>): Promise<Oficin
 
 export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, dados as any);
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id), dados);
   } catch (err) {
     console.error('[DB] Erro ao atualizar oficina:', err);
     throw err;
@@ -1188,7 +1188,7 @@ export async function updateOficina(id: string, dados: Record<string, unknown>):
 
 export async function updateOficinaStatus(id: string, status: 'pendente' | 'aprovado' | 'rejeitado'): Promise<void> {
   try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, { status } as any);
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id), { status });
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da oficina:', err);
     throw err;
