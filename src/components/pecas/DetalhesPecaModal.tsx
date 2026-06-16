@@ -105,64 +105,66 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
             {peca.vendedorNome || peca.criador || 'Anónimo'}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {temWhatsApp && (
-              <a
-                href={`https://wa.me/${whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
-              >
-                <WhatsappLogo size={18} />
-                WhatsApp
-              </a>
-            )}
+          {user ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {temWhatsApp && (
+                  <a
+                    href={`https://wa.me/${whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
+                  >
+                    <WhatsappLogo size={18} />
+                    WhatsApp
+                  </a>
+                )}
 
-            {temTelefone && !mostrarTelefone && (
-              <Button tipo="primario" icone={<Phone />} onClick={() => setMostrarTelefone(true)}>
-                Ver Telefone
-              </Button>
-            )}
+                {temTelefone && !mostrarTelefone && (
+                  <Button tipo="primario" icone={<Phone />} onClick={() => setMostrarTelefone(true)}>
+                    Ver Telefone
+                  </Button>
+                )}
 
-            {temTelefone && mostrarTelefone && (
-              <a
-                href={`tel:${telefone}`}
-                className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
-              >
-                <Phone />
-                {telefone}
-              </a>
-            )}
+                {temTelefone && mostrarTelefone && (
+                  <a
+                    href={`tel:${telefone}`}
+                    className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-white font-bold py-2.5 px-4 rounded-xl transition text-sm"
+                  >
+                    <Phone />
+                    {telefone}
+                  </a>
+                )}
 
-            {temEmail && (
-              <a
-                href={`mailto:${email}`}
-                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-2.5 px-4 rounded-xl transition border border-slate-300 text-sm"
-              >
-                <Envelope />
-                Email
-              </a>
-            )}
-          </div>
+                {temEmail && (
+                  <a
+                    href={`mailto:${email}`}
+                    className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-2.5 px-4 rounded-xl transition border border-slate-300 text-sm"
+                  >
+                    <Envelope />
+                    Email
+                  </a>
+                )}
+              </div>
 
-          {temChat && (
-            <Button
-              tipo="azul"
-              blocoCompleto
-              onClick={() => abrirChat(peca.id, 'peca', peca.titulo, vendedorUid!, peca.vendedorNome || peca.criador || 'Vendedor')}
-              icone={<ChatCircleDots />}
-            >
-              Enviar Mensagem (Chat Interno)
-            </Button>
-          )}
-
-          {!temChat && !user && (
+              {temChat && (
+                <Button
+                  tipo="azul"
+                  blocoCompleto
+                  onClick={() => abrirChat(peca.id, 'peca', peca.titulo, vendedorUid!, peca.vendedorNome || peca.criador || 'Vendedor')}
+                  icone={<ChatCircleDots />}
+                >
+                  Enviar Mensagem (Chat Interno)
+                </Button>
+              )}
+            </>
+          ) : (
             <button
               onClick={() => loginModal.openLoginModal(currentPath)}
-              className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-2.5 px-4 rounded-xl transition text-sm"
+              className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-3 px-4 rounded-xl transition text-sm"
             >
               <SignIn />
-              Faça login para enviar mensagem
+              Faça login para ver os contactos
             </button>
           )}
         </div>

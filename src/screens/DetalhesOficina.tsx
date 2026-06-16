@@ -13,7 +13,8 @@ import {
   Star, 
   User,
   Wrench,
-  ChatCircleDots
+  ChatCircleDots,
+  SignIn
 } from '@phosphor-icons/react';
 import { getOficinaPorId, addReview, subscribeReviewsOficina } from '@/lib/db';
 import type { OficinaMecanico } from '@/types/oficina';
@@ -37,8 +38,9 @@ interface DetalhesOficinaProps {
 
 export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
   const router = useRouter();
-  const { auth } = useApp();
+  const { auth, loginModal } = useApp();
   const { user } = auth;
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
   const toast = useToast();
 
   const [oficina, setOficina] = useState<OficinaMecanico | null>(null);
@@ -304,51 +306,61 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-fg-strong">Contactar Profissional</h2>
             
-            <div className="space-y-3 pt-2">
-              {/* Call */}
-              <a
-                href={`tel:${oficina.telefone}`}
-                className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
-              >
-                <Phone size={18} weight="fill" className="text-brand-600" />
-                Ligar para Oficina
-              </a>
-
-              {/* WhatsApp */}
-              {oficina.whatsapp && (
+            {user ? (
+              <div className="space-y-3 pt-2">
+                {/* Call */}
                 <a
-                  href={`https://wa.me/${oficina.whatsapp}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow-md shadow-green-500/10"
+                  href={`tel:${oficina.telefone}`}
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
                 >
-                  <WhatsappLogo size={20} weight="fill" />
-                  Enviar WhatsApp
+                  <Phone size={18} weight="fill" className="text-brand-600" />
+                  Ligar para Oficina
                 </a>
-              )}
 
-              {/* Email */}
-              <a
-                href={`mailto:${oficina.email}`}
-                className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
-              >
-                <EnvelopeSimple size={18} weight="bold" className="text-neutral-500" />
-                Enviar Email
-              </a>
+                {/* WhatsApp */}
+                {oficina.whatsapp && (
+                  <a
+                    href={`https://wa.me/${oficina.whatsapp}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow-md shadow-green-500/10"
+                  >
+                    <WhatsappLogo size={20} weight="fill" />
+                    Enviar WhatsApp
+                  </a>
+                )}
 
-              {/* Website */}
-              {oficina.website && (
+                {/* Email */}
                 <a
-                  href={oficina.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-3 w-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  href={`mailto:${oficina.email}`}
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
                 >
-                  <Globe size={18} />
-                  Visitar Website
+                  <EnvelopeSimple size={18} weight="bold" className="text-neutral-500" />
+                  Enviar Email
                 </a>
-              )}
-            </div>
+
+                {/* Website */}
+                {oficina.website && (
+                  <a
+                    href={oficina.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 w-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  >
+                    <Globe size={18} />
+                    Visitar Website
+                  </a>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => loginModal.openLoginModal(currentPath)}
+                className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-4 px-4 rounded-xl transition text-sm"
+              >
+                <SignIn />
+                Faça login para ver os contactos
+              </button>
+            )}
           </div>
 
           {/* Details Metadata Card */}
