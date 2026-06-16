@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de Integração de APIs & Monetização — ReparAuto</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind for quick premium styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              900: '#7c2d12',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #020617;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f97316;
+    }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-brand relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          Planeamento Estratégico B2B
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-orange-400 via-amber-200 to-indigo-400 bg-clip-text text-transparent">
+          Plano de Integração de APIs & Monetização
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Como implementar simulações reais de crédito e seguro no ReparAuto, qual o fluxo técnico recomendado, e como escalar receitas via parcerias financeiras.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Pronto para Integração</span>
+      </div>
+    </header>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center: Content Details -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Secção 1: Oportunidade e Estrutura -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">01.</span> A Oportunidade Financeira
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            A venda de viaturas usadas e reparações está intrinsecamente ligada à contratação de <strong>serviços financeiros</strong>. Em Portugal, a maioria das pessoas simula e contrata crédito ou seguros no momento da decisão da compra. Ao atuar como um <strong>Integrador de Leads Qualificados</strong>, o ReparAuto capta o utilizador no momento de maior intenção de conversão.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">💳</span>
+              <h3 class="font-bold text-orange-400 text-base">Financiamento</h3>
+              <p class="text-xs text-slate-400 mt-1">Simulações de crédito baseadas no valor residual do carro, com comissões baseadas no valor financiado (CPS) ou por lead válida (CPL).</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🛡️</span>
+              <h3 class="font-bold text-indigo-400 text-base">Seguro Automóvel</h3>
+              <p class="text-xs text-slate-400 mt-1">Cotações instantâneas a partir da matrícula. Monetização rápida através de comissões na contratação da primeira apólice anual.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Secção 2: Parceiros e APIs recomendados em Portugal -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">02.</span> Parceiros & APIs em Portugal
+          </h2>
+          
+          <div class="space-y-6">
+            <!-- Financiamento -->
+            <div>
+              <h3 class="font-bold text-white text-lg flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 bg-orange-500/10 border border-orange-500/30 text-orange-500 rounded text-xs">Crédito</span>
+                Parceiros Recomendados
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-slate-400">
+                      <th class="py-2">Parceiro</th>
+                      <th class="py-2">Modelo Comercial</th>
+                      <th class="py-2">Facilidade API</th>
+                      <th class="py-2">Margem Média</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-3 font-semibold text-white">Credibom / Cofidis</td>
+                      <td class="py-3">CPL (€5-10) ou CPS (1% - 1.5%)</td>
+                      <td class="py-3 text-emerald-400">Média (REST/XML)</td>
+                      <td class="py-3">Alta (Alto ticket de crédito)</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-3 font-semibold text-white">Banco CTT / Santander</td>
+                      <td class="py-3">CPS (1% do financiamento)</td>
+                      <td class="py-3 text-amber-400">Complexa (Bancos tradicionais)</td>
+                      <td class="py-3">Muito Alta</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-3 font-semibold text-white">ComparaJá.pt / Doutor Finanças</td>
+                      <td class="py-3">CPL Estrito (€7.50 fixo)</td>
+                      <td class="py-3 text-emerald-400">Muito Fácil (API moderna)</td>
+                      <td class="py-3">Média</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Seguros -->
+            <div>
+              <h3 class="font-bold text-white text-lg flex items-center gap-2 mb-3">
+                <span class="px-2 py-0.5 bg-indigo-500/10 border border-indigo-500/30 text-indigo-500 rounded text-xs">Seguros</span>
+                Parceiros Recomendados
+              </h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs text-slate-300 border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-slate-400">
+                      <th class="py-2">Parceiro</th>
+                      <th class="py-2">Modelo Comercial</th>
+                      <th class="py-2">Facilidade API</th>
+                      <th class="py-2">Vantagem</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-3 font-semibold text-white">Allianz / Tranquilidade</td>
+                      <td class="py-3">CPS (3% - 5% da apólice anual)</td>
+                      <td class="py-3 text-amber-400">Média (Webhooks / Broker)</td>
+                      <td class="py-3">Marca líder em Portugal</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-3 font-semibold text-white">Logo / Seguro Direto</td>
+                      <td class="py-3">CPL (€3 - €5 por simulação completa)</td>
+                      <td class="py-3 text-emerald-400">Fácil (APIs de seguradoras diretas)</td>
+                      <td class="py-3">Preço competitivo para o cliente</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Secção 3: Passos e Estrutura Técnica de Integração -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">03.</span> Guia de Implementação Técnica
+          </h2>
+          <div class="space-y-4 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">1</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Contrato e Credenciais</h4>
+                <p class="text-xs text-slate-400 mt-1">Efetuar registo como intermediário de crédito secundário ou parceiro de publicidade junto do Banco de Portugal (para crédito) ou fechar contrato de mediação com um broker (para seguros). Obter a API Key e Endpoint URL dos servidores Sandbox.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">2</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Submissão e Consentimento GDPR</h4>
+                <p class="text-xs text-slate-400 mt-1">Ao recolher dados pessoais sensíveis (NIF, rendimento, idade), é crucial obter consentimento explícito. O utilizador deve clicar numa checkbox autorizando o envio dos seus dados especificamente ao parceiro (ex: Banco CTT).</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">3</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Backend e Webhooks de Acompanhamento</h4>
+                <p class="text-xs text-slate-400 mt-1">Configurar uma Cloud Function ou endpoint em Next.js para fazer o proxy seguro da API key. Implementar webhooks para receber o status atualizado do crédito ("Pendente", "Aprovado", "Financiado"). Isso garante que sua comissão seja rastreada perfeitamente no dashboard.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right: Interactive Simulator Calculator -->
+      <div class="space-y-8">
+        <section class="glass rounded-2xl p-6 glow-indigo relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+            🧮 Simulador de Receita
+          </h2>
+          <p class="text-xs text-slate-400 mb-6">
+            Calcule o potencial de ganho mensal do ReparAuto com base em tráfego e simulações.
+          </p>
+
+          <div class="space-y-5">
+            <!-- MAU Input -->
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                <span>Visitantes Mensais (MAU)</span>
+                <span id="mauVal" class="text-indigo-400">10,000</span>
+              </div>
+              <input 
+                type="range" 
+                id="inputMau" 
+                min="1000" 
+                max="100000" 
+                step="1000" 
+                value="10000"
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              >
+            </div>
+
+            <!-- Simulation Rate Input -->
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                <span>Taxa de Simulações (%)</span>
+                <span id="simRateVal" class="text-indigo-400">5%</span>
+              </div>
+              <input 
+                type="range" 
+                id="inputSimRate" 
+                min="1" 
+                max="20" 
+                step="0.5" 
+                value="5"
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              >
+            </div>
+
+            <!-- Approved Rate Input -->
+            <div>
+              <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                <span>Taxa de Conversão/Aprovação (%)</span>
+                <span id="convRateVal" class="text-indigo-400">10%</span>
+              </div>
+              <input 
+                type="range" 
+                id="inputConvRate" 
+                min="2" 
+                max="40" 
+                step="1" 
+                value="10"
+                class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+              >
+            </div>
+
+            <!-- Financial Values Settings -->
+            <div class="pt-4 border-t border-slate-800 space-y-3">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Comissão de Crédito Média (CPS)</span>
+                <span class="font-bold text-white">€150 <span class="text-[10px] text-slate-500">(1% de €15k)</span></span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Comissão de Seguro Média (CPS/CPL)</span>
+                <span class="font-bold text-white">€15 <span class="text-[10px] text-slate-500">(Média anual)</span></span>
+              </div>
+            </div>
+
+            <!-- Calculation Output Dashboard -->
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 mt-6">
+              <div class="text-center">
+                <span class="text-xs text-slate-400 block uppercase tracking-wider font-bold">Ganho Mensal Estimado</span>
+                <span id="resultTotal" class="text-3xl sm:text-4xl font-black text-emerald-400 block mt-1">€8,250</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800 text-[11px] text-slate-400 text-center">
+                <div>
+                  <span class="block">Receita Crédito</span>
+                  <span id="resultCredito" class="font-bold text-white text-sm">€7,500</span>
+                </div>
+                <div>
+                  <span class="block">Receita Seguro</span>
+                  <span id="resultSeguro" class="font-bold text-white text-sm">€750</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Compliance & Legal Alerts -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">
+            ⚠️ Alerta Regulamentar & RGPD
+          </h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            A intermediação de crédito em Portugal é fortemente regulada pelo <strong>Banco de Portugal</strong> (DL 74-A/2017). Não se pode promover ou sugerir financiamentos sem estar oficialmente registado como intermediário ou vincular a simulação a um intermediário autorizado oficial. Recomenda-se usar parcerias de publicidade digital (CPL) via agregadores para mitigar riscos de compliance inicial.
+          </p>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      ReparAuto © 2026 • Documentação e Estratégia de Monetização B2B
+    </footer>
+  </div>
+
+  <!-- Interactive script for ROI Calculator -->
+  <script>
+    const inputMau = document.getElementById('inputMau');
+    const inputSimRate = document.getElementById('inputSimRate');
+    const inputConvRate = document.getElementById('inputConvRate');
+
+    const mauVal = document.getElementById('mauVal');
+    const simRateVal = document.getElementById('simRateVal');
+    const convRateVal = document.getElementById('convRateVal');
+
+    const resultTotal = document.getElementById('resultTotal');
+    const resultCredito = document.getElementById('resultCredito');
+    const resultSeguro = document.getElementById('resultSeguro');
+
+    function calculateROI() {
+      const mau = parseInt(inputMau.value);
+      const simRate = parseFloat(inputSimRate.value) / 100;
+      const convRate = parseFloat(inputConvRate.value) / 100;
+
+      // Update text values
+      mauVal.textContent = mau.toLocaleString('pt-PT');
+      simRateVal.textContent = (simRate * 100).toFixed(1) + '%';
+      convRateVal.textContent = (convRate * 100).toFixed(0) + '%';
+
+      // Calculation formula
+      const totalSimulators = mau * simRate;
+      const totalApproved = totalSimulators * convRate;
+
+      // Assume 50% choose credit, 50% choose insurance
+      const leadsCredito = Math.round(totalApproved * 0.5);
+      const leadsSeguro = Math.round(totalApproved * 0.5);
+
+      const ganhoCredito = leadsCredito * 150; // €150 commission
+      const ganhoSeguro = leadsSeguro * 15;    // €15 commission
+      const totalGanho = ganhoCredito + ganhoSeguro;
+
+      // Update calculations in view
+      resultCredito.textContent = '€' + ganhoCredito.toLocaleString('pt-PT');
+      resultSeguro.textContent = '€' + ganhoSeguro.toLocaleString('pt-PT');
+      resultTotal.textContent = '€' + totalGanho.toLocaleString('pt-PT');
+    }
+
+    inputMau.addEventListener('input', calculateROI);
+    inputSimRate.addEventListener('input', calculateROI);
+    inputConvRate.addEventListener('input', calculateROI);
+
+    // Initial calculation
+    calculateROI();
+  </script>
+</body>
+</html>
