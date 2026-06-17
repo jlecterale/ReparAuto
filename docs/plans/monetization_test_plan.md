@@ -46,11 +46,12 @@ Este documento define a estratégia, cenários e casos de teste para a implanta�
   2. Rolar até à secção abaixo dos contactos do vendedor.
   3. No simulador de financiamento, alterar o slider de "Valor de Entrada". O valor da prestação mensal estimada deve recalcular instantaneamente.
   4. Alterar o slider de "Reembolso" (ex: para 60 meses). A prestação mensal deve ser atualizada.
-  5. Clicar em "Pedir Pré-Aprovação de Crédito". Deve mostrar o loading e, em seguida, a mensagem de sucesso confirmando o envio.
-  6. Mudar para a aba "Seguro Auto".
-  7. Alternar o tipo de cobertura de "Terceiros" para "Danos Próprios". O prêmio estimado deve mudar instantaneamente.
-  8. Clicar em "Obter Cotações de Seguro Grátis" e verificar a mensagem de sucesso.
-* **Resultado Esperado**: Cálculos matemáticos precisos e feedback claro de envio.
+  5. Preencher Nome, Telefone e E-mail e marcar a caixa de consentimento (RGPD). Sem consentimento/contacto válido, o envio deve ser bloqueado com aviso.
+  6. Clicar em "Pedir Pré-Aprovação de Crédito". Deve gravar a lead na coleção `leads_parceria` (Firestore) e mostrar a mensagem de sucesso (sem afirmar falsamente o envio a instituições nomeadas).
+  7. Mudar para a aba "Seguro Auto".
+  8. Alternar o tipo de cobertura de "Terceiros" para "Danos Próprios". O prémio estimado deve mudar instantaneamente.
+  9. Clicar em "Obter Cotações de Seguro Grátis" e verificar a mensagem de sucesso e a gravação da lead.
+* **Resultado Esperado**: Cálculos matemáticos precisos, consentimento obrigatório, lead persistida e feedback claro (não enganoso).
 
 ### Caso 3: Integração Stripe (Fase 1 - Roadmap)
 * **Objetivo**: Testar o webhook de subscrição premium e créditos.

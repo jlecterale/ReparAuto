@@ -1,18 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Wrench, 
-  ShieldCheck, 
-  Clock, 
-  FileText, 
-  Coins, 
-  CaretLeft, 
-  CaretRight, 
-  Sparkles 
+import { useRouter } from 'next/navigation';
+import {
+  Wrench,
+  Clock,
+  FileText,
+  Coins,
+  CaretLeft,
+  CaretRight,
+  X,
 } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+
+const DISMISS_KEY = 'monetization_carousel_dismissed';
 
 interface Slide {
   id: number;
@@ -28,8 +30,10 @@ interface Slide {
 }
 
 export default function MonetizationCarousel() {
+  const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [visible, setVisible] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const slides: Slide[] = [
@@ -67,7 +71,7 @@ export default function MonetizationCarousel() {
       ctaText: 'Adicionar Relatório',
       icon: <FileText size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150" />,
       gradient: 'from-blue-600 via-blue-700 to-indigo-900',
-      link: '/comprar',
+      link: '/anunciar',
     },
     {
       id: 4,
@@ -84,7 +88,13 @@ export default function MonetizationCarousel() {
   ];
 
   useEffect(() => {
-    if (!isHovered) {
+    if (typeof window !== 'undefined' && localStorage.getItem(DISMISS_KEY) === '1') {
+      setVisible(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isHovered && visible) {
       timerRef.current = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % slides.length);
       }, 6000);
@@ -93,7 +103,7 @@ export default function MonetizationCarousel() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isHovered, slides.length]);
+  }, [isHovered, visible, slides.length]);
 
   const handlePrev = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
@@ -107,8 +117,28 @@ export default function MonetizationCarousel() {
     setCurrentSlide(index);
   };
 
+  const handleCta = (link: string) => {
+    if (link.startsWith('#')) {
+      const el = document.getElementById('ofertas');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      router.push(link);
+    }
+  };
+
+  const handleDismiss = () => {
+    setVisible(false);
+    try {
+      localStorage.setItem(DISMISS_KEY, '1');
+    } catch {
+      // ignore storage errors (private mode)
+    }
+  };
+
+  if (!visible) return null;
+
   return (
-    <div 
+    <div
       className="relative w-full rounded-2xl overflow-hidden shadow-lg mb-8"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -116,12 +146,12 @@ export default function MonetizationCarousel() {
       aria-label="Campanhas de Monetização ReparAuto"
     >
       {/* Slides Container */}
-      <div 
+      <div
         className="flex transition-transform duration-500 ease-out h-[240px] sm:h-[200px]"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {slides.map((slide) => (
-          <div 
+          <div
             key={slide.id}
             className={`w-full shrink-0 bg-gradient-to-r ${slide.gradient} p-6 sm:p-8 flex flex-col justify-between text-white relative`}
           >
@@ -142,24 +172,17 @@ export default function MonetizationCarousel() {
               <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight pr-12">
                 {slide.title}
               </h2>
-              
+
               <p className="mt-2 text-white/85 text-xs sm:text-sm max-w-2xl line-clamp-2">
                 {slide.description}
               </p>
             </div>
 
             <div className="relative z-10 flex items-center gap-4 mt-3 sm:mt-0">
-              <Button 
-                tipo="ghost" 
+              <Button
+                tipo="ghost"
                 tamanho="sm"
-                onClick={() => {
-                  if (slide.link.startsWith('#')) {
-                    const el = document.getElementById('ofertas');
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    window.location.href = slide.link;
-                  }
-                }}
+                onClick={() => handleCta(slide.link)}
               >
                 {slide.ctaText}
               </Button>
@@ -168,8 +191,17 @@ export default function MonetizationCarousel() {
         ))}
       </div>
 
+      {/* Dismiss Button */}
+      <button
+        onClick={handleDismiss}
+        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 flex items-center justify-center text-white transition-all z-30 focus:outline-none focus:ring-2 focus:ring-accent"
+        aria-label="Dispensar campanhas"
+      >
+        <X size={14} weight="bold" />
+      </button>
+
       {/* Navigation Buttons */}
-      <button 
+      <button
         onClick={handlePrev}
         className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 flex items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
         aria-label="Slide anterior"
@@ -177,7 +209,7 @@ export default function MonetizationCarousel() {
         <CaretLeft size={20} weight="bold" />
       </button>
 
-      <button 
+      <button
         onClick={handleNext}
         className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 flex items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
         aria-label="Próximo slide"

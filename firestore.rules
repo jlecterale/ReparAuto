@@ -128,5 +128,29 @@ service cloud.firestore {
         && request.resource.data.denunciantId == request.auth.uid;
       allow update: if isAdmin();
     }
+
+    match /propostas/{propostaId} {
+      allow read: if isAuthenticated() && (
+        request.auth.uid == resource.data.vendedorUid ||
+        request.auth.uid == resource.data.compradorUid ||
+        isAdmin()
+      );
+      allow create: if isAuthenticated()
+        && request.resource.data.vendedorUid == request.auth.uid
+        && request.resource.data.status == 'pendente';
+      allow update: if isAuthenticated() && (
+        request.auth.uid == resource.data.compradorUid ||
+        request.auth.uid == resource.data.vendedorUid ||
+        isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /leads_parceria/{leadId} {
+      // Consent-gated lead intake; readable only by admins (RGPD).
+      allow read: if isAdmin();
+      allow create: if request.resource.data.consentimento == true;
+      allow update, delete: if isAdmin();
+    }
   }
 }

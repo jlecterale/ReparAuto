@@ -249,6 +249,15 @@ export default function DetalhesCarro() {
           <ContactSection carro={carro} />
         </div>
 
+        <FinanciamentoSeguroWidget
+          carroPreco={carro.preco}
+          carroId={carro.id}
+          carroTitulo={`${carro.marca} ${carro.modelo}`}
+          defaultNome={user?.nome}
+          defaultEmail={user?.email}
+          defaultTelefone={user?.telefone}
+        />
+
         <div className="mt-6">
           <VinCheckPanel />
         </div>

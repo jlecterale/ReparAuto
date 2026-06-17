@@ -3,14 +3,35 @@
 import { useState } from 'react';
 import { Coins, ShieldCheck, Calculator, ArrowRight, CheckCircle } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
+import { useToast } from '@/components/ui/Toast';
+import { criarLeadParceria } from '@/lib/db';
 
 interface FinanciamentoSeguroWidgetProps {
   carroPreco: number;
+  carroId?: string;
+  carroTitulo?: string;
+  defaultNome?: string;
+  defaultEmail?: string;
+  defaultTelefone?: string;
 }
 
-export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoSeguroWidgetProps) {
+export default function FinanciamentoSeguroWidget({
+  carroPreco,
+  carroId,
+  carroTitulo,
+  defaultNome = '',
+  defaultEmail = '',
+  defaultTelefone = '',
+}: FinanciamentoSeguroWidgetProps) {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'financiamento' | 'seguro'>('financiamento');
-  
+
+  // Shared contact + consent (RGPD)
+  const [nome, setNome] = useState(defaultNome);
+  const [email, setEmail] = useState(defaultEmail);
+  const [telefone, setTelefone] = useState(defaultTelefone);
+  const [consentimento, setConsentimento] = useState(false);
+
   // States for Credit Simulator
   const [entrada, setEntrada] = useState<number>(Math.round(carroPreco * 0.2));
   const [meses, setMeses] = useState<number>(48);
@@ -24,31 +45,131 @@ export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoS
   const [loadingSeguro, setLoadingSeguro] = useState(false);
 
   const valorFinanciado = Math.max(0, carroPreco - entrada);
-  const taxaAnual = 0.065; // 6.5% interest rate
+  const taxaAnual = 0.065; // 6.5% nominal annual rate (TAN) — indicative
   const taxaMensal = taxaAnual / 12;
-  const prestacaoMensal = valorFinanciado > 0 
+  const prestacaoMensal = valorFinanciado > 0
     ? Math.round((valorFinanciado * taxaMensal) / (1 - Math.pow(1 + taxaMensal, -meses)))
     : 0;
 
-  const handleSimularCredito = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoadingCredito(true);
-    setTimeout(() => {
-      setLoadingCredito(false);
-      setLeadEnviadaCredito(true);
-    }, 1200);
-  };
-
-  const handleSimularSeguro = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoadingSeguro(true);
-    setTimeout(() => {
-      setLoadingSeguro(false);
-      setLeadEnviadaSeguro(true);
-    }, 1200);
-  };
-
   const precoSeguroEstimado = cobertura === 'civil' ? 180 : 450;
+
+  function validarContacto(): boolean {
+    if (!nome.trim()) {
+      toast?.erro('Indique o seu nome.');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast?.erro('Indique um e-mail válido.');
+      return false;
+    }
+    if (telefone.replace(/\D/g, '').length < 9) {
+      toast?.erro('Indique um telefone válido.');
+      return false;
+    }
+    if (!consentimento) {
+      toast?.erro('É necessário o seu consentimento para partilhar os dados com os parceiros.');
+      return false;
+    }
+    return true;
+  }
+
+  const handleSimularCredito = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validarContacto()) return;
+    setLoadingCredito(true);
+    try {
+      await criarLeadParceria({
+        tipo: 'financiamento',
+        nome: nome.trim(),
+        email: email.trim(),
+        telefone: telefone.trim(),
+        consentimento: true,
+        origem: 'detalhes-carro',
+        carroId,
+        carroTitulo,
+        carroPreco,
+        entrada,
+        meses,
+        prestacaoEstimada: prestacaoMensal,
+      });
+      setLeadEnviadaCredito(true);
+    } catch {
+      toast?.erro('Não foi possível enviar o pedido. Tente novamente.');
+    } finally {
+      setLoadingCredito(false);
+    }
+  };
+
+  const handleSimularSeguro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validarContacto()) return;
+    setLoadingSeguro(true);
+    try {
+      await criarLeadParceria({
+        tipo: 'seguro',
+        nome: nome.trim(),
+        email: email.trim(),
+        telefone: telefone.trim(),
+        consentimento: true,
+        origem: 'detalhes-carro',
+        carroId,
+        carroTitulo,
+        carroPreco,
+        idadeCondutor: idade,
+        cobertura,
+        premioEstimado: precoSeguroEstimado,
+      });
+      setLeadEnviadaSeguro(true);
+    } catch {
+      toast?.erro('Não foi possível enviar o pedido. Tente novamente.');
+    } finally {
+      setLoadingSeguro(false);
+    }
+  };
+
+  // Shared contact + consent block (rendered inside each form)
+  const contactoConsentimento = (
+    <div className="space-y-2 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <input
+          type="text"
+          value={nome}
+          onChange={(e) => setNome(e.target.value)}
+          placeholder="Nome"
+          autoComplete="name"
+          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition"
+        />
+        <input
+          type="tel"
+          value={telefone}
+          onChange={(e) => setTelefone(e.target.value)}
+          placeholder="Telefone"
+          autoComplete="tel"
+          className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition"
+        />
+      </div>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="E-mail"
+        autoComplete="email"
+        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition"
+      />
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={consentimento}
+          onChange={(e) => setConsentimento(e.target.checked)}
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-accent focus:ring-accent/30"
+        />
+        <span className="text-[10px] text-fg-subtle leading-relaxed">
+          Autorizo a partilha dos meus dados de contacto com os parceiros de crédito e seguro da ReparAuto
+          para receber propostas, nos termos da Política de Privacidade (RGPD).
+        </span>
+      </label>
+    </div>
+  );
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm mt-4">
@@ -84,13 +205,13 @@ export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoS
           {leadEnviadaCredito ? (
             <div className="text-center py-6">
               <CheckCircle size={48} className="text-green-500 mx-auto mb-3" weight="fill" />
-              <h4 className="font-extrabold text-fg-heading text-base">Pedido de Simulação Enviado!</h4>
+              <h4 className="font-extrabold text-fg-heading text-base">Pedido de Simulação Registado!</h4>
               <p className="text-xs text-fg-subtle mt-1 px-4">
-                Enviámos os dados para o Banco CTT e Credibom. Um gestor entrará em contacto nas próximas 2 horas.
+                Os nossos parceiros de crédito automóvel vão analisar o seu pedido e entrar em contacto consigo.
               </p>
-              <Button 
-                tipo="terciario" 
-                tamanho="sm" 
+              <Button
+                tipo="terciario"
+                tamanho="sm"
                 className="mt-4"
                 onClick={() => setLeadEnviadaCredito(false)}
               >
@@ -145,9 +266,11 @@ export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoS
                 </div>
               </div>
 
+              {contactoConsentimento}
+
               <div className="pt-2 border-t border-slate-100">
                 <span className="text-[10px] text-fg-subtle block mb-3 leading-relaxed">
-                  * Taxa de juro indicativa (TAEG 6.5%). Valores estimados não vinculativos, sujeitos a análise de crédito.
+                  * Taxa indicativa (TAN 6,5%/ano). A TAEG e a prestação final dependem do parceiro e da análise de crédito. Valores não vinculativos.
                 </span>
                 <Button
                   type="submit"
@@ -170,13 +293,13 @@ export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoS
           {leadEnviadaSeguro ? (
             <div className="text-center py-6">
               <CheckCircle size={48} className="text-green-500 mx-auto mb-3" weight="fill" />
-              <h4 className="font-extrabold text-fg-heading text-base">Pedido de Cotação Recebido!</h4>
+              <h4 className="font-extrabold text-fg-heading text-base">Pedido de Cotação Registado!</h4>
               <p className="text-xs text-fg-subtle mt-1 px-4">
-                Parceiros Allianz e Tranquilidade foram notificados. Receberá as propostas no seu e-mail em breve.
+                Vai receber propostas de seguro dos nossos parceiros no e-mail indicado.
               </p>
-              <Button 
-                tipo="terciario" 
-                tamanho="sm" 
+              <Button
+                tipo="terciario"
+                tamanho="sm"
                 className="mt-4"
                 onClick={() => setLeadEnviadaSeguro(false)}
               >
@@ -237,9 +360,11 @@ export default function FinanciamentoSeguroWidget({ carroPreco }: FinanciamentoS
                 </div>
               </div>
 
+              {contactoConsentimento}
+
               <div className="pt-2 border-t border-slate-100">
                 <span className="text-[10px] text-fg-subtle block mb-3 leading-relaxed">
-                  * Estimativa baseada no perfil padrão do condutor sem sinistros nos últimos 5 anos.
+                  * Estimativa baseada no perfil padrão do condutor sem sinistros nos últimos 5 anos. Valor final sujeito a cotação do segurador.
                 </span>
                 <Button
                   type="submit"
