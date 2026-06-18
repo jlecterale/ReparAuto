@@ -54,6 +54,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
+    // Android maps use Google Maps and need an API key. iOS uses Apple Maps
+    // (no key). Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY in .env / EAS.
+    config: {
+      googleMaps: { apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '' },
+    },
     // No location/media permissions. Notifications (POST_NOTIFICATIONS on
     // Android 13+) are contributed by expo-notifications below. Location
     // (Fase 5) arrives with its feature.
@@ -102,7 +107,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'A ReparAuto usa a câmara apenas quando tira uma foto para o seu anúncio.',
       },
     ],
-    // NOTE: expo-location (Fase 5) plugin is added when the workshops map ships.
+    [
+      'expo-location',
+      {
+        locationWhenInUsePermission:
+          'A ReparAuto usa a sua localização apenas para mostrar oficinas perto de si no mapa.',
+      },
+    ],
     [
       'expo-splash-screen',
       {

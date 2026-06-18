@@ -29,6 +29,12 @@ const OPCOES: Opcao[] = [
     titulo: 'Registar a sua oficina',
     texto: 'Apareça no diretório de oficinas e receba clientes.',
   },
+  {
+    href: '/anunciar/intencao',
+    icon: 'search',
+    titulo: 'Procuro um carro',
+    texto: 'Diga o que procura e deixe os vendedores virem ter consigo.',
+  },
 ];
 
 export default function AnunciarHome() {

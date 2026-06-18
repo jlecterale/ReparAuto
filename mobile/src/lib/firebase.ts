@@ -22,6 +22,8 @@ export const storage = storageModule();
 db.settings({
   persistence: true,
   cacheSizeBytes: firestoreModule.CACHE_SIZE_UNLIMITED,
+  // Drop `undefined` fields on write (cleaner than pruning every payload).
+  ignoreUndefinedProperties: true,
 }).catch(() => {
   // settings can only be set before the first operation; ignore if already used.
 });

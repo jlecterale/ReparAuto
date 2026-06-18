@@ -62,7 +62,28 @@ export default function DetalhesCarroScreen() {
       <Stack.Screen
         options={{
           title: `${carro.marca} ${carro.modelo}`,
-          headerRight: () => <FavoriteButton id={carro.id} />,
+          headerRight: () => (
+            <View className="flex-row items-center gap-4">
+              <Ionicons
+                name="flag-outline"
+                size={20}
+                color={colors.danger[600]}
+                onPress={() =>
+                  requireAuth(() =>
+                    router.push({
+                      pathname: '/denunciar',
+                      params: {
+                        alvoId: carro.id,
+                        alvoTipo: 'carro',
+                        titulo: `${carro.marca} ${carro.modelo}`,
+                      },
+                    }),
+                  )
+                }
+              />
+              <FavoriteButton id={carro.id} />
+            </View>
+          ),
         }}
       />
       <ScrollView contentContainerClassName="pb-28">

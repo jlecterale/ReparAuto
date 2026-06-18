@@ -7,19 +7,29 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
+import { StarRating } from '@/components/ui/StarRating';
 import { getOficinaById } from '@/lib/db';
-import { ESPECIALIDADES_LABELS, type Oficina } from '@/types';
+import { subscribeReviews } from '@/lib/trust';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { ESPECIALIDADES_LABELS, type Oficina, type Review } from '@/types';
 import { colors } from '@/theme/colors';
 
 export default function DetalhesOficinaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
+  const requireAuth = useRequireAuth();
   const [oficina, setOficina] = useState<Oficina | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const unsub = subscribeReviews(id, setReviews, () => {});
+    return unsub;
+  }, [id]);
 
   useEffect(() => {
     let active = true;
@@ -55,7 +65,26 @@ export default function DetalhesOficinaScreen() {
 
   return (
     <View className="flex-1 bg-neutral-50">
-      <Stack.Screen options={{ title: oficina.nome }} />
+      <Stack.Screen
+        options={{
+          title: oficina.nome,
+          headerRight: () => (
+            <Ionicons
+              name="flag-outline"
+              size={20}
+              color={colors.danger[600]}
+              onPress={() =>
+                requireAuth(() =>
+                  router.push({
+                    pathname: '/denunciar',
+                    params: { alvoId: oficina.id, alvoTipo: 'utilizador', titulo: oficina.nome },
+                  }),
+                )
+              }
+            />
+          ),
+        }}
+      />
       <ScrollView contentContainerClassName="pb-28">
         {capa ? (
           <Image
@@ -108,6 +137,43 @@ export default function DetalhesOficinaScreen() {
               <Ionicons name="location-outline" size={18} color={colors.primary[600]} />
               <Text className="ml-2 flex-1 text-base text-fg">{morada}</Text>
             </View>
+          )}
+
+          {/* Avaliações */}
+          <View className="mt-6 flex-row items-center justify-between">
+            <Text className="text-lg font-bold text-fg-heading">Avaliações</Text>
+            <Button
+              label="Avaliar"
+              variant="outline"
+              className="px-3 py-2"
+              onPress={() =>
+                requireAuth(() =>
+                  router.push({
+                    pathname: '/avaliar',
+                    params: {
+                      anuncioId: oficina.id,
+                      anuncioTipo: 'oficina',
+                      vendedorUid: oficina.criador,
+                      vendedorEmail: oficina.criador,
+                      titulo: oficina.nome,
+                    },
+                  }),
+                )
+              }
+            />
+          </View>
+          {reviews.length === 0 ? (
+            <Text className="mt-2 text-sm text-fg-subtle">Ainda sem avaliações. Seja o primeiro.</Text>
+          ) : (
+            reviews.map((r) => (
+              <View key={r.id} className="mt-3 rounded-xl bg-white p-3">
+                <View className="flex-row items-center justify-between">
+                  <Text className="font-bold text-fg-heading">{r.autorNome}</Text>
+                  <StarRating value={r.nota} size={14} />
+                </View>
+                {!!r.comentario && <Text className="mt-1 text-sm text-fg-muted">{r.comentario}</Text>}
+              </View>
+            ))
           )}
         </View>
       </ScrollView>

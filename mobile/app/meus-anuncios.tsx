@@ -19,30 +19,40 @@ import {
   getOficinasByCreator,
   getPecasByCreator,
 } from '@/lib/db';
+import { deleteIntencao, getIntencoesByUser } from '@/lib/trust';
 import { useAuth } from '@/context/AuthContext';
-import type { StatusAnuncio } from '@/types';
 import { colors } from '@/theme/colors';
 
-type Kind = 'carro' | 'peca' | 'oficina';
+type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
+type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'outro';
 
 interface Item {
   kind: Kind;
   id: string;
   titulo: string;
   subtitulo: string;
-  status: StatusAnuncio;
+  status: EstadoItem;
 }
 
-const STATUS: Record<StatusAnuncio, { label: string; bg: string; fg: string }> = {
+const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
   pendente: { label: 'Em revisão', bg: 'bg-warning-100', fg: 'text-warning-700' },
   aprovado: { label: 'Aprovado', bg: 'bg-success-100', fg: 'text-success-700' },
+  ativa: { label: 'Ativa', bg: 'bg-success-100', fg: 'text-success-700' },
   rejeitado: { label: 'Rejeitado', bg: 'bg-danger-100', fg: 'text-danger-700' },
+  outro: { label: '—', bg: 'bg-neutral-100', fg: 'text-fg-muted' },
 };
+
+function estado(s: string): EstadoItem {
+  return (['pendente', 'aprovado', 'rejeitado', 'ativa'] as string[]).includes(s)
+    ? (s as EstadoItem)
+    : 'outro';
+}
 
 const KIND_ICON: Record<Kind, keyof typeof Ionicons.glyphMap> = {
   carro: 'car-sport',
   peca: 'construct',
   oficina: 'business',
+  intencao: 'search',
 };
 
 export default function MeusAnunciosScreen() {
@@ -52,11 +62,12 @@ export default function MeusAnunciosScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const carregar = useCallback(async () => {
-    if (!user?.email) return;
-    const [carros, pecas, oficinas] = await Promise.all([
+    if (!user?.email || !user?.uid) return;
+    const [carros, pecas, oficinas, intencoes] = await Promise.all([
       getCarrosByCreator(user.email),
       getPecasByCreator(user.email),
       getOficinasByCreator(user.email),
+      getIntencoesByUser(user.uid),
     ]);
     const lista: Item[] = [
       ...carros.map((c) => ({
@@ -64,25 +75,32 @@ export default function MeusAnunciosScreen() {
         id: c.id,
         titulo: `${c.marca} ${c.modelo}`,
         subtitulo: `${c.anoFabricacao} · ${c.local}`,
-        status: c.status,
+        status: estado(c.status),
       })),
       ...pecas.map((p) => ({
         kind: 'peca' as const,
         id: p.id,
         titulo: p.titulo,
         subtitulo: `${p.categoria} · ${p.local}`,
-        status: p.status,
+        status: estado(p.status),
       })),
       ...oficinas.map((o) => ({
         kind: 'oficina' as const,
         id: o.id,
         titulo: o.nome,
         subtitulo: [o.localidade, o.distrito].filter(Boolean).join(', '),
-        status: o.status,
+        status: estado(o.status),
+      })),
+      ...intencoes.map((i) => ({
+        kind: 'intencao' as const,
+        id: i.id,
+        titulo: i.titulo,
+        subtitulo: i.criterios?.localizacao?.distrito ?? 'Procura',
+        status: estado(i.status),
       })),
     ];
     setItens(lista);
-  }, [user?.email]);
+  }, [user?.email, user?.uid]);
 
   useFocusEffect(
     useCallback(() => {
@@ -100,7 +118,8 @@ export default function MeusAnunciosScreen() {
   function abrir(item: Item) {
     if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
     else if (item.kind === 'peca') router.push(`/pecas/${item.id}`);
-    else router.push(`/oficinas/${item.id}`);
+    else if (item.kind === 'oficina') router.push(`/oficinas/${item.id}`);
+    else router.push(`/intencoes/${item.id}`);
   }
 
   function confirmarRemover(item: Item) {
@@ -110,7 +129,12 @@ export default function MeusAnunciosScreen() {
         text: 'Eliminar',
         style: 'destructive',
         onPress: async () => {
-          const remover = { carro: deleteCarro, peca: deletePeca, oficina: deleteOficina }[item.kind];
+          const remover = {
+            carro: deleteCarro,
+            peca: deletePeca,
+            oficina: deleteOficina,
+            intencao: deleteIntencao,
+          }[item.kind];
           try {
             await remover(item.id);
             setItens((atual) => atual.filter((x) => !(x.id === item.id && x.kind === item.kind)));

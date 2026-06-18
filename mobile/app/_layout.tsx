@@ -61,6 +61,10 @@ function RootNavigator() {
       <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="pecas/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="oficinas/[id]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen name="intencoes/index" options={{ headerShown: true, title: 'Procuras' }} />
+      <Stack.Screen name="intencoes/[id]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen name="denunciar" options={{ headerShown: true, title: 'Denunciar', presentation: 'modal' }} />
+      <Stack.Screen name="avaliar" options={{ headerShown: true, title: 'Avaliar', presentation: 'modal' }} />
       <Stack.Screen name="chat/[listingId]" options={{ headerShown: true, title: 'Conversa' }} />
       <Stack.Screen name="favoritos" options={{ headerShown: true, title: 'Favoritos' }} />
       <Stack.Screen name="notificacoes" options={{ headerShown: true, title: 'Notificações' }} />

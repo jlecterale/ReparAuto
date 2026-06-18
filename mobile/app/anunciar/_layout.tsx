@@ -15,6 +15,7 @@ export default function AnunciarLayout() {
       <Stack.Screen name="carro" options={{ title: 'Vender carro' }} />
       <Stack.Screen name="peca" options={{ title: 'Anunciar peça' }} />
       <Stack.Screen name="oficina" options={{ title: 'Registar oficina' }} />
+      <Stack.Screen name="intencao" options={{ title: 'Procurar um carro' }} />
     </Stack>
   );
 }

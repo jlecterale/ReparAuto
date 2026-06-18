@@ -58,7 +58,26 @@ export default function DetalhesPecaScreen() {
 
   return (
     <View className="flex-1 bg-neutral-50">
-      <Stack.Screen options={{ title: peca.titulo }} />
+      <Stack.Screen
+        options={{
+          title: peca.titulo,
+          headerRight: () => (
+            <Ionicons
+              name="flag-outline"
+              size={20}
+              color={colors.danger[600]}
+              onPress={() =>
+                requireAuth(() =>
+                  router.push({
+                    pathname: '/denunciar',
+                    params: { alvoId: peca.id, alvoTipo: 'peca', titulo: peca.titulo },
+                  }),
+                )
+              }
+            />
+          ),
+        }}
+      />
       <ScrollView contentContainerClassName="pb-28">
         {peca.foto ? (
           <Image

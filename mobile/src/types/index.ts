@@ -139,6 +139,87 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
   outro: 'Outro Serviço',
 };
 
+// ---------- Intenções de compra ----------
+export type CategoriaIntencao = 'carro' | 'moto' | 'viatura_comercial' | 'pecas';
+export type StatusIntencao = 'pendente' | 'ativa' | 'pausada' | 'expirada' | 'deletada';
+export type ContatoPreferido = 'chat' | 'whatsapp' | 'ambos';
+
+export const CATEGORIA_INTENCAO_LABELS: Record<CategoriaIntencao, string> = {
+  carro: 'Carro',
+  moto: 'Mota',
+  viatura_comercial: 'Comercial',
+  pecas: 'Peças',
+};
+
+export interface IntencaoCriterios {
+  marca: string;
+  modelo: string;
+  anoMinimo: number;
+  anoMaximo?: number;
+  precoMinimo?: number;
+  precoMaximo: number;
+  combustivel: string[];
+  tipoTransmissao: string[];
+  quilometragemMaxima: number;
+  localizacao: { distrito: string; raio: number; latitude?: number; longitude?: number };
+}
+
+export interface IntencaoCompra {
+  id: string;
+  userId: string;
+  categoria: CategoriaIntencao;
+  titulo: string;
+  descricao?: string;
+  criterios: IntencaoCriterios;
+  contatoPreferido: ContatoPreferido;
+  mostrarTelefone: boolean;
+  vendedorNome?: string;
+  vendedorTelefone?: string;
+  vendedorWhatsApp?: string;
+  vendedorEmail?: string;
+  status: StatusIntencao;
+  prioritaria: boolean;
+  stats: { visualizacoes: number; visualizacoes7Dias: number; contatos: number; contatos7Dias: number };
+  criadaEm: Timestamp;
+  atualizadaEm: Timestamp;
+}
+
+// ---------- Confiança: reviews & reports ----------
+export type StatusReview = 'pendente' | 'aprovado' | 'rejeitado';
+
+export interface Review {
+  id: string;
+  autorUid: string;
+  autorNome: string;
+  autorFoto: string | null;
+  vendedorUid: string;
+  vendedorEmail: string;
+  anuncioId: string;
+  anuncioTipo: 'carro' | 'peca' | 'oficina';
+  nota: number;
+  comentario: string;
+  status: StatusReview;
+  dataCriacao: Timestamp;
+}
+
+export type MotivoReport =
+  | 'fraude'
+  | 'informacao_falsa'
+  | 'conteudo_ofensivo'
+  | 'spam'
+  | 'veiculo_roubado'
+  | 'outro';
+export type TipoReport = 'carro' | 'peca' | 'utilizador';
+
+export const MOTIVO_REPORT_LABELS: Record<MotivoReport, string> = {
+  fraude: 'Fraude / burla',
+  informacao_falsa: 'Informação falsa',
+  conteudo_ofensivo: 'Conteúdo ofensivo',
+  spam: 'Spam',
+  veiculo_roubado: 'Veículo roubado',
+  outro: 'Outro',
+};
+
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';
 
