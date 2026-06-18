@@ -17,6 +17,9 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#074C92',
+  // The app has no dark theme — force a light color scheme so browsers don't
+  // apply their dark-mode UA styling to form controls when the OS is in dark mode.
+  colorScheme: 'light',
 };
 
 export const metadata: Metadata = {

@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import useSwipe from '@/hooks/useSwipe';
 
 const DISMISS_KEY = 'monetization_carousel_dismissed';
 
@@ -113,6 +114,9 @@ export default function MonetizationCarousel() {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
 
+  // Touch swipe: drag left → next slide, drag right → previous slide.
+  const swipe = useSwipe({ onLeft: handleNext, onRight: handlePrev });
+
   const handleDotClick = (index: number) => {
     setCurrentSlide(index);
   };
@@ -139,9 +143,10 @@ export default function MonetizationCarousel() {
 
   return (
     <div
-      className="relative w-full rounded-2xl overflow-hidden shadow-lg mb-8"
+      className="relative w-full rounded-2xl overflow-hidden shadow-lg mb-8 touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      {...swipe}
       role="region"
       aria-label="Campanhas de Monetização ReparAuto"
     >
@@ -203,7 +208,7 @@ export default function MonetizationCarousel() {
       {/* Navigation Buttons */}
       <button
         onClick={handlePrev}
-        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 flex items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
+        className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
         aria-label="Slide anterior"
       >
         <CaretLeft size={20} weight="bold" />
@@ -211,7 +216,7 @@ export default function MonetizationCarousel() {
 
       <button
         onClick={handleNext}
-        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 flex items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
+        className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/20 hover:bg-black/40 border border-white/20 items-center justify-center text-white transition-all z-20 focus:outline-none focus:ring-2 focus:ring-accent"
         aria-label="Próximo slide"
       >
         <CaretRight size={20} weight="bold" />
