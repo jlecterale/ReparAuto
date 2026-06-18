@@ -1,8 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useChat } from '@/context/ChatContext';
 import { colors } from '@/theme/colors';
 
 export default function TabsLayout() {
+  const { mensagensNaoLidas } = useChat();
+
   return (
     <Tabs
       screenOptions={{
@@ -38,10 +41,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="favoritos"
+        name="mensagens"
         options={{
-          title: 'Favoritos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="heart" size={size} color={color} />,
+          title: 'Mensagens',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="chatbubbles" size={size} color={color} />
+          ),
+          tabBarBadge: mensagensNaoLidas > 0 ? mensagensNaoLidas : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.danger[500] },
         }}
       />
       <Tabs.Screen

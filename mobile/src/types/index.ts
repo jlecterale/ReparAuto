@@ -139,6 +139,51 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
   outro: 'Outro Serviço',
 };
 
+// ---------- Chat ----------
+export type ListingType = 'carro' | 'peca' | 'intencao';
+
+export interface Mensagem {
+  id: string;
+  listingId: string;
+  listingType: ListingType;
+  listingTitle: string;
+  fromUid: string;
+  fromNome: string;
+  toUid: string;
+  toNome: string;
+  participants: string[];
+  mensagem: string;
+  lida: boolean;
+  dataCriacao: Timestamp;
+}
+
+/** Derived inbox entry (one per listing + counterpart). */
+export interface Conversa {
+  chaveConversa: string;
+  listingId: string;
+  listingType: ListingType;
+  listingTitle: string;
+  outroUid: string;
+  outroNome: string;
+  ultimaMensagem: string;
+  ultimaData: Timestamp;
+  naoLidas: number;
+}
+
+// ---------- Notificações ----------
+export type TipoNotificacao = 'aprovado' | 'rejeitado' | 'info' | 'mensagem';
+
+export interface Notificacao {
+  id: string;
+  uid: string;
+  tipo: TipoNotificacao;
+  titulo: string;
+  mensagem: string;
+  link?: string | null;
+  lida: boolean;
+  dataCriacao: Timestamp;
+}
+
 /** Workshops live in the `services` collection (web type: OficinaMecanico). */
 export interface Oficina {
   id: string;

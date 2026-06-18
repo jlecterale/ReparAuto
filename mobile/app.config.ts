@@ -54,11 +54,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
-    // No app-level permissions are declared. The gallery uses the system Photo
-    // Picker (no permission on Android 13+/iOS PHPicker). The CAMERA permission
-    // is contributed by expo-image-picker's own manifest and requested at
-    // runtime only when the user taps "Tirar foto". Location (Fase 5) and
-    // notifications (Fase 4) arrive with their features.
+    // No location/media permissions. Notifications (POST_NOTIFICATIONS on
+    // Android 13+) are contributed by expo-notifications below. Location
+    // (Fase 5) arrives with its feature.
     permissions: [],
   },
   web: {
@@ -72,6 +70,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-apple-authentication',
     '@react-native-firebase/app',
     '@react-native-firebase/auth',
+    '@react-native-firebase/messaging',
+    [
+      'expo-notifications',
+      {
+        icon: './assets/notification-icon.png',
+        color: '#0b4f9e',
+      },
+    ],
     [
       'expo-build-properties',
       {
@@ -96,9 +102,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'A ReparAuto usa a câmara apenas quando tira uma foto para o seu anúncio.',
       },
     ],
-    // NOTE: expo-location (Fase 5) and expo-notifications (Fase 4) plugins are
-    // added when those features ship, so the build only declares permissions
-    // it actually uses.
+    // NOTE: expo-location (Fase 5) plugin is added when the workshops map ships.
     [
       'expo-splash-screen',
       {

@@ -105,6 +105,12 @@ export default function PerfilScreen() {
             label="Os meus anúncios"
             onPress={() => router.push('/meus-anuncios')}
           />
+          <Row icon="heart-outline" label="Favoritos" onPress={() => router.push('/favoritos')} />
+          <Row
+            icon="notifications-outline"
+            label="Notificações"
+            onPress={() => router.push('/notificacoes')}
+          />
           <Row
             icon="create-outline"
             label="Editar perfil"

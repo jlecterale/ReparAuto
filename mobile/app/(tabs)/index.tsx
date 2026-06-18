@@ -10,6 +10,7 @@ import { Logo } from '@/components/ui/Logo';
 import { CarCard } from '@/components/CarCard';
 import { useCarros } from '@/hooks/useCarros';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useNotificacoes } from '@/context/NotificacoesContext';
 import type { Carro } from '@/types';
 import { colors } from '@/theme/colors';
 
@@ -38,6 +39,7 @@ function aplicaFiltro(carro: Carro, filtro: Filtro): boolean {
 export default function HomeScreen() {
   const { carros, loading, error } = useCarros();
   const requireAuth = useRequireAuth();
+  const { naoLidas } = useNotificacoes();
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
 
@@ -54,14 +56,37 @@ export default function HomeScreen() {
     <Screen>
       <View className="flex-row items-center justify-between px-4 pb-3 pt-1">
         <Logo />
-        <Pressable
-          onPress={() => requireAuth(() => router.push('/anunciar'))}
-          accessibilityRole="button"
-          className="flex-row items-center rounded-full bg-accent px-4 py-2 active:opacity-80"
-        >
-          <Ionicons name="add" size={18} color="#fff" />
-          <Text className="ml-1 font-bold text-white">Anunciar</Text>
-        </Pressable>
+        <View className="flex-row items-center gap-1">
+          <Pressable
+            onPress={() => requireAuth(() => router.push('/favoritos'))}
+            accessibilityRole="button"
+            accessibilityLabel="Favoritos"
+            hitSlop={6}
+            className="h-9 w-9 items-center justify-center"
+          >
+            <Ionicons name="heart-outline" size={24} color={colors.primary[700]} />
+          </Pressable>
+          <Pressable
+            onPress={() => requireAuth(() => router.push('/notificacoes'))}
+            accessibilityRole="button"
+            accessibilityLabel="Notificações"
+            hitSlop={6}
+            className="h-9 w-9 items-center justify-center"
+          >
+            <Ionicons name="notifications-outline" size={24} color={colors.primary[700]} />
+            {naoLidas > 0 && (
+              <View className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-danger-500" />
+            )}
+          </Pressable>
+          <Pressable
+            onPress={() => requireAuth(() => router.push('/anunciar'))}
+            accessibilityRole="button"
+            className="ml-1 flex-row items-center rounded-full bg-accent px-4 py-2 active:opacity-80"
+          >
+            <Ionicons name="add" size={18} color="#fff" />
+            <Text className="ml-1 font-bold text-white">Anunciar</Text>
+          </Pressable>
+        </View>
       </View>
 
       <View className="px-4">

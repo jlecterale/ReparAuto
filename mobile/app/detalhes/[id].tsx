@@ -7,19 +7,23 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { getCarroById } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
+import { useAuth } from '@/context/AuthContext';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Carro } from '@/types';
 import { colors } from '@/theme/colors';
 
 export default function DetalhesCarroScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
+  const { user } = useAuth();
+  const requireAuth = useRequireAuth();
   const [carro, setCarro] = useState<Carro | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +55,7 @@ export default function DetalhesCarroScreen() {
   }
 
   const fotos = carro.fotos?.length ? carro.fotos : [];
+  const podeMensagem = !!carro.criadorUid && carro.criadorUid !== user?.uid;
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -111,6 +116,27 @@ export default function DetalhesCarroScreen() {
 
       {/* Contact bar */}
       <View className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-neutral-200 bg-white px-4 pb-7 pt-3">
+        {podeMensagem ? (
+          <Button
+            label="Mensagem"
+            className="flex-1"
+            icon={<Ionicons name="chatbubble-ellipses" size={18} color="#fff" />}
+            onPress={() =>
+              requireAuth(() =>
+                router.push({
+                  pathname: '/chat/[listingId]',
+                  params: {
+                    listingId: carro.id,
+                    listingType: 'carro',
+                    listingTitle: `${carro.marca} ${carro.modelo}`,
+                    outroUid: carro.criadorUid!,
+                    outroNome: carro.vendedorNome || 'Vendedor',
+                  },
+                }),
+              )
+            }
+          />
+        ) : null}
         {carro.vendedorWhatsApp ? (
           <Button
             label="WhatsApp"
@@ -123,8 +149,9 @@ export default function DetalhesCarroScreen() {
         {carro.vendedorTelefone ? (
           <Button
             label="Ligar"
+            variant="outline"
             className="flex-1"
-            icon={<Ionicons name="call" size={18} color="#fff" />}
+            icon={<Ionicons name="call" size={18} color={colors.primary[700]} />}
             onPress={() => Linking.openURL(`tel:${carro.vendedorTelefone}`)}
           />
         ) : null}
