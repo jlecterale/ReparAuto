@@ -5,12 +5,26 @@ A app **regista o token FCM** de cada dispositivo em `users/{uid}.fcmTokens`
 (deep-link). As **notificações in-app** (coleção `notifications`, em tempo real)
 já funcionam sem backend.
 
-Para **entregar push quando a app está fechada**, falta um passo no backend:
-uma Cloud Function que, ao ser criada uma notificação, envia FCM para os tokens
-do destinatário. Como o site já usa Firebase, basta adicionar esta função ao
-projeto `reparauto-site` (não faz parte da app mobile).
+Para **entregar push quando a app está fechada**, é necessária uma Cloud
+Function que, ao ser criada uma notificação, envia FCM para os tokens do
+destinatário. **Essa função já está implementada no repositório**, em
+[`functions/`](../../functions) (`pushOnNotification`) — só falta fazer o deploy.
 
-## Função de referência (Node, firebase-functions v2)
+## Ativar (resumo)
+
+```sh
+cd functions
+npm install
+firebase deploy --only functions
+```
+
+Pré-requisitos: projeto `reparauto-site` no **plano Blaze** e, para iOS,
+a **APNs Auth Key** carregada no Firebase Console → Cloud Messaging. Detalhes
+completos em [`functions/README.md`](../../functions/README.md).
+
+---
+
+## Função de referência (já incluída em `functions/src/index.ts`)
 
 ```ts
 // functions/src/index.ts
