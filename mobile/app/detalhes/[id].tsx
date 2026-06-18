@@ -1,0 +1,152 @@
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Linking,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { useLocalSearchParams, Stack } from 'expo-router';
+import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
+import { Button } from '@/components/ui/Button';
+import { getCarroById } from '@/lib/db';
+import { formatKm, formatPreco } from '@/lib/format';
+import type { Carro } from '@/types';
+import { colors } from '@/theme/colors';
+
+export default function DetalhesCarroScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { width } = useWindowDimensions();
+  const [carro, setCarro] = useState<Carro | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    getCarroById(id)
+      .then((c) => active && setCarro(c))
+      .finally(() => active && setLoading(false));
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50">
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+      </View>
+    );
+  }
+
+  if (!carro) {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50 px-8">
+        <Ionicons name="alert-circle-outline" size={56} color={colors.neutral[300]} />
+        <Text className="mt-3 text-lg font-bold text-fg-heading">Anúncio não encontrado</Text>
+      </View>
+    );
+  }
+
+  const fotos = carro.fotos?.length ? carro.fotos : [];
+
+  return (
+    <View className="flex-1 bg-neutral-50">
+      <Stack.Screen options={{ title: `${carro.marca} ${carro.modelo}` }} />
+      <ScrollView contentContainerClassName="pb-28">
+        {/* Gallery */}
+        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+          {fotos.map((url, i) => (
+            <Image
+              key={i}
+              source={url}
+              style={{ width, height: width * 0.72 }}
+              contentFit="cover"
+              transition={200}
+            />
+          ))}
+          {fotos.length === 0 && (
+            <View
+              style={{ width, height: width * 0.72 }}
+              className="items-center justify-center bg-neutral-200"
+            >
+              <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />
+            </View>
+          )}
+        </ScrollView>
+
+        <View className="p-4">
+          <Text className="text-2xl font-extrabold text-fg-heading">
+            {carro.marca} {carro.modelo}
+          </Text>
+          <Text className="mt-1 text-3xl font-black text-accent">
+            {formatPreco(carro.preco)}
+          </Text>
+
+          {/* Specs */}
+          <View className="mt-5 flex-row flex-wrap">
+            <Spec icon="calendar-outline" label="Ano" value={String(carro.anoFabricacao)} />
+            <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
+            <Spec icon="water-outline" label="Combustível" value={carro.combustivel} />
+            <Spec icon="cog-outline" label="Caixa" value={carro.cambio} />
+            <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
+            <Spec icon="location-outline" label="Local" value={carro.local} />
+          </View>
+
+          {!!carro.descricao && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Descrição</Text>
+              <Text className="text-base leading-6 text-fg">{carro.descricao}</Text>
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* Contact bar */}
+      <View className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-neutral-200 bg-white px-4 pb-7 pt-3">
+        {carro.vendedorWhatsApp ? (
+          <Button
+            label="WhatsApp"
+            variant="secondary"
+            className="flex-1"
+            icon={<Ionicons name="logo-whatsapp" size={18} color="#fff" />}
+            onPress={() => Linking.openURL(`https://wa.me/${carro.vendedorWhatsApp}`)}
+          />
+        ) : null}
+        {carro.vendedorTelefone ? (
+          <Button
+            label="Ligar"
+            className="flex-1"
+            icon={<Ionicons name="call" size={18} color="#fff" />}
+            onPress={() => Linking.openURL(`tel:${carro.vendedorTelefone}`)}
+          />
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function Spec({
+  icon,
+  label,
+  value,
+}: {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View className="mb-3 w-1/2 flex-row items-center pr-3">
+      <View className="h-9 w-9 items-center justify-center rounded-lg bg-primary-50">
+        <Ionicons name={icon} size={18} color={colors.primary[600]} />
+      </View>
+      <View className="ml-2.5 flex-1">
+        <Text className="text-xs text-fg-subtle">{label}</Text>
+        <Text className="text-sm font-semibold text-fg" numberOfLines={1}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}

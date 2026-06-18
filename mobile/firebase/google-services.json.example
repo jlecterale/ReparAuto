@@ -1,0 +1,37 @@
+{
+  "project_info": {
+    "project_number": "707836120678",
+    "project_id": "reparauto-site",
+    "storage_bucket": "reparauto-site.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707836120678:android:REPLACE_ME",
+        "android_client_info": {
+          "package_name": "com.recargarage"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "REPLACE_ME-web.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        { "current_key": "REPLACE_ME_ANDROID_API_KEY" }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "REPLACE_ME-web.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
