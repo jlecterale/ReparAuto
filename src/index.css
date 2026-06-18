@@ -179,6 +179,10 @@ html {
   /* Keep the user's chosen base size; stop iOS from inflating text on rotate. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* The app ships a single light theme. Pin the color scheme so browsers render
+   * native form controls (inputs, textareas, selects) in light mode instead of
+   * inheriting the OS dark-mode UA styling, which made fields look dark/greyed. */
+  color-scheme: light;
 }
 
 /* Phosphor icons render as <svg>, and Tailwind's preflight forces
