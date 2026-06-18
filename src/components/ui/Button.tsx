@@ -49,6 +49,7 @@ export default function Button({
     aviso: 'bg-warning-400 hover:bg-warning-500 text-fg-strong shadow-sm hover:shadow-md',
     escuro: 'bg-primary-900 hover:bg-primary-800 text-white shadow-sm hover:shadow-md',
     ghost: 'bg-white/10 hover:bg-white/20 text-white border border-white/25',
+    premium: 'bg-gradient-to-r from-warning-300 via-warning-400 to-secondary-500 text-neutral-950 font-extrabold shadow-md shadow-secondary-500/20 hover:from-warning-400 hover:via-warning-500 hover:to-secondary-600 border border-warning-200/35 hover:shadow-lg hover:shadow-secondary-500/40 hover:-translate-y-0.5 transition-all duration-200',
   };
 
   const tamanhos: Record<string, string> = {

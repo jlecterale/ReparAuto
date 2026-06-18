@@ -1,3 +1,7 @@
+rolloutPolicy:
+  type: BRANCH
+  branch: main
+
 runConfig:
   cpu: 1
   memoryMiB: 512

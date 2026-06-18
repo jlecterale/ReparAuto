@@ -201,94 +201,97 @@ export default function DetalhesIntencao() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {temWhatsApp ? (
-              <a
-                href={gerarLinkWhatsApp(whatsapp!, intencao.titulo)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
-              >
-                <WhatsappLogo className="text-lg" />
-                WhatsApp
-              </a>
-            ) : (
-              <div
-                title="Comprador não disponibilizou WhatsApp"
-                className="flex items-center justify-center gap-2 bg-green-100 text-green-300 font-bold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
-              >
-                <WhatsappLogo className="text-lg" />
-                WhatsApp indisponível
-              </div>
-            )}
+          {user ? (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {temWhatsApp ? (
+                  <a
+                    href={gerarLinkWhatsApp(whatsapp!, intencao.titulo)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
+                  >
+                    <WhatsappLogo className="text-lg" />
+                    WhatsApp
+                  </a>
+                ) : (
+                  <div
+                    title="Comprador não disponibilizou WhatsApp"
+                    className="flex items-center justify-center gap-2 bg-green-100 text-green-300 font-bold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
+                  >
+                    <WhatsappLogo className="text-lg" />
+                    WhatsApp indisponível
+                  </div>
+                )}
 
-            {temEmail ? (
-              <a
-                href={`mailto:${email}`}
-                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-3 px-4 rounded-xl transition border border-slate-300 text-sm"
-              >
-                <Envelope />
-                Enviar Email
-              </a>
-            ) : (
-              <div
-                title="Comprador não disponibilizou email"
-                className="flex items-center justify-center gap-2 bg-white text-fg-subtle font-semibold py-3 px-4 rounded-xl border border-slate-200 text-sm cursor-not-allowed"
-              >
-                <Envelope />
-                Email indisponível
+                {temEmail ? (
+                  <a
+                    href={`mailto:${email}`}
+                    className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-3 px-4 rounded-xl transition border border-slate-300 text-sm"
+                  >
+                    <Envelope />
+                    Enviar Email
+                  </a>
+                ) : (
+                  <div
+                    title="Comprador não disponibilizou email"
+                    className="flex items-center justify-center gap-2 bg-white text-fg-subtle font-semibold py-3 px-4 rounded-xl border border-slate-200 text-sm cursor-not-allowed"
+                  >
+                    <Envelope />
+                    Email indisponível
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="mt-3">
-            {temTelefone && !mostrarTelefone && (
-              <Button tipo="primario" tamanho="lg" blocoCompleto onClick={() => setMostrarTelefone(true)} icone={<Phone />}>
-                Ver Telefone
-              </Button>
-            )}
-            {temTelefone && mostrarTelefone && (
-              <a
-                href={`tel:${telefone}`}
-                className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 px-4 rounded-xl transition text-sm"
-              >
-                <Phone />
-                {telefone}
-              </a>
-            )}
-            {!temTelefone && (
-              <div
-                title="Comprador não disponibilizou telefone"
-                className="flex items-center justify-center gap-2 w-full bg-slate-100 text-fg-subtle font-semibold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
-              >
-                <Phone />
-                Telefone indisponível
+              <div className="mt-3">
+                {temTelefone && !mostrarTelefone && (
+                  <Button tipo="primario" tamanho="lg" blocoCompleto onClick={() => setMostrarTelefone(true)} icone={<Phone />}>
+                    Ver Telefone
+                  </Button>
+                )}
+                {temTelefone && mostrarTelefone && (
+                  <a
+                    href={`tel:${telefone}`}
+                    className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white font-bold py-3 px-4 rounded-xl transition text-sm"
+                  >
+                    <Phone />
+                    {telefone}
+                  </a>
+                )}
+                {!temTelefone && (
+                  <div
+                    title="Comprador não disponibilizou telefone"
+                    className="flex items-center justify-center gap-2 w-full bg-slate-100 text-fg-subtle font-semibold py-3 px-4 rounded-xl text-sm cursor-not-allowed"
+                  >
+                    <Phone />
+                    Telefone indisponível
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <div className="mt-3">
-            {temChat && (
-              <Button
-                tipo="azul"
-                tamanho="lg"
-                blocoCompleto
-                onClick={() => abrirChat(intencao.id, 'intencao', intencao.titulo, intencao.userId, intencao.vendedorNome || 'Comprador')}
-                icone={<ChatCircleDots />}
-              >
-                Enviar Mensagem (Chat Interno)
-              </Button>
-            )}
-            {!temChat && !user && (
-              <button
-                onClick={() => loginModal.openLoginModal(currentPath)}
-                className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-3 px-4 rounded-xl transition text-sm"
-              >
-                <SignIn />
-                Faça login para enviar mensagem
-              </button>
-            )}
-          </div>
+              <div className="mt-3">
+                {temChat && (
+                  <Button
+                    tipo="azul"
+                    tamanho="lg"
+                    blocoCompleto
+                    onClick={() => abrirChat(intencao.id, 'intencao', intencao.titulo, intencao.userId, intencao.vendedorNome || 'Comprador')}
+                    icone={<ChatCircleDots />}
+                  >
+                    Enviar Mensagem (Chat Interno)
+                  </Button>
+                )}
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={() => loginModal.openLoginModal(currentPath)}
+              className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-4 px-4 rounded-xl transition text-sm"
+            >
+              <SignIn />
+              Faça login para ver os contactos
+            </button>
+          )}
         </div>
 
         <div className="mt-4 flex items-center gap-4 text-xs text-fg-subtle">
