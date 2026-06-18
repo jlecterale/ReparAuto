@@ -77,51 +77,88 @@ export interface Carro {
   contagemFavoritos?: number;
 }
 
-export type TipoPeca =
-  | 'Motor'
-  | 'Travões'
-  | 'Suspensão'
-  | 'Elétrica'
-  | 'Carroçaria'
-  | 'Interior'
-  | 'Pneus'
-  | 'Outro';
+export type TipoPeca = 'venda' | 'desmonte' | 'procura';
+export type FiltroTipoPeca = 'todos' | TipoPeca;
+
+export const TIPO_PECA_LABELS: Record<TipoPeca, string> = {
+  venda: 'Venda',
+  desmonte: 'Desmonte',
+  procura: 'Procura',
+};
 
 export interface Peca {
   id: string;
-  titulo: string;
   tipo: TipoPeca;
-  preco: number;
+  titulo: string;
+  categoria: string;
+  marcaCarro: string;
+  modeloCarro?: string;
+  preco: number | null;
   estado: string;
-  marca?: string;
-  modelo?: string;
   local: string;
   distrito?: string;
-  descricao: string;
-  fotos: string[];
+  coordenadas?: { lat: number; lng: number };
+  contacto?: string;
+  vendedorTelefone?: string;
+  vendedorWhatsApp?: string;
+  vendedorEmail?: string;
+  foto?: string;
   criador: string;
   criadorUid?: string;
+  vendedorNome?: string;
+  descricao: string;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
+  dataAprovacao?: Timestamp;
+  visualizacoes?: number;
+  contagemMensagens?: number;
 }
 
+export type EspecialidadeOficina =
+  | 'mecanica_convencional'
+  | 'preparacao'
+  | 'pintura'
+  | 'eletrica'
+  | 'eletronica'
+  | 'estetica_automotiva'
+  | 'pneus'
+  | 'ar_condicionado'
+  | 'classicos_restauro'
+  | 'outro';
+
+export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
+  mecanica_convencional: 'Mecânica Convencional',
+  preparacao: 'Preparação & Tuning',
+  pintura: 'Pintura & Funilaria',
+  eletrica: 'Eletricidade',
+  eletronica: 'Eletrónica & Diagnóstico',
+  estetica_automotiva: 'Estética Automóvel (Detailing)',
+  pneus: 'Pneus & Alinhamento',
+  ar_condicionado: 'Ar Condicionado',
+  classicos_restauro: 'Clássicos & Restauro',
+  outro: 'Outro Serviço',
+};
+
+/** Workshops live in the `services` collection (web type: OficinaMecanico). */
 export interface Oficina {
   id: string;
+  criador: string;
   nome: string;
   descricao: string;
-  servicos: string[];
-  local: string;
-  distrito?: string;
-  morada?: string;
-  coordenadas?: { lat: number; lng: number };
-  telefone?: string;
-  email?: string;
-  fotos: string[];
-  criador: string;
-  criadorUid?: string;
+  responsavel: string;
+  telefone: string;
+  whatsapp?: string;
+  email: string;
+  website?: string;
+  distrito: string;
+  localidade: string;
+  morada: string;
+  coordenadas?: { latitude: number; longitude: number };
+  especialidades: EspecialidadeOficina[];
+  logoUrl?: string;
+  fotos?: string[];
+  status: StatusAnuncio;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
-  verificado?: boolean;
-  status: StatusAnuncio;
-  dataCriacao: Timestamp;
+  dataCriacao?: Timestamp;
 }

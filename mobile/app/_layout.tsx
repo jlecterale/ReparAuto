@@ -8,13 +8,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { FavoritosProvider } from '@/context/FavoritosContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { colors } from '@/theme/colors';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigator() {
-  const { isLoggedIn, loading } = useAuth();
+  const { loading } = useAuth();
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
@@ -28,20 +29,20 @@ function RootNavigator() {
     );
   }
 
+  // Guest browsing is allowed (App Store Guideline 5.1.1(i)): the marketplace
+  // is fully readable without an account. Login is only required for actions
+  // (favourite, announce, contact), which push the (auth) modal on demand.
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.neutral[50] } }}>
-      <Stack.Protected guard={isLoggedIn}>
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
-        <Stack.Screen
-          name="anunciar"
-          options={{ headerShown: true, title: 'Anunciar', presentation: 'modal' }}
-        />
-      </Stack.Protected>
-
-      <Stack.Protected guard={!isLoggedIn}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen name="pecas/[id]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen name="oficinas/[id]" options={{ headerShown: true, title: '' }} />
+      <Stack.Screen
+        name="anunciar"
+        options={{ headerShown: true, title: 'Anunciar', presentation: 'modal' }}
+      />
+      <Stack.Screen name="(auth)" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
@@ -51,10 +52,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AuthProvider>
-          <ToastProvider>
-            <StatusBar style="dark" />
-            <RootNavigator />
-          </ToastProvider>
+          <FavoritosProvider>
+            <ToastProvider>
+              <StatusBar style="dark" />
+              <RootNavigator />
+            </ToastProvider>
+          </FavoritosProvider>
         </AuthProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

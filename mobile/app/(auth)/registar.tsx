@@ -36,6 +36,8 @@ export default function RegistarScreen() {
     setLoading(true);
     try {
       await registar(nome.trim(), email.trim(), password);
+      if (router.canDismiss()) router.dismiss();
+      else router.replace('/');
     } catch {
       showToast('Não foi possível criar a conta. O email pode já existir.', 'error');
     } finally {

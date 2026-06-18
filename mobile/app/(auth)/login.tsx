@@ -7,8 +7,9 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { Screen } from '@/components/ui/Screen';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -18,12 +19,18 @@ import { useToast } from '@/context/ToastContext';
 import { colors } from '@/theme/colors';
 
 export default function LoginScreen() {
-  const { login, loginGoogle } = useAuth();
+  const { login, loginGoogle, loginApple, appleDisponivel } = useAuth();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Return to the app after authenticating (the auth flow is a modal).
+  function voltarApp() {
+    if (router.canDismiss()) router.dismiss();
+    else router.replace('/');
+  }
 
   async function handleLogin() {
     if (!email.trim() || !password) {
@@ -33,6 +40,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await login(email.trim(), password);
+      voltarApp();
     } catch {
       showToast('Credenciais inválidas. Tente novamente.', 'error');
     } finally {
@@ -44,10 +52,24 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     try {
       await loginGoogle();
+      voltarApp();
     } catch {
       showToast('Não foi possível entrar com o Google.', 'error');
     } finally {
       setGoogleLoading(false);
+    }
+  }
+
+  async function handleApple() {
+    try {
+      await loginApple();
+      voltarApp();
+    } catch (e) {
+      // User cancellation is silent; everything else surfaces an error.
+      const code = (e as { code?: string })?.code;
+      if (code !== 'ERR_REQUEST_CANCELED' && code !== 'ERR_CANCELED') {
+        showToast('Não foi possível entrar com a Apple.', 'error');
+      }
     }
   }
 
@@ -105,6 +127,16 @@ export default function LoginScreen() {
               onPress={handleGoogle}
               icon={<Ionicons name="logo-google" size={18} color={colors.primary[700]} />}
             />
+
+            {appleDisponivel && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                cornerRadius={12}
+                style={{ height: 50, width: '100%' }}
+                onPress={handleApple}
+              />
+            )}
           </View>
 
           <View className="mt-8 flex-row justify-center">

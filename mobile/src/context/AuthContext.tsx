@@ -8,8 +8,11 @@ import React, {
 } from 'react';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import {
+  appleSignInDisponivel,
   configureGoogleSignIn,
   criarConta,
+  deleteAccount,
+  loginComApple,
   loginComEmail,
   loginComGoogle,
   logoutFirebase,
@@ -17,6 +20,7 @@ import {
 } from '@/lib/auth';
 import {
   createUserProfile,
+  deleteUserProfile,
   getUserProfile,
   updateUserProfile,
 } from '@/lib/db';
@@ -56,7 +60,10 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<Usuario>;
   registar: (nome: string, email: string, password: string) => Promise<Usuario>;
   loginGoogle: () => Promise<Usuario>;
+  loginApple: () => Promise<Usuario>;
+  appleDisponivel: boolean;
   logout: () => Promise<void>;
+  eliminarConta: () => Promise<void>;
   updateProfile: (data: Partial<Usuario>) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -66,6 +73,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
+  const [appleDisponivel, setAppleDisponivel] = useState(false);
+
+  useEffect(() => {
+    appleSignInDisponivel().then(setAppleDisponivel).catch(() => {});
+  }, []);
 
   const mergeProfile = useCallback(
     async (fb: FirebaseAuthTypes.User): Promise<Usuario> => {
@@ -119,10 +131,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return merged;
   }, [mergeProfile]);
 
+  const loginApple = useCallback(async () => {
+    const fb = await loginComApple();
+    const merged = await mergeProfile(fb);
+    setUser(merged);
+    return merged;
+  }, [mergeProfile]);
+
   const logout = useCallback(async () => {
     await logoutFirebase();
     setUser(null);
   }, []);
+
+  const eliminarConta = useCallback(async () => {
+    const uid = user?.uid;
+    // Remove the Firestore profile first, then the auth account. If the auth
+    // delete needs a recent login, it throws and the caller re-authenticates.
+    if (uid) await deleteUserProfile(uid).catch(() => {});
+    await deleteAccount();
+    setUser(null);
+  }, [user?.uid]);
 
   const updateProfile = useCallback(
     async (data: Partial<Usuario>) => {
@@ -149,11 +177,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       registar,
       loginGoogle,
+      loginApple,
+      appleDisponivel,
       logout,
+      eliminarConta,
       updateProfile,
       refreshProfile,
     }),
-    [user, loading, login, registar, loginGoogle, logout, updateProfile, refreshProfile],
+    [
+      user,
+      loading,
+      login,
+      registar,
+      loginGoogle,
+      loginApple,
+      appleDisponivel,
+      logout,
+      eliminarConta,
+      updateProfile,
+      refreshProfile,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

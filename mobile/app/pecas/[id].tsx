@@ -11,22 +11,21 @@ import { useLocalSearchParams, Stack } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
-import { FavoriteButton } from '@/components/ui/FavoriteButton';
-import { getCarroById } from '@/lib/db';
-import { formatKm, formatPreco } from '@/lib/format';
-import type { Carro } from '@/types';
+import { getPecaById } from '@/lib/db';
+import { formatPrecoOpcional } from '@/lib/format';
+import { TIPO_PECA_LABELS, type Peca } from '@/types';
 import { colors } from '@/theme/colors';
 
-export default function DetalhesCarroScreen() {
+export default function DetalhesPecaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
-  const [carro, setCarro] = useState<Carro | null>(null);
+  const [peca, setPeca] = useState<Peca | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
-    getCarroById(id)
-      .then((c) => active && setCarro(c))
+    getPecaById(id)
+      .then((p) => active && setPeca(p))
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
@@ -41,91 +40,83 @@ export default function DetalhesCarroScreen() {
     );
   }
 
-  if (!carro) {
+  if (!peca) {
     return (
       <View className="flex-1 items-center justify-center bg-neutral-50 px-8">
         <Ionicons name="alert-circle-outline" size={56} color={colors.neutral[300]} />
-        <Text className="mt-3 text-lg font-bold text-fg-heading">Anúncio não encontrado</Text>
+        <Text className="mt-3 text-lg font-bold text-fg-heading">Peça não encontrada</Text>
       </View>
     );
   }
 
-  const fotos = carro.fotos?.length ? carro.fotos : [];
+  const tel = peca.vendedorTelefone || peca.contacto;
 
   return (
     <View className="flex-1 bg-neutral-50">
-      <Stack.Screen
-        options={{
-          title: `${carro.marca} ${carro.modelo}`,
-          headerRight: () => <FavoriteButton id={carro.id} />,
-        }}
-      />
+      <Stack.Screen options={{ title: peca.titulo }} />
       <ScrollView contentContainerClassName="pb-28">
-        {/* Gallery */}
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-          {fotos.map((url, i) => (
-            <Image
-              key={i}
-              source={url}
-              style={{ width, height: width * 0.72 }}
-              contentFit="cover"
-              transition={200}
-            />
-          ))}
-          {fotos.length === 0 && (
-            <View
-              style={{ width, height: width * 0.72 }}
-              className="items-center justify-center bg-neutral-200"
-            >
-              <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />
-            </View>
-          )}
-        </ScrollView>
+        {peca.foto ? (
+          <Image
+            source={peca.foto}
+            style={{ width, height: width * 0.72 }}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : (
+          <View
+            style={{ width, height: width * 0.6 }}
+            className="items-center justify-center bg-neutral-200"
+          >
+            <Ionicons name="cube-outline" size={48} color={colors.neutral[400]} />
+          </View>
+        )}
 
         <View className="p-4">
-          <Text className="text-2xl font-extrabold text-fg-heading">
-            {carro.marca} {carro.modelo}
-          </Text>
+          <View className="self-start rounded bg-primary-100 px-2 py-0.5">
+            <Text className="text-xs font-bold text-primary-700">
+              {TIPO_PECA_LABELS[peca.tipo]}
+            </Text>
+          </View>
+          <Text className="mt-2 text-2xl font-extrabold text-fg-heading">{peca.titulo}</Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPreco(carro.preco)}
+            {formatPrecoOpcional(peca.preco)}
           </Text>
 
-          {/* Specs */}
           <View className="mt-5 flex-row flex-wrap">
-            <Spec icon="calendar-outline" label="Ano" value={String(carro.anoFabricacao)} />
-            <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
-            <Spec icon="water-outline" label="Combustível" value={carro.combustivel} />
-            <Spec icon="cog-outline" label="Caixa" value={carro.cambio} />
-            <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
-            <Spec icon="location-outline" label="Local" value={carro.local} />
+            <Spec icon="pricetag-outline" label="Categoria" value={peca.categoria} />
+            <Spec icon="car-outline" label="Marca" value={peca.marcaCarro} />
+            {!!peca.modeloCarro && (
+              <Spec icon="car-sport-outline" label="Modelo" value={peca.modeloCarro} />
+            )}
+            <Spec icon="ribbon-outline" label="Estado" value={peca.estado} />
+            <Spec icon="location-outline" label="Local" value={peca.local} />
           </View>
 
-          {!!carro.descricao && (
+          {!!peca.descricao && (
             <View className="mt-5">
               <Text className="mb-2 text-lg font-bold text-fg-heading">Descrição</Text>
-              <Text className="text-base leading-6 text-fg">{carro.descricao}</Text>
+              <Text className="text-base leading-6 text-fg">{peca.descricao}</Text>
             </View>
           )}
         </View>
       </ScrollView>
 
-      {/* Contact bar */}
       <View className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-neutral-200 bg-white px-4 pb-7 pt-3">
-        {carro.vendedorWhatsApp ? (
+        {peca.vendedorWhatsApp ? (
           <Button
             label="WhatsApp"
             variant="secondary"
             className="flex-1"
             icon={<Ionicons name="logo-whatsapp" size={18} color="#fff" />}
-            onPress={() => Linking.openURL(`https://wa.me/${carro.vendedorWhatsApp}`)}
+            onPress={() => Linking.openURL(`https://wa.me/${peca.vendedorWhatsApp}`)}
           />
         ) : null}
-        {carro.vendedorTelefone ? (
+        {tel ? (
           <Button
             label="Ligar"
             className="flex-1"
             icon={<Ionicons name="call" size={18} color="#fff" />}
-            onPress={() => Linking.openURL(`tel:${carro.vendedorTelefone}`)}
+            onPress={() => Linking.openURL(`tel:${tel}`)}
           />
         ) : null}
       </View>

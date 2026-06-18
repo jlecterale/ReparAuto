@@ -75,10 +75,33 @@ export function subscribePecas(
     );
 }
 
+export async function getPecaById(id: string): Promise<Peca | null> {
+  const doc = await db.collection(PECAS).doc(id).get();
+  return doc.exists() ? ({ id: doc.id, ...doc.data() } as Peca) : null;
+}
+
 // ---------- Oficinas ----------
 export async function getOficinas(): Promise<Oficina[]> {
   const snap = await db.collection(OFICINAS).where('status', '==', 'aprovado').get();
   return mapDocs<Oficina>(snap).sort(byDataCriacaoDesc);
+}
+
+export function subscribeOficinas(
+  onData: (oficinas: Oficina[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  return db
+    .collection(OFICINAS)
+    .where('status', '==', 'aprovado')
+    .onSnapshot(
+      (snap) => onData(mapDocs<Oficina>(snap).sort(byDataCriacaoDesc)),
+      (err) => onError?.(err),
+    );
+}
+
+export async function getOficinaById(id: string): Promise<Oficina | null> {
+  const doc = await db.collection(OFICINAS).doc(id).get();
+  return doc.exists() ? ({ id: doc.id, ...doc.data() } as Oficina) : null;
 }
 
 // ---------- Users ----------
@@ -105,4 +128,41 @@ export async function updateUserProfile(
   data: Partial<Usuario>,
 ): Promise<void> {
   await db.collection(USERS).doc(uid).set(data, { merge: true });
+}
+
+export async function deleteUserProfile(uid: string): Promise<void> {
+  await db.collection(USERS).doc(uid).delete();
+}
+
+// ---------- Favoritos ----------
+/** Reads the favourites array stored on the user document. */
+export async function getFavoritosRemoto(uid: string): Promise<string[]> {
+  const doc = await db.collection(USERS).doc(uid).get();
+  const data = doc.data();
+  return Array.isArray(data?.favoritos) ? (data!.favoritos as string[]) : [];
+}
+
+/** Persists the favourites array on the user document. */
+export async function saveFavoritosRemoto(
+  uid: string,
+  favoritos: string[],
+): Promise<void> {
+  await db.collection(USERS).doc(uid).set({ favoritos }, { merge: true });
+}
+
+/**
+ * Atomically bumps a numeric counter. Firestore queues the write while offline
+ * and syncs on reconnect, so no manual offline queue is needed (unlike web).
+ * The security rules whitelist `contagemFavoritos` bumps on `cars`.
+ */
+export async function bumpContador(
+  colecao: 'cars' | 'parts',
+  id: string,
+  campo: string,
+  delta: 1 | -1,
+): Promise<void> {
+  await db
+    .collection(colecao)
+    .doc(id)
+    .update({ [campo]: firestore.FieldValue.increment(delta) });
 }

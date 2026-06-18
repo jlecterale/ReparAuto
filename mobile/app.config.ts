@@ -41,6 +41,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: BUNDLE_ID,
     supportsTablet: true,
     googleServicesFile: './firebase/GoogleService-Info.plist',
+    // Required for Sign in with Apple (App Store Guideline 4.8).
+    usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -52,13 +54,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
-    permissions: [
-      'CAMERA',
-      'READ_MEDIA_IMAGES',
-      'ACCESS_COARSE_LOCATION',
-      'ACCESS_FINE_LOCATION',
-      'POST_NOTIFICATIONS',
-    ],
+    // Only declare permissions for features that ship. Camera/photos arrive
+    // with "Anunciar" (Fase 3); location with the workshops map (Fase 5);
+    // notifications with push (Fase 4). Declaring them earlier risks store
+    // rejection for requesting permissions with no in-app use.
+    permissions: [],
   },
   web: {
     bundler: 'metro',
@@ -68,6 +68,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-secure-store',
+    'expo-apple-authentication',
     '@react-native-firebase/app',
     '@react-native-firebase/auth',
     [
@@ -75,36 +76,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         // React Native Firebase requires static frameworks on iOS.
         ios: { useFrameworks: 'static' },
-        android: { },
+        android: {},
       },
     ],
     [
       '@react-native-google-signin/google-signin',
       { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
     ],
-    [
-      'expo-image-picker',
-      {
-        photosPermission:
-          'A ReparAuto precisa de acesso às suas fotos para publicar anúncios.',
-        cameraPermission:
-          'A ReparAuto precisa da câmara para tirar fotos dos seus anúncios.',
-      },
-    ],
-    [
-      'expo-location',
-      {
-        locationWhenInUsePermission:
-          'A ReparAuto usa a sua localização para mostrar anúncios e oficinas perto de si.',
-      },
-    ],
-    [
-      'expo-notifications',
-      {
-        icon: './assets/notification-icon.png',
-        color: '#0b4f9e',
-      },
-    ],
+    // NOTE: expo-image-picker (Fase 3), expo-location (Fase 5) and
+    // expo-notifications (Fase 4) plugins are added when those features ship,
+    // so the build only declares permissions it actually uses.
     [
       'expo-splash-screen',
       {

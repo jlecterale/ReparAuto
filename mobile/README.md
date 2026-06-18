@@ -60,10 +60,20 @@ assets/                   # ícones e splash gerados a partir do logo da marca
 ## Estado da implementação (roadmap)
 
 - [x] **Fase 1 — Fundação**: Expo + Router + NativeWind, Firebase nativo,
-      autenticação (email + Google), navegação protegida, design system.
-- [x] **Fase 2 (parcial)**: listagem de carros em tempo real + detalhe.
-- [ ] **Fase 2 (resto)**: peças, oficinas, favoritos, filtros.
+      autenticação (email + Google + Apple), navegação, design system.
+- [x] **Fase 2 — Descoberta & Detalhe**: listagens em tempo real de carros,
+      peças e oficinas, com pesquisa e filtros; ecrãs de detalhe; favoritos
+      (conta + anónimo via AsyncStorage). Navegação aberta a convidados —
+      login só é exigido para ações (favoritar, anunciar).
 - [ ] **Fase 3**: anunciar (câmara/upload) + perfil completo.
 - [ ] **Fase 4**: chat em tempo real + notificações push.
 - [ ] **Fase 5**: intenções, confiança, mapa de oficinas.
 - [ ] **Fase 6**: polimento, offline e submissão às lojas.
+
+## Conformidade com as lojas (já tratado)
+
+- **Eliminação de conta in-app** (App Store 5.1.1(v)) — em Perfil → "Eliminar conta".
+- **Sign in with Apple** (App Store 4.8) — apresentado no iOS quando há login Google.
+- **Navegação sem registo** (App Store 5.1.1(i)) — convidados navegam livremente.
+- **Permissões só quando usadas** — câmara/localização/notificações são
+  declaradas apenas nas fases que as utilizam (3/4/5).

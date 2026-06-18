@@ -3,31 +3,60 @@ import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
-import { Input } from '@/components/ui/Input';
+import { SearchBar } from '@/components/ui/SearchBar';
+import { FilterChips, type ChipOption } from '@/components/ui/FilterChips';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Logo } from '@/components/ui/Logo';
 import { CarCard } from '@/components/CarCard';
 import { useCarros } from '@/hooks/useCarros';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import type { Carro } from '@/types';
 import { colors } from '@/theme/colors';
+
+type Filtro = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
+
+const FILTROS: ChipOption<Filtro>[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'ate1000', label: 'Até €1.000' },
+  { value: 'ate5000', label: 'Até €5.000' },
+  { value: 'reparar', label: 'Para reparar' },
+];
+
+function aplicaFiltro(carro: Carro, filtro: Filtro): boolean {
+  switch (filtro) {
+    case 'ate1000':
+      return carro.preco <= 1000;
+    case 'ate5000':
+      return carro.preco <= 5000;
+    case 'reparar':
+      return carro.estadoVeiculo === 'manutencao';
+    default:
+      return true;
+  }
+}
 
 export default function HomeScreen() {
   const { carros, loading, error } = useCarros();
+  const requireAuth = useRequireAuth();
   const [busca, setBusca] = useState('');
+  const [filtro, setFiltro] = useState<Filtro>('todos');
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    if (!termo) return carros;
-    return carros.filter((c) =>
-      `${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo),
-    );
-  }, [carros, busca]);
+    return carros.filter((c) => {
+      if (!aplicaFiltro(c, filtro)) return false;
+      if (!termo) return true;
+      return `${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo);
+    });
+  }, [carros, busca, filtro]);
 
   return (
     <Screen>
-      {/* Header */}
       <View className="flex-row items-center justify-between px-4 pb-3 pt-1">
         <Logo />
         <Pressable
-          onPress={() => router.push('/anunciar')}
+          onPress={() => requireAuth(() => router.push('/anunciar'))}
+          accessibilityRole="button"
           className="flex-row items-center rounded-full bg-accent px-4 py-2 active:opacity-80"
         >
           <Ionicons name="add" size={18} color="#fff" />
@@ -35,18 +64,14 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* Search */}
-      <View className="px-4 pb-2">
-        <View className="flex-row items-center rounded-xl border border-neutral-300 bg-white px-3">
-          <Ionicons name="search" size={18} color={colors.fg.subtle} />
-          <Input
-            value={busca}
-            onChangeText={setBusca}
-            placeholder="Procurar marca, modelo ou localidade"
-            className="flex-1 border-0 px-2"
-          />
-        </View>
+      <View className="px-4">
+        <SearchBar
+          value={busca}
+          onChangeText={setBusca}
+          placeholder="Procurar marca, modelo ou localidade"
+        />
       </View>
+      <FilterChips options={FILTROS} selected={filtro} onSelect={setFiltro} />
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
@@ -70,30 +95,12 @@ export default function HomeScreen() {
             <EmptyState
               icon="car-outline"
               titulo="Sem resultados"
-              texto={busca ? 'Tente outra pesquisa.' : 'Ainda não há anúncios.'}
+              texto={busca || filtro !== 'todos' ? 'Tente outros critérios.' : 'Ainda não há anúncios.'}
             />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
     </Screen>
-  );
-}
-
-function EmptyState({
-  icon,
-  titulo,
-  texto,
-}: {
-  icon: keyof typeof Ionicons.glyphMap;
-  titulo: string;
-  texto: string;
-}) {
-  return (
-    <View className="flex-1 items-center justify-center px-8 py-20">
-      <Ionicons name={icon} size={56} color={colors.neutral[300]} />
-      <Text className="mt-4 text-lg font-bold text-fg-heading">{titulo}</Text>
-      <Text className="mt-1 text-center text-fg-muted">{texto}</Text>
-    </View>
   );
 }

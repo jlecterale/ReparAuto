@@ -1,20 +1,71 @@
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { REQUIRES_RECENT_LOGIN } from '@/lib/auth';
 import { colors } from '@/theme/colors';
 
 export default function PerfilScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, eliminarConta } = useAuth();
+  const { showToast } = useToast();
 
   function confirmarLogout() {
     Alert.alert('Terminar sessão', 'Tem a certeza que quer sair?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Sair', style: 'destructive', onPress: () => logout() },
     ]);
+  }
+
+  function confirmarEliminar() {
+    Alert.alert(
+      'Eliminar conta',
+      'Esta ação é permanente e remove o seu perfil e os seus dados. Tem a certeza?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await eliminarConta();
+            } catch (e) {
+              const code = (e as { code?: string })?.code;
+              if (code === REQUIRES_RECENT_LOGIN) {
+                showToast('Por segurança, inicie sessão novamente e tente de novo.', 'error');
+                await logout();
+              } else {
+                showToast('Não foi possível eliminar a conta.', 'error');
+              }
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  if (!user) {
+    return (
+      <Screen>
+        <SectionHeader title="Perfil" />
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-primary-50">
+            <Ionicons name="person-circle-outline" size={44} color={colors.primary[600]} />
+          </View>
+          <Text className="text-2xl font-extrabold text-fg-heading">Bem-vindo</Text>
+          <Text className="mb-6 mt-2 text-center text-base text-fg-muted">
+            Inicie sessão para guardar favoritos, anunciar e contactar vendedores.
+          </Text>
+          <View className="w-full">
+            <Button label="Entrar ou criar conta" onPress={() => router.push('/login')} />
+          </View>
+        </View>
+      </Screen>
+    );
   }
 
   return (
@@ -29,7 +80,10 @@ export default function PerfilScreen() {
               contentFit="cover"
             />
           ) : (
-            <View className="h-22 w-22 items-center justify-center rounded-full bg-primary-100" style={{ width: 88, height: 88 }}>
+            <View
+              className="items-center justify-center rounded-full bg-primary-100"
+              style={{ width: 88, height: 88 }}
+            >
               <Ionicons name="person" size={40} color={colors.primary[600]} />
             </View>
           )}
@@ -52,13 +106,16 @@ export default function PerfilScreen() {
           <Row icon="settings-outline" label="Definições" last />
         </View>
 
-        <View className="mt-6">
+        <View className="mt-6 gap-3">
           <Button
             label="Terminar sessão"
             variant="outline"
             onPress={confirmarLogout}
             icon={<Ionicons name="log-out-outline" size={18} color={colors.primary[700]} />}
           />
+          <Pressable onPress={confirmarEliminar} className="py-2" accessibilityRole="button">
+            <Text className="text-center font-semibold text-danger-600">Eliminar conta</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </Screen>

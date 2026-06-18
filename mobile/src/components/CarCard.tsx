@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Carro } from '@/types';
 import { formatKm, formatPreco } from '@/lib/format';
+import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { colors } from '@/theme/colors';
 
 const BLURHASH = 'L6PZfSjE.AyE_3t7t7R**0o#DgR4';
@@ -38,6 +39,9 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
             <Text className="text-xs font-bold text-neutral-900">Para reparar</Text>
           </View>
         )}
+        <View className="absolute right-2 top-2">
+          <FavoriteButton id={carro.id} floating />
+        </View>
       </View>
 
       <View className="p-3">

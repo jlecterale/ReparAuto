@@ -15,3 +15,8 @@ export function formatKm(km: number): string {
 export function formatNumero(n: number): string {
   return new Intl.NumberFormat('pt-PT').format(n);
 }
+
+/** Parts may have no price (e.g. "procura" listings) → "Sob consulta". */
+export function formatPrecoOpcional(preco: number | null | undefined): string {
+  return preco != null && preco > 0 ? formatPreco(preco) : 'Sob consulta';
+}
