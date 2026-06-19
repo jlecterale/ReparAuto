@@ -27,10 +27,13 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Return to the app after authenticating (the auth flow is a modal).
-  function voltarApp() {
+  // After authenticating (the auth flow is a modal): if the profile is
+  // incomplete, send the user to Perfil to finish it (mirrors the web's
+  // setup-perfil redirect); otherwise return to where they were.
+  function aposLogin(profileCompleted: boolean) {
     if (router.canDismiss()) router.dismiss();
-    else router.replace('/');
+    if (!profileCompleted) router.navigate('/perfil');
+    else if (!router.canGoBack()) router.replace('/');
   }
 
   async function handleLogin() {
@@ -40,8 +43,8 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      await login(email.trim(), password);
-      voltarApp();
+      const u = await login(email.trim(), password);
+      aposLogin(u.profileCompleted);
     } catch {
       showToast('Credenciais inválidas. Tente novamente.', 'error');
     } finally {
@@ -52,8 +55,8 @@ export default function LoginScreen() {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
-      await loginGoogle();
-      voltarApp();
+      const u = await loginGoogle();
+      aposLogin(u.profileCompleted);
     } catch {
       showToast('Não foi possível entrar com o Google.', 'error');
     } finally {
@@ -63,8 +66,8 @@ export default function LoginScreen() {
 
   async function handleApple() {
     try {
-      await loginApple();
-      voltarApp();
+      const u = await loginApple();
+      aposLogin(u.profileCompleted);
     } catch (e) {
       // User cancellation is silent; everything else surfaces an error.
       const code = (e as { code?: string })?.code;

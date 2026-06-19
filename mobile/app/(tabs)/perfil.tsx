@@ -99,6 +99,23 @@ export default function PerfilScreen() {
           )}
         </View>
 
+        {!user.profileCompleted && (
+          <Pressable
+            onPress={() => router.push('/perfil/editar')}
+            accessibilityRole="button"
+            className="mb-3 flex-row items-center rounded-2xl border border-secondary-200 bg-secondary-50 p-4 active:opacity-90"
+          >
+            <Ionicons name="alert-circle" size={22} color={colors.secondary[600]} />
+            <View className="ml-3 flex-1">
+              <Text className="font-bold text-secondary-700">Complete o seu perfil</Text>
+              <Text className="text-sm text-secondary-700/80">
+                Adicione contacto e localização para anunciar e ser contactado.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.secondary[600]} />
+          </Pressable>
+        )}
+
         <View className="mt-2 overflow-hidden rounded-2xl bg-white">
           <Row
             icon="car-sport-outline"

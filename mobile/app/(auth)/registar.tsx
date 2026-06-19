@@ -36,8 +36,10 @@ export default function RegistarScreen() {
     setLoading(true);
     try {
       await registar(nome.trim(), email.trim(), password);
+      // New accounts always start with an incomplete profile → go to Perfil
+      // so the user can finish it (mirrors the web's setup-perfil step).
       if (router.canDismiss()) router.dismiss();
-      else router.replace('/');
+      router.navigate('/perfil');
     } catch {
       showToast('Não foi possível criar a conta. O email pode já existir.', 'error');
     } finally {
