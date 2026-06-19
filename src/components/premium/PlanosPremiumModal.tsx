@@ -10,6 +10,8 @@ import {
   Wrench,
   Storefront,
   CaretRight,
+  CalendarBlank,
+  Clock,
 } from '@phosphor-icons/react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -26,12 +28,20 @@ interface Plano {
   descricao: string;
   preco: string;
   periodo: string;
+  /** Preço mensal em euros (para cálculo de desconto anual) */
+  precoMensal?: number;
+  /** Preço anual em euros */
+  precoAnual?: number;
   destaque: boolean;
+  /** Badge exibido quando está no modo mensal */
   badge?: string;
+  /** Badge exibido quando está no modo anual (pode diferir) */
+  badgeAnual?: string;
   icon: React.ReactNode;
   beneficios: string[];
   /** Stripe Price ID — preencher após configuração do Stripe */
   stripePriceId: string;
+  stripePriceIdAnual?: string;
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -100,6 +110,8 @@ const PLANOS_OFICINAS: Plano[] = [
     descricao: 'Selo de confiança e presença na listagem de oficinas.',
     preco: '€15',
     periodo: '/mês',
+    precoMensal: 15,
+    precoAnual: 150,
     destaque: false,
     icon: <Wrench size={28} weight="duotone" className="text-primary-500" />,
     beneficios: [
@@ -109,6 +121,7 @@ const PLANOS_OFICINAS: Plano[] = [
       'Perfil personalizado',
     ],
     stripePriceId: 'price_OFICINA_BASICO_PLACEHOLDER',
+    stripePriceIdAnual: 'price_OFICINA_BASICO_ANUAL_PLACEHOLDER',
   },
   {
     id: 'oficina-pro',
@@ -116,8 +129,11 @@ const PLANOS_OFICINAS: Plano[] = [
     descricao: 'Topo das buscas geográficas e chat ilimitado.',
     preco: '€35',
     periodo: '/mês',
+    precoMensal: 35,
+    precoAnual: 300,
     destaque: true,
     badge: 'Recomendado',
+    badgeAnual: 'Melhor Oferta 🔥',
     icon: <Crown size={28} weight="duotone" className="text-warning-400" />,
     beneficios: [
       'Tudo do plano Verificada',
@@ -127,6 +143,7 @@ const PLANOS_OFICINAS: Plano[] = [
       'Badge Premium dourado',
     ],
     stripePriceId: 'price_OFICINA_PRO_PLACEHOLDER',
+    stripePriceIdAnual: 'price_OFICINA_PRO_ANUAL_PLACEHOLDER',
   },
 ];
 
@@ -137,6 +154,8 @@ const PLANOS_LEADS: Plano[] = [
     descricao: 'Acesso antecipado a intenções de compra.',
     preco: '€50',
     periodo: '/mês',
+    precoMensal: 50,
+    precoAnual: 500,
     destaque: true,
     badge: 'Stands & Lojas',
     icon: <Storefront size={28} weight="duotone" className="text-secondary-600" />,
@@ -148,13 +167,22 @@ const PLANOS_LEADS: Plano[] = [
       'Suporte dedicado',
     ],
     stripePriceId: 'price_LEADS_PRO_PLACEHOLDER',
+    stripePriceIdAnual: 'price_LEADS_PRO_ANUAL_PLACEHOLDER',
   },
 ];
 
 type Tab = 'anuncios' | 'oficinas' | 'leads';
+type BillingCycle = 'mensal' | 'anual';
+
+/** Calcula a percentagem de desconto do plano anual */
+function calcDesconto(precoMensal: number, precoAnual: number): number {
+  const totalMensal = precoMensal * 12;
+  return Math.round(((totalMensal - precoAnual) / totalMensal) * 100);
+}
 
 export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModalProps) {
   const [tab, setTab] = useState<Tab>('anuncios');
+  const [billing, setBilling] = useState<BillingCycle>('mensal');
   const [loading, setLoading] = useState<string | null>(null);
 
   const tabs: { key: Tab; label: string }[] = [
@@ -170,8 +198,16 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
         ? PLANOS_OFICINAS
         : PLANOS_LEADS;
 
+  /** Anúncios não têm opção anual */
+  const showBillingToggle = tab !== 'anuncios';
+  const isAnual = billing === 'anual';
+
   const handleEscolherPlano = async (plano: Plano) => {
     setLoading(plano.id);
+
+    const priceId = isAnual && plano.stripePriceIdAnual
+      ? plano.stripePriceIdAnual
+      : plano.stripePriceId;
 
     /* ──────────────────────────────────────────────────────────
      * INTEGRAÇÃO STRIPE — descomentar quando o endpoint estiver pronto:
@@ -180,7 +216,7 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
      *   const res = await fetch('/api/stripe/checkout-session', {
      *     method: 'POST',
      *     headers: { 'Content-Type': 'application/json' },
-     *     body: JSON.stringify({ priceId: plano.stripePriceId }),
+     *     body: JSON.stringify({ priceId }),
      *   });
      *   const { url } = await res.json();
      *   if (url) window.location.href = url;
@@ -193,8 +229,8 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
     setTimeout(() => {
       setLoading(null);
       alert(
-        `Plano "${plano.nome}" selecionado!\n\n` +
-        `Stripe Price ID: ${plano.stripePriceId}\n\n` +
+        `Plano "${plano.nome}" (${isAnual ? 'Anual' : 'Mensal'}) selecionado!\n\n` +
+        `Stripe Price ID: ${priceId}\n\n` +
         `A integração com o Stripe será ativada em breve. ` +
         `Configure o endpoint /api/stripe/checkout-session e substitua os Price IDs.`
       );
@@ -204,11 +240,11 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
   return (
     <Modal show={show} onClose={onClose} titulo="Planos & Impulsionamentos" tamanho="xl">
       {/* Tab selector */}
-      <div className="flex gap-1 p-1 bg-neutral-100 rounded-xl mb-6">
+      <div className="flex gap-1 p-1 bg-neutral-100 rounded-xl mb-4">
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => setTab(t.key)}
+            onClick={() => { setTab(t.key); setBilling('mensal'); }}
             className={`flex-1 py-2.5 px-3 text-sm font-bold rounded-lg transition-all duration-200 ${
               tab === t.key
                 ? 'bg-white text-fg-heading shadow-sm'
@@ -220,64 +256,160 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
         ))}
       </div>
 
+      {/* Billing toggle — only for oficinas & leads */}
+      {showBillingToggle && (
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="relative flex items-center gap-1 p-1 bg-neutral-100 rounded-xl">
+            <button
+              onClick={() => setBilling('mensal')}
+              className={`flex items-center gap-1.5 py-2 px-4 text-sm font-bold rounded-lg transition-all duration-200 ${
+                !isAnual
+                  ? 'bg-white text-fg-heading shadow-sm'
+                  : 'text-fg-muted hover:text-fg-strong'
+              }`}
+            >
+              <Clock size={16} weight="bold" />
+              Mensal
+            </button>
+            <button
+              onClick={() => setBilling('anual')}
+              className={`flex items-center gap-1.5 py-2 px-4 text-sm font-bold rounded-lg transition-all duration-200 ${
+                isAnual
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm'
+                  : 'text-fg-muted hover:text-fg-strong'
+              }`}
+            >
+              <CalendarBlank size={16} weight="bold" />
+              Anual
+            </button>
+          </div>
+          {!isAnual && (
+            <span className="text-xs text-green-600 font-bold bg-green-50 px-2.5 py-1 rounded-full animate-pulse">
+              💰 Poupe até 29% no plano anual!
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Plans grid */}
       <div className={`grid gap-4 ${planosAtivos.length >= 3 ? 'md:grid-cols-3' : planosAtivos.length === 2 ? 'md:grid-cols-2' : 'md:grid-cols-1 max-w-md mx-auto'}`}>
-        {planosAtivos.map((plano) => (
-          <div
-            key={plano.id}
-            className={`relative rounded-2xl border-2 p-5 flex flex-col transition-all duration-200 hover:shadow-lg ${
-              plano.destaque
-                ? 'border-warning-400 bg-gradient-to-b from-warning-50/50 to-white shadow-md ring-1 ring-warning-200/50'
-                : 'border-neutral-200 bg-white hover:border-neutral-300'
-            }`}
-          >
-            {/* Badge de destaque */}
-            {plano.badge && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge cor="accent" variante="solid">
-                  {plano.badge}
-                </Badge>
-              </div>
-            )}
+        {planosAtivos.map((plano) => {
+          const hasAnual = plano.precoMensal != null && plano.precoAnual != null;
+          const desconto = hasAnual ? calcDesconto(plano.precoMensal!, plano.precoAnual!) : 0;
+          const showAnual = isAnual && hasAnual;
 
-            {/* Header */}
-            <div className="flex items-center gap-3 mb-3 mt-1">
-              {plano.icon}
-              <div>
-                <h4 className="text-base font-extrabold text-fg-heading leading-tight">{plano.nome}</h4>
-                <p className="text-xs text-fg-muted">{plano.descricao}</p>
-              </div>
-            </div>
+          // Determine badge text
+          const badgeText = showAnual
+            ? (plano.badgeAnual || `Poupe ${desconto}%`)
+            : plano.badge;
 
-            {/* Preço */}
-            <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-3xl font-extrabold text-fg-heading">{plano.preco}</span>
-              <span className="text-sm text-fg-muted font-medium">{plano.periodo}</span>
-            </div>
+          // Determine if this plan should be highlighted
+          const isHighlighted = showAnual
+            ? true // all annual plans are highlighted to show savings
+            : plano.destaque;
 
-            {/* Benefícios */}
-            <ul className="space-y-2 mb-5 flex-1">
-              {plano.beneficios.map((b, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-fg">
-                  <CheckCircle size={18} weight="fill" className="text-success-500 shrink-0 mt-0.5" />
-                  {b}
-                </li>
-              ))}
-            </ul>
+          // Find the biggest discount among current plans for "melhor oferta" ring
+          const maxDesconto = planosAtivos.reduce((max, p) => {
+            if (p.precoMensal && p.precoAnual) {
+              const d = calcDesconto(p.precoMensal, p.precoAnual);
+              return d > max ? d : max;
+            }
+            return max;
+          }, 0);
+          const isBestDeal = showAnual && hasAnual && desconto === maxDesconto && desconto > 0;
 
-            {/* CTA */}
-            <Button
-              tipo={plano.destaque ? 'premium' : 'secundario'}
-              tamanho="md"
-              blocoCompleto
-              carregando={loading === plano.id}
-              iconeFim={<CaretRight size={16} weight="bold" />}
-              onClick={() => handleEscolherPlano(plano)}
+          return (
+            <div
+              key={plano.id}
+              className={`relative rounded-2xl border-2 p-5 flex flex-col transition-all duration-300 hover:shadow-lg ${
+                isBestDeal
+                  ? 'border-green-400 bg-gradient-to-b from-green-50/60 to-white shadow-lg ring-2 ring-green-300/50 scale-[1.02]'
+                  : isHighlighted
+                    ? 'border-warning-400 bg-gradient-to-b from-warning-50/50 to-white shadow-md ring-1 ring-warning-200/50'
+                    : 'border-neutral-200 bg-white hover:border-neutral-300'
+              }`}
             >
-              Escolher Plano
-            </Button>
-          </div>
-        ))}
+              {/* Badge de destaque */}
+              {badgeText && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <Badge
+                    cor={isBestDeal ? 'green' : 'accent'}
+                    variante="solid"
+                  >
+                    {badgeText}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Header */}
+              <div className="flex items-center gap-3 mb-3 mt-1">
+                {plano.icon}
+                <div>
+                  <h4 className="text-base font-extrabold text-fg-heading leading-tight">{plano.nome}</h4>
+                  <p className="text-xs text-fg-muted">{plano.descricao}</p>
+                </div>
+              </div>
+
+              {/* Preço */}
+              {showAnual ? (
+                <div className="mb-4">
+                  {/* Preço original riscado */}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg text-fg-muted line-through font-semibold">
+                      €{(plano.precoMensal! * 12)}
+                    </span>
+                    <span className="text-xs font-bold text-white bg-green-500 px-2 py-0.5 rounded-full">
+                      -{desconto}%
+                    </span>
+                  </div>
+                  {/* Preço anual */}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold text-green-600">€{plano.precoAnual}</span>
+                    <span className="text-sm text-fg-muted font-medium">/ano</span>
+                  </div>
+                  {/* Equivalente mensal */}
+                  <p className="text-xs text-green-600 font-semibold mt-1">
+                    ≈ €{(plano.precoAnual! / 12).toFixed(2)}/mês · Poupa €{(plano.precoMensal! * 12 - plano.precoAnual!)}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-extrabold text-fg-heading">{plano.preco}</span>
+                  <span className="text-sm text-fg-muted font-medium">{plano.periodo}</span>
+                </div>
+              )}
+
+              {/* Benefícios */}
+              <ul className="space-y-2 mb-5 flex-1">
+                {plano.beneficios.map((b, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-fg">
+                    <CheckCircle size={18} weight="fill" className="text-success-500 shrink-0 mt-0.5" />
+                    {b}
+                  </li>
+                ))}
+                {/* Extra benefit for annual */}
+                {showAnual && (
+                  <li className="flex items-start gap-2 text-sm text-green-700 font-semibold">
+                    <CheckCircle size={18} weight="fill" className="text-green-500 shrink-0 mt-0.5" />
+                    Pagamento anual — sem preocupações
+                  </li>
+                )}
+              </ul>
+
+              {/* CTA */}
+              <Button
+                tipo={isBestDeal ? 'premium' : isHighlighted ? 'premium' : 'secundario'}
+                tamanho="md"
+                blocoCompleto
+                carregando={loading === plano.id}
+                iconeFim={<CaretRight size={16} weight="bold" />}
+                onClick={() => handleEscolherPlano(plano)}
+              >
+                {showAnual ? 'Subscrever Anual' : 'Escolher Plano'}
+              </Button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Footer info */}
