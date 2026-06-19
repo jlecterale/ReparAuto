@@ -182,7 +182,7 @@ function calcDesconto(precoMensal: number, precoAnual: number): number {
 
 export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModalProps) {
   const [tab, setTab] = useState<Tab>('anuncios');
-  const [billing, setBilling] = useState<BillingCycle>('mensal');
+  const [billing, setBilling] = useState<BillingCycle>('anual');
   const [loading, setLoading] = useState<string | null>(null);
 
   const tabs: { key: Tab; label: string }[] = [
@@ -244,7 +244,7 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
         {tabs.map((t) => (
           <button
             key={t.key}
-            onClick={() => { setTab(t.key); setBilling('mensal'); }}
+            onClick={() => { setTab(t.key); setBilling(t.key === 'anuncios' ? 'mensal' : 'anual'); }}
             className={`flex-1 py-2.5 px-3 text-sm font-bold rounded-lg transition-all duration-200 ${
               tab === t.key
                 ? 'bg-white text-fg-heading shadow-sm'
