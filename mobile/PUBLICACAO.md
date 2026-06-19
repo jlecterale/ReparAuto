@@ -1,4 +1,4 @@
-# Publicação nas lojas — ReparAuto (iOS & Android)
+# Publicação nas lojas — RecarGarage (iOS & Android)
 
 Guia passo a passo para publicar a app na **Apple App Store** e na **Google
 Play**, usando **EAS** (Expo Application Services). Bundle id / package:

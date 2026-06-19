@@ -87,7 +87,7 @@ export default function LoginScreen() {
           <View className="mb-8 items-center">
             <LogoMark size={64} />
             <Text className="mt-4 text-3xl font-extrabold text-primary-900">
-              Repar<Text className="text-accent">Auto</Text>
+              Recar<Text className="text-accent">Garage</Text>
             </Text>
             <Text className="mt-1 text-base text-fg-muted">
               Entre na sua conta para continuar
@@ -153,14 +153,14 @@ export default function LoginScreen() {
             Ao continuar, aceita os{' '}
             <Text
               className="font-semibold text-primary-700"
-              onPress={() => WebBrowser.openBrowserAsync('https://reparauto.pt/termos')}
+              onPress={() => WebBrowser.openBrowserAsync('https://www.recargarage.com/termos')}
             >
               Termos
             </Text>{' '}
             e a{' '}
             <Text
               className="font-semibold text-primary-700"
-              onPress={() => WebBrowser.openBrowserAsync('https://reparauto.pt/privacidade')}
+              onPress={() => WebBrowser.openBrowserAsync('https://www.recargarage.com/privacidade')}
             >
               Política de Privacidade
             </Text>

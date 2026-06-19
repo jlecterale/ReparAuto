@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LogoMark } from '@/components/ui/Logo';
 import { colors } from '@/theme/colors';
 
-const SITE = 'https://reparauto.pt';
+const SITE = 'https://www.recargarage.com';
 
 const LINKS: { label: string; path: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { label: 'Política de Privacidade', path: '/privacidade', icon: 'shield-checkmark-outline' },
@@ -23,7 +23,7 @@ export default function DefinicoesScreen() {
       <View className="items-center py-6">
         <LogoMark size={56} />
         <Text className="mt-3 text-xl font-extrabold text-primary-900">
-          Repar<Text className="text-accent">Auto</Text>
+          Recar<Text className="text-accent">Garage</Text>
         </Text>
         <Text className="text-sm text-fg-subtle">Versão {versao}</Text>
       </View>
@@ -46,7 +46,7 @@ export default function DefinicoesScreen() {
       </View>
 
       <Text className="mt-6 text-center text-xs text-fg-subtle">
-        © {new Date().getFullYear()} ReparAuto
+        © {new Date().getFullYear()} RecarGarage
       </Text>
     </ScrollView>
   );

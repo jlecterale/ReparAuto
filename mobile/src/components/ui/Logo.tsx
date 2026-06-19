@@ -39,7 +39,7 @@ export function Logo({ size = 28 }: { size?: number }) {
     <View className="flex-row items-center gap-2">
       <LogoMark size={size} />
       <Text className="text-xl font-extrabold text-primary-900">
-        Repar<Text className="text-accent">Auto</Text>
+        Recar<Text className="text-accent">Garage</Text>
       </Text>
     </View>
   );

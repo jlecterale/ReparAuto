@@ -11,7 +11,7 @@ const firebaseFile = (name: string): string | undefined => {
 };
 
 /**
- * ReparAuto mobile app config.
+ * RecarGarage mobile app config.
  *
  * Native Firebase credentials are NOT committed. They live in `./firebase/`
  * and are wired into each build through `googleServicesFile` below:
@@ -33,9 +33,9 @@ const GOOGLE_IOS_URL_SCHEME =
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'ReparAuto',
-  slug: 'reparauto',
-  scheme: 'reparauto',
+  name: 'RecarGarage',
+  slug: 'recargarage',
+  scheme: 'recargarage',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -118,14 +118,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         photosPermission: false,
         microphonePermission: false,
         cameraPermission:
-          'A ReparAuto usa a câmara apenas quando tira uma foto para o seu anúncio.',
+          'A RecarGarage usa a câmara apenas quando tira uma foto para o seu anúncio.',
       },
     ],
     [
       'expo-location',
       {
         locationWhenInUsePermission:
-          'A ReparAuto usa a sua localização apenas para mostrar oficinas perto de si no mapa.',
+          'A RecarGarage usa a sua localização apenas para mostrar oficinas perto de si no mapa.',
       },
     ],
     [

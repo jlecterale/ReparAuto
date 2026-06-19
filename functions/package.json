@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "description": "Cloud Functions for ReparAuto — push notifications",
+  "description": "Cloud Functions for RecarGarage — push notifications",
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",

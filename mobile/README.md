@@ -1,6 +1,6 @@
-# ReparAuto — App Mobile (React Native + Expo)
+# RecarGarage — App Mobile (React Native + Expo)
 
-App nativa iOS/Android do marketplace ReparAuto, construída com **Expo SDK 55**,
+App nativa iOS/Android do marketplace RecarGarage, construída com **Expo SDK 55**,
 **Expo Router**, **NativeWind** e **React Native Firebase**. Partilha o mesmo
 backend Firebase (`reparauto-site`) do site, pelo que usa os mesmos dados,
 utilizadores e regras de segurança.

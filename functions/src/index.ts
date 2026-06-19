@@ -1,5 +1,5 @@
 /**
- * ReparAuto Cloud Functions — push notifications.
+ * RecarGarage Cloud Functions — push notifications.
  *
  * When a document is created in `notifications/{id}` (the same docs the web and
  * mobile apps already write — e.g. new chat message, listing approved), this
@@ -50,7 +50,7 @@ export const pushOnNotification = onDocumentCreated(
     const response = await getMessaging().sendEachForMulticast({
       tokens,
       notification: {
-        title: data.titulo ?? "ReparAuto",
+        title: data.titulo ?? "RecarGarage",
         body: data.mensagem ?? "",
       },
       data: { link: data.link ?? "", tipo: data.tipo ?? "" },

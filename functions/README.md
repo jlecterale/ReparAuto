@@ -1,4 +1,4 @@
-# ReparAuto — Cloud Functions
+# RecarGarage — Cloud Functions
 
 Entrega de **notificações push** (FCM) para a app mobile. Quando é criado um
 documento em `notifications/{id}` (já escrito pela web e pela app — ex.: nova

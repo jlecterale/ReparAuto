@@ -1,4 +1,4 @@
-# Textos das lojas — ReparAuto (Português de Portugal)
+# Textos das lojas — RecarGarage (Português de Portugal)
 
 Conteúdo pronto a colar nas fichas da **App Store** e da **Google Play**.
 Respeita os limites de caracteres de cada campo. Revê antes de submeter.
@@ -7,15 +7,15 @@ Respeita os limites de caracteres de cada campo. Revê antes de submeter.
 
 ## Comum
 
-- **Nome da app:** ReparAuto
+- **Nome da app:** RecarGarage
 - **Categoria principal:** Compras (Shopping)
 - **Categoria secundária (App Store):** Estilo de vida
 - **Idioma principal:** Português (Portugal)
 - **Classificação etária:** 4+ (App Store) / 3+ (Google Play)
-- **URL de marketing:** https://reparauto.pt
-- **URL de política de privacidade:** https://reparauto.pt/privacidade
-- **URL de suporte:** https://reparauto.pt/seguranca
-- **Email de suporte:** suporte@reparauto.pt
+- **URL de marketing:** https://www.recargarage.com
+- **URL de política de privacidade:** https://www.recargarage.com/privacidade
+- **URL de suporte:** https://www.recargarage.com/seguranca
+- **Email de suporte:** suporte@recargarage.com
 
 ---
 
@@ -23,7 +23,7 @@ Respeita os limites de caracteres de cada campo. Revê antes de submeter.
 
 ### Nome (máx. 30 caracteres)
 ```
-ReparAuto
+RecarGarage
 ```
 
 ### Subtítulo (máx. 30 caracteres)
@@ -39,7 +39,7 @@ diretamente com os vendedores. Tudo num só lugar.
 
 ### Descrição (máx. 4000 caracteres)
 ```
-A ReparAuto é o marketplace português para quem compra, vende e repara
+A RecarGarage é o marketplace português para quem compra, vende e repara
 automóveis. Encontre o seu próximo carro usado, peças ao melhor preço e oficinas
 de confiança perto de si — tudo numa app rápida e simples.
 
@@ -72,7 +72,7 @@ PARA PROFISSIONAIS E PARTICULARES
 Pode navegar livremente sem criar conta. O início de sessão só é pedido para
 guardar favoritos, anunciar ou contactar.
 
-Descarregue a ReparAuto e junte-se ao maior mercado automóvel português.
+Descarregue a RecarGarage e junte-se ao maior mercado automóvel português.
 ```
 
 ### Palavras-chave (máx. 100 caracteres, separadas por vírgula)
@@ -96,7 +96,7 @@ A app permite navegar como convidado, sem conta. O início de sessão só é ped
 para ações (favoritar, anunciar, gerir perfil).
 
 Conta de teste:
-  Email: revisor@reparauto.pt
+  Email: revisor@recargarage.com
   Palavra-passe: (fornecer)
 
 Eliminação de conta: disponível em Perfil → Eliminar conta.
@@ -109,7 +109,7 @@ Sign in with Apple disponível no ecrã de início de sessão (iOS).
 
 ### Nome da app (máx. 30 caracteres)
 ```
-ReparAuto
+RecarGarage
 ```
 
 ### Descrição curta (máx. 80 caracteres)
@@ -119,7 +119,7 @@ Carros usados, peças e oficinas. Compre, venda e contacte num só lugar.
 
 ### Descrição completa (máx. 4000 caracteres)
 ```
-A ReparAuto é o marketplace português para quem compra, vende e repara
+A RecarGarage é o marketplace português para quem compra, vende e repara
 automóveis. Encontre o seu próximo carro usado, peças ao melhor preço e oficinas
 de confiança perto de si — tudo numa app rápida e simples.
 
@@ -152,7 +152,7 @@ PARA PROFISSIONAIS E PARTICULARES
 Pode navegar livremente sem criar conta. O início de sessão só é pedido para
 guardar favoritos, anunciar ou contactar.
 
-Descarregue a ReparAuto e junte-se ao maior mercado automóvel português.
+Descarregue a RecarGarage e junte-se ao maior mercado automóvel português.
 ```
 
 ### Notas da versão (máx. 500 caracteres)
@@ -184,6 +184,6 @@ Dados recolhidos e associados ao utilizador:
 
 - Substituir os URLs e o email de exemplo pelos reais antes de submeter.
 - O nome legal/empresa pode ser pedido nas duas consolas (preencher com a
-  entidade responsável pela ReparAuto).
+  entidade responsável pela RecarGarage).
 - Screenshots: gerar a partir da app em execução (Início, Detalhe do carro,
   Peças, Oficinas, Anunciar, Favoritos).
