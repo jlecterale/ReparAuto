@@ -8,7 +8,7 @@ service firebase.storage {
     // ==========================================
     
     function isAuthenticated() {
-      return request.auth != null;
+      return request.auth != null && request.auth.token.email_verified == true;
     }
     
     function isAdmin() {
@@ -27,8 +27,8 @@ service firebase.storage {
 
     match /users/{userId}/{allImages=**} {
       allow read: if true;
-      allow write: if (isAuthenticated() && request.auth.uid == userId && isValidImage()) || isAdmin();
-      allow delete: if (isAuthenticated() && request.auth.uid == userId) || isAdmin();
+      allow write: if (request.auth != null && request.auth.uid == userId && isValidImage()) || isAdmin();
+      allow delete: if (request.auth != null && request.auth.uid == userId) || isAdmin();
     }
 
     match /ads/{userId}/{allImages=**} {

@@ -32,6 +32,7 @@ export interface Usuario {
   notificacoes: boolean;
   foto: string | null;
   profileCompleted: boolean;
+  emailVerified?: boolean;
   verificado?: boolean;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
@@ -56,6 +57,7 @@ export interface AuthContextValue {
   profileCompleted: boolean;
   updateProfile: (data: Partial<Usuario>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  reenviarEmailVerificacao: () => Promise<void>;
 }
 
 export type UsuarioInput = Omit<Usuario, 'uid' | 'dataCriacao' | 'dataAtualizacao'>;
