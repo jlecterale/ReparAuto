@@ -20,7 +20,10 @@ export function FilterChips<T extends string>({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerClassName="gap-2 px-4 py-2"
+      // flexGrow:0 stops the row from absorbing vertical space; items-center
+      // keeps each chip at its natural height instead of stretching to fill.
+      style={{ flexGrow: 0 }}
+      contentContainerClassName="items-center gap-2 px-4 py-2"
     >
       {options.map((opt) => {
         const ativo = opt.value === selected;
