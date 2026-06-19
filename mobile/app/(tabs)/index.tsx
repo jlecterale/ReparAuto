@@ -3,8 +3,10 @@ import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
-import { SearchBar } from '@/components/ui/SearchBar';
+import { SearchActionsRow } from '@/components/ui/SearchActionsRow';
 import { FilterChips, type ChipOption } from '@/components/ui/FilterChips';
+import { SortSheet, type SortOption } from '@/components/ui/SortSheet';
+import { CarFiltersSheet } from '@/components/home/CarFiltersSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Logo } from '@/components/ui/Logo';
 import { CarCard } from '@/components/CarCard';
@@ -15,6 +17,7 @@ import type { Carro } from '@/types';
 import { colors } from '@/theme/colors';
 
 type Filtro = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
+type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
 const FILTROS: ChipOption<Filtro>[] = [
   { value: 'todos', label: 'Todos' },
@@ -23,7 +26,13 @@ const FILTROS: ChipOption<Filtro>[] = [
   { value: 'reparar', label: 'Para reparar' },
 ];
 
-function aplicaFiltro(carro: Carro, filtro: Filtro): boolean {
+const SORT_OPCOES: SortOption<Ordenar>[] = [
+  { value: 'relevancia', label: 'Mais recentes', icon: 'sparkles-outline' },
+  { value: 'preco_asc', label: 'Preço: mais baixo', icon: 'trending-down-outline' },
+  { value: 'preco_desc', label: 'Preço: mais alto', icon: 'trending-up-outline' },
+];
+
+function aplicaChip(carro: Carro, filtro: Filtro): boolean {
   switch (filtro) {
     case 'ate1000':
       return carro.preco <= 1000;
@@ -43,14 +52,47 @@ export default function HomeScreen() {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<Filtro>('todos');
 
+  // Advanced filters + sort.
+  const [precoMin, setPrecoMin] = useState('');
+  const [precoMax, setPrecoMax] = useState('');
+  const [distrito, setDistrito] = useState('');
+  const [estado, setEstado] = useState('');
+  const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+
+  const filtersCount = [precoMin, precoMax, distrito, estado].filter(Boolean).length;
+
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    return carros.filter((c) => {
-      if (!aplicaFiltro(c, filtro)) return false;
-      if (!termo) return true;
-      return `${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo);
+    const min = precoMin ? Number(precoMin) : null;
+    const max = precoMax ? Number(precoMax) : null;
+    const dist = distrito.toLowerCase();
+
+    let cs = carros.filter((c) => {
+      if (!aplicaChip(c, filtro)) return false;
+      if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
+      if (min !== null && c.preco < min) return false;
+      if (max !== null && c.preco > max) return false;
+      if (estado && c.estadoVeiculo !== estado) return false;
+      if (dist) {
+        const cd = (c.distrito ?? '').toLowerCase();
+        if (cd !== dist && !(c.local ?? '').toLowerCase().includes(dist)) return false;
+      }
+      return true;
     });
-  }, [carros, busca, filtro]);
+
+    if (ordenar === 'preco_asc') cs = [...cs].sort((a, b) => a.preco - b.preco);
+    else if (ordenar === 'preco_desc') cs = [...cs].sort((a, b) => b.preco - a.preco);
+    return cs;
+  }, [carros, busca, filtro, precoMin, precoMax, estado, distrito, ordenar]);
+
+  function limparFiltros() {
+    setPrecoMin('');
+    setPrecoMax('');
+    setDistrito('');
+    setEstado('');
+  }
 
   return (
     <Screen>
@@ -89,13 +131,15 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <View className="px-4">
-        <SearchBar
-          value={busca}
-          onChangeText={setBusca}
-          placeholder="Procurar marca, modelo ou localidade"
-        />
-      </View>
+      <SearchActionsRow
+        value={busca}
+        onChangeText={setBusca}
+        placeholder="Procurar marca, modelo ou localidade"
+        filtersCount={filtersCount}
+        onOpenFilters={() => setFiltersOpen(true)}
+        sortActive={ordenar !== 'relevancia'}
+        onOpenSort={() => setSortOpen(true)}
+      />
       <FilterChips options={FILTROS} selected={filtro} onSelect={setFiltro} />
 
       {loading ? (
@@ -120,12 +164,38 @@ export default function HomeScreen() {
             <EmptyState
               icon="car-outline"
               titulo="Sem resultados"
-              texto={busca || filtro !== 'todos' ? 'Tente outros critérios.' : 'Ainda não há anúncios.'}
+              texto={
+                busca || filtro !== 'todos' || filtersCount > 0
+                  ? 'Tente outros critérios.'
+                  : 'Ainda não há anúncios.'
+              }
             />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <CarFiltersSheet
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        precoMin={precoMin}
+        setPrecoMin={setPrecoMin}
+        precoMax={precoMax}
+        setPrecoMax={setPrecoMax}
+        distrito={distrito}
+        setDistrito={setDistrito}
+        estado={estado}
+        setEstado={setEstado}
+        onClear={limparFiltros}
+        resultCount={filtrados.length}
+      />
+      <SortSheet
+        visible={sortOpen}
+        onClose={() => setSortOpen(false)}
+        options={SORT_OPCOES}
+        value={ordenar}
+        onChange={setOrdenar}
+      />
     </Screen>
   );
 }

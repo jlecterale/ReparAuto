@@ -4,7 +4,9 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
-import { SearchBar } from '@/components/ui/SearchBar';
+import { SearchActionsRow } from '@/components/ui/SearchActionsRow';
+import { SortSheet, type SortOption } from '@/components/ui/SortSheet';
+import { OficinaFiltersSheet } from '@/components/oficinas/OficinaFiltersSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { OficinaCard } from '@/components/OficinaCard';
 import { OficinasMapa } from '@/components/OficinasMapa';
@@ -12,22 +14,47 @@ import { useOficinas } from '@/hooks/useOficinas';
 import { colors } from '@/theme/colors';
 
 type Vista = 'lista' | 'mapa';
+type Ordenar = 'relevancia' | 'avaliacao';
+
+const SORT_OPCOES: SortOption<Ordenar>[] = [
+  { value: 'relevancia', label: 'Mais recentes', icon: 'sparkles-outline' },
+  { value: 'avaliacao', label: 'Melhor avaliadas', icon: 'star-outline' },
+];
 
 export default function OficinasScreen() {
   const { oficinas, loading, error } = useOficinas();
   const [busca, setBusca] = useState('');
   const [vista, setVista] = useState<Vista>('lista');
 
+  const [distrito, setDistrito] = useState('');
+  const [especialidade, setEspecialidade] = useState('');
+  const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+
+  const filtersCount = [distrito, especialidade].filter(Boolean).length;
+
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
-    if (!termo) return oficinas;
-    return oficinas.filter((o) =>
-      `${o.nome} ${o.localidade} ${o.distrito}`.toLowerCase().includes(termo),
-    );
-  }, [oficinas, busca]);
+    let os = oficinas.filter((o) => {
+      if (termo && !`${o.nome} ${o.localidade} ${o.distrito}`.toLowerCase().includes(termo)) return false;
+      if (distrito && o.distrito !== distrito) return false;
+      if (especialidade && !(o.especialidades ?? []).includes(especialidade as never)) return false;
+      return true;
+    });
+    if (ordenar === 'avaliacao') {
+      os = [...os].sort((a, b) => (b.mediaAvaliacoes ?? 0) - (a.mediaAvaliacoes ?? 0));
+    }
+    return os;
+  }, [oficinas, busca, distrito, especialidade, ordenar]);
 
   function abrir(id: string) {
     router.push(`/oficinas/${id}`);
+  }
+
+  function limparFiltros() {
+    setDistrito('');
+    setEspecialidade('');
   }
 
   return (
@@ -43,8 +70,16 @@ export default function OficinasScreen() {
       />
 
       {vista === 'lista' && (
-        <View className="px-4 pb-1 pt-3">
-          <SearchBar value={busca} onChangeText={setBusca} placeholder="Procurar oficina ou localidade" />
+        <View className="pb-1 pt-3">
+          <SearchActionsRow
+            value={busca}
+            onChangeText={setBusca}
+            placeholder="Procurar oficina ou localidade"
+            filtersCount={filtersCount}
+            onOpenFilters={() => setFiltersOpen(true)}
+            sortActive={ordenar !== 'relevancia'}
+            onOpenSort={() => setSortOpen(true)}
+          />
         </View>
       )}
 
@@ -59,7 +94,7 @@ export default function OficinasScreen() {
           texto="Verifique a sua ligação e tente novamente."
         />
       ) : vista === 'mapa' ? (
-        <OficinasMapa oficinas={oficinas} onSelect={abrir} />
+        <OficinasMapa oficinas={filtradas} onSelect={abrir} />
       ) : (
         <FlatList
           data={filtradas}
@@ -70,12 +105,30 @@ export default function OficinasScreen() {
             <EmptyState
               icon="business-outline"
               titulo="Sem oficinas"
-              texto={busca ? 'Tente outra pesquisa.' : 'Ainda não há oficinas.'}
+              texto={busca || filtersCount > 0 ? 'Tente outros critérios.' : 'Ainda não há oficinas.'}
             />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <OficinaFiltersSheet
+        visible={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        distrito={distrito}
+        setDistrito={setDistrito}
+        especialidade={especialidade}
+        setEspecialidade={setEspecialidade}
+        onClear={limparFiltros}
+        resultCount={filtradas.length}
+      />
+      <SortSheet
+        visible={sortOpen}
+        onClose={() => setSortOpen(false)}
+        options={SORT_OPCOES}
+        value={ordenar}
+        onChange={setOrdenar}
+      />
     </Screen>
   );
 }

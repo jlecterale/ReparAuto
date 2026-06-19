@@ -18,3 +18,46 @@ export const ESTADOS_VEICULO: { value: EstadoVeiculo; label: string }[] = [
 
 /** Hard limits mirrored from the web app. */
 export const MAX_FOTOS_CARRO = 7;
+
+/** Portuguese districts (matches the web `DISTRITOS`). */
+export const DISTRITOS = [
+  'Aveiro',
+  'Beja',
+  'Braga',
+  'Bragança',
+  'Castelo Branco',
+  'Coimbra',
+  'Évora',
+  'Faro',
+  'Guarda',
+  'Leiria',
+  'Lisboa',
+  'Portalegre',
+  'Porto',
+  'Santarém',
+  'Setúbal',
+  'Viana do Castelo',
+  'Vila Real',
+  'Viseu',
+  'Açores',
+  'Madeira',
+];
+
+/** Part categories / conditions (match the web constants for filter parity). */
+export const CATEGORIAS_PECAS = [
+  'Motor e Transmissão',
+  'Carroçaria e Chaparia',
+  'Iluminação e Óticas',
+  'Interior e Bancos',
+  'Suspensão e Travões',
+  'Eletrónica e Sensores',
+  'Carro Completo p/ Desmonte',
+  'Outros',
+];
+
+export const ESTADOS_PECA = [
+  'Usado (Segunda Mão)',
+  'Novo (Em caixa)',
+  'Reconstruído / Recondicionado',
+  'Indiferente (Procura)',
+];
