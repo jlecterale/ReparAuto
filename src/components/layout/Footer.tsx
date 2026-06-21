@@ -15,6 +15,12 @@ export default function Footer() {
           <Link href="/termos" className="hover:text-white transition">Termos de Utilização</Link>
           <Link href="/privacidade" className="hover:text-white transition">Política de Privacidade</Link>
           <Link href="/cookies" className="hover:text-white transition">Política de Cookies</Link>
+          <button
+            onClick={() => window.dispatchEvent(new Event('reparauto_open_cookie_settings'))}
+            className="hover:text-white transition cursor-pointer font-semibold"
+          >
+            Definições de Cookies
+          </button>
           <Link href="/seguranca" className="hover:text-white transition">Segurança</Link>
           <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
           <a href="mailto:garagerecar@gmail.com" className="hover:text-white transition">Fale Conosco (garagerecar@gmail.com)</a>

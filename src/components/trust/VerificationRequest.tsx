@@ -20,6 +20,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage } from '@/lib/firebase';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
+import CameraCapture from '@/components/ui/CameraCapture';
 import type { AlertTipo } from '@/types/ui';
 import type { Verification, VerificationInput, TipoVerificacao, TipoDocumento } from '@/types/verification';
 
@@ -59,6 +60,7 @@ export default function VerificationRequest({
   const [erro, setErro] = useState('');
   const docInputRef = useRef<HTMLInputElement>(null);
   const selfieInputRef = useRef<HTMLInputElement>(null);
+  const [cameraActiveFor, setCameraActiveFor] = useState<'documento' | 'selfie' | null>(null);
 
   if (loading) return null;
 
@@ -240,6 +242,15 @@ export default function VerificationRequest({
             </>
           )}
         </div>
+        {!docFile && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setCameraActiveFor('documento'); }}
+            className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-bold text-accent hover:text-accent-hover transition border border-accent/20 rounded-lg py-2 hover:bg-accent/5"
+          >
+            <Camera size={16} /> Tirar Foto com a Câmara
+          </button>
+        )}
         <input
           ref={docInputRef}
           type="file"
@@ -279,6 +290,15 @@ export default function VerificationRequest({
             </>
           )}
         </div>
+        {!selfieFile && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setCameraActiveFor('selfie'); }}
+            className="mt-2 w-full flex items-center justify-center gap-2 text-xs font-bold text-accent hover:text-accent-hover transition border border-accent/20 rounded-lg py-2 hover:bg-accent/5"
+          >
+            <Camera size={16} /> Tirar Selfie com a Câmara
+          </button>
+        )}
         <input
           ref={selfieInputRef}
           type="file"
@@ -319,6 +339,23 @@ export default function VerificationRequest({
         <Lock className="mr-1" />
         Os documentos são armazenados de forma segura e apagados após a verificação (RGPD).
       </p>
+
+      {cameraActiveFor && (
+        <CameraCapture
+          facingMode={cameraActiveFor === 'selfie' ? 'user' : 'environment'}
+          label={cameraActiveFor === 'selfie' ? 'Tirar Selfie com Documento' : 'Tirar Foto do Documento'}
+          onClose={() => setCameraActiveFor(null)}
+          onCapture={(file) => {
+            if (cameraActiveFor === 'documento') {
+              setDocFile(file);
+            } else {
+              setSelfieFile(file);
+            }
+            setErro('');
+            setCameraActiveFor(null);
+          }}
+        />
+      )}
     </div>
   );
 }

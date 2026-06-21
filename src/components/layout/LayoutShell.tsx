@@ -11,6 +11,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { WarningCircle } from '@phosphor-icons/react';
 import NotificationPrePrompt from '@/components/ui/NotificationPrePrompt';
+import CookieConsent from '@/components/ui/CookieConsent';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -122,6 +123,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
       <BottomNav />
       <ChatModal />
+      <CookieConsent />
       {showNotifPrompt && user && (
         <NotificationPrePrompt
           uid={user.uid}
