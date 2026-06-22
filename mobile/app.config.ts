@@ -36,7 +36,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'RecarGarage',
   slug: 'recargarage',
   scheme: 'recargarage',
-  version: '1.0.0',
+  version: '1.1.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
@@ -60,7 +60,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: BUNDLE_ID,
-    versionCode: 1,
+    versionCode: 2,
     googleServicesFile: firebaseFile('google-services.json'),
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',

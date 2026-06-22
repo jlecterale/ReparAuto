@@ -14,6 +14,7 @@ import { NotificacoesProvider } from '@/context/NotificacoesContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { registerForPush, setupPushHandlers, unregisterPush } from '@/lib/push';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { UpdateBanner } from '@/components/ui/UpdateBanner';
 import type { Href } from 'expo-router';
 import { colors } from '@/theme/colors';
 
@@ -88,6 +89,7 @@ export default function RootLayout() {
               <NotificacoesProvider>
                 <ToastProvider>
                   <StatusBar style="dark" />
+                  <UpdateBanner />
                   <OfflineBanner />
                   <RootNavigator />
                 </ToastProvider>
