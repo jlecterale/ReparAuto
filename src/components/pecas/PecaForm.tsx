@@ -8,6 +8,7 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { comprimirImagem } from '@/lib/compressImage';
 import { getCoordenadas } from '@/lib/geo';
+import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
 
@@ -230,14 +231,17 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-bold text-fg-subtle mb-1">
-            Marca do Carro Compatível <span className="text-red-500">*</span>
+            Marca Compatível <span className="text-red-500">*</span>
           </label>
-          <input
-            type="text"
-            placeholder="Ex: Seat, Peugeot, BMW"
-            value={form.marcaCarro}
-            onChange={(e) => atualizar('marcaCarro', e.target.value)}
-            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          <SeletorMarcaModelo
+            marca={form.marcaCarro}
+            modelo=""
+            onChangeMarca={(m) => atualizar('marcaCarro', m)}
+            onChangeModelo={() => {}}
+            labelMarca="Marca"
+            labelModelo=""
+            modeloObrigatorio={false}
+            placeholderMarca="Selecionar marca"
           />
         </div>
         <div>

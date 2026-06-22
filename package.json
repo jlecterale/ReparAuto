@@ -12,7 +12,9 @@
     "import:pecas": "node scripts/importar-pecas.mjs",
     "import:pecas:dry": "node scripts/importar-pecas.mjs --dry-run",
     "seed": "node scripts/seed-firestore.mjs",
-    "seed:dry": "node scripts/seed-firestore.mjs --dry-run"
+    "seed:dry": "node scripts/seed-firestore.mjs --dry-run",
+    "seed:marcas": "node scripts/seed-marcas-modelos.mjs",
+    "seed:marcas:dry": "node scripts/seed-marcas-modelos.mjs --dry-run"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

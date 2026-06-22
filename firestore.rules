@@ -36,8 +36,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && hasValidImageCount(7);
       allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin()
-        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visualizacoes', 'contagemMensagens', 'contagemFavoritos']));
+        || request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['visualizacoes', 'contagemMensagens', 'contagemFavoritos']);
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
@@ -45,8 +45,8 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated() && hasValidImageCount(3);
       allow update: if (isOwnerByEmail() && hasValidImageCount(3)) || isAdmin()
-        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['visualizacoes', 'contagemMensagens']));
+        || request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['visualizacoes', 'contagemMensagens']);
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
@@ -110,11 +110,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid;
-      // Any signed-in user may bump view/contact counters (stats map only),
+      // Any user (signed-in or not) may bump view/contact counters (stats map only),
       // mirroring the counter exception on /cars and /parts.
       allow update: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin()
-        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['stats']));
+        || request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['stats']);
       allow delete: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin();
     }
 

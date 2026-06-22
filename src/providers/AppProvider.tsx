@@ -44,6 +44,11 @@ export default function AppProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, []);
 
+  const openLoginModal = useCallback((redirectTo?: string) => {
+    setLoginRedirectTo(redirectTo);
+    setLoginModalOpen(true);
+  }, []);
+
   const auth = useAuth();
   // Only stream the heavy public collections on routes that render them.
   // Other routes still get the action methods (publicarCarro/publicarPeca);
@@ -52,7 +57,7 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   const needsPecas = pathname.startsWith('/pecas');
   const carros = useCarros(needsCarros);
   const pecas = usePecas(needsPecas);
-  const favoritos = useFavoritos(auth.user);
+  const favoritos = useFavoritos(auth.user, openLoginModal);
   const chat = useChat(auth.user?.uid || null, auth.user?.nome || '');
   const intencoes = useIntencoes(auth.user?.uid || null);
 
@@ -64,11 +69,6 @@ export default function AppProvider({ children }: { children: ReactNode }) {
       router.replace('/setup-perfil');
     }
   }, [isLoggedIn, loading, profileCompleted, router, pathname]);
-
-  const openLoginModal = useCallback((redirectTo?: string) => {
-    setLoginRedirectTo(redirectTo);
-    setLoginModalOpen(true);
-  }, []);
 
   const closeLoginModal = useCallback(() => {
     setLoginModalOpen(false);

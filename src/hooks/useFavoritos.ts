@@ -41,7 +41,7 @@ function salvarLocal(lista: string[]): void {
   } catch {}
 }
 
-export default function useFavoritos(user: Usuario | null) {
+export default function useFavoritos(user: Usuario | null, onRequireLogin?: () => void) {
   const [favoritos, setFavoritosState] = useState<string[]>([]);
 
   useEffect(() => {
@@ -108,6 +108,12 @@ export default function useFavoritos(user: Usuario | null) {
       const idStr = String(id);
       const idx = favoritos.indexOf(idStr);
       const uid = user?.uid || null;
+
+      if (!uid && idx === -1) {
+        onRequireLogin?.();
+        return;
+      }
+
       let nova: string[];
       if (idx > -1) {
         nova = [...favoritos];
@@ -121,30 +127,28 @@ export default function useFavoritos(user: Usuario | null) {
         nova = [...favoritos, idStr];
         if (navigator.onLine) {
           incrementCampo('cars', idStr, 'contagemFavoritos');
-          if (uid) {
-            getDoc(doc(db, 'cars', idStr)).then((carSnap) => {
-              if (carSnap.exists()) {
-                const carData = carSnap.data();
-                const criadorUid = carData.criadorUid;
-                if (criadorUid && criadorUid !== uid) {
-                  criarNotificacao(
-                    criadorUid,
-                    'info',
-                    'Anúncio Favoritado ⭐️',
-                    `Alguém favoritou o seu anúncio: ${carData.marca} ${carData.modelo}`,
-                    `/detalhes/${idStr}`
-                  ).catch((err) => console.error('[Favoritos] Erro ao enviar notificação:', err));
-                }
+          getDoc(doc(db, 'cars', idStr)).then((carSnap) => {
+            if (carSnap.exists()) {
+              const carData = carSnap.data();
+              const criadorUid = carData.criadorUid;
+              if (criadorUid && criadorUid !== uid) {
+                criarNotificacao(
+                  criadorUid,
+                  'info',
+                  'Anúncio Favoritado ⭐️',
+                  `Alguém favoritou o seu anúncio: ${carData.marca} ${carData.modelo}`,
+                  `/detalhes/${idStr}`
+                ).catch((err) => console.error('[Favoritos] Erro ao enviar notificação:', err));
               }
-            }).catch((err) => console.error('[Favoritos] Erro ao buscar dados do carro:', err));
-          }
+            }
+          }).catch((err) => console.error('[Favoritos] Erro ao buscar dados do carro:', err));
         } else {
           enqueue({ uid, type: 'favorito_add', payload: { carId: idStr } });
         }
       }
       salvar(nova);
     },
-    [favoritos, salvar, user?.uid]
+    [favoritos, salvar, user?.uid, onRequireLogin]
   );
 
   const isFavorito = useCallback(

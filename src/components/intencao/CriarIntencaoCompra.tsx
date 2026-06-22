@@ -261,7 +261,7 @@ export default function CriarIntencaoCompra() {
         {passo === 1 && isVeiculo && (
           <>
             <h3 className="font-extrabold text-fg-heading mb-4">Detalhes do veículo</h3>
-            <StepBasico criterios={form.criterios} onChange={updateForm} />
+            <StepBasico criterios={form.criterios} onChange={updateForm} categoria={form.categoria} />
           </>
         )}
         {passo === 1 && form.categoria === 'pecas' && (
