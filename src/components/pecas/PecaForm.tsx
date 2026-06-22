@@ -8,9 +8,11 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { comprimirImagem } from '@/lib/compressImage';
 import { getCoordenadas } from '@/lib/geo';
-import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
+import { pickDefined } from '@/lib/compatibility';
+import type { CompatibilityEntry } from '@/types/peca';
 
 interface PecaFormProps {
   onSuccess?: () => void;
@@ -29,8 +31,9 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     titulo: '',
     categoria: 'Motor e Transmissão',
     estado: 'Usado',
-    marcaCarro: '',
     preco: '',
+    precoNovoReferencia: '',
+    numeroOEM: '',
     descricao: '',
     localizacao: '',
     localizacaoDistrito: '',
@@ -39,6 +42,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     vendedorEmail: user?.email || '',
   });
 
+  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>([]);
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
@@ -70,8 +74,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       setErro('O título é obrigatório.');
       return;
     }
-    if (!form.marcaCarro.trim()) {
-      setErro('A marca do carro compatível é obrigatória.');
+    if (compatibilidades.length === 0) {
+      setErro('Adicione pelo menos uma compatibilidade (marca/modelo).');
       return;
     }
 
@@ -87,13 +91,20 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         fotoUrl = await uploadFileToStorage(fotoFile, folder, fileName);
       }
 
-      await publicarPeca({
-        ...form,
+      const primaria = compatibilidades[0];
+      const precoNovoNum = form.precoNovoReferencia ? Number(form.precoNovoReferencia) : null;
+      const { precoNovoReferencia: _precoRef, localizacao: _loc, localizacaoDistrito: _locDist, numeroOEM: _oem, ...formBase } = form;
+      void _precoRef; void _loc; void _locDist; void _oem;
+      await publicarPeca(pickDefined({
+        ...formBase,
+        marcaCarro: primaria.marca,
+        modeloCarro: primaria.modelo || undefined,
+        compatibilidades,
+        numeroOEM: form.numeroOEM.trim() || undefined,
+        precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
         local: form.localizacao,
         distrito: form.localizacaoDistrito || undefined,
         coordenadas: form.localizacao ? getCoordenadas(form.localizacao) : undefined,
-        localizacao: undefined,
-        localizacaoDistrito: undefined,
         preco: form.preco ? Number(form.preco) : null,
         foto: fotoUrl || undefined,
         criador: user?.email || '',
@@ -102,7 +113,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorTelefone: form.vendedorTelefone || null,
         vendedorWhatsApp: form.vendedorWhatsApp || null,
         vendedorEmail: form.vendedorEmail || user?.email || null,
-      });
+      }));
 
       getAdminUsers()
         .then((admins) => {
@@ -119,8 +130,9 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         titulo: '',
         categoria: 'Motor e Transmissão',
         estado: 'Usado',
-        marcaCarro: '',
         preco: '',
+        precoNovoReferencia: '',
+        numeroOEM: '',
         descricao: '',
         localizacao: '',
         localizacaoDistrito: '',
@@ -128,6 +140,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorWhatsApp: '',
         vendedorEmail: '',
       });
+      setCompatibilidades([]);
       setFotoFile(null);
       setFotoPreview(null);
 
@@ -228,22 +241,13 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         </div>
       </div>
 
+      <CompatibilitySelector
+        value={compatibilidades}
+        onChange={setCompatibilidades}
+        required
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-bold text-fg-subtle mb-1">
-            Marca Compatível <span className="text-red-500">*</span>
-          </label>
-          <SeletorMarcaModelo
-            marca={form.marcaCarro}
-            modelo=""
-            onChangeMarca={(m) => atualizar('marcaCarro', m)}
-            onChangeModelo={() => {}}
-            labelMarca="Marca"
-            labelModelo=""
-            modeloObrigatorio={false}
-            placeholderMarca="Selecionar marca"
-          />
-        </div>
         <div>
           <label className="block text-xs font-bold text-fg-subtle mb-1">
             Preço (€) {form.tipo !== 'procura' ? <span className="text-red-500">*</span> : '(opcional)'}
@@ -256,6 +260,34 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
             className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
           />
         </div>
+        <div>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
+            Preço de Referência Novo (€) <span className="text-slate-400 font-normal">opcional</span>
+          </label>
+          <input
+            type="number"
+            placeholder="Preço novo em catálogo"
+            value={form.precoNovoReferencia}
+            onChange={(e) => atualizar('precoNovoReferencia', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">
+          Referência OEM / Nº Original <span className="text-fg-subtle font-normal">opcional</span>
+        </label>
+        <input
+          type="text"
+          placeholder="Ex: 06A115561B"
+          value={form.numeroOEM}
+          onChange={(e) => atualizar('numeroOEM', e.target.value)}
+          className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+        />
+        <p className="text-[11px] text-slate-400 mt-1">
+          O número OEM ajuda compradores a confirmar compatibilidade exata.
+        </p>
       </div>
 
       <div>

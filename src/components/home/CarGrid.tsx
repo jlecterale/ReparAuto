@@ -1,6 +1,6 @@
 'use client';
 
-import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star } from '@phosphor-icons/react';
+import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -8,7 +8,6 @@ import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
-import SegmentedControl from '@/components/ui/SegmentedControl';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
@@ -139,171 +138,182 @@ export default function CarGrid() {
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
       {/* ============ FILTER PANEL (left column) ============ */}
       <aside className="mb-6 lg:mb-0 lg:sticky lg:top-5 space-y-3">
-        {/* Mode toggle */}
-        <SegmentedControl<TipoGrid>
-          ariaLabel="Alternar entre carros, intenções de compra e oficinas"
-          value={tipo}
-          onChange={(val) => {
-            console.log('[CarGrid] Tab changed to:', val);
-            setTipo(val);
-          }}
-          options={[
-            { value: 'carros', label: 'Carros', icone: <Car weight="fill" /> },
-            { value: 'intencoes', label: 'Intenções', icone: <MagnifyingGlass /> },
-            { value: 'oficinas', label: 'Oficinas', icone: <Wrench weight="fill" /> },
-          ]}
-        />
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
+          {/* Search */}
+          <div className="relative">
+            <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
+            <input
+              type="text"
+              placeholder={
+                tipo === 'oficinas'
+                  ? "Ex: Recar Garage..."
+                  : tipo === 'intencoes'
+                  ? "Ex: Procurando Clio..."
+                  : "Ex: Renault Clio..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
+            />
+          </div>
 
-        {(tipo === 'carros' || tipo === 'oficinas') && (
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 shadow-sm">
-            {/* Search */}
+          {/* Search type select dropdown */}
+          <div className="space-y-1">
+            <label htmlFor="search-type" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Ver resultados de:
+            </label>
             <div className="relative">
-              <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" />
-              <input
-                type="text"
-                placeholder={tipo === 'oficinas' ? "Ex: Recar Garage..." : "Ex: Renault Clio..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
-              />
+              <select
+                id="search-type"
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as TipoGrid)}
+                className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 text-fg border border-slate-200 focus:outline-none focus:border-accent focus:bg-white transition text-sm appearance-none cursor-pointer font-medium"
+              >
+                <option value="carros">🚗 Carros</option>
+                <option value="intencoes">💡 Intenções de Compra</option>
+                <option value="oficinas">🔧 Oficinas & Mecânicos</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+                <CaretDown size={16} />
+              </div>
             </div>
+          </div>
 
-            {/* Quick chips */}
+          {/* Quick chips */}
+          {tipo === 'carros' && (
+            <div className="space-y-2">
+              <span className="block text-xs font-bold text-fg-subtle uppercase tracking-wide">Ofertas rápidas</span>
+              <div className="flex flex-wrap gap-2">
+                {quickChips.map((chip) => (
+                  <button
+                    key={chip.value}
+                    onClick={() => setFiltroAtivo(filtroAtivo === chip.value ? null : chip.value as 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer')}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                      filtroAtivo === chip.value
+                        ? 'bg-accent text-white border-accent'
+                        : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Advanced filters toggle (mobile only) */}
+          <Button
+            tipo="secundario"
+            tamanho="sm"
+            blocoCompleto
+            icone={<SlidersHorizontal />}
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="lg:hidden"
+          >
+            {showAdvanced ? 'Ocultar filtros' : 'Mais filtros'}
+          </Button>
+
+          {/* Advanced filters */}
+          <div className={`${showAdvanced ? 'block' : 'hidden'} lg:block space-y-4 border-t border-slate-100 pt-4`}>
             {tipo === 'carros' && (
-              <div className="space-y-2">
-                <span className="block text-xs font-bold text-fg-subtle uppercase tracking-wide">Ofertas rápidas</span>
-                <div className="flex flex-wrap gap-2">
-                  {quickChips.map((chip) => (
-                    <button
-                      key={chip.value}
-                      onClick={() => setFiltroAtivo(filtroAtivo === chip.value ? null : chip.value as 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer')}
-                      className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                        filtroAtivo === chip.value
-                          ? 'bg-accent text-white border-accent'
-                          : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {chip.label}
-                    </button>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
+                  <input
+                    type="number" placeholder="Mínimo"
+                    value={advPriceMin ?? ''}
+                    onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
+                  <input
+                    type="number" placeholder="Máximo"
+                    value={advPriceMax ?? ''}
+                    onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
+                  />
                 </div>
               </div>
             )}
 
-            {/* Advanced filters toggle (mobile only) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-fg-subtle flex items-center gap-1">
+                  <MapPin className="text-accent" /> Localização
+                </span>
+              </div>
+              <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
+                <input type="checkbox" checked={raioMode}
+                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
+                  className="rounded text-accent focus:ring-accent" />
+                Pesquisar por raio
+              </label>
+              {!raioMode ? (
+                <div className="space-y-2">
+                  <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                    <option value="">Todos os distritos</option>
+                    {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
+                    disabled={!advDistrito}
+                    className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
+                    <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                    {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                    <option value="">Selecionar distrito</option>
+                    {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
+                    disabled={!raioDist}
+                    className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
+                    <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                    {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
+                  </select>
+                  <div className="flex items-center gap-2">
+                    <input type="number" min={1} max={500} placeholder="Raio km"
+                      value={advRaioKm ?? ''}
+                      onChange={(e) => setAdvRaioKm(e.target.value ? Number(e.target.value) : null)}
+                      className="w-24 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent" />
+                    <span className="text-xs text-fg-subtle truncate">de {advRaioCentro || '—'}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {tipo === 'carros' && (
+              <div className="border-t border-slate-100 pt-3">
+                <span className="block text-xs font-bold text-fg-subtle mb-2">Ordenar por preço</span>
+                <div className="flex flex-col gap-2">
+                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'crescente' ? null : 'crescente')}
+                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                    <TrendUp /> Mais baixo
+                  </button>
+                  <button type="button" onClick={() => setSortOrdem(sortOrdem === 'decrescente' ? null : 'decrescente')}
+                    className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
+                    <TrendDown /> Mais caro
+                  </button>
+                </div>
+              </div>
+            )}
+
             <Button
               tipo="secundario"
               tamanho="sm"
               blocoCompleto
-              icone={<SlidersHorizontal />}
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="lg:hidden"
+              onClick={limparFiltrosAvancados}
             >
-              {showAdvanced ? 'Ocultar filtros' : 'Mais filtros'}
+              Limpar filtros
             </Button>
-
-            {/* Advanced filters */}
-            <div className={`${showAdvanced ? 'block' : 'hidden'} lg:block space-y-4 border-t border-slate-100 pt-4`}>
-              {tipo === 'carros' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
-                    <input
-                      type="number" placeholder="Mínimo"
-                      value={advPriceMin ?? ''}
-                      onChange={(e) => setAdvPriceMin(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
-                    <input
-                      type="number" placeholder="Máximo"
-                      value={advPriceMax ?? ''}
-                      onChange={(e) => setAdvPriceMax(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-fg-subtle flex items-center gap-1">
-                    <MapPin className="text-accent" /> Localização
-                  </span>
-                </div>
-                <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
-                  <input type="checkbox" checked={raioMode}
-                    onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
-                    className="rounded text-accent focus:ring-accent" />
-                  Pesquisar por raio
-                </label>
-                {!raioMode ? (
-                  <div className="space-y-2">
-                    <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                      <option value="">Todos os distritos</option>
-                      {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                    <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
-                      disabled={!advDistrito}
-                      className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                      <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
-                      {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                      <option value="">Selecionar distrito</option>
-                      {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                    <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
-                      disabled={!raioDist}
-                      className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                      <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
-                      {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
-                    </select>
-                    <div className="flex items-center gap-2">
-                      <input type="number" min={1} max={500} placeholder="Raio km"
-                        value={advRaioKm ?? ''}
-                        onChange={(e) => setAdvRaioKm(e.target.value ? Number(e.target.value) : null)}
-                        className="w-24 bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent" />
-                      <span className="text-xs text-fg-subtle truncate">de {advRaioCentro || '—'}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {tipo === 'carros' && (
-                <div className="border-t border-slate-100 pt-3">
-                  <span className="block text-xs font-bold text-fg-subtle mb-2">Ordenar por preço</span>
-                  <div className="flex flex-col gap-2">
-                    <button type="button" onClick={() => setSortOrdem(sortOrdem === 'crescente' ? null : 'crescente')}
-                      className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'crescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
-                      <TrendUp /> Mais baixo
-                    </button>
-                    <button type="button" onClick={() => setSortOrdem(sortOrdem === 'decrescente' ? null : 'decrescente')}
-                      className={`font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 text-xs ${sortOrdem === 'decrescente' ? 'bg-accent text-white' : 'bg-white hover:bg-slate-100 border border-slate-300 text-fg'}`}>
-                      <TrendDown /> Mais caro
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <Button
-                tipo="secundario"
-                tamanho="sm"
-                blocoCompleto
-                onClick={limparFiltrosAvancados}
-              >
-                Limpar filtros
-              </Button>
-            </div>
           </div>
-        )}
+        </div>
       </aside>
 
       {/* ============ RESULTS (right column) ============ */}

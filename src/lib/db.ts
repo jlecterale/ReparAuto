@@ -18,36 +18,660 @@ import {
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
+import { DB_VERSION, DB_VERSION_KEY, MARCAS_MODELOS_COLLECTION, MARCAS_MODELOS_DOC } from './constants';
+import marcasModelosData from '@/data/marcas-modelos.json';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
-import type { Peca, PecaInput } from '@/types/peca';
-import type { Usuario, Role, PremiumConfig } from '@/types/usuario';
+import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
+import type { Usuario, Role } from '@/types/usuario';
 import type { Notificacao, TipoNotificacao } from '@/types/notificacao';
 import type { Review, ReviewInput, StatusReview } from '@/types/review';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
-import type { Proposta, PropostaInput, StatusProposta } from '@/types/proposal';
-import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
-import type { OficinaMecanico } from '@/types/oficina';
+
+type CarroSeed = Omit<CarroInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
+type PecaSeed = Omit<PecaInput, 'dataCriacao'> & { dataCriacao: ReturnType<typeof Timestamp.now> };
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
 const OFICINAS_COLLECTION = 'services';
 
-// Public listings filter on status server-side so clients never download
-// pending/rejected documents. Sorting stays client-side to avoid requiring
-// a composite (status, dataCriacao) index.
-function sortByDataCriacaoDesc<T extends { dataCriacao?: { toMillis?: () => number } }>(items: T[]): T[] {
-  return items.sort((a, b) => (b.dataCriacao?.toMillis?.() || 0) - (a.dataCriacao?.toMillis?.() || 0));
+const defaultCarros: CarroSeed[] = [
+  {
+    marca: 'Renault',
+    modelo: 'Clio 1.5 dCi',
+    anoFabricacao: 2007,
+    anoModelo: 2008,
+    preco: 600,
+    km: 210000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Cinzento',
+    portas: 5,
+    local: 'Braga',
+    descricao:
+      'Viatura comercial com alguns problemas de motor. **Motor de arranque avariado.**\nIdeal para quem quer reparar.\n\n* Direção assistida\n* Fecho centralizado\n* Vidros elétricos',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Elétrica'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto:
+      'Diagnóstico elétrico e motor de arranque novo: 250€ com mão de obra incluída.',
+    incluirMecanicoNome: true,
+    mecanicoNome: 'Auto Oficina Rapidez',
+    incluirMecanicoTelefone: true,
+    mecanicoTelefone: '912345678',
+    fotos: ['images/clio.png', '🔧', '⚠️'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Peugeot',
+    modelo: '206 1.1',
+    anoFabricacao: 2004,
+    anoModelo: 2004,
+    preco: 450,
+    km: 195000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Azul',
+    portas: 3,
+    local: 'Porto',
+    descricao:
+      'Peugeot 206 sinistrado na parte frontal. Ideal para peças ou reparação profunda.\n\n* Motor arranca mas radiador está partido\n* Interiores em bom estado\n* Farol esquerdo partido',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Pintura e funilaria', 'Lataria / amassados'],
+    manutencaoOutro: 'Radiador partido',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/peugeot206.png', '🛠️', '📦'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Volkswagen',
+    modelo: 'Golf IV 1.9 TDI',
+    anoFabricacao: 2003,
+    anoModelo: 2003,
+    preco: 900,
+    km: 280000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Preto',
+    portas: 5,
+    local: 'Coimbra',
+    descricao:
+      'Excelente motor 1.9 TDI de 110cv. Anda diariamente mas precisa de pastilhas e discos novos urgentemente.\n\n* Revisão feita há 5.000 km\n* AC a funcionar\n* Interiores desgastados',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto:
+      'Substituição de discos e pastilhas frontais e traseiras: 180€ com mão de obra',
+    incluirMecanicoNome: true,
+    mecanicoNome: 'Mecânica do Zé',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/golf4.png', '✅', '🔩'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    rodando: true,
+    inspecao: true,
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'BMW',
+    modelo: '320d Coupé (Valor Livre)',
+    anoFabricacao: 2011,
+    anoModelo: 2012,
+    preco: 12400,
+    km: 185000,
+    combustivel: 'Diesel',
+    cambio: 'Manual',
+    cor: 'Branco',
+    portas: 3,
+    local: 'Lisboa',
+    descricao:
+      'BMW 320d Coupé em excelente estado de conservação. Quilómetros reais e comprovados.\n\n* Estofos em pele\n* Faróis Bi-Xénon\n* Sensores de estacionamento\n* Jantes de liga leve',
+    estadoVeiculo: 'pronto',
+    tiposManutencao: [],
+    manutencaoOutro: '',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/bmw320d.png', '✨', '💎'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Opel',
+    modelo: 'Corsa B 1.2',
+    anoFabricacao: 1999,
+    anoModelo: 1999,
+    preco: 350,
+    km: 165000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Verde',
+    portas: 5,
+    local: 'Lisboa',
+    descricao:
+      'Carro parado há 2 anos numa garagem. Não pega, provavelmente bateria ou bomba de combustível avariada.\nTem alguma ferrugem na porta do condutor.\n\n* Pintura queimada do sol\n* Pneus ressequidos',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Mecânica', 'Elétrica', 'Pintura e funilaria', 'Lataria / amassados'],
+    manutencaoOutro: 'Parado há muito tempo',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['🚐', '⏳', '🕸️'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    rodando: false,
+    inspecao: false,
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Mercedes-Benz',
+    modelo: 'C220 CDI (Valor Livre)',
+    anoFabricacao: 2009,
+    anoModelo: 2009,
+    preco: 8900,
+    km: 250000,
+    combustivel: 'Diesel',
+    cambio: 'Automático',
+    cor: 'Preto',
+    portas: 4,
+    local: 'Porto',
+    descricao:
+      'Mercedes C220 CDI nacional, caixa automática. Anda diariamente sem qualquer problema.\n\n* GPS e Bluetooth\n* Tecto de abrir\n* Bancos elétricos com memória',
+    estadoVeiculo: 'pronto',
+    tiposManutencao: [],
+    manutencaoOutro: '',
+    temOrcamento: false,
+    orcamentoTexto: '',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: false,
+    mecanicoTelefone: '',
+    fotos: ['images/mercedes.png', '🚗', '⚙️'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    marca: 'Seat',
+    modelo: 'Ibiza 1.4',
+    anoFabricacao: 2006,
+    anoModelo: 2006,
+    preco: 750,
+    km: 230000,
+    combustivel: 'Gasolina',
+    cambio: 'Manual',
+    cor: 'Vermelho',
+    portas: 5,
+    local: 'Faro',
+    descricao:
+      'Seat Ibiza 1.4 a gasolina. Anda diariamente mas apresenta luz de erro de motor no painel (EGR ou sonda lambda) e o ar condicionado não arrefece.\n\n* Jantes especiais\n* Vidros elétricos à frente\n* Fecho central',
+    estadoVeiculo: 'manutencao',
+    tiposManutencao: ['Eletrônica', 'Ar-condicionado'],
+    manutencaoOutro: '',
+    temOrcamento: true,
+    orcamentoTexto: 'Diagnóstico de erro EGR + carregamento de AC: 120€',
+    incluirMecanicoNome: false,
+    mecanicoNome: '',
+    incluirMecanicoTelefone: true,
+    mecanicoTelefone: '933567890',
+    fotos: ['🚗', '⚡', '🔌'],
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    rodando: true,
+    inspecao: true,
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+];
+
+const defaultPecas: PecaSeed[] = [
+  {
+    tipo: 'venda',
+    titulo: 'Motor 1.9 TDI ASZ 130cv',
+    categoria: 'Motor e Transmissão',
+    marcaCarro: 'Seat',
+    modeloCarro: 'Ibiza 6L',
+    compatibilidades: [
+      { marca: 'Seat', modelo: 'Ibiza', anoInicio: 2002, anoFim: 2008, motor: '1.9 TDI' },
+      { marca: 'Volkswagen', modelo: 'Golf IV', anoInicio: 1997, anoFim: 2004, motor: '1.9 TDI' },
+    ],
+    preco: 450,
+    estado: 'Usado',
+    local: 'Braga',
+    contacto: '912345678',
+    foto: '⚙️',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Motor em excelente estado de funcionamento. Retirado de veículo acidentado na traseira. Tem cerca de 210.000 km. Vendido completo com turbo original.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'desmonte',
+    titulo: 'Peugeot 206 1.1 para desmonte completo',
+    categoria: 'Carro Completo p/ Desmonte',
+    marcaCarro: 'Peugeot',
+    modeloCarro: '206',
+    compatibilidades: [
+      { marca: 'Peugeot', modelo: '206', anoInicio: 1998, anoFim: 2012 },
+    ],
+    preco: 300,
+    estado: 'Usado',
+    local: 'Porto',
+    contacto: '933567890',
+    foto: '🚗',
+    criador: 'carlos@email.com',
+    vendedorNome: 'Carlos Silva',
+    vendedorTelefone: '933567890',
+    vendedorWhatsApp: '351933567890',
+    vendedorEmail: 'carlos@email.com',
+    descricao:
+      'Carro completo para peças. Chaparia em bom estado, interiores impecáveis. Motor parado. Vendo peças individuais ou o conjunto.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'procura',
+    titulo: 'Procuro Farol Frontal Esquerdo Halogéneo',
+    categoria: 'Iluminação e Óticas',
+    marcaCarro: 'Renault',
+    modeloCarro: 'Clio III',
+    compatibilidades: [
+      { marca: 'Renault', modelo: 'Clio', anoInicio: 2005, anoFim: 2012 },
+    ],
+    preco: 0,
+    estado: 'Usado',
+    local: 'Lisboa',
+    contacto: '922456789',
+    foto: '🔍',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Procuro farol esquerdo (lado condutor) original e em bom estado para Renault Clio de 2007 (Fase 1).',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'venda',
+    titulo: 'Motor 1.7 CDTI 100cv',
+    categoria: 'Motor e Transmissão',
+    marcaCarro: 'Opel',
+    modeloCarro: 'Astra H',
+    compatibilidades: [
+      { marca: 'Opel', modelo: 'Astra', anoInicio: 2004, anoFim: 2010, motor: '1.7 CDTI' },
+      { marca: 'Opel', modelo: 'Corsa', anoInicio: 2006, anoFim: 2014, motor: '1.7 CDTI' },
+    ],
+    preco: 550,
+    estado: 'Usado',
+    local: 'Lisboa',
+    contacto: '912345678',
+    foto: '⚙️',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Motor 1.7 CDTI de 100cv em bom estado. Retirado de Opel Astra H com 180.000 km. Completo com turbo e injetores. Ideal para substituição em Astra H ou Corsa D.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'venda',
+    titulo: 'Jogo Discos e Pastilhas Travão Dianteiros',
+    categoria: 'Suspensão e Travões',
+    marcaCarro: 'Opel',
+    modeloCarro: 'Astra H',
+    compatibilidades: [
+      { marca: 'Opel', modelo: 'Astra', anoInicio: 2004, anoFim: 2010 },
+      { marca: 'Volkswagen', modelo: 'Golf IV', anoInicio: 1997, anoFim: 2004 },
+    ],
+    preco: 85,
+    estado: 'Novo (Em caixa)',
+    local: 'Porto',
+    contacto: '912345678',
+    foto: '🛞',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Jogo completo de discos e pastilhas de travão dianteiros, novos em caixa. Compatíveis com Opel Astra H e VW Golf IV. Marca TRW, qualidade OEM.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'venda',
+    titulo: 'Farol Esquerdo BMW Série 3 E90 Bi-Xénon',
+    categoria: 'Iluminação e Óticas',
+    marcaCarro: 'BMW',
+    modeloCarro: '320d E90',
+    compatibilidades: [
+      { marca: 'BMW', modelo: '320d', anoInicio: 2005, anoFim: 2012 },
+      { marca: 'BMW', modelo: 'Série 3 E90', anoInicio: 2005, anoFim: 2012 },
+    ],
+    preco: 120,
+    estado: 'Usado',
+    local: 'Lisboa',
+    contacto: '912345678',
+    foto: '💡',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Farol esquerdo (lado condutor) original BMW Bi-Xénon para Série 3 E90 (2005-2012). Inclui ballast e lâmpada. Em bom estado estético e funcional.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'venda',
+    titulo: 'Centralina ECU Mercedes W204',
+    categoria: 'Eletrónica e Sensores',
+    marcaCarro: 'Mercedes',
+    modeloCarro: 'C220 CDI W204',
+    compatibilidades: [
+      { marca: 'Mercedes-Benz', modelo: 'C220 CDI', anoInicio: 2007, anoFim: 2014 },
+      { marca: 'Mercedes', modelo: 'Classe C W204', anoInicio: 2007, anoFim: 2014 },
+    ],
+    preco: 180,
+    estado: 'Reconstruído / Recondicionado',
+    local: 'Porto',
+    contacto: '912345678',
+    foto: '🔌',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Centralina ECU recondicionada para Mercedes Classe C W204 C220 CDI. Testada e programada. Solução económica para substituição da unidade original.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    tipo: 'desmonte',
+    titulo: 'Seat Ibiza 1.4 para desmonte',
+    categoria: 'Carro Completo p/ Desmonte',
+    marcaCarro: 'Seat',
+    modeloCarro: 'Ibiza 1.4',
+    compatibilidades: [
+      { marca: 'Seat', modelo: 'Ibiza', anoInicio: 2002, anoFim: 2008 },
+    ],
+    preco: 250,
+    estado: 'Usado',
+    local: 'Faro',
+    contacto: '912345678',
+    foto: '🚗',
+    criador: 'admin@reparauto.pt',
+    vendedorNome: 'Admin ReparAuto',
+    vendedorTelefone: '912345678',
+    vendedorWhatsApp: '351912345678',
+    vendedorEmail: 'admin@reparauto.pt',
+    descricao:
+      'Seat Ibiza 1.4 completo para desmonte. Motor de arranque, alternador, radiador, bancos e painéis disponíveis. Carro acidentado na traseira, frente intacta.',
+    status: 'aprovado',
+    dataCriacao: Timestamp.now(),
+  },
+];
+
+const defaultOficinas = [
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Recar Garage & Prep',
+    descricao: 'Especialistas em eletrónica, reprogramação e preparação de motores para competição e estrada. Realizamos também serviços de estética automóvel e detalhe completo.',
+    responsavel: 'Filipe Antunes',
+    telefone: '912345678',
+    whatsapp: '351912345678',
+    email: 'contacto@recargarage.pt',
+    website: 'https://recargarage.pt',
+    distrito: 'Lisboa',
+    localidade: 'Lisboa',
+    morada: 'Avenida da República, 1420',
+    coordenadas: { latitude: 38.7436, longitude: -9.1443 },
+    especialidades: ['preparacao', 'eletronica', 'estetica_automotiva'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 4.8,
+    totalAvaliacoes: 5,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Oficina Mecânica Central Braga',
+    descricao: 'Oficina multimarcas com foco em mecânica convencional, diagnóstico computorizado, carregamento de ar condicionado e substituição de pneus.',
+    responsavel: 'João Silva',
+    telefone: '923456789',
+    whatsapp: '351923456789',
+    email: 'braga@mecanicacentral.pt',
+    website: 'https://mecanicacentralbraga.pt',
+    distrito: 'Braga',
+    localidade: 'Braga',
+    morada: 'Rua do Caires, 54',
+    coordenadas: { latitude: 41.5432, longitude: -8.4285 },
+    especialidades: ['mecanica_convencional', 'ar_condicionado', 'pneus'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 4.5,
+    totalAvaliacoes: 3,
+    dataCriacao: Timestamp.now(),
+  },
+  {
+    criador: 'admin@reparauto.pt',
+    nome: 'Auto Pintura e Restauro Clássicos',
+    descricao: 'Oficina premium especializada em pintura automóvel de estufa, reparação de chapa e restauro completo de veículos clássicos.',
+    responsavel: 'Manuel Neves',
+    telefone: '934567890',
+    whatsapp: '351934567890',
+    email: 'manuel@autopinturaclassicos.pt',
+    distrito: 'Porto',
+    localidade: 'Vila Nova de Gaia',
+    morada: 'Zona Industrial de Grijó, Lote 12',
+    coordenadas: { latitude: 41.0254, longitude: -8.5786 },
+    especialidades: ['pintura', 'classicos_restauro'],
+    logoUrl: '',
+    status: 'aprovado',
+    mediaAvaliacoes: 5.0,
+    totalAvaliacoes: 8,
+    dataCriacao: Timestamp.now(),
+  }
+];
+
+export async function initDatabase(): Promise<void> {
+  try {
+    const carrosSnap = await getDocs(collection(db, CARROS_COLLECTION));
+    const pecasSnap = await getDocs(collection(db, PECAS_COLLECTION));
+    const oficinasSnap = await getDocs(collection(db, OFICINAS_COLLECTION));
+
+    const precisaSeed = carrosSnap.empty || pecasSnap.empty || oficinasSnap.empty;
+
+    if (precisaSeed) {
+      if (carrosSnap.empty) {
+        for (const carro of defaultCarros) {
+          await addDoc(collection(db, CARROS_COLLECTION), carro as DocumentData);
+        }
+      }
+      if (pecasSnap.empty) {
+        for (const peca of defaultPecas) {
+          await addDoc(collection(db, PECAS_COLLECTION), peca as DocumentData);
+        }
+      }
+      if (oficinasSnap.empty) {
+        for (const oficina of defaultOficinas) {
+          await addDoc(collection(db, OFICINAS_COLLECTION), oficina as DocumentData);
+        }
+      }
+      localStorage.setItem(DB_VERSION_KEY, DB_VERSION);
+      console.log('[DB] Seed data imported to Firestore');
+    }
+    await migrarMensagens();
+    await migrarCompatibilidades();
+    await seedMarcasModelos();
+  } catch (err) {
+    console.error('[DB] Erro ao inicializar:', err);
+  }
+}
+
+const MARCAS_MODELOS_MIGRATION_KEY = 'reparauto_migration_marcas_modelos_v1';
+
+async function seedMarcasModelos(): Promise<void> {
+  if (localStorage.getItem(MARCAS_MODELOS_MIGRATION_KEY)) return;
+  try {
+    const docRef = doc(db, MARCAS_MODELOS_COLLECTION, MARCAS_MODELOS_DOC);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      const dados = marcasModelosData as Array<{ marca: string; modelos: string[] }>;
+      await setDoc(docRef, {
+        dados,
+        ultimaAtualizacao: Timestamp.now(),
+      });
+      console.log('[DB] Marcas/modelos seeded to Firestore');
+    }
+    localStorage.setItem(MARCAS_MODELOS_MIGRATION_KEY, '1');
+  } catch (err) {
+    console.warn('[DB] Erro ao seed marcas/modelos (não crítico):', err);
+  }
+}
+
+const COMPAT_MIGRATION_KEY = 'reparauto_migration_compat_v1';
+const MENSAGENS_COLLECTION = 'messages';
+const MIGRATION_KEY = 'reparauto_migration_participants';
+
+async function migrarMensagens(): Promise<void> {
+  if (localStorage.getItem(MIGRATION_KEY)) return;
+  try {
+    const snap = await getDocs(collection(db, MENSAGENS_COLLECTION));
+    const batch = writeBatch(db);
+    let count = 0;
+    snap.docs.forEach((d) => {
+      const data = d.data();
+      if (!data.participants && data.fromUid && data.toUid) {
+        batch.update(d.ref, { participants: [data.fromUid, data.toUid].sort() });
+        count++;
+      }
+    });
+    if (count > 0) {
+      await batch.commit();
+      console.log(`[DB] Migradas ${count} mensagens com participantes`);
+    }
+    localStorage.setItem(MIGRATION_KEY, 'done');
+  } catch {
+    // migration is best-effort
+  }
+}
+
+async function migrarCompatibilidades(): Promise<void> {
+  if (localStorage.getItem(COMPAT_MIGRATION_KEY)) return;
+  try {
+    const snap = await getDocs(collection(db, PECAS_COLLECTION));
+    const batch = writeBatch(db);
+    let updated = 0;
+
+    for (const docSnap of snap.docs) {
+      const data = docSnap.data();
+      if (data.compatibilidades && data.compatibilidades.length > 0) continue;
+      const marca: string | undefined = data.marcaCarro;
+      if (!marca) continue;
+
+      const entry: CompatibilityEntry = { marca };
+      const modelo: string | undefined = data.modeloCarro;
+      if (modelo) entry.modelo = modelo;
+
+      batch.update(docSnap.ref, { compatibilidades: [entry] });
+      updated++;
+    }
+
+    if (updated > 0) {
+      await batch.commit();
+      console.log(`[DB] Migradas ${updated} peças com compatibilidades`);
+    }
+
+    const existingTitles = new Set(snap.docs.map((d) => d.data().titulo));
+    const newParts = defaultPecas.filter((p) => !existingTitles.has(p.titulo));
+    if (newParts.length > 0) {
+      const addBatch = writeBatch(db);
+      const now = Timestamp.now();
+      for (const part of newParts) {
+        const ref = doc(collection(db, PECAS_COLLECTION));
+        addBatch.set(ref, { ...part, dataCriacao: now });
+      }
+      await addBatch.commit();
+      console.log(`[DB] Adicionadas ${newParts.length} novas peças de seed com compatibilidades`);
+    }
+
+    localStorage.setItem(COMPAT_MIGRATION_KEY, 'done');
+  } catch (err) {
+    console.error('[DB] Erro na migração de compatibilidades:', err);
+  }
 }
 
 export async function getCarros(): Promise<Carro[]> {
   try {
-    const q = query(collection(db, CARROS_COLLECTION), where('status', '==', 'aprovado'));
+    const q = query(collection(db, CARROS_COLLECTION), orderBy('dataCriacao', 'desc'));
     const snap = await getDocs(q);
     const todos = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Carro));
-    return sortByDataCriacaoDesc(todos);
+    return todos.filter((c) => c.status === 'aprovado');
   } catch (err) {
     console.error('[DB] Erro ao buscar carros:', err);
     return [];
@@ -58,12 +682,12 @@ export function subscribeCarros(
   onData: (carros: Carro[]) => void,
   onError?: (err: Error) => void,
 ): () => void {
-  const q = query(collection(db, CARROS_COLLECTION), where('status', '==', 'aprovado'));
+  const q = query(collection(db, CARROS_COLLECTION), orderBy('dataCriacao', 'desc'));
   return onSnapshot(
     q,
     (snap) => {
       const todos = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Carro);
-      onData(sortByDataCriacaoDesc(todos));
+      onData(todos.filter((c) => c.status === 'aprovado'));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de carros:', err);
@@ -122,10 +746,10 @@ export async function deleteCarro(id: string): Promise<void> {
 
 export async function getPecas(): Promise<Peca[]> {
   try {
-    const q = query(collection(db, PECAS_COLLECTION), where('status', '==', 'aprovado'));
+    const q = query(collection(db, PECAS_COLLECTION), orderBy('dataCriacao', 'desc'));
     const snap = await getDocs(q);
     const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    return sortByDataCriacaoDesc(todas);
+    return todas.filter((p) => p.status === 'aprovado');
   } catch (err) {
     console.error('[DB] Erro ao buscar peças:', err);
     return [];
@@ -136,12 +760,12 @@ export function subscribePecas(
   onData: (pecas: Peca[]) => void,
   onError?: (err: Error) => void,
 ): () => void {
-  const q = query(collection(db, PECAS_COLLECTION), where('status', '==', 'aprovado'));
+  const q = query(collection(db, PECAS_COLLECTION), orderBy('dataCriacao', 'desc'));
   return onSnapshot(
     q,
     (snap) => {
       const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Peca);
-      onData(sortByDataCriacaoDesc(todas));
+      onData(todas.filter((p) => p.status === 'aprovado'));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de peças:', err);
@@ -185,6 +809,25 @@ export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
     return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
+    throw err;
+  }
+}
+
+export async function addPecasBatch(dadosList: Record<string, unknown>[]): Promise<string[]> {
+  if (dadosList.length === 0) return [];
+  try {
+    const batch = writeBatch(db);
+    const ids: string[] = [];
+    const now = Timestamp.now();
+    for (const dados of dadosList) {
+      const ref = doc(collection(db, PECAS_COLLECTION));
+      batch.set(ref, { ...dados, status: 'pendente', dataCriacao: now });
+      ids.push(ref.id);
+    }
+    await batch.commit();
+    return ids;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar peças em lote:', err);
     throw err;
   }
 }
@@ -275,64 +918,6 @@ export async function setUserRole(uid: string, role: Role): Promise<void> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Planos Premium (admin-managed)
-// ---------------------------------------------------------------------------
-
-export type PlanInfo = {
-  planoId: string;
-  nome: string;
-  categoria: 'anuncios' | 'oficinas' | 'leads';
-};
-
-export async function setUserPlan(
-  uid: string,
-  plan: PlanInfo,
-  adminUid: string,
-  adminNome: string,
-  dias: number,
-): Promise<void> {
-  try {
-    const agora = Timestamp.now();
-    const expMs = agora.toMillis() + dias * 86400000;
-    const dataExpiracao = Timestamp.fromMillis(expMs);
-    const userRef = doc(db, USERS_COLLECTION, uid);
-    await setDoc(
-      userRef,
-      {
-        planoAtivo: {
-          planoId: plan.planoId,
-          nome: plan.nome,
-          categoria: plan.categoria,
-          dataAtribuicao: agora,
-          dataExpiracao,
-          atribuidoPor: 'admin' as const,
-          adminUid,
-          adminNome,
-        },
-        dataAtualizacao: Timestamp.now(),
-      },
-      { merge: true },
-    );
-  } catch (err) {
-    console.error('[DB] Erro ao atribuir plano:', err);
-    throw err;
-  }
-}
-
-export async function revokeUserPlan(uid: string): Promise<void> {
-  try {
-    const userRef = doc(db, USERS_COLLECTION, uid);
-    await updateDoc(userRef, {
-      planoAtivo: null,
-      dataAtualizacao: Timestamp.now(),
-    });
-  } catch (err) {
-    console.error('[DB] Erro ao revogar plano:', err);
-    throw err;
-  }
-}
-
 export async function getAdminUsers(): Promise<Usuario[]> {
   try {
     const q = query(collection(db, USERS_COLLECTION), where('role', '==', 'admin'));
@@ -346,7 +931,7 @@ export async function getAdminUsers(): Promise<Usuario[]> {
 
 export async function updateCarro(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, CARROS_COLLECTION, id), dados);
+    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, dados as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar carro:', err);
     throw err;
@@ -355,7 +940,7 @@ export async function updateCarro(id: string, dados: Record<string, unknown>): P
 
 export async function updatePeca(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, PECAS_COLLECTION, id), dados);
+    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, dados as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar peça:', err);
     throw err;
@@ -368,7 +953,7 @@ export async function updateCarroStatus(id: string, status: StatusAnuncio): Prom
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, CARROS_COLLECTION, id), updates);
+    await updateDoc(doc(db, CARROS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status do carro:', err);
     throw err;
@@ -381,10 +966,70 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
     if (status === 'aprovado') {
       updates.dataAprovacao = Timestamp.now();
     }
-    await updateDoc(doc(db, PECAS_COLLECTION, id), updates);
+    await updateDoc(doc(db, PECAS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da peça:', err);
     throw err;
+  }
+}
+
+export async function matchAndNotifyForPeca(peca: Peca): Promise<number> {
+  try {
+    if (peca.tipo === 'procura') return 0;
+    const { pecasShareCompatibility } = await import('./compatibility');
+    const constraints = [
+      where('status', '==', 'aprovado'),
+      where('tipo', '==', 'procura'),
+    ];
+    if (peca.categoria) {
+      constraints.push(where('categoria', '==', peca.categoria));
+    }
+    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
+    const snap = await getDocs(qProcuras);
+    const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
+    const matches = procuras.filter(
+      (p) => p.criadorUid && p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
+    );
+    const seen = new Set<string>();
+    let notified = 0;
+    for (const procura of matches) {
+      if (!procura.criadorUid || seen.has(procura.criadorUid)) continue;
+      seen.add(procura.criadorUid);
+      await criarNotificacao(
+        procura.criadorUid,
+        'info',
+        'Peça encontrada para o seu pedido!',
+        `"${peca.titulo}" corresponde ao seu pedido "${procura.titulo}".`,
+        `/pecas?peca=${peca.id}`,
+      );
+      notified++;
+    }
+    return notified;
+  } catch (err) {
+    console.error('[DB] Erro em matchAndNotifyForPeca:', err);
+    return 0;
+  }
+}
+
+export async function countProcurasForPeca(peca: Peca): Promise<number> {
+  try {
+    const { pecasShareCompatibility } = await import('./compatibility');
+    const constraints = [
+      where('status', '==', 'aprovado'),
+      where('tipo', '==', 'procura'),
+    ];
+    if (peca.categoria) {
+      constraints.push(where('categoria', '==', peca.categoria));
+    }
+    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
+    const snap = await getDocs(qProcuras);
+    const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
+    return procuras.filter(
+      (p) => p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
+    ).length;
+  } catch (err) {
+    console.error('[DB] Erro em countProcurasForPeca:', err);
+    return 0;
   }
 }
 
@@ -444,33 +1089,16 @@ export async function getNotificacoes(uid: string): Promise<Notificacao[]> {
     );
     const snap = await getDocs(q);
     const notificacoes = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
-    return sortByDataCriacaoDesc(notificacoes);
+    notificacoes.sort((a, b) => {
+      const aTime = a.dataCriacao?.toDate?.()?.getTime() || 0;
+      const bTime = b.dataCriacao?.toDate?.()?.getTime() || 0;
+      return bTime - aTime;
+    });
+    return notificacoes;
   } catch (err) {
     console.error('[DB] Erro ao buscar notificações:', err);
     return [];
   }
-}
-
-export function subscribeNotificacoes(
-  uid: string,
-  onData: (notificacoes: Notificacao[]) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  const q = query(
-    collection(db, NOTIFICACOES_COLLECTION),
-    where('uid', '==', uid),
-  );
-  return onSnapshot(
-    q,
-    (snap) => {
-      const notificacoes = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
-      onData(sortByDataCriacaoDesc(notificacoes));
-    },
-    (err) => {
-      console.error('[DB] Erro no snapshot de notificações:', err);
-      onError?.(err);
-    },
-  );
 }
 
 export async function marcarNotificacaoLida(id: string): Promise<void> {
@@ -489,10 +1117,8 @@ export async function marcarTodasNotificacoesLidas(uid: string): Promise<void> {
       where('lida', '==', false),
     );
     const snap = await getDocs(q);
-    if (snap.empty) return;
-    const batch = writeBatch(db);
-    snap.docs.forEach((d) => batch.update(d.ref, { lida: true }));
-    await batch.commit();
+    const batch = snap.docs.map((d) => updateDoc(doc(db, NOTIFICACOES_COLLECTION, d.id), { lida: true }));
+    await Promise.all(batch);
   } catch (err) {
     console.error('[DB] Erro ao marcar notificações como lidas:', err);
   }
@@ -612,7 +1238,7 @@ export async function getAllReviewsAdmin(): Promise<Review[]> {
 
 export async function updateReviewStatus(id: string, status: StatusReview): Promise<void> {
   try {
-    await updateDoc(doc(db, REVIEWS_COLLECTION, id), { status });
+    await updateDoc(doc(db, REVIEWS_COLLECTION, id) as any, { status } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da avaliação:', err);
     throw err;
@@ -688,7 +1314,7 @@ export async function updateReportStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, REPORTS_COLLECTION, id), updates);
+    await updateDoc(doc(db, REPORTS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar denúncia:', err);
     throw err;
@@ -752,7 +1378,7 @@ export async function updateVerificationStatus(
       updates.dataResolucao = Timestamp.now();
     }
     if (notasAdmin) updates.notasAdmin = notasAdmin;
-    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), updates);
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar verificação:', err);
     throw err;
@@ -773,10 +1399,10 @@ export async function deleteVerificationFiles(documentoUrl: string, selfieUrl: s
 
 export async function clearVerificationUrls(id: string): Promise<void> {
   try {
-    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id), {
+    await updateDoc(doc(db, VERIFICATIONS_COLLECTION, id) as any, {
       documentoUrl: '',
       selfieUrl: '',
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao limpar URLs de verificação:', err);
   }
@@ -814,7 +1440,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
-      ...dados,
+      ...dados as any,
       status: 'pendente',
       prioritaria: false,
       stats: {
@@ -838,10 +1464,10 @@ export async function getIntencaoCompra(id: string): Promise<IntencaoCompra | nu
     const docRef = doc(db, INTENCOES_COLLECTION, id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    updateDoc(docRef, {
+    updateDoc(docRef as any, {
       'stats.visualizacoes': increment(1),
       'stats.visualizacoes7Dias': increment(1),
-    }).catch(() => {});
+    } as any).catch(() => {});
     return { id: snap.id, ...snap.data() } as IntencaoCompra;
   } catch (err) {
     console.error('[DB] Erro ao buscar intenção:', err);
@@ -876,7 +1502,7 @@ export async function atualizarIntencaoCompra(id: string, userId: string, update
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef, { ...updates, atualizadaEm: Timestamp.now() });
+    await updateDoc(docRef as any, { ...updates, atualizadaEm: Timestamp.now() } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar intenção:', err);
     throw err;
@@ -890,11 +1516,11 @@ export async function deletarIntencaoCompra(id: string, userId: string): Promise
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef, {
+    await updateDoc(docRef as any, {
       status: 'deletada',
       deletadaEm: Timestamp.now(),
       atualizadaEm: Timestamp.now(),
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao deletar intenção:', err);
     throw err;
@@ -908,11 +1534,11 @@ export async function pausarIntencaoCompra(id: string, userId: string): Promise<
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef, {
+    await updateDoc(docRef as any, {
       status: 'pausada',
       expiradoEm: Timestamp.now(),
       atualizadaEm: Timestamp.now(),
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao pausar intenção:', err);
     throw err;
@@ -926,11 +1552,11 @@ export async function reativarIntencaoCompra(id: string, userId: string): Promis
     if (!snap.exists()) throw new Error('Intenção não encontrada');
     const data = snap.data() as IntencaoCompra;
     if (data.userId !== userId) throw new Error('Não autorizado');
-    await updateDoc(docRef, {
+    await updateDoc(docRef as any, {
       status: 'ativa',
       expiradoEm: null,
       atualizadaEm: Timestamp.now(),
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao reativar intenção:', err);
     throw err;
@@ -1020,13 +1646,10 @@ export async function iniciarContatoIntencao(
       });
     }
 
-    // Counter bump must not fail the contact that was already created.
-    await updateDoc(doc(db, INTENCOES_COLLECTION, intencaoId), {
+    await updateDoc(doc(db, INTENCOES_COLLECTION, intencaoId) as any, {
       'stats.contatos': increment(1),
       'stats.contatos7Dias': increment(1),
-    }).catch((err) => {
-      console.warn('[DB] Falha ao incrementar stats da intenção:', err);
-    });
+    } as any);
 
     return contatoId;
   } catch (err) {
@@ -1060,10 +1683,10 @@ export async function marcarContatoRelevante(contatoId: string, userId: string):
     const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
     const snap = await getDoc(docRef);
     if (!snap.exists()) throw new Error('Contato não encontrado');
-    await updateDoc(docRef, {
+    await updateDoc(docRef as any, {
       marcadoComoRelevante: true,
       atualizadoEm: Timestamp.now(),
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao marcar contato relevante:', err);
     throw err;
@@ -1073,10 +1696,10 @@ export async function marcarContatoRelevante(contatoId: string, userId: string):
 export async function rejeitarContato(contatoId: string, userId: string): Promise<void> {
   try {
     const docRef = doc(db, CONTATOS_INTENCAO_COLLECTION, contatoId);
-    await updateDoc(docRef, {
+    await updateDoc(docRef as any, {
       status: 'rejeitado',
       atualizadoEm: Timestamp.now(),
-    });
+    } as any);
   } catch (err) {
     console.error('[DB] Erro ao rejeitar contato:', err);
     throw err;
@@ -1129,7 +1752,7 @@ export async function updateDenunciaIntencaoStatus(
     }
     if (acaoTomada) updates.acaoTomada = acaoTomada;
     if (notas) updates.notas = notas;
-    await updateDoc(doc(db, DENUNCIAS_INTENCAO_COLLECTION, id), updates);
+    await updateDoc(doc(db, DENUNCIAS_INTENCAO_COLLECTION, id) as any, updates as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar denúncia:', err);
     throw err;
@@ -1170,7 +1793,7 @@ export async function getIntencoesAtivas(): Promise<IntencaoCompra[]> {
 
 export async function updateIntencaoStatus(id: string, status: string): Promise<void> {
   try {
-    await updateDoc(doc(db, INTENCOES_COLLECTION, id), { status, atualizadaEm: Timestamp.now() });
+    await updateDoc(doc(db, INTENCOES_COLLECTION, id) as any, { status, atualizadaEm: Timestamp.now() } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da intenção:', err);
     throw err;
@@ -1178,13 +1801,14 @@ export async function updateIntencaoStatus(id: string, status: string): Promise<
 }
 
 // ============ OFICINAS E MECÂNICOS ============
+import type { OficinaMecanico } from '@/types/oficina';
 
 export async function getOficinas(): Promise<OficinaMecanico[]> {
   try {
-    const q = query(collection(db, OFICINAS_COLLECTION), where('status', '==', 'aprovado'));
+    const q = query(collection(db, OFICINAS_COLLECTION), orderBy('dataCriacao', 'desc'));
     const snap = await getDocs(q);
     const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
-    return sortByDataCriacaoDesc(todas);
+    return todas.filter((c) => c.status === 'aprovado');
   } catch (err) {
     console.error('[DB] Erro ao buscar oficinas:', err);
     return [];
@@ -1195,12 +1819,12 @@ export function subscribeOficinas(
   onData: (oficinas: OficinaMecanico[]) => void,
   onError?: (err: Error) => void,
 ): () => void {
-  const q = query(collection(db, OFICINAS_COLLECTION), where('status', '==', 'aprovado'));
+  const q = query(collection(db, OFICINAS_COLLECTION), orderBy('dataCriacao', 'desc'));
   return onSnapshot(
     q,
     (snap) => {
       const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as OficinaMecanico);
-      onData(sortByDataCriacaoDesc(todas));
+      onData(todas.filter((c) => c.status === 'aprovado'));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de oficinas:', err);
@@ -1239,7 +1863,7 @@ export async function addOficina(dados: Record<string, unknown>): Promise<Oficin
 
 export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
   try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id), dados);
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, dados as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar oficina:', err);
     throw err;
@@ -1248,7 +1872,7 @@ export async function updateOficina(id: string, dados: Record<string, unknown>):
 
 export async function updateOficinaStatus(id: string, status: 'pendente' | 'aprovado' | 'rejeitado'): Promise<void> {
   try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id), { status });
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id) as any, { status } as any);
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da oficina:', err);
     throw err;
@@ -1285,421 +1909,4 @@ export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
     return [];
   }
 }
-
-// ---------------------------------------------------------------------------
-// Propostas / Contra-propostas (seller → interested buyer negotiation)
-// ---------------------------------------------------------------------------
-
-const PROPOSTAS_COLLECTION = 'propostas';
-
-function ordenarPorCriacao<T extends { criadaEm?: { toDate?: () => Date } }>(items: T[]): T[] {
-  return items.sort(
-    (a, b) => (b.criadaEm?.toDate?.()?.getTime() || 0) - (a.criadaEm?.toDate?.()?.getTime() || 0),
-  );
-}
-
-export async function criarProposta(dados: PropostaInput): Promise<Proposta> {
-  try {
-    const id = doc(collection(db, PROPOSTAS_COLLECTION)).id;
-    const agora = Timestamp.now();
-    const proposta: Proposta = { id, ...dados, criadaEm: agora, atualizadaEm: agora };
-    await setDoc(doc(db, PROPOSTAS_COLLECTION, id), cleanUndefined({ ...proposta }));
-
-    // Criar notificação para o vendedor
-    await criarNotificacao(
-      dados.vendedorUid,
-      'info',
-      'Nova Proposta Recebida 💰',
-      `${dados.compradorNome} enviou uma proposta de ${dados.valor}€ para o seu anúncio: ${dados.anuncioTitulo}`,
-      '/perfil',
-    );
-
-    return proposta;
-  } catch (err) {
-    console.error('[DB] Erro ao criar proposta:', err);
-    throw err;
-  }
-}
-
-export async function getPropostasPorVendedor(vendedorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', vendedorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (vendedor):', err);
-    return [];
-  }
-}
-
-export async function getPropostasPorComprador(compradorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', compradorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (comprador):', err);
-    return [];
-  }
-}
-
-export async function atualizarProposta(id: string, status: StatusProposta): Promise<void> {
-  try {
-    const docRef = doc(db, PROPOSTAS_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const prop = docSnap.data() as Proposta;
-      const updates: Record<string, unknown> = { status, atualizadaEm: Timestamp.now() };
-      if (status === 'aceita' || status === 'rejeitada') {
-        updates.respostaCompradorEm = Timestamp.now();
-      }
-      await updateDoc(docRef as any, updates as any);
-
-      // Notificar o comprador sobre a resposta
-      const statusStr = status === 'aceita' ? 'aceitou' : status === 'rejeitada' ? 'rejeitou' : status;
-      await criarNotificacao(
-        prop.compradorUid,
-        'info',
-        `Proposta de Compra ${status === 'aceita' ? 'Aceite' : 'Rejeitada'} 💰`,
-        `O vendedor ${statusStr} a sua proposta de ${prop.valor}€ no anúncio: ${prop.anuncioTitulo}`,
-        '/perfil',
-      );
-    }
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar proposta:', err);
-    throw err;
-  }
-}
-
-export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
-  try {
-    // 1. Eliminar anúncios de carros
-    const qCars = query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid));
-    const snapCars = await getDocs(qCars);
-    for (const docSnap of snapCars.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 2. Eliminar anúncios de peças
-    const qParts = query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid));
-    const snapParts = await getDocs(qParts);
-    for (const docSnap of snapParts.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 3. Eliminar propostas (onde o utilizador é comprador OU vendedor)
-    const qPropComp = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid));
-    const snapPropComp = await getDocs(qPropComp);
-    for (const docSnap of snapPropComp.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-    const qPropVend = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid));
-    const snapPropVend = await getDocs(qPropVend);
-    for (const docSnap of snapPropVend.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 4. Eliminar notificações do utilizador
-    const qNotif = query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid));
-    const snapNotif = await getDocs(qNotif);
-    for (const docSnap of snapNotif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 5. Eliminar intenções de compra do utilizador
-    const qInten = query(collection(db, INTENCOES_COLLECTION), where('uid', '==', uid));
-    const snapInten = await getDocs(qInten);
-    for (const docSnap of snapInten.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 6. Eliminar verificação de identidade
-    const qVerif = query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid));
-    const snapVerif = await getDocs(qVerif);
-    for (const docSnap of snapVerif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 7. Eliminar reviews escritas pelo utilizador
-    const qRev = query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid));
-    const snapRev = await getDocs(qRev);
-    for (const docSnap of snapRev.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 8. Eliminar mensagens de chats do utilizador
-    const qMessages = query(collection(db, 'messages'), where('participants', 'array-contains', uid));
-    const snapMessages = await getDocs(qMessages);
-    for (const docSnap of snapMessages.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 9. Eliminar perfil do utilizador
-    await deleteDoc(doc(db, USERS_COLLECTION, uid));
-  } catch (err) {
-    console.error('[DB] Erro ao eliminar dados do utilizador:', err);
-    throw err;
-  }
-}
-
-
-// ---------------------------------------------------------------------------
-// Leads de parceria (financing / insurance simulators) — consent-gated (RGPD)
-// ---------------------------------------------------------------------------
-
-const LEADS_PARCERIA_COLLECTION = 'leads_parceria';
-
-export async function criarLeadParceria(dados: LeadParceriaInput): Promise<string> {
-  try {
-    const id = doc(collection(db, LEADS_PARCERIA_COLLECTION)).id;
-    await setDoc(
-      doc(db, LEADS_PARCERIA_COLLECTION, id),
-      cleanUndefined({ id, ...dados, criadaEm: Timestamp.now() }),
-    );
-    return id;
-  } catch (err) {
-    console.error('[DB] Erro ao criar lead de parceria:', err);
-    throw err;
-  }
-}
-
-export async function getLeadsParceriaAdmin(): Promise<LeadParceria[]> {
-  try {
-    const q = query(collection(db, LEADS_PARCERIA_COLLECTION), orderBy('criadaEm', 'desc'));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => d.data() as LeadParceria);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar leads de parceria:', err);
-    return [];
-  }
-}
-
-// ============ CONFIG (PREMIUM CONTROLS) ============
-
-const CONFIG_COLLECTION = 'config';
-const PREMIUM_DOC = 'premium';
-
-export async function getPremiumConfig(): Promise<PremiumConfig> {
-  try {
-    const docRef = doc(db, CONFIG_COLLECTION, PREMIUM_DOC);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      return {
-        masterActive: data.masterActive !== false,
-        impulsionamento: data.impulsionamento !== false,
-        oficinas: data.oficinas !== false,
-        leads: data.leads !== false,
-        parceriasActive: data.parceriasActive !== false,
-        financiamento: data.financiamento !== false,
-        seguro: data.seguro !== false,
-        atualizadoEm: data.atualizadoEm,
-        atualizadoPor: data.atualizadoPor,
-      } as PremiumConfig;
-    }
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  } catch (err) {
-    console.error('[DB] Erro ao buscar premium config:', err);
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  }
-}
-
-export async function updatePremiumConfig(
-  features: Partial<PremiumConfig>,
-  adminUid: string,
-): Promise<void> {
-  try {
-    const docRef = doc(db, CONFIG_COLLECTION, PREMIUM_DOC);
-    await setDoc(
-      docRef,
-      {
-        ...features,
-        atualizadoEm: Timestamp.now(),
-        atualizadoPor: adminUid,
-      },
-      { merge: true },
-    );
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar premium config:', err);
-    throw err;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Admin Dashboard Stats (real data aggregation)
-// ---------------------------------------------------------------------------
-
-export interface DashboardMonthlyStats {
-  mes: string; // "Jan", "Fev", etc.
-  utilizadores: number;
-  carros: number;
-  pecas: number;
-  oficinas: number;
-  intencoes: number;
-}
-
-export interface AdminDashboardStats {
-  /** Contagem de utilizadores por faixa de antiguidade (dias desde dataCriacao) */
-  antiguidade: { range: string; percent: number; count: number }[];
-  /** Métricas mensais para gráfico de evolução (últimos 6 meses) */
-  evolucaoMensal: DashboardMonthlyStats[];
-  /** Total de utilizadores que criaram pelo menos 1 anúncio */
-  utilizadoresAtivos: number;
-  /** Média de anúncios por utilizador */
-  mediaAnunciosPorUtilizador: number;
-  /** Total de visualizações acumuladas */
-  totalVisualizacoes: number;
-  /** Total de contagens de mensagens */
-  totalMensagens: number;
-}
-
-function getMonthLabel(monthIndex: number): string {
-  const labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  return labels[monthIndex] || '?';
-}
-
-function getLast6Months(): { year: number; month: number; label: string }[] {
-  const now = new Date();
-  const months: { year: number; month: number; label: string }[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ year: d.getFullYear(), month: d.getMonth(), label: getMonthLabel(d.getMonth()) });
-  }
-  return months;
-}
-
-function isInMonth(timestamp: Timestamp | undefined, year: number, month: number): boolean {
-  if (!timestamp) return false;
-  const d = timestamp.toDate();
-  return d.getFullYear() === year && d.getMonth() === month;
-}
-
-export async function getAdminDashboardStats(
-  users: Usuario[],
-  carros: Carro[],
-  pecas: Peca[],
-  oficinas: OficinaMecanico[],
-  intencoes: IntencaoCompra[],
-): Promise<AdminDashboardStats> {
-  // --- Antiguidade dos utilizadores (proxy para faixas etárias / tempo de plataforma) ---
-  const now = Date.now();
-  const antiguidadeRanges = [
-    { label: '0 - 30 dias', min: 0, max: 30 },
-    { label: '1 - 3 meses', min: 31, max: 90 },
-    { label: '3 - 6 meses', min: 91, max: 180 },
-    { label: '6 - 12 meses', min: 181, max: 365 },
-    { label: '+ 1 ano', min: 366, max: Infinity },
-  ];
-
-  const antiguidade = antiguidadeRanges.map((range) => {
-    const count = users.filter((u) => {
-      const dataCriacao = u.dataCriacao?.toDate?.()?.getTime();
-      if (!dataCriacao) return false;
-      const dias = Math.floor((now - dataCriacao) / 86400000);
-      return dias >= range.min && dias <= range.max;
-    }).length;
-    return {
-      range: range.label,
-      percent: users.length > 0 ? Math.round((count / users.length) * 100) : 0,
-      count,
-    };
-  });
-
-  // --- Evolução mensal (últimos 6 meses) ---
-  const meses = getLast6Months();
-  const evolucaoMensal: DashboardMonthlyStats[] = meses.map((m) => ({
-    mes: m.label,
-    utilizadores: users.filter((u) => isInMonth(u.dataCriacao, m.year, m.month)).length,
-    carros: carros.filter((c) => isInMonth(c.dataCriacao, m.year, m.month)).length,
-    pecas: pecas.filter((p) => isInMonth(p.dataCriacao, m.year, m.month)).length,
-    oficinas: oficinas.filter((o) => isInMonth(o.dataCriacao, m.year, m.month)).length,
-    intencoes: intencoes.filter((i) => isInMonth(i.criadaEm, m.year, m.month)).length,
-  }));
-
-  // --- Utilizadores ativos (criaram pelo menos 1 anúncio) ---
-  const criadoresAtivos = new Set<string>();
-  carros.forEach((c) => { if (c.criador) criadoresAtivos.add(c.criador); if (c.criadorUid) criadoresAtivos.add(c.criadorUid); });
-  pecas.forEach((p) => { if (p.criador) criadoresAtivos.add(p.criador); if (p.criadorUid) criadoresAtivos.add(p.criadorUid); });
-  oficinas.forEach((o) => { if (o.criador) criadoresAtivos.add(o.criador); });
-  const utilizadoresAtivos = criadoresAtivos.size;
-
-  // --- Média de anúncios por utilizador ---
-  const totalAnuncios = carros.length + pecas.length + oficinas.length;
-  const mediaAnunciosPorUtilizador = users.length > 0 ? parseFloat((totalAnuncios / users.length).toFixed(1)) : 0;
-
-  // --- Total de visualizações e mensagens ---
-  const totalVisualizacoes =
-    (carros.reduce((acc, c) => acc + (c.visualizacoes || 0), 0)) +
-    (pecas.reduce((acc, p) => acc + (p.visualizacoes || 0), 0));
-
-  const totalMensagens =
-    (carros.reduce((acc, c) => acc + (c.contagemMensagens || 0), 0)) +
-    (pecas.reduce((acc, p) => acc + (p.contagemMensagens || 0), 0));
-
-  return {
-    antiguidade,
-    evolucaoMensal,
-    utilizadoresAtivos,
-    mediaAnunciosPorUtilizador,
-    totalVisualizacoes,
-    totalMensagens,
-  };
-}
-
-export function subscribePremiumConfig(
-  onData: (config: PremiumConfig) => void,
-  onError?: (err: Error) => void,
-): () => void {
-  const docRef = doc(db, CONFIG_COLLECTION, PREMIUM_DOC);
-  return onSnapshot(
-    docRef,
-    (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        onData({
-          masterActive: data.masterActive !== false,
-          impulsionamento: data.impulsionamento !== false,
-          oficinas: data.oficinas !== false,
-          leads: data.leads !== false,
-          parceriasActive: data.parceriasActive !== false,
-          financiamento: data.financiamento !== false,
-          seguro: data.seguro !== false,
-          atualizadoEm: data.atualizadoEm,
-          atualizadoPor: data.atualizadoPor,
-        });
-      } else {
-        onData({
-          masterActive: true,
-          impulsionamento: true,
-          oficinas: true,
-          leads: true,
-          parceriasActive: true,
-          financiamento: true,
-          seguro: true,
-        });
-      }
-    },
-    (err) => {
-      console.error('[DB] Erro no snapshot de premium config:', err);
-      onError?.(err);
-    },
-  );
-}
-
 

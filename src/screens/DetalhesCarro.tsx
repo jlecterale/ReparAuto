@@ -9,6 +9,7 @@ import { formatarPreco, renderDescricao } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
+import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
 import FinanciamentoSeguroWidget from '@/components/detalhes/FinanciamentoSeguroWidget';
 import Badge from '@/components/ui/Badge';
@@ -260,6 +261,10 @@ export default function DetalhesCarro() {
 
         <div className="mt-6">
           <VinCheckPanel />
+        </div>
+
+        <div className="mt-6">
+          <CompatibleParts carro={carro} />
         </div>
       </div>
 

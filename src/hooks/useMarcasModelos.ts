@@ -1,150 +1,85 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { MARCAS_MODELOS_COLLECTION, MARCAS_MODELOS_DOC } from '@/lib/constants';
 import dados from '@/data/marcas-modelos.json';
-import type { MarcaModeloDoc, MarcasModelosCache, TipoVeiculo } from '@/types/marcas-modelos';
 
 export interface MarcaModelos {
   marca: string;
   modelos: string[];
 }
 
-const CACHE_KEY = 'marcas_modelos_cache';
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+type DadosCache = Array<{ marca: string; modelos: string[] }>;
 
-function getCache(): MarcasModelosCache | null {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as MarcasModelosCache;
-  } catch {
-    return null;
-  }
+// Module-level cache — shared across all hook instances
+let cachePromise: Promise<DadosCache> | null = null;
+let cachedData: DadosCache | null = null;
+
+async function fetchMarcasModelos(): Promise<DadosCache> {
+  if (cachedData) return cachedData;
+  if (cachePromise) return cachePromise;
+
+  const LS_KEY = 'reparauto_marcas_modelos_cache';
+
+  cachePromise = (async () => {
+    try {
+      const docRef = doc(db, MARCAS_MODELOS_COLLECTION, MARCAS_MODELOS_DOC);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        const firestoreData = snap.data().dados as DadosCache;
+        if (firestoreData?.length) {
+          cachedData = firestoreData;
+          try { localStorage.setItem(LS_KEY, JSON.stringify(firestoreData)); } catch { /* quota exceeded */ }
+          return firestoreData;
+        }
+      }
+    } catch { /* Firestore unavailable */ }
+
+    // Fallback: try localStorage cache
+    try {
+      const ls = localStorage.getItem(LS_KEY);
+      if (ls) {
+        const parsed = JSON.parse(ls) as DadosCache;
+        if (parsed?.length) {
+          cachedData = parsed;
+          return parsed;
+        }
+      }
+    } catch { /* parse failed */ }
+
+    // Final fallback: bundled JSON
+    cachedData = dados as DadosCache;
+    return cachedData;
+  })();
+
+  return cachePromise;
 }
 
-function setCache(dados: MarcaModeloDoc[]): void {
-  try {
-    const cache: MarcasModelosCache = { timestamp: Date.now(), dados };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-  } catch {
-    // localStorage might be full or unavailable
-  }
-}
-
-function isCacheValid(cache: MarcasModelosCache): boolean {
-  return Date.now() - cache.timestamp < CACHE_TTL_MS;
-}
-
-function getFallbackData(): MarcaModeloDoc[] {
-  return (dados as { marca: string; modelos: string[] }[]).map((d) => ({
-    nome: d.marca,
-    tipos: ['carro'] as TipoVeiculo[],
-    modelos: d.modelos,
-    ativo: true,
-  }));
-}
-
-interface UseMarcasModelosOptions {
-  /** Filtrar marcas por tipo de veículo */
-  tipo?: TipoVeiculo;
-}
-
-interface UseMarcasModelosResult {
-  marcas: string[];
-  getModelos: (marca: string) => string[];
-  loading: boolean;
-  error: string | null;
-  /** Lista completa de documentos (para admin UI) */
-  docs: MarcaModeloDoc[];
-}
-
-export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasModelosResult {
-  const { tipo } = options ?? {};
-  const [docs, setDocs] = useState<MarcaModeloDoc[]>(() => {
-    // Try cache first
-    const cached = getCache();
-    if (cached && isCacheValid(cached)) {
-      return cached.dados;
-    }
-    return [];
-  });
-  const [loading, setLoading] = useState(() => {
-    const cached = getCache();
-    return !(cached && isCacheValid(cached));
-  });
-  const [error, setError] = useState<string | null>(null);
+export function useMarcasModelos() {
+  const [data, setData] = useState<DadosCache | null>(cachedData ?? null);
 
   useEffect(() => {
-    let cancelled = false;
+    if (data) return; // already loaded
+    fetchMarcasModelos().then(setData).catch(() => {
+      // Last-resort fallback
+      setData(dados as DadosCache);
+    });
+  }, [data]);
 
-    async function fetchMarcas() {
-      // Check cache again (in case it was set between render and effect)
-      const cached = getCache();
-      if (cached && isCacheValid(cached)) {
-        if (!cancelled) {
-          setDocs(cached.dados);
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        const q = query(
-          collection(db, 'marcas_modelos'),
-          where('ativo', '==', true),
-          orderBy('nome')
-        );
-        const snapshot = await getDocs(q);
-        const result: MarcaModeloDoc[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data() as MarcaModeloDoc;
-          result.push({ ...data, nome: doc.id });
-        });
-
-        if (!cancelled) {
-          setDocs(result);
-          setCache(result);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.warn('[useMarcasModelos] Erro ao buscar do Firestore, usando fallback:', err);
-        const fallback = getFallbackData();
-        if (!cancelled) {
-          setDocs(fallback);
-          setCache(fallback);
-          setLoading(false);
-          setError(null); // Fallback is silent — user doesn't need to know
-        }
-      }
-    }
-
-    fetchMarcas();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const marcas = useMemo(() => {
-    let filtered = docs;
-    if (tipo) {
-      filtered = docs.filter((d) => d.tipos.includes(tipo));
-    }
-    return filtered
-      .filter((d) => d.ativo)
-      .map((d) => d.nome)
-      .sort((a, b) => a.localeCompare(b));
-  }, [docs, tipo]);
-
-  const getModelos = useCallback(
-    (marca: string): string[] => {
-      const entry = docs.find((d) => d.nome.toLowerCase() === marca.toLowerCase());
-      return entry?.modelos ?? [];
-    },
-    [docs]
+  const marcas = useMemo(
+    () => (data ?? []).map((d) => d.marca).sort((a, b) => a.localeCompare(b)),
+    [data],
   );
 
-  return { marcas, getModelos, loading, error, docs };
+  const getModelos = (marca: string): string[] => {
+    if (!data) return [];
+    const entry = data.find(
+      (d) => d.marca.toLowerCase() === marca.toLowerCase(),
+    );
+    return entry?.modelos ?? [];
+  };
+
+  return { marcas, getModelos, loaded: data !== null };
 }
