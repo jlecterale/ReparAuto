@@ -11,11 +11,42 @@ npm run dev          # Next.js dev server (hot reload)
 npm run build        # Production build → .next/
 npm run start        # Run production build locally
 npx tsc --noEmit     # Type-check (strict mode)
+npm test             # Run web tests (Jest) — see "Testing & TDD" below
+npm run test:watch   # Jest watch mode
+npm run test:coverage # Jest with coverage
+npm --prefix mobile run test  # Run mobile tests (jest-expo)
 npm run deploy:rules # Deploy Firestore/Storage rules
 npm run seed         # Seed demo data into empty collections (Admin SDK)
 ```
 
-No test runner or formatter is configured.
+No formatter is configured. The lint command is `npm run lint` (`next lint`).
+
+## Testing & TDD (MANDATORY)
+
+**Test-driven development is required for every change — new features, bug fixes,
+and refactors alike.** Before writing or modifying implementation code, write a
+failing test that captures the intended behavior (RED), then write the minimal
+code to make it pass (GREEN), then refactor. Work in **vertical slices** — one
+test → one implementation → repeat. Never write a batch of tests up front.
+
+- **Runners**: Jest via `next/jest` (web, `jsdom` env) and `jest-expo` (mobile).
+  Config: `jest.config.js` and `mobile/jest.config.js`.
+- **Run**: `npm test` (web), `npm --prefix mobile run test` (mobile),
+  `npm run test:coverage` (web coverage).
+- **Test behavior, not implementation** — exercise the public interface so tests
+  survive internal refactors; the name describes _what_, not _how_.
+- **Mock only at system boundaries** (Firebase SDK, network, time, randomness,
+  `localStorage`, `canvas`). Never mock our own modules; prefer dependency
+  injection (e.g. `offlineQueue.processQueue(uid, handler)`).
+- **Co-locate** `*.test.ts(x)` next to the module and import Jest globals from
+  `@jest/globals` so `npx tsc --noEmit` stays green.
+- **For bug fixes**: first add a failing test that reproduces the bug, then fix.
+- **Gate before commit**: `npx tsc --noEmit` and `npm test` must be green. A CI
+  workflow to enforce this per-PR is in `docs/plans/20-estrategia-de-testes.md`
+  §7 (add it once the token has `workflow` scope).
+- **Reference**: full backlog and critical-path map in
+  `docs/plans/20-estrategia-de-testes.md`; methodology skills in `.agents/skills/`
+  (`tdd`, `javascript-typescript-jest`).
 
 ## Architecture
 
@@ -78,7 +109,8 @@ Demo seed data lives in `scripts/seed-firestore.mjs` (`npm run seed`), not in cl
 - **Auth**: Firebase Auth (email/password + Google). Roles: `user`, `admin`. New listings default to `status: 'pendente'` (admin approves).
 - **Commits**: conventional style (`feat:`, `fix:`) with descriptive summaries.
 - **TypeScript**: strict mode enabled. Types live in `src/types/`.
-- **No tests**: no test framework exists — do not attempt to run tests.
+- **Tests**: Jest is configured (web + mobile). TDD is mandatory — see the
+  "Testing & TDD" section above; write the failing test first.
 
 ## SEO
 

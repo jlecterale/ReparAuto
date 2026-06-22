@@ -22,7 +22,7 @@ Portuguese marketplace for used cars, parts, workshops and purchase intents. Nex
 - **firebase-admin** — server-only, used by `src/lib/db.server.ts` and `scripts/`.
 - **@phosphor-icons/react** — icons (files importing them need `'use client'`).
 - **leaflet / react-leaflet** — maps; always loaded via `dynamic(..., { ssr: false })`.
-- **No test/lint/format tooling** — verification is `npx tsc --noEmit` + `npm run build`.
+- **Testing**: Jest is configured (`next/jest` for web, `jest-expo` for mobile). **TDD is mandatory** — write the failing test first (see `CLAUDE.md` → _Testing & TDD_ and `docs/plans/20-estrategia-de-testes.md`). Verification: `npx tsc --noEmit` + `npm test` + `npm run build`.
 
 ## Data Layer
 
