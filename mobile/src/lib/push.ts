@@ -22,10 +22,29 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
-    shouldPlaySound: false,
+    shouldPlaySound: true,
     shouldSetBadge: false,
   }),
 });
+
+/** Android channel ID used for both foreground display and FCM delivery. */
+const ANDROID_CHANNEL_ID = 'default';
+
+/**
+ * On Android 8+ a notification channel is REQUIRED — without one, neither the
+ * locally-rendered foreground banner nor FCM background pushes are shown. This
+ * was the missing piece: the app requested permission and stored a token but
+ * never created a channel, so nothing surfaced on Android. No-op on iOS.
+ */
+async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  await Notifications.setNotificationChannelAsync(ANDROID_CHANNEL_ID, {
+    name: 'Notificações',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+    vibrationPattern: [0, 250, 250, 250],
+  });
+}
 
 async function temPermissao(): Promise<boolean> {
   const status = await messaging().requestPermission();
@@ -38,6 +57,7 @@ async function temPermissao(): Promise<boolean> {
 /** Requests permission, fetches the FCM token and stores it on the user doc. */
 export async function registerForPush(uid: string): Promise<string | null> {
   try {
+    await ensureAndroidChannel();
     if (!(await temPermissao())) return null;
     if (Platform.OS === 'ios') {
       await messaging().registerDeviceForRemoteMessages();
@@ -77,13 +97,19 @@ type RemoteMessage = FirebaseMessagingTypes.RemoteMessage;
  * (e.g. `{ link }`) so the caller can deep-link. Returns an unsubscribe fn.
  */
 export function setupPushHandlers(onOpen: (data: RemoteMessage['data']) => void): () => void {
+  // Make sure the channel exists even if registerForPush hasn't run yet.
+  ensureAndroidChannel().catch(() => {});
+
   // Foreground messages → show a local banner.
   const unsubForeground = messaging().onMessage(async (msg) => {
     const title = msg.notification?.title ?? 'ReparAuto';
     const body = msg.notification?.body ?? '';
     await Notifications.scheduleNotificationAsync({
       content: { title, body, data: msg.data ?? {} },
-      trigger: null,
+      // Android: present on the high-importance channel created at register time
+      // so the banner actually pops (a bare `{ channelId }` is the "deliver now"
+      // trigger). Ignored on iOS, which uses `null`.
+      trigger: Platform.OS === 'android' ? { channelId: ANDROID_CHANNEL_ID } : null,
     });
   });
 

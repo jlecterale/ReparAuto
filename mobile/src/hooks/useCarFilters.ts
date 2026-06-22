@@ -6,6 +6,8 @@ export type QuickChip = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
 export type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
 export interface CarAdvFilters {
+  marca: string;
+  modelo: string;
   precoMin: string;
   precoMax: string;
   kmMin: string;
@@ -24,6 +26,8 @@ export interface CarAdvFilters {
 }
 
 const INITIAL: CarAdvFilters = {
+  marca: '',
+  modelo: '',
   precoMin: '',
   precoMax: '',
   kmMin: '',
@@ -70,6 +74,8 @@ export function useCarFilters(carros: Carro[]) {
   const filtersCount = useMemo(() => {
     const localizacaoActive = f.raioMode ? !!(f.raioCentro && f.raioKm) : !!(f.concelho || f.distrito);
     return [
+      f.marca,
+      f.modelo,
       f.precoMin || f.precoMax,
       f.kmMin || f.kmMax,
       f.anoMin || f.anoMax,
@@ -93,6 +99,8 @@ export function useCarFilters(carros: Carro[]) {
     let cs = carros.filter((c) => {
       if (!aplicaChip(c, chip)) return false;
       if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
+      if (f.marca && (c.marca ?? '').toLowerCase() !== f.marca.toLowerCase()) return false;
+      if (f.modelo && (c.modelo ?? '').toLowerCase() !== f.modelo.toLowerCase()) return false;
       if (precoMin !== null && c.preco < precoMin) return false;
       if (precoMax !== null && c.preco > precoMax) return false;
       if (kmMin !== null && c.km < kmMin) return false;

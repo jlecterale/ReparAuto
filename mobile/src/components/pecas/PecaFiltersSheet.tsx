@@ -1,7 +1,10 @@
+import { View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
+import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { CATEGORIAS_PECAS, DISTRITOS, ESTADOS_PECA } from '@/lib/constants';
 
 const CATEGORIA_OPTS = [{ value: '', label: 'Todas' }, ...CATEGORIAS_PECAS.map((c) => ({ value: c, label: c }))];
@@ -17,6 +20,10 @@ interface PecaFiltersSheetProps {
   setEstado: (v: string) => void;
   distrito: string;
   setDistrito: (v: string) => void;
+  marca: string;
+  setMarca: (v: string) => void;
+  modelo: string;
+  setModelo: (v: string) => void;
   onClear: () => void;
   resultCount: number;
 }
@@ -30,9 +37,14 @@ export function PecaFiltersSheet({
   setEstado,
   distrito,
   setDistrito,
+  marca,
+  setMarca,
+  modelo,
+  setModelo,
   onClear,
   resultCount,
 }: PecaFiltersSheetProps) {
+  const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
   return (
     <BottomSheet
       visible={visible}
@@ -45,7 +57,34 @@ export function PecaFiltersSheet({
         </>
       }
     >
-      <SheetSection title="Categoria" first>
+      <SheetSection title="Marca e modelo do carro" first>
+        <View className="gap-3">
+          <SelectField
+            value={marca}
+            onChange={(v) => {
+              setMarca(v);
+              setModelo('');
+            }}
+            options={marcas}
+            loading={marcasLoading}
+            placeholder="Todas as marcas"
+            title="Marca"
+            emptyOption="Todas as marcas"
+          />
+          {!!marca && (
+            <SelectField
+              value={modelo}
+              onChange={setModelo}
+              options={getModelos(marca)}
+              placeholder="Todos os modelos"
+              title="Modelo"
+              emptyOption="Todos os modelos"
+            />
+          )}
+        </View>
+      </SheetSection>
+
+      <SheetSection title="Categoria">
         <ChipSelect options={CATEGORIA_OPTS} value={categoria} onChange={setCategoria} />
       </SheetSection>
       <SheetSection title="Estado">

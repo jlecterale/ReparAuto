@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { router } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -10,7 +10,8 @@ import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { addOficina, uploadAnuncioFoto } from '@/lib/db';
+import { addOficina, getOficinaById, updateOficina, uploadAnuncioFoto } from '@/lib/db';
+import { colors } from '@/theme/colors';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
 
 const ESPECIALIDADES = (Object.keys(ESPECIALIDADES_LABELS) as EspecialidadeOficina[]).map(
@@ -18,6 +19,8 @@ const ESPECIALIDADES = (Object.keys(ESPECIALIDADES_LABELS) as EspecialidadeOfici
 );
 
 export default function RegistarOficinaScreen() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
@@ -36,6 +39,34 @@ export default function RegistarOficinaScreen() {
   const [descricao, setDescricao] = useState('');
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [enviando, setEnviando] = useState(false);
+  const [carregando, setCarregando] = useState(!!editId);
+
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    getOficinaById(editId)
+      .then((o) => {
+        if (cancelled || !o) return;
+        setLogo(o.logoUrl ? [o.logoUrl] : []);
+        setNome(o.nome ?? '');
+        setResponsavel(o.responsavel ?? '');
+        setTelefone(o.telefone ?? '');
+        setWhatsapp(o.whatsapp ?? '');
+        setEmail(o.email ?? '');
+        setWebsite(o.website ?? '');
+        setDistrito(o.distrito ?? '');
+        setLocalidade(o.localidade ?? '');
+        setMorada(o.morada ?? '');
+        setDescricao(o.descricao ?? '');
+        setEspecialidades(o.especialidades ?? []);
+      })
+      .finally(() => {
+        if (!cancelled) setCarregando(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editId]);
 
   function toggleEspecialidade(e: EspecialidadeOficina) {
     setEspecialidades((atual) =>
@@ -66,9 +97,13 @@ export default function RegistarOficinaScreen() {
 
     setEnviando(true);
     try {
-      const logoUrl = logo[0] ? await uploadAnuncioFoto(user.uid, logo[0], 0) : undefined;
+      const logoUrl = logo[0]
+        ? logo[0].startsWith('http')
+          ? logo[0]
+          : await uploadAnuncioFoto(user.uid, logo[0], 0)
+        : undefined;
 
-      await addOficina({
+      const dados = {
         nome: nome.trim(),
         descricao: descricao.trim(),
         responsavel: responsavel.trim(),
@@ -81,23 +116,37 @@ export default function RegistarOficinaScreen() {
         morada: morada.trim(),
         especialidades,
         logoUrl,
-        criador: user.email,
-      });
+      };
+
+      if (editId) {
+        await updateOficina(editId, { ...dados, status: 'pendente' });
+      } else {
+        await addOficina({ ...dados, criador: user.email });
+      }
 
       Alert.alert(
-        'Oficina enviada',
+        editId ? 'Oficina atualizada' : 'Oficina enviada',
         'O registo foi submetido e ficará visível após aprovação.',
         [{ text: 'OK', onPress: () => router.dismissAll() }],
       );
     } catch {
-      showToast('Não foi possível registar. Tente novamente.', 'error');
+      showToast('Não foi possível guardar. Tente novamente.', 'error');
     } finally {
       setEnviando(false);
     }
   }
 
+  if (carregando) {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50">
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoider offset={headerHeight} className="flex-1 bg-neutral-50">
+      <Stack.Screen options={{ title: editId ? 'Editar oficina' : 'Registar oficina' }} />
       <ScrollView
         contentContainerClassName="p-4 gap-4"
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
@@ -150,7 +199,7 @@ export default function RegistarOficinaScreen() {
         <Input label="Website" value={website} onChangeText={setWebsite} placeholder="https://…" autoCapitalize="none" keyboardType="url" />
 
         <Button
-          label={enviando ? 'A enviar…' : 'Registar oficina'}
+          label={enviando ? 'A guardar…' : editId ? 'Guardar alterações' : 'Registar oficina'}
           onPress={publicar}
           loading={enviando}
           className="mt-2"

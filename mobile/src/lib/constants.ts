@@ -19,6 +19,9 @@ export const ESTADOS_VEICULO: { value: EstadoVeiculo; label: string }[] = [
 /** Hard limits mirrored from the web app. */
 export const MAX_FOTOS_CARRO = 7;
 
+/** Firestore collection that is the source of truth for brands/models. */
+export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
+
 /** Portuguese districts (matches the web `DISTRITOS`). */
 export const DISTRITOS = [
   'Aveiro',

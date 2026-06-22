@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { COMBUSTIVEIS, DISTRITOS } from '@/lib/constants';
 import { getConcelhos } from '@/lib/geo';
+import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
 import { colors } from '@/theme/colors';
@@ -46,6 +48,7 @@ export function CarFiltersSheet({
 }: CarFiltersSheetProps) {
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
   const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
+  const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
 
   function toggleCombustivel(value: Combustivel) {
     update({
@@ -67,7 +70,31 @@ export function CarFiltersSheet({
         </>
       }
     >
-      <SheetSection title="Preço (€)" first>
+      <SheetSection title="Marca e modelo" first>
+        <View className="gap-3">
+          <SelectField
+            value={f.marca}
+            onChange={(v) => update({ marca: v, modelo: '' })}
+            options={marcas}
+            loading={marcasLoading}
+            placeholder="Todas as marcas"
+            title="Marca"
+            emptyOption="Todas as marcas"
+          />
+          {!!f.marca && (
+            <SelectField
+              value={f.modelo}
+              onChange={(v) => update({ modelo: v })}
+              options={getModelos(f.marca)}
+              placeholder="Todos os modelos"
+              title="Modelo"
+              emptyOption="Todos os modelos"
+            />
+          )}
+        </View>
+      </SheetSection>
+
+      <SheetSection title="Preço (€)">
         <RangeRow
           minValue={f.precoMin}
           maxValue={f.precoMax}

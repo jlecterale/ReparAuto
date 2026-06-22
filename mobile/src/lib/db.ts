@@ -179,6 +179,24 @@ export async function getOficinasByCreator(email: string): Promise<Oficina[]> {
   return mapDocs<Oficina>(snap).sort(byDataCriacaoDesc);
 }
 
+/**
+ * Updates an existing listing the signed-in user owns. The security rules allow
+ * `update` only for the creator (matched by email) and the web app resets
+ * `status` to `pendente` on user edits so changes are re-reviewed — we mirror
+ * that by having callers pass `status: 'pendente'`.
+ */
+export async function updateCarro(id: string, dados: Record<string, unknown>): Promise<void> {
+  await db.collection(CARROS).doc(id).update(cleanUndefined(dados));
+}
+
+export async function updatePeca(id: string, dados: Record<string, unknown>): Promise<void> {
+  await db.collection(PECAS).doc(id).update(cleanUndefined(dados));
+}
+
+export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
+  await db.collection(OFICINAS).doc(id).update(cleanUndefined(dados));
+}
+
 export async function deleteCarro(id: string): Promise<void> {
   await db.collection(CARROS).doc(id).delete();
 }

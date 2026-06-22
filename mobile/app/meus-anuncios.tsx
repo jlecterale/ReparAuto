@@ -122,6 +122,13 @@ export default function MeusAnunciosScreen() {
     else router.push(`/intencoes/${item.id}`);
   }
 
+  /** carro / peca / oficina have an edit form; intencao isn't editable here. */
+  function editar(item: Item) {
+    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
+    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: { id: item.id } });
+    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: { id: item.id } });
+  }
+
   function confirmarRemover(item: Item) {
     Alert.alert('Eliminar anúncio', `Remover "${item.titulo}"?`, [
       { text: 'Cancelar', style: 'cancel' },
@@ -182,6 +189,17 @@ export default function MeusAnunciosScreen() {
               </Text>
             </View>
           </View>
+          {item.kind !== 'intencao' && (
+            <Pressable
+              onPress={() => editar(item)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Editar"
+              className="p-2"
+            >
+              <Ionicons name="create-outline" size={20} color={colors.primary[600]} />
+            </Pressable>
+          )}
           <Pressable
             onPress={() => confirmarRemover(item)}
             hitSlop={8}

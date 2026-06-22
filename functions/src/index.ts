@@ -54,7 +54,13 @@ export const pushOnNotification = onDocumentCreated(
         body: data.mensagem ?? "",
       },
       data: { link: data.link ?? "", tipo: data.tipo ?? "" },
-      android: { priority: "high" },
+      // channelId must match the channel the mobile app creates in
+      // src/lib/push.ts (ANDROID_CHANNEL_ID = 'default'); otherwise Android 8+
+      // drops background notifications instead of showing them.
+      android: {
+        priority: "high",
+        notification: { channelId: "default", sound: "default" },
+      },
       apns: { payload: { aps: { sound: "default" } } },
     });
 
