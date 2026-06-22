@@ -10,7 +10,7 @@ import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { addOficina, getOficinaById, updateOficina, uploadAnuncioFoto } from '@/lib/db';
+import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
 import { colors } from '@/theme/colors';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
 
@@ -97,11 +97,7 @@ export default function RegistarOficinaScreen() {
 
     setEnviando(true);
     try {
-      const logoUrl = logo[0]
-        ? logo[0].startsWith('http')
-          ? logo[0]
-          : await uploadAnuncioFoto(user.uid, logo[0], 0)
-        : undefined;
+      const logoUrl = logo[0] ? await uploadFotoIfLocal(user.uid, logo[0], 0) : undefined;
 
       const dados = {
         nome: nome.trim(),

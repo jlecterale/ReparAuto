@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -12,7 +12,7 @@ import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
-import { addPeca, getPecaById, updatePeca, uploadAnuncioFoto } from '@/lib/db';
+import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
 import { colors } from '@/theme/colors';
 import { TIPO_PECA_LABELS, type TipoPeca } from '@/types';
 
@@ -46,6 +46,7 @@ export default function AnunciarPecaScreen() {
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   const precisaPreco = tipo !== 'procura';
 
@@ -99,11 +100,7 @@ export default function AnunciarPecaScreen() {
 
     setEnviando(true);
     try {
-      const fotoUrl = foto[0]
-        ? foto[0].startsWith('http')
-          ? foto[0]
-          : await uploadAnuncioFoto(user.uid, foto[0], 0)
-        : undefined;
+      const fotoUrl = foto[0] ? await uploadFotoIfLocal(user.uid, foto[0], 0) : undefined;
 
       const dados = {
         tipo,
@@ -183,8 +180,9 @@ export default function AnunciarPecaScreen() {
           label="Modelo"
           value={modelo}
           onChange={setModelo}
-          options={getModelos(marca)}
+          options={modelos}
           allowCustom
+          disabled={!marca}
           placeholder={marca ? 'Selecionar modelo' : 'Escolha a marca primeiro'}
           title="Modelo"
         />

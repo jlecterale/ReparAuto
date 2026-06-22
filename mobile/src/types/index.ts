@@ -142,7 +142,7 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
 // ---------- Marcas & modelos (source of truth: Firestore `marcas_modelos`) ----------
 export type TipoVeiculo = 'carro' | 'moto' | 'caminhao';
 
-/** Documento da coleção `marcas_modelos` — `nome` é o ID do documento. */
+/** Document in the `marcas_modelos` collection — `nome` is the document ID. */
 export interface MarcaModeloDoc {
   nome: string;
   tipos: TipoVeiculo[];

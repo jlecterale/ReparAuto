@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
@@ -45,6 +46,7 @@ export function PecaFiltersSheet({
   resultCount,
 }: PecaFiltersSheetProps) {
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
+  const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
   return (
     <BottomSheet
       visible={visible}
@@ -75,7 +77,7 @@ export function PecaFiltersSheet({
             <SelectField
               value={modelo}
               onChange={setModelo}
-              options={getModelos(marca)}
+              options={modelos}
               placeholder="Todos os modelos"
               title="Modelo"
               emptyOption="Todos os modelos"

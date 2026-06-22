@@ -18,6 +18,17 @@ function cleanUndefined<T extends Record<string, unknown>>(obj: T): T {
   ) as T;
 }
 
+/**
+ * For updates, an `undefined` optional field means the user cleared it, so it
+ * must be written as `null` to actually blank the stored value — dropping the
+ * key (as on create) would silently keep the old value.
+ */
+function nullifyUndefined<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(obj).map(([k, v]) => [k, v === undefined ? null : v]),
+  );
+}
+
 const CARROS = 'cars';
 const PECAS = 'parts';
 const OFICINAS = 'services';
@@ -77,6 +88,19 @@ export async function uploadAnuncioFoto(
   const ref = storage.ref(`ads/${uid}/${Date.now()}_${index}.${ext}`);
   await ref.putFile(localUri);
   return ref.getDownloadURL();
+}
+
+/**
+ * Keeps an already-uploaded photo (https download URL) as-is, uploading only a
+ * fresh local `file://` pick. Shared by the create/edit forms so editing a
+ * listing doesn't re-upload images that are already in Storage.
+ */
+export async function uploadFotoIfLocal(
+  uid: string,
+  uri: string,
+  index: number,
+): Promise<string> {
+  return uri.startsWith('http') ? uri : uploadAnuncioFoto(uid, uri, index);
 }
 
 /** Creates a car listing as `pendente` (admin approves before it goes public). */
@@ -186,15 +210,15 @@ export async function getOficinasByCreator(email: string): Promise<Oficina[]> {
  * that by having callers pass `status: 'pendente'`.
  */
 export async function updateCarro(id: string, dados: Record<string, unknown>): Promise<void> {
-  await db.collection(CARROS).doc(id).update(cleanUndefined(dados));
+  await db.collection(CARROS).doc(id).update(nullifyUndefined(dados));
 }
 
 export async function updatePeca(id: string, dados: Record<string, unknown>): Promise<void> {
-  await db.collection(PECAS).doc(id).update(cleanUndefined(dados));
+  await db.collection(PECAS).doc(id).update(nullifyUndefined(dados));
 }
 
 export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
-  await db.collection(OFICINAS).doc(id).update(cleanUndefined(dados));
+  await db.collection(OFICINAS).doc(id).update(nullifyUndefined(dados));
 }
 
 export async function deleteCarro(id: string): Promise<void> {

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
@@ -49,6 +49,7 @@ export function CarFiltersSheet({
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
   const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
+  const modelos = useMemo(() => getModelos(f.marca), [getModelos, f.marca]);
 
   function toggleCombustivel(value: Combustivel) {
     update({
@@ -85,7 +86,7 @@ export function CarFiltersSheet({
             <SelectField
               value={f.modelo}
               onChange={(v) => update({ modelo: v })}
-              options={getModelos(f.marca)}
+              options={modelos}
               placeholder="Todos os modelos"
               title="Modelo"
               emptyOption="Todos os modelos"

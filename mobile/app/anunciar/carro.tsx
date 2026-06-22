@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
@@ -12,7 +12,7 @@ import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
-import { addCarro, getCarroById, updateCarro, uploadAnuncioFoto } from '@/lib/db';
+import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import {
   CAMBIOS,
   COMBUSTIVEIS,
@@ -48,6 +48,7 @@ export default function AnunciarCarroScreen() {
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   // Edit mode: load the existing listing and prefill the form.
   useEffect(() => {
@@ -108,11 +109,7 @@ export default function AnunciarCarroScreen() {
     setEnviando(true);
     try {
       // Keep already-uploaded photos (https URLs); upload only new local files.
-      const urls = await Promise.all(
-        fotos.map((uri, i) =>
-          uri.startsWith('http') ? Promise.resolve(uri) : uploadAnuncioFoto(user.uid, uri, i),
-        ),
-      );
+      const urls = await Promise.all(fotos.map((uri, i) => uploadFotoIfLocal(user.uid, uri, i)));
 
       const dados = {
         marca: marca.trim(),
@@ -193,8 +190,9 @@ export default function AnunciarCarroScreen() {
           label="Modelo *"
           value={modelo}
           onChange={setModelo}
-          options={getModelos(marca)}
+          options={modelos}
           allowCustom
+          disabled={!marca}
           placeholder={marca ? 'Selecionar modelo' : 'Escolha a marca primeiro'}
           title="Modelo"
         />

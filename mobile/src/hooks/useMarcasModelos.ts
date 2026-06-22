@@ -35,7 +35,9 @@ export function useMarcasModelos(tipo?: TipoVeiculo): UseMarcasModelosResult {
 
   const marcas = useMemo(() => {
     return docs
-      .filter((d) => d.ativo && (!tipo || d.tipos?.includes(tipo)))
+      // A doc with no `tipos` array is treated as matching any tipo so it isn't
+      // silently dropped from the picker.
+      .filter((d) => d.ativo && (!tipo || !Array.isArray(d.tipos) || d.tipos.includes(tipo)))
       .map((d) => d.nome)
       .sort((a, b) => a.localeCompare(b));
   }, [docs, tipo]);
