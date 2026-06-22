@@ -13,6 +13,8 @@ import LoginModal from '@/components/auth/LoginModal';
 import type { AppContextValue } from '@/types/app';
 import { subscribePremiumConfig } from '@/lib/db';
 import type { PremiumConfig } from '@/types/usuario';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '@/lib/firebase';
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -44,6 +46,15 @@ export default function AppProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (analytics) {
+      logEvent(analytics, 'page_view', {
+        page_path: pathname,
+        page_title: document.title,
+      });
+    }
+  }, [pathname]);
 
   const openLoginModal = useCallback((redirectTo?: string) => {
     setLoginRedirectTo(redirectTo);
