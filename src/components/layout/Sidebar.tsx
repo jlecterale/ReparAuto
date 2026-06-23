@@ -18,15 +18,17 @@ import {
   Wrench,
   ListChecks,
   Crown,
+  Bell,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
-import NotificationBell from './NotificationBell';
+import NotificationInbox from './NotificationInbox';
 import ChatInbox from '@/components/chat/ChatInbox';
 import PlanosPremiumModal from '@/components/premium/PlanosPremiumModal';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Badge from '@/components/ui/Badge';
 import usePremiumConfig from '@/hooks/usePremiumConfig';
+import useNotificacoes from '@/hooks/useNotificacoes';
 
 interface SidebarProps {
   /** Mobile drawer open state (ignored on desktop, where the rail is always visible). */
@@ -41,8 +43,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, isLoggedIn, isAdmin, logout } = auth;
   const { mensagensNaoLidas } = chat;
+  const { naoLidas } = useNotificacoes(user?.uid);
 
   const [showChatInbox, setShowChatInbox] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [showPlanos, setShowPlanos] = useState(false);
 
   const isActive = (path: string) => {
@@ -162,12 +166,18 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               )}
 
               {isLoggedIn && (
-                <div className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200">
-                  <span className="w-5 flex items-center justify-center text-white/55 group-hover:text-accent-bright transition-colors [&_button]:!text-current">
-                    <NotificationBell />
-                  </span>
+                <button
+                  onClick={() => { setShowNotifications(true); onClose(); }}
+                  className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  <Bell size={20} className="shrink-0 text-white/55 group-hover:text-accent-bright transition-colors" />
                   Notificações
-                </div>
+                  {naoLidas > 0 && (
+                    <Badge cor="accent" variante="solid" className="ml-auto justify-center min-w-[20px] !text-[10px]">
+                      {naoLidas > 99 ? '99+' : naoLidas}
+                    </Badge>
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -227,6 +237,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       </aside>
 
       <ChatInbox show={showChatInbox} onClose={() => setShowChatInbox(false)} />
+      <NotificationInbox show={showNotifications} onClose={() => setShowNotifications(false)} />
       <PlanosPremiumModal show={showPlanos} onClose={() => setShowPlanos(false)} />
     </>
   );
