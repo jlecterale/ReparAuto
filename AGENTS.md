@@ -4,13 +4,19 @@ Portuguese marketplace for used cars, parts, workshops and purchase intents. Nex
 
 `CLAUDE.md` holds the day-to-day conventions and architecture summary; this file adds the source map, implementation notes and the feature workflow.
 
+> 🚫 **The `mobile/` folder is off-limits by default.** It holds the separate React Native / Expo app (see `docs/plans/19-app-react-native.html`). Do **not** read, search, analyze, or modify anything under `mobile/` unless the user's request is *explicitly* about the mobile app. For all web/marketplace work, ignore `mobile/` entirely — don't grep it, don't touch it. (Likewise treat `functions/` as a separate Cloud Functions surface — only enter it for explicit Functions work.)
+
+> ⚠️ **Never run `firebase deploy` (in any form) on your own.** Deploying — App Hosting, Firestore/Storage rules, Cloud Functions, indexes, anything — is **always** an explicit, user-initiated action. Do not run `npm run deploy:rules`, `npm run deploy:hosting`, `firebase deploy ...`, or any `firebase`/`gcloud` deploy command unless the user asks for that specific deploy in the current turn. Approval to deploy in one turn does **not** carry over to a later turn. When a change is ready to ship, build/type-check it and then **tell the user which command to run** — let them run it.
+
+> 🌿 **Never commit or push directly to `main`.** All changes land via a Pull Request. Create a `feat/`/`fix/`/`tech/`/`chore/` branch, commit there, and open a PR for the user to review and merge — even when the user just says "commit". Never `git push` to `main`. See **Git workflow** in `CLAUDE.md`.
+
 ## Structure
 
 - `app/` — Next.js App Router routes (SSR/ISR per route), sitemap, robots.
 - `src/` — all application source code (screens, components, hooks, lib, types).
 - `public/` — static assets + `firebase-messaging-sw.js` (FCM service worker).
 - `scripts/` — Node maintenance scripts (Admin SDK): `seed-firestore.mjs`, `importar-pecas.mjs`.
-- `docs/`, `plans/` — prose docs and feature plans, not executable.
+- `docs/` — prose docs and analysis; `docs/plans/` holds numbered feature plans (`NN-<slug>.md`/`.html`) + the canonical `index.html` roadmap. Not executable.
 - `firestore.rules` / `storage.rules` — security rules (RBAC); deploy with `npm run deploy:rules`.
 
 ## Tech
@@ -71,28 +77,52 @@ src/
 npm run dev          # Next.js dev server
 npm run build        # production build
 npx tsc --noEmit     # type-check (strict)
-npm run deploy:rules # deploy Firestore rules
+npm run deploy:rules # deploy Firestore rules — USER-INITIATED ONLY (see warning at top)
 npm run seed         # seed demo data into empty collections (Admin SDK / ADC)
 npm run seed:dry     # report what would be seeded
 ```
 
 ## Feature Workflow
 
-When asked to implement a new feature:
+### 1. Investigation & planning (research first)
 
-1. **Competitor research** — Before coding, research how competitors (OLX, Standvirtual, CustoJusto, eBay Motors) implement the same feature. Analyze UX, flows, and patterns used.
-2. **Best practices** — Define the best technical and UX approach before coding.
-3. **Scalability analysis** — Document strengths and weaknesses of the chosen implementation (performance, maintainability, Firestore limits, etc.).
-4. **Plans** — Generate `.md` files in `plans/` with full analysis. Optionally generate an interactive HTML (in the same folder) that visually summarizes the proposal.
-5. **UI/UX excellence** — New interfaces must follow modern UI/UX standards: visual feedback, micro-interactions, accessibility (WCAG), responsiveness, consistency with the existing design system.
-6. **Final review** — Before marking a task as done, verify:
-   - Code follows best practices (DRY, componentization, separation of concerns)
-   - No duplicated code or redundant logic
-   - Possible bugs, race conditions, state errors
-   - Error handling and edge cases
-   - Performance (unnecessary re-renders, bundle size)
-   - Consistency with the rest of the codebase
-   - Implicit typing (validated props, fallbacks)
+When asked to investigate a feature, scope a change, or generate a plan, **do online research before writing any plan or code**:
+
+1. **Competitor analysis** — research how relevant marketplaces implement the feature, across both target markets. **Portugal:** OLX Portugal, Standvirtual, CustoJusto, AutoScout24. **Brazil (now a launch market):** Webmotors, OLX Brasil, Mercado Livre / Mercado Livre Veículos, iCarros, Mobiauto, and (for parts) Connectparts/Jocar. Note what works and what users complain about in each market.
+2. **UX best practices** — search design patterns, web/mobile UX guidelines, and accessibility (WCAG) considerations for the feature domain.
+3. **Feasibility & scalability** — check Next.js / React 19 / Firebase support, relevant libraries, and Firestore limits (composite indexes, query constraints, security-rule provability). Document strengths and weaknesses of the chosen approach (performance, maintainability, bundle size).
+4. **User sentiment** — look for Reddit threads, app-store/Trustpilot reviews, and community discussions about what users want and hate here.
+
+### 2. Plans
+
+Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), commit sequence, edge cases, and verification steps.
+
+- **Number new plans sequentially** (continue from the highest existing `NN`).
+- **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
+- `docs/plans/index.html` is the **canonical roadmap** (shipped vs. queued) — keep it the source of truth.
+
+### 3. UI/UX excellence
+
+New interfaces must follow modern UI/UX standards: visual feedback, micro-interactions, accessibility (WCAG), responsiveness, and consistency with the existing design system. Use the `frontend-design` skill (semantic Tailwind tokens, shared `src/components/ui/` primitives) for any UI work.
+
+### 4. Closing out a plan (after it ships)
+
+A plan isn't done until the roadmap says so. **When the implementing work lands, mark the plan shipped in the same pass:** flip its `implemented` flag (and any status badge) in the `docs/plans/index.html` `plans` registry, noting anything deliberately deferred. Commit it alongside (or right after) the feature, e.g. `docs: mark plan NN (<feature>) as shipped`.
+
+### 5. Pre-PR / pre-completion review checklist
+
+Before opening a PR or marking a task done, **always do a self-review pass** — go through every item:
+
+- **Code quality** — re-read the diff as a reviewer; prefer the simplest version that reads well (DRY, componentization, separation of concerns). Match surrounding idioms.
+- **Code reuse** — grep for existing utilities/components/patterns before adding new ones (`src/components/ui/`, `src/hooks/`, `src/lib/`).
+- **No duplication or redundant logic.**
+- **Bug scan** — off-by-one errors, missing null checks at system boundaries, race conditions in async/`onSnapshot` flows, stale/inconsistent state.
+- **Error handling & edge cases** covered; props validated with sensible fallbacks.
+- **Performance** — unnecessary re-renders, memoization (cards/context values), bundle size.
+- **Firestore-rules provability** — any new query is provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
+- **Type safety** — run `npx tsc --noEmit` and `npm run build`; fix every error before reporting done.
+
+Only after this pass is clean should you open the PR (when the user asks) or report the task complete.
 
 ## Conventions
 

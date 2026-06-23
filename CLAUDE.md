@@ -4,6 +4,10 @@ Portuguese used-car and parts marketplace. Next.js 15 (App Router) + React 19 + 
 
 See `AGENTS.md` for full source map, implementation deviations, and feature workflow.
 
+> 🚫 **The `mobile/` folder is off-limits by default.** It holds the separate React Native / Expo app (see plan 19). Do **not** read, search, analyze, or modify anything under `mobile/` unless the user's request is *explicitly* about the mobile app. For all web/marketplace work, ignore `mobile/` entirely — don't grep it, don't touch it. (Likewise treat `functions/` as a separate Cloud Functions surface — only enter it for explicit Functions work.)
+
+> ⚠️ **Never run `firebase deploy` (in any form) on your own.** Deploying — App Hosting, Firestore/Storage rules, Cloud Functions, indexes, anything — is **always** an explicit, user-initiated action. Do not run `npm run deploy:rules`, `npm run deploy:hosting`, `firebase deploy ...`, or `gcloud`/`firebase` deploy commands unless the user asks for that specific deploy in the current turn. Approval to deploy in one turn does **not** carry over to a later turn. When a change needs deploying, build/type-check it and then **tell the user which command to run** — let them run it.
+
 ## Commands
 
 ```sh
@@ -11,11 +15,11 @@ npm run dev          # Next.js dev server (hot reload)
 npm run build        # Production build → .next/
 npm run start        # Run production build locally
 npx tsc --noEmit     # Type-check (strict mode)
-npm run deploy:rules # Deploy Firestore/Storage rules
+npm run deploy:rules # Deploy Firestore rules — USER-INITIATED ONLY (see warning above)
 npm run seed         # Seed demo data into empty collections (Admin SDK)
 ```
 
-No test runner or formatter is configured.
+No test runner or formatter is configured. Verification is `npx tsc --noEmit` + `npm run build`.
 
 ## Architecture
 
@@ -132,3 +136,51 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `next.config.ts` — security headers (CSP, HSTS, …), image domains
 - `apphosting.yaml` — Firebase App Hosting runtime config (region, memory, env vars)
 - `firestore.rules` / `storage.rules` — security rules (RBAC)
+
+## Workflow Protocols
+
+### Investigation & planning (research first)
+
+When asked to investigate a feature, scope a change, or generate a plan, **do online research before writing any plan or code**:
+
+1. **Competitor analysis** — search how relevant marketplaces handle the feature, across both target markets. **Portugal:** OLX Portugal, Standvirtual, CustoJusto, AutoScout24. **Brazil (now a launch market):** Webmotors, OLX Brasil, Mercado Livre / Mercado Livre Veículos, iCarros, Mobiauto, and (for parts) Connectparts/Jocar. Note what works and what users complain about in each market.
+2. **UX best practices** — search for design patterns, web/mobile UX guidelines, and accessibility (WCAG) considerations for the feature domain.
+3. **Feasibility** — check Next.js / React 19 / Firebase support, relevant libraries, Firestore limits (composite indexes, query constraints, security-rule provability), and performance/bundle implications.
+4. **User sentiment** — look for Reddit threads, app-store/Trustpilot reviews, and community discussions about what users want and hate in this area.
+
+Consolidate findings into the plan — don't jump straight to code on non-trivial work.
+
+### Plans
+
+Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), the commit sequence, edge cases, and verification steps.
+
+- **Number new plans sequentially** (continue from the highest existing `NN`).
+- **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
+- `docs/plans/index.html` is the **canonical roadmap** (shipped vs. queued) — keep it the source of truth, trust it over prose scattered elsewhere.
+
+### Closing out a plan (after it ships)
+
+A plan isn't done until the roadmap says so. **When the work implementing a plan lands, mark it shipped in the same pass:** flip its `implemented` flag (and any status badge) in the `docs/plans/index.html` `plans` registry, and note anything deliberately deferred. Commit the roadmap update alongside (or right after) the feature, e.g. `docs: mark plan NN (<feature>) as shipped`.
+
+### Pre-PR / pre-completion review checklist
+
+Before opening a PR or reporting a task as done, **always do a self-review pass** — go through every item:
+
+1. **Code quality** — re-read the diff as a reviewer. Prefer the simplest version that reads well; question every abstraction, dead branch, and clever bit. Match the surrounding code's idioms.
+2. **Code reuse** — grep for existing utilities/components/patterns before adding new ones. Check `src/components/ui/`, `src/hooks/`, `src/lib/` first.
+3. **No duplication** — extract shared logic only when it genuinely reduces repetition (3+ call sites or complex logic).
+4. **Bug scan** — off-by-one errors, missing null checks at system boundaries, race conditions in async/`onSnapshot` flows, stale state.
+5. **UI/UX** — loading/empty/error states, visual feedback/micro-interactions, responsiveness, accessibility (WCAG), and consistency with the existing design system. Use the `frontend-design` skill for any UI change.
+6. **Design-system compliance** — semantic Tailwind tokens (no raw hex/`slate-*`), shared `src/components/ui/` primitives over hand-rolled markup (enforced by `frontend-design`).
+7. **Firestore-rules provability** — any new query must be provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
+8. **Type safety** — run `npx tsc --noEmit` and `npm run build`. Fix every error before reporting done.
+
+Only after this pass is clean should you open the PR or report the task complete.
+
+### Git workflow
+
+- Branches start with `feat/`, `fix/`, `tech/`, or `chore/` (e.g. `feat/<short-slug>`).
+- **Never commit or push directly to `main`.** All changes land via a Pull Request: create a branch, commit there, and open a PR for the user to review and merge. Never `git push` to `main` — even when the user asks to "commit", branch first and open a PR.
+- Conventional commits (`feat:`, `fix:`, `docs:`, …), imperative present, English, short subject + a body explaining the *why*.
+- **Never add Claude/Anthropic as a co-author** — no `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line. Commits are authored by the user only.
+- **Commit/push only when the user asks.** As with deploys, never push or open PRs unprompted.
