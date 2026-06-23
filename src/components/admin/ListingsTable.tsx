@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Funnel, PencilSimpleLine, Check, X, Trash } from '@phosphor-icons/react';
+import { Funnel, PencilSimpleLine, Check, X, Trash, Lightning } from '@phosphor-icons/react';
 import type { Carro, StatusAnuncio } from '@/types/carro';
 import type { Peca } from '@/types/peca';
+import { Timestamp } from 'firebase/firestore';
 import { formatarPreco, formatarData } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -107,7 +108,14 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                   <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
                     <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{c.id}</td>
                     <td className="py-3 pr-4 font-medium text-fg-heading">
-                      {c.marca} {c.modelo}
+                      <div className="flex items-center gap-1.5">
+                        {c.marca} {c.modelo}
+                        {c.impulso?.ativo && (
+                          <span title="Premium / Turbo">
+                            <Lightning weight="fill" className="text-amber-500 shrink-0" />
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco)}</td>
                     <td className="py-3 pr-4 text-fg-muted text-xs">{c.criador}</td>
@@ -127,6 +135,27 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                           className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         >
                           Editar
+                        </Button>
+                        <Button
+                          tipo={c.impulso?.ativo ? 'premium' : 'terciario'}
+                          tamanho="sm"
+                          onClick={async () => {
+                            setActionLoading((prev) => ({ ...prev, [c.id]: true }));
+                            const novoEstado = !c.impulso?.ativo;
+                            await onUpdateCarro(c.id, {
+                              impulso: {
+                                ativo: novoEstado,
+                                dataInicio: novoEstado ? Timestamp.now() : null,
+                                dataFim: novoEstado ? Timestamp.fromDate(new Date(Date.now() + 30 * 86400000)) : null,
+                              }
+                            });
+                            setActionLoading((prev) => ({ ...prev, [c.id]: false }));
+                          }}
+                          disabled={!!actionLoading[c.id]}
+                          icone={<Lightning weight={c.impulso?.ativo ? 'fill' : 'regular'} />}
+                          title={c.impulso?.ativo ? 'Remover Destaque Turbo' : 'Destacar Turbo'}
+                        >
+                          {c.impulso?.ativo ? 'Turbo' : 'Destacar'}
                         </Button>
                         {c.status !== 'aprovado' && (
                           <Button
@@ -179,7 +208,16 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
               : pecasFiltrados.map((p) => (
                   <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
                     <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{p.id}</td>
-                    <td className="py-3 pr-4 font-medium text-fg-heading">{p.titulo}</td>
+                    <td className="py-3 pr-4 font-medium text-fg-heading">
+                      <div className="flex items-center gap-1.5">
+                        {p.titulo}
+                        {p.impulso?.ativo && (
+                          <span title="Premium / Turbo">
+                            <Lightning weight="fill" className="text-amber-500 shrink-0" />
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="py-3 pr-4 font-bold text-accent">
                       {p.preco != null && p.preco > 0 ? formatarPreco(p.preco) : '—'}
                     </td>
@@ -200,6 +238,27 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                           className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                         >
                           Editar
+                        </Button>
+                        <Button
+                          tipo={p.impulso?.ativo ? 'premium' : 'terciario'}
+                          tamanho="sm"
+                          onClick={async () => {
+                            setActionLoading((prev) => ({ ...prev, [p.id]: true }));
+                            const novoEstado = !p.impulso?.ativo;
+                            await onUpdatePeca(p.id, {
+                              impulso: {
+                                ativo: novoEstado,
+                                dataInicio: novoEstado ? Timestamp.now() : null,
+                                dataFim: novoEstado ? Timestamp.fromDate(new Date(Date.now() + 30 * 86400000)) : null,
+                              }
+                            });
+                            setActionLoading((prev) => ({ ...prev, [p.id]: false }));
+                          }}
+                          disabled={!!actionLoading[p.id]}
+                          icone={<Lightning weight={p.impulso?.ativo ? 'fill' : 'regular'} />}
+                          title={p.impulso?.ativo ? 'Remover Destaque Turbo' : 'Destacar Turbo'}
+                        >
+                          {p.impulso?.ativo ? 'Turbo' : 'Destacar'}
                         </Button>
                         {p.status !== 'aprovado' && (
                           <Button

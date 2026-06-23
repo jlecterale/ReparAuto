@@ -41,6 +41,7 @@ import ReviewsQueue from '@/components/admin/ReviewsQueue';
 import PremiumTogglePanel from '@/components/admin/PremiumTogglePanel';
 import PortugalMap from '@/components/admin/PortugalMap';
 import SeguroFinanciamentoTab from '@/components/admin/SeguroFinanciamentoTab';
+import BannersTab from '@/components/admin/BannersTab';
 import useReports from '@/hooks/useReports';
 import { useReviewsAdmin } from '@/hooks/useReviews';
 import { useVerificationsAdmin } from '@/hooks/useVerification';
@@ -53,7 +54,7 @@ import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 
-type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'intencoes' | 'oficinas' | 'premium' | 'seguro-financiamento' | 'pendentes';
+type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'intencoes' | 'oficinas' | 'premium' | 'seguro-financiamento' | 'pendentes' | 'banners';
 
 export default function Admin() {
   const { auth } = useApp();
@@ -591,6 +592,18 @@ export default function Admin() {
       activeGradient: 'from-emerald-500 to-teal-600',
       activeBorder: 'border-emerald-400/30',
       textColor: 'text-emerald-400',
+      activeTextColor: 'text-white',
+    },
+    {
+      key: 'banners' as TabAdmin,
+      label: 'Banners',
+      Icon: House,
+      value: null,
+      gradient: 'from-blue-500/10 via-cyan-500/5 to-transparent',
+      borderClass: 'border-blue-500/10',
+      activeGradient: 'from-blue-600 via-cyan-500 to-indigo-650',
+      activeBorder: 'border-blue-400/30',
+      textColor: 'text-blue-400',
       activeTextColor: 'text-white',
     },
     {
@@ -1275,6 +1288,12 @@ export default function Admin() {
           {tab === 'seguro-financiamento' && (
             <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-100">
               <SeguroFinanciamentoTab />
+            </div>
+          )}
+
+          {tab === 'banners' && (
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-150">
+              <BannersTab />
             </div>
           )}
         </div>
