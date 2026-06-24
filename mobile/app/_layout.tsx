@@ -13,6 +13,7 @@ import { ChatProvider } from '@/context/ChatContext';
 import { NotificacoesProvider } from '@/context/NotificacoesContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { registerForPush, setupPushHandlers, unregisterPush } from '@/lib/push';
+import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import type { Href } from 'expo-router';
 import { colors } from '@/theme/colors';
@@ -22,6 +23,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function RootNavigator() {
   const { loading, user } = useAuth();
   const uid = user?.uid ?? null;
+
+  // Silently check for and download OTA updates (applied on next launch).
+  useOTAUpdates();
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});

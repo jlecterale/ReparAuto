@@ -17,7 +17,10 @@
     "ios": "expo run:ios",
     "prebuild": "expo prebuild",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "update": "eas update",
+    "update:preview": "eas update --branch preview",
+    "update:production": "eas update --branch production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -48,6 +51,7 @@
     "expo-splash-screen": "~55.0.21",
     "expo-status-bar": "~55.0.6",
     "expo-system-ui": "~55.0.18",
+    "expo-updates": "~55.0.24",
     "expo-web-browser": "~55.0.16",
     "nativewind": "^4.2.5",
     "react": "19.2.0",
