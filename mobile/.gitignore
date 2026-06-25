@@ -11,6 +11,9 @@ expo-env.d.ts
 /ios
 /android
 
+# iOS build artifacts (xcarchive, .ipa, generated ExportOptions.plist)
+/build
+
 # Metro
 .metro-health-check*
 
