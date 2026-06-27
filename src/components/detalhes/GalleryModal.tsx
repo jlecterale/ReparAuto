@@ -1,11 +1,10 @@
 'use client';
 
-import { CaretLeft, CaretRight, HandPointing } from '@phosphor-icons/react';
-import { useState, useCallback, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import { CaretLeft, CaretRight, X, MagnifyingGlassPlus } from '@phosphor-icons/react';
+import { useCallback, useEffect, useState } from 'react';
+import { renderFoto } from '@/lib/utils';
 import FotoRender from '@/components/ui/FotoRender';
-import useSwipe from '@/hooks/useSwipe';
-import usePinchZoom from '@/hooks/usePinchZoom';
+import useImageZoom from '@/hooks/useImageZoom';
 
 interface GalleryModalProps {
   show: boolean;
@@ -30,102 +29,134 @@ export default function GalleryModal({ show, onClose, fotos = [], indiceInicial 
     [fotos.length],
   );
 
+  const { bindings, imgRef, zoomed, resetZoom } = useImageZoom({
+    onNext: goNext,
+    onPrev: goPrev,
+    onClose,
+  });
+
+  // Reset zoom whenever the visible photo changes (buttons, keys, thumbnails).
+  useEffect(() => {
+    resetZoom();
+  }, [indice, resetZoom]);
+
   useEffect(() => {
     if (!show) return;
+    document.body.style.overflow = 'hidden';
     function handleKey(e: KeyboardEvent) {
-      if (e.key === 'ArrowLeft') goPrev();
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowLeft') goPrev();
       else if (e.key === 'ArrowRight') goNext();
     }
     window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [show, goNext, goPrev]);
-
-  const swipeHandlers = useSwipe({ onLeft: goNext, onRight: goPrev });
-  const pinchHandlers = usePinchZoom();
-
-  useEffect(() => {
-    pinchHandlers.reset();
-  }, [indice, pinchHandlers]);
-
-  const combinedTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) pinchHandlers.onTouchStart(e);
-    else swipeHandlers.onTouchStart(e);
-  }, [swipeHandlers, pinchHandlers]);
-
-  const combinedTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) pinchHandlers.onTouchMove(e);
-    else swipeHandlers.onTouchMove(e);
-  }, [swipeHandlers, pinchHandlers]);
-
-  const combinedTouchEnd = useCallback((e: React.TouchEvent) => {
-    pinchHandlers.onTouchEnd(e);
-    swipeHandlers.onTouchEnd(e);
-  }, [swipeHandlers, pinchHandlers]);
-
-  const combinedTouchCancel = useCallback((e: React.TouchEvent) => {
-    pinchHandlers.onTouchCancel(e);
-    swipeHandlers.onTouchCancel(e);
-  }, [swipeHandlers, pinchHandlers]);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKey);
+    };
+  }, [show, goNext, goPrev, onClose]);
 
   if (!show || fotos.length === 0) return null;
 
+  const atual = renderFoto(fotos[indice]);
+  const temVarias = fotos.length > 1;
+
   return (
-    <Modal show={show} onClose={onClose} titulo="Galeria de Fotos" tamanho="lg">
-      <div className="space-y-3">
-        <div
-          className="w-full h-64 sm:h-96 rounded-xl overflow-hidden bg-slate-200 touch-pan-y select-none"
-          onTouchStart={combinedTouchStart}
-          onTouchMove={combinedTouchMove}
-          onTouchEnd={combinedTouchEnd}
-          onTouchCancel={combinedTouchCancel}
+    <div
+      className="fixed inset-0 z-[100] bg-black/95 flex flex-col select-none page-enter"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Galeria de fotos"
+    >
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-4 py-3 text-fg-inverse shrink-0">
+        <span className="text-sm font-semibold tabular-nums">
+          {indice + 1} / {fotos.length}
+        </span>
+        <button
+          onClick={onClose}
+          aria-label="Fechar galeria"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition"
         >
-          <FotoRender foto={fotos[indice]} classes="w-full h-full object-cover" />
+          <X className="text-xl" />
+        </button>
+      </div>
+
+      {/* Stage */}
+      <div className="relative flex-1 min-h-0 overflow-hidden">
+        <div
+          className="absolute inset-0 flex items-center justify-center touch-none"
+          onTouchStart={bindings.onTouchStart}
+          onTouchMove={bindings.onTouchMove}
+          onTouchEnd={bindings.onTouchEnd}
+          onWheel={bindings.onWheel}
+          onMouseDown={bindings.onMouseDown}
+          onDoubleClick={bindings.onDoubleClick}
+          onClick={(e) => { if (e.target === e.currentTarget && !zoomed) onClose(); }}
+        >
+          {atual.type === 'img' ? (
+            <img
+              key={indice}
+              ref={imgRef}
+              src={atual.src}
+              alt={`Foto ${indice + 1} de ${fotos.length}`}
+              draggable={false}
+              className={`max-w-full max-h-full object-contain will-change-transform ${zoomed ? 'cursor-grab active:cursor-grabbing' : 'cursor-zoom-in'}`}
+            />
+          ) : (
+            <div className="text-[20vh] leading-none">{atual.emoji}</div>
+          )}
         </div>
 
-        <p className="text-[10px] text-fg-subtle text-center block sm:hidden">
-          <HandPointing className="mr-1" /> Deslize para navegar &middot; Belisque para zoom
-        </p>
-
-        {fotos.length > 1 && (
-          <div className="flex items-center justify-between gap-2">
+        {/* Prev / Next (pointer devices) */}
+        {temVarias && (
+          <>
             <button
               onClick={goPrev}
-              className="bg-slate-100 hover:bg-slate-200 text-fg px-3 py-1.5 rounded-lg text-sm font-semibold transition"
               aria-label="Foto anterior"
+              className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
             >
-              <CaretLeft className="mr-1" /> Anterior
+              <CaretLeft className="text-2xl" />
             </button>
-            <span className="text-xs text-fg-subtle font-medium">
-              {indice + 1} / {fotos.length}
-            </span>
             <button
               onClick={goNext}
-              className="bg-slate-100 hover:bg-slate-200 text-fg px-3 py-1.5 rounded-lg text-sm font-semibold transition"
               aria-label="Próxima foto"
+              className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
             >
-              Seguinte <CaretRight className="ml-1" />
+              <CaretRight className="text-2xl" />
             </button>
-          </div>
+          </>
         )}
 
-        {fotos.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        {/* Zoom hint */}
+        {!zoomed && (
+          <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] text-fg-inverse/70 flex items-center gap-1 pointer-events-none">
+            <MagnifyingGlassPlus className="text-sm" />
+            <span className="hidden sm:inline">Duplo clique ou roda do rato para ampliar</span>
+            <span className="sm:hidden">Toque duplo ou belisque para ampliar</span>
+          </p>
+        )}
+      </div>
+
+      {/* Thumbnails */}
+      {temVarias && (
+        <div className="shrink-0 px-3 py-3 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 justify-center min-w-min mx-auto w-max">
             {fotos.map((foto, i) => (
               <button
                 key={i}
                 onClick={() => setIndice(i)}
-                className={`w-16 h-16 rounded-lg overflow-hidden border-2 flex-shrink-0 transition ${
-                  i === indice ? 'border-accent' : 'border-transparent opacity-60 hover:opacity-100'
-                }`}
                 aria-label={`Foto ${i + 1}`}
                 aria-current={i === indice ? 'true' : undefined}
+                className={`w-14 h-14 rounded-lg overflow-hidden border-2 shrink-0 transition ${
+                  i === indice ? 'border-accent' : 'border-transparent opacity-50 hover:opacity-100'
+                }`}
               >
                 <FotoRender foto={foto} classes="w-full h-full object-cover" />
               </button>
             ))}
           </div>
-        )}
-      </div>
-    </Modal>
+        </div>
+      )}
+    </div>
   );
 }

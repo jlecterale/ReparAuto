@@ -75,6 +75,14 @@ export async function enviarMensagem(p: EnviarMensagemParams): Promise<void> {
   }
 
   // Notify the recipient (in-app notification; rules allow 'mensagem' to others).
+  // Deep-link straight to the conversation. From the recipient's perspective the
+  // "other" participant is the sender, so we pass the sender's uid/name.
+  const chatLink =
+    `/chat/${encodeURIComponent(p.listingId)}` +
+    `?listingType=${encodeURIComponent(p.listingType)}` +
+    `&listingTitle=${encodeURIComponent(p.listingTitle)}` +
+    `&outroUid=${encodeURIComponent(p.fromUid)}` +
+    `&outroNome=${encodeURIComponent(p.fromNome || p.fromUid)}`;
   await db
     .collection(NOTIFICATIONS)
     .add({
@@ -84,7 +92,7 @@ export async function enviarMensagem(p: EnviarMensagemParams): Promise<void> {
       mensagem: trimmed.length > 100 ? `${trimmed.slice(0, 97)}...` : trimmed,
       lida: false,
       dataCriacao: firestore.FieldValue.serverTimestamp(),
-      link: null,
+      link: chatLink,
     })
     .catch(() => {});
 }

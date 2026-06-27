@@ -11,6 +11,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { OwnerStats } from '@/components/ui/OwnerStats';
 import {
   deleteCarro,
   deleteOficina,
@@ -26,12 +27,20 @@ import { colors } from '@/theme/colors';
 type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
 type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'outro';
 
+interface ItemStats {
+  visualizacoes?: number;
+  contagemMensagens?: number;
+  /** Cars only — parts have no favourite counter. */
+  contagemFavoritos?: number;
+}
+
 interface Item {
   kind: Kind;
   id: string;
   titulo: string;
   subtitulo: string;
   status: EstadoItem;
+  stats?: ItemStats;
 }
 
 const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
@@ -76,6 +85,11 @@ export default function MeusAnunciosScreen() {
         titulo: `${c.marca} ${c.modelo}`,
         subtitulo: `${c.anoFabricacao} · ${c.local}`,
         status: estado(c.status),
+        stats: {
+          visualizacoes: c.visualizacoes,
+          contagemMensagens: c.contagemMensagens,
+          contagemFavoritos: c.contagemFavoritos ?? 0,
+        },
       })),
       ...pecas.map((p) => ({
         kind: 'peca' as const,
@@ -83,6 +97,10 @@ export default function MeusAnunciosScreen() {
         titulo: p.titulo,
         subtitulo: `${p.categoria} · ${p.local}`,
         status: estado(p.status),
+        stats: {
+          visualizacoes: p.visualizacoes,
+          contagemMensagens: p.contagemMensagens,
+        },
       })),
       ...oficinas.map((o) => ({
         kind: 'oficina' as const,
@@ -188,6 +206,11 @@ export default function MeusAnunciosScreen() {
                 {STATUS[item.status].label}
               </Text>
             </View>
+            {item.stats && (
+              <View className="mt-1.5">
+                <OwnerStats {...item.stats} />
+              </View>
+            )}
           </View>
           {item.kind !== 'intencao' && (
             <Pressable

@@ -45,6 +45,8 @@ export default function HomeScreen() {
     limpar,
     filtersCount,
     filtrados,
+    marcaOpts,
+    modeloOpts,
   } = useCarFilters(carros);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -138,6 +140,8 @@ export default function HomeScreen() {
         update={update}
         onClear={limpar}
         resultCount={filtrados.length}
+        marcaOpts={marcaOpts}
+        modeloOpts={modeloOpts}
       />
       <SortSheet
         visible={sortOpen}

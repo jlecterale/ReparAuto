@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de Expansão para o Brasil — ReparAuto</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind for quick premium styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              900: '#7c2d12',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(250, 204, 21, 0.05) 0%, transparent 40%);
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+    }
+    .glow-amber {
+      box-shadow: 0 0 20px rgba(250, 204, 21, 0.15);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #10b981; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-brand relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🇧🇷 Plano Estratégico — Mercado de Lançamento
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-emerald-400 via-amber-200 to-yellow-400 bg-clip-text text-transparent">
+          Expansão do ReparAuto para o Brasil
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Adaptar a plataforma (carros, peças, oficinas e intenções de compra) para o mercado brasileiro, com localização PT-BR, pagamentos locais (PIX), base de veículos FIPE e uma arquitetura multi-país que isola por completo as operações de Portugal e do Brasil.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-amber-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Reaproveita o backend Firebase</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">PIX</span>
+        <span class="text-xs text-slate-400">Pagamento instantâneo essencial no Brasil</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-amber-300">FIPE</span>
+        <span class="text-xs text-slate-400">Marcas/modelos reais via BrasilAPI (grátis)</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">1 base</span>
+        <span class="text-xs text-slate-400">Multi-país via chave <code>country</code>, sem duplicar app</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">R$ 29-49</span>
+        <span class="text-xs text-slate-400">Faixa de preço premium ajustada ao mercado</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 - Estratégia -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-emerald-400 font-extrabold">01.</span> Estratégia &amp; Porquê Brasil
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            O Brasil passa a ser um <strong>mercado de lançamento</strong>. É o maior mercado de carros usados da América Latina, com forte cultura de compra/venda entre particulares e um ecossistema de peças e oficinas enorme. O backend não muda: o ReparAuto já assenta inteiramente em <strong>Firebase (Auth, Firestore, Storage, Cloud Messaging)</strong>, pelo que a expansão é sobretudo <strong>localização + isolamento por país</strong>, não uma reconstrução.
+          </p>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            A abordagem é uma <strong>única base de código e um único projeto Firebase</strong>, com os dados segmentados por uma chave <code class="text-emerald-400">country</code>. Isto evita duplicar a aplicação e mantém as <code>firestore.rules</code> e a lógica de negócio partilhadas entre os dois mercados.
+          </p>
+        </section>
+
+        <!-- 02 - Localização -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-emerald-400 font-extrabold">02.</span> Tradução e Localização (PT-PT → PT-BR)
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Principais termos a ajustar na interface conforme o país selecionado.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2">Portugal (PT-PT)</th>
+                  <th class="py-2">Brasil (PT-BR)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Telemóvel</td><td class="py-2">Celular / WhatsApp</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Matrícula</td><td class="py-2">Placa do Veículo</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Morada</td><td class="py-2">Endereço</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Código Postal</td><td class="py-2">CEP</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Registo</td><td class="py-2">Cadastro</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Ecrã</td><td class="py-2">Tela</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Carrinha / Misto</td><td class="py-2">Caminhonete / SUV</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Bate-chapa</td><td class="py-2">Funilaria e Pintura</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Reboque / Pronto-Socorro</td><td class="py-2">Guincho</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">NIF</td><td class="py-2">CPF / CNPJ</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Propina / Assinatura</td><td class="py-2">Assinatura / Mensalidade</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Correio Eletrónico</td><td class="py-2">E-mail</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-emerald-300">Ação técnica:</strong> alavancar o sistema de i18n previsto no <a class="text-emerald-400 underline" href="12-i18n-seo.md">Plano 12 (i18n &amp; SEO)</a> — adicionar a variante <code>pt-BR</code> aos ficheiros de tradução e fazer <code>lib/constants.ts</code> resolver os termos pelo país ativo, em vez de duplicar strings.
+            </p>
+          </div>
+        </section>
+
+        <!-- 03 - Pagamentos -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-emerald-400 font-extrabold">03.</span> Moeda &amp; Pagamentos Premium
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Os valores em Euros não se convertem diretamente — devem refletir o poder de compra local. A monetização (planos premium / impulsos) já existe no <a class="text-emerald-400 underline" href="17-monetizacao-profissionais-intencao-compra.md">Plano 17</a>; aqui adapta-se a moeda e os meios de pagamento.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">💰</span>
+              <h3 class="font-bold text-amber-400 text-base">Moeda &amp; Formato</h3>
+              <p class="text-xs text-slate-400 mt-1">Real Brasileiro (BRL — R$), formato <code>R$ 1.500,00</code> (ponto para milhar, vírgula para centavos).</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🏷️</span>
+              <h3 class="font-bold text-emerald-400 text-base">Preço Premium</h3>
+              <p class="text-xs text-slate-400 mt-1">Faixa sugerida entre <strong class="text-white">R$ 29,90 e R$ 49,90/mês</strong>, ajustável por testes A/B.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">⚡</span>
+              <h3 class="font-bold text-indigo-400 text-base">PIX (essencial)</h3>
+              <p class="text-xs text-slate-400 mt-1">Pagamento instantâneo é o método dominante no Brasil — indispensável para conversão.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🔌</span>
+              <h3 class="font-bold text-orange-400 text-base">Gateways</h3>
+              <p class="text-xs text-slate-400 mt-1">Mercado Pago, Pagar.me ou Asaas (PIX + cartões nacionais). Stripe para internacional.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 - FIPE -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-emerald-400 font-extrabold">04.</span> Base de Veículos (FIPE)
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            O catálogo europeu tem marcas/modelos com presença nula ou diferente no Brasil (ex.: Seat, Opel, Dacia). Para o mercado brasileiro, as marcas e modelos vêm da <strong>tabela FIPE oficial</strong>, em vez do <code>marcas-modelos</code> usado em Portugal.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2">API</th>
+                  <th class="py-2">Endpoint</th>
+                  <th class="py-2">Notas</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-emerald-400">BrasilAPI (recomendada)</td>
+                  <td class="py-3"><code class="text-[11px]">GET brasilapi.com.br/api/fipe/marcas/v1</code></td>
+                  <td class="py-3">Grátis, rápida, sem chave.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-amber-400">FipeX / Parallelum</td>
+                  <td class="py-3"><code class="text-[11px]">GET parallelum.com.br/fipe/api/v1/carros/marcas</code></td>
+                  <td class="py-3">Popular, mas com rate limit sem token.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-amber-300">Ação técnica:</strong> quando <code>country === "BR"</code>, os formulários de «Anunciar» (carro e oficina) consultam a FIPE para Marcas/Modelos. Cache no Firestore para evitar bater na API a cada carregamento.
+            </p>
+          </div>
+        </section>
+
+        <!-- 05 - Arquitetura multi-país -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-emerald-400 font-extrabold">05.</span> Arquitetura Multi-País
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Utilizadores do Brasil não devem ver anúncios/oficinas de Portugal, e vice-versa. O isolamento é feito por uma chave de país aplicada em todos os documentos e queries.
+          </p>
+          <div class="space-y-4 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500 text-emerald-400 font-bold flex items-center justify-center shrink-0">1</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Chave no banco</h4>
+                <p class="text-xs text-slate-400 mt-1">Adicionar <code>country: "BR" | "PT"</code> nos documentos de utilizadores, anúncios (cars/parts), oficinas (services) e intenções.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500 text-emerald-400 font-bold flex items-center justify-center shrink-0">2</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Seletor de país</h4>
+                <p class="text-xs text-slate-400 mt-1">Dropdown (🇧🇷 BR / 🇵🇹 PT) no cabeçalho, com a preferência guardada em <code>localStorage</code>.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500 text-emerald-400 font-bold flex items-center justify-center shrink-0">3</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Auto-deteção</h4>
+                <p class="text-xs text-slate-400 mt-1">Identificar o país do visitante na primeira visita (GeoIP) e pré-selecionar, mantendo o seletor para troca manual.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500 text-emerald-400 font-bold flex items-center justify-center shrink-0">4</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Filtro global nas queries</h4>
+                <p class="text-xs text-slate-400 mt-1">Todas as listagens incluem <code>.where("country", "==", selectedCountry)</code>. Requer índices compostos (country + status + dataCriacao) e atualização das <code>firestore.rules</code>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-rose-300">Atenção:</strong> os documentos existentes em Portugal precisam de uma <strong>migração</strong> que defina <code>country: "PT"</code> por defeito (backfill). Sem isso, ficam invisíveis após o filtro global entrar em vigor.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Benchmark concorrentes -->
+        <section class="glass rounded-2xl p-6 glow-amber relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🏁 Concorrência no Brasil</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-slate-300">Webmotors</strong> — líder em carros, forte em stands.</li>
+            <li><strong class="text-slate-300">OLX Brasil</strong> — particulares, alto volume.</li>
+            <li><strong class="text-slate-300">Mercado Livre Veículos</strong> — reputação + pagamentos.</li>
+            <li><strong class="text-slate-300">iCarros / Mobiauto</strong> — comparadores e tabela FIPE.</li>
+            <li><strong class="text-slate-300">Connectparts / Jocar</strong> — referência em peças.</li>
+          </ul>
+        </section>
+
+        <!-- Escopo de mudanças -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📦 Escopo de Mudanças</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Reaproveita</span><span class="text-slate-400">Auth · Firestore · Storage · FCM · UI</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:70%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Adapta</span><span class="text-slate-400">i18n · moeda · FIPE · seletor país</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:25%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-rose-400 font-bold">Novo</span><span class="text-slate-400">PIX gateway · backfill country</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-rose-500" style="width:15%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Riscos -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Atenções</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Backfill obrigatório:</strong> definir <code>country</code> nos dados PT antes de ativar o filtro global.</li>
+            <li><strong>Índices compostos:</strong> novas queries por país exigem índices Firestore.</li>
+            <li><strong>Regras de pagamento:</strong> PIX implica gateway com webhook e conciliação.</li>
+            <li><strong>Fiscal/legal:</strong> CPF/CNPJ, LGPD (equivalente brasileiro do RGPD) e termos por país.</li>
+            <li><strong>FIPE:</strong> tratar rate limits e cache para não depender de API externa em runtime.</li>
+          </ul>
+        </section>
+
+        <!-- Primeiros passos -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Primeiros Passos</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li>Adicionar campo <code>country</code> aos tipos e backfill dos dados PT.</li>
+            <li>Implementar seletor de país + auto-deteção GeoIP.</li>
+            <li>Aplicar filtro <code>country</code> nas queries e <code>firestore.rules</code> + índices.</li>
+            <li>Adicionar variante <code>pt-BR</code> ao i18n e formatação BRL.</li>
+            <li>Integrar FIPE (BrasilAPI) no fluxo «Anunciar».</li>
+            <li>Integrar gateway PIX para os planos premium.</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      ReparAuto © 2026 • Plano 20 — Expansão para o Brasil 🇧🇷
+    </footer>
+  </div>
+</body>
+</html>

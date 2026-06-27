@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
@@ -6,10 +6,8 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
-import { SelectField } from '@/components/ui/SelectField';
 import { COMBUSTIVEIS, DISTRITOS } from '@/lib/constants';
 import { getConcelhos } from '@/lib/geo';
-import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
 import { colors } from '@/theme/colors';
@@ -36,6 +34,8 @@ interface CarFiltersSheetProps {
   update: (partial: Partial<CarAdvFilters>) => void;
   onClear: () => void;
   resultCount: number;
+  marcaOpts: string[];
+  modeloOpts: string[];
 }
 
 export function CarFiltersSheet({
@@ -45,11 +45,13 @@ export function CarFiltersSheet({
   update,
   onClear,
   resultCount,
+  marcaOpts,
+  modeloOpts,
 }: CarFiltersSheetProps) {
+  const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
+  const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
   const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
-  const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
-  const modelos = useMemo(() => getModelos(f.marca), [getModelos, f.marca]);
 
   function toggleCombustivel(value: Combustivel) {
     update({
@@ -71,31 +73,23 @@ export function CarFiltersSheet({
         </>
       }
     >
-      <SheetSection title="Marca e modelo" first>
-        <View className="gap-3">
-          <SelectField
+      {marcaOpts.length > 0 && (
+        <SheetSection title="Marca" first>
+          <ChipSelect
+            options={marcaSelectOpts}
             value={f.marca}
             onChange={(v) => update({ marca: v, modelo: '' })}
-            options={marcas}
-            loading={marcasLoading}
-            placeholder="Todas as marcas"
-            title="Marca"
-            emptyOption="Todas as marcas"
           />
-          {!!f.marca && (
-            <SelectField
-              value={f.modelo}
-              onChange={(v) => update({ modelo: v })}
-              options={modelos}
-              placeholder="Todos os modelos"
-              title="Modelo"
-              emptyOption="Todos os modelos"
-            />
-          )}
-        </View>
-      </SheetSection>
+        </SheetSection>
+      )}
 
-      <SheetSection title="Preço (€)">
+      {!!f.marca && modeloOpts.length > 0 && (
+        <SheetSection title="Modelo">
+          <ChipSelect options={modeloSelectOpts} value={f.modelo} onChange={(v) => update({ modelo: v })} />
+        </SheetSection>
+      )}
+
+      <SheetSection title="Preço (€)" first={marcaOpts.length === 0}>
         <RangeRow
           minValue={f.precoMin}
           maxValue={f.precoMax}

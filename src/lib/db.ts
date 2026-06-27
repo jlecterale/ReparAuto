@@ -31,10 +31,12 @@ import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoInten
 import type { Proposta, PropostaInput, StatusProposta } from '@/types/proposal';
 import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
 import type { OficinaMecanico } from '@/types/oficina';
+import type { Banner, BannerInput } from '@/types/banner';
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
 const OFICINAS_COLLECTION = 'services';
+const BANNERS_COLLECTION = 'banners';
 
 // Public listings filter on status server-side so clients never download
 // pending/rejected documents. Sorting stays client-side to avoid requiring
@@ -1781,6 +1783,74 @@ export function subscribePremiumConfig(
       onError?.(err);
     },
   );
+}
+
+// ---------------------------------------------------------------------------
+// Banners Collection CRUD Functions
+// ---------------------------------------------------------------------------
+
+export function subscribeBanners(
+  onData: (banners: Banner[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(collection(db, BANNERS_COLLECTION), orderBy('ordem', 'asc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const results = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Banner);
+      onData(results);
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de banners:', err);
+      onError?.(err);
+    },
+  );
+}
+
+export async function getBanners(): Promise<Banner[]> {
+  try {
+    const q = query(
+      collection(db, BANNERS_COLLECTION),
+      where('ativo', '==', true),
+      orderBy('ordem', 'asc')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Banner));
+  } catch (err) {
+    console.error('[DB] Erro ao buscar banners ativos:', err);
+    return [];
+  }
+}
+
+export async function addBanner(banner: BannerInput): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, BANNERS_COLLECTION), cleanUndefined({
+      ...banner,
+      dataCriacao: Timestamp.now(),
+    }));
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] Erro ao adicionar banner:', err);
+    throw err;
+  }
+}
+
+export async function updateBanner(id: string, updates: Partial<Banner>): Promise<void> {
+  try {
+    await updateDoc(doc(db, BANNERS_COLLECTION, id), cleanUndefined(updates));
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar banner:', err);
+    throw err;
+  }
+}
+
+export async function deleteBanner(id: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, BANNERS_COLLECTION, id));
+  } catch (err) {
+    console.error('[DB] Erro ao deletar banner:', err);
+    throw err;
+  }
 }
 
 

@@ -1,4 +1,16 @@
+import { Platform } from 'react-native';
 import dados from '@/data/distritos-concelhos.json';
+
+/**
+ * Whether the in-app map can be rendered.
+ *
+ * iOS draws maps with Apple Maps, which needs no key. Android uses Google Maps
+ * (react-native-maps) and renders a blank tile grid without an API key, so we
+ * only enable the map there when EXPO_PUBLIC_GOOGLE_MAPS_API_KEY is set. The var
+ * is inlined into the bundle at build time, mirroring `app.config.ts`.
+ */
+export const mapsDisponivel =
+  Platform.OS !== 'android' || !!process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 export interface ConcelhoDado {
   nome: string;

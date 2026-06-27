@@ -1,5 +1,5 @@
 import type { ExpoConfig, ConfigContext } from 'expo/config';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // Reference a native Firebase file only when it exists, so building for a single
@@ -25,18 +25,34 @@ const firebaseFile = (name: string): string | undefined => {
 
 const BUNDLE_ID = 'com.recargarage';
 
-// Reversed iOS OAuth client id used by Google Sign-In. Read it from the plist
-// (key REVERSED_CLIENT_ID) and expose it here, e.g. in `.env`:
-//   GOOGLE_IOS_URL_SCHEME=com.googleusercontent.apps.XXXXXXXX-YYYY
+// Reversed iOS OAuth client id used by Google Sign-In's iosUrlScheme. Prefer an
+// explicit `GOOGLE_IOS_URL_SCHEME` env var; otherwise derive it from the
+// REVERSED_CLIENT_ID key in the committed GoogleService-Info.plist. Shipping a
+// placeholder here makes App Store Connect reject the upload (error 90158), so
+// the build fails loudly instead of falling back to a dummy scheme.
+const reversedClientIdFromPlist = (): string | undefined => {
+  const p = join(__dirname, 'firebase', 'GoogleService-Info.plist');
+  if (!existsSync(p)) return undefined;
+  const m = readFileSync(p, 'utf8').match(
+    /<key>REVERSED_CLIENT_ID<\/key>\s*<string>([^<]+)<\/string>/,
+  );
+  return m?.[1];
+};
 const GOOGLE_IOS_URL_SCHEME =
-  process.env.GOOGLE_IOS_URL_SCHEME ?? 'com.googleusercontent.apps.REPLACE_ME';
+  process.env.GOOGLE_IOS_URL_SCHEME ?? reversedClientIdFromPlist();
+if (!GOOGLE_IOS_URL_SCHEME) {
+  throw new Error(
+    'Google Sign-In iosUrlScheme is unset: set GOOGLE_IOS_URL_SCHEME or add ' +
+      'REVERSED_CLIENT_ID to firebase/GoogleService-Info.plist.',
+  );
+}
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'RecarGarage',
   slug: 'recargarage',
   scheme: 'recargarage',
-  version: '1.1.0',
+  version: '1.2.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
@@ -48,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    buildNumber: '1',
+    buildNumber: '10',
     bundleIdentifier: BUNDLE_ID,
     supportsTablet: true,
     googleServicesFile: firebaseFile('GoogleService-Info.plist'),
@@ -60,7 +76,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: BUNDLE_ID,
-    versionCode: 2,
+    versionCode: 20,
     googleServicesFile: firebaseFile('google-services.json'),
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
@@ -108,7 +124,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-build-properties',
       {
         // React Native Firebase requires static frameworks on iOS.
-        ios: { useFrameworks: 'static' },
+        // `buildReactNativeFromSource` works around the firestore (v24+) Swift
+        // build failure under Xcode 26 / RN 0.83: the new RNFBFirestore Swift
+        // sources force Clang to build the RNFBFirestore ObjC module, which
+        // imports React types (RCTBridgeModule, RCTPromiseRejectBlock). The
+        // prebuilt RNCore binary's module map doesn't expose those for a
+        // modular import, so we build React Native from source instead.
+        // See invertase/react-native-firebase#8657, expo/expo#39233.
+        ios: { useFrameworks: 'static', buildReactNativeFromSource: true },
         android: {},
       },
     ],
