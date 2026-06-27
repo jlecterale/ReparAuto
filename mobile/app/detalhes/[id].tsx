@@ -13,7 +13,8 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
-import { getCarroById } from '@/lib/db';
+import { OwnerStats } from '@/components/ui/OwnerStats';
+import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -32,12 +33,17 @@ export default function DetalhesCarroScreen() {
   useEffect(() => {
     let active = true;
     getCarroById(id)
-      .then((c) => active && setCarro(c))
+      .then((c) => {
+        if (!active) return;
+        setCarro(c);
+        // Count the view for everyone except the owner.
+        if (c && c.criadorUid !== user?.uid) registarVisualizacao('cars', id);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, user?.uid]);
 
   if (loading) {
     return (
@@ -57,6 +63,7 @@ export default function DetalhesCarroScreen() {
   }
 
   const fotos = carro.fotos?.length ? carro.fotos : [];
+  const ehDono = !!carro.criadorUid && carro.criadorUid === user?.uid;
   const podeMensagem = !!carro.criadorUid && carro.criadorUid !== user?.uid;
 
   return (
@@ -117,6 +124,18 @@ export default function DetalhesCarroScreen() {
           <Text className="mt-1 text-3xl font-black text-accent">
             {formatPreco(carro.preco)}
           </Text>
+
+          {ehDono && (
+            <View className="mt-4">
+              <Text className="mb-2 text-sm font-bold text-fg-heading">As suas estatísticas</Text>
+              <OwnerStats
+                variant="card"
+                visualizacoes={carro.visualizacoes}
+                contagemMensagens={carro.contagemMensagens}
+                contagemFavoritos={carro.contagemFavoritos ?? 0}
+              />
+            </View>
+          )}
 
           {/* Specs */}
           <View className="mt-5 flex-row flex-wrap">

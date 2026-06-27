@@ -51,7 +51,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
-          <ShieldCheck className="text-blue-500" /> Verificações
+          <ShieldCheck className="text-blue-700" /> Verificações
           {pendentes > 0 && <Badge cor="blue" variante="solid">{pendentes}</Badge>}
         </h3>
       </div>
@@ -181,7 +181,7 @@ export default function VerificationsQueue({ verifications, loading, onUpdateSta
           <div className="relative max-w-2xl max-h-[90vh]">
             <button
               onClick={() => setImageModal(null)}
-              className="absolute -top-3 -right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg text-fg-muted hover:text-red-500 transition z-10"
+              className="absolute -top-3 -right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg text-fg-muted hover:text-red-700 transition z-10"
             >
               <X />
             </button>

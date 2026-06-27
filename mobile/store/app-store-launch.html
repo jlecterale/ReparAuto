@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>RecarGarage — Textos para a App Store (Lançamento)</title>
+<style>
+  :root{
+    --brand:#0b4f9e; --brand-700:#083d7a; --ink:#0f172a; --muted:#64748b;
+    --bg:#f1f5f9; --card:#ffffff; --line:#e2e8f0; --ok:#16a34a; --warn:#dc2626;
+    --chip:#eef2ff; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+  header{background:linear-gradient(135deg,var(--brand),var(--brand-700));color:#fff;padding:40px 24px}
+  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  header h1{margin:0 0 6px;font-size:30px;letter-spacing:-.02em}
+  header p{margin:0;opacity:.92;font-size:15px}
+  .badge{display:inline-block;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+    padding:3px 10px;border-radius:999px;font-size:12px;margin-top:14px;margin-right:6px}
+  main{padding:28px 0 80px}
+  section{margin:30px 0}
+  h2{font-size:20px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+  h2 .num{background:var(--brand);color:#fff;width:26px;height:26px;border-radius:8px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px 18px;margin:12px 0;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .field-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+  .field-name{font-weight:700;font-size:14px}
+  .field-sub{color:var(--muted);font-size:12px;font-weight:500}
+  .copy-text{white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;
+    background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:0}
+  .row{display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .counter{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+  .counter.ok{color:var(--ok)} .counter.over{color:var(--warn)}
+  button.copy{appearance:none;border:1px solid var(--brand);background:#fff;color:var(--brand);
+    font-weight:600;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.15s}
+  button.copy:hover{background:var(--brand);color:#fff}
+  button.copy.done{background:var(--ok);border-color:var(--ok);color:#fff}
+  .tabs{display:flex;gap:8px;margin:8px 0 4px}
+  .tab{flex:1;text-align:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff;
+    cursor:pointer;font-weight:700;font-size:15px;color:var(--muted);transition:.15s}
+  .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .pane{display:none} .pane.active{display:block}
+  table{width:100%;border-collapse:collapse;font-size:14px;background:#fff;border-radius:12px;overflow:hidden}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  th{background:#f8fafc;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  td:first-child{font-weight:600;white-space:nowrap}
+  .note{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;font-size:13.5px;color:#1e3a5f}
+  .note b{color:var(--brand-700)}
+  ul.clean{margin:8px 0 0;padding-left:20px;font-size:14px} ul.clean li{margin:4px 0}
+  .pill{display:inline-block;background:var(--chip);color:var(--brand-700);font-size:11px;font-weight:700;
+    padding:2px 8px;border-radius:999px;margin-left:6px}
+  .check{list-style:none;padding:0;margin:0} .check li{padding:6px 0 6px 28px;position:relative;font-size:14px}
+  .check li::before{content:"☐";position:absolute;left:0;font-size:16px;color:var(--brand)}
+  footer{color:var(--muted);font-size:12px;text-align:center;padding:30px 0 50px}
+  code{background:#f1f5f9;padding:1px 6px;border-radius:5px;font-size:12.5px}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>RecarGarage — Textos para a App Store</h1>
+    <p>Conteúdo pronto a colar no App Store Connect para o lançamento iOS em Portugal. Carros usados, peças e oficinas.</p>
+    <span class="badge">🇵🇹 Português (Portugal)</span>
+    <span class="badge">Otimizado por ASO</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- METADATA COMUM -->
+  <section>
+    <h2><span class="num">1</span> Metadados comuns (independentes do idioma)</h2>
+    <div class="card">
+      <table>
+        <tr><th>Campo</th><th>Valor</th></tr>
+        <tr><td>Nome da app</td><td>RecarGarage</td></tr>
+        <tr><td>Bundle ID</td><td><code>com.recargarage</code></td></tr>
+        <tr><td>Categoria principal</td><td>Compras (Shopping)</td></tr>
+        <tr><td>Categoria secundária</td><td>Estilo de vida (Lifestyle)</td></tr>
+        <tr><td>Idioma</td><td>Português (Portugal) — idioma principal</td></tr>
+        <tr><td>Classificação etária</td><td>4+</td></tr>
+        <tr><td>Preço</td><td>Grátis · sem compras integradas</td></tr>
+        <tr><td>URL de marketing</td><td>https://www.recargarage.com</td></tr>
+        <tr><td>URL de privacidade</td><td>https://www.recargarage.com/privacidade</td></tr>
+        <tr><td>URL de suporte</td><td>https://www.recargarage.com/seguranca</td></tr>
+        <tr><td>Email de suporte</td><td>suporte@recargarage.com</td></tr>
+        <tr><td>Encriptação (ITSAppUsesNonExemptEncryption)</td><td>false (sem criptografia não isenta)</td></tr>
+      </table>
+      <div class="note" style="margin-top:14px">
+        <b>Nota ASO:</b> O App Store indexa <b>Nome (30)</b> + <b>Subtítulo (30)</b> + <b>Palavras-chave (100 bytes, oculto)</b> —
+        cada palavra é indexada <b>uma só vez</b>. Por isso os três campos <b>nunca repetem termos</b> entre si.
+        A descrição e o texto promocional <b>não</b> contam para a pesquisa (só para conversão).
+        Substitua os URLs/email de exemplo pelos reais antes de submeter.
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <section>
+    <h2><span class="num">2</span> Textos da ficha (Português de Portugal)</h2>
+
+    <!-- ============ PORTUGAL ============ -->
+    <div class="pane active" id="pane-pt">
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Nome / Title</span><span class="field-sub">máx. 30 caracteres</span></div>
+        <pre class="copy-text" data-limit="30" data-unit="char">RecarGarage: Carros e Peças</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Subtítulo / Subtitle</span><span class="field-sub">máx. 30 caracteres · sem repetir palavras do nome</span></div>
+        <pre class="copy-text" data-limit="30" data-unit="char">Stand, oficinas e usados</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Palavras-chave / Keywords</span><span class="field-sub">máx. 100 bytes · vírgulas sem espaços · sem acentos · sem repetir nome/subtítulo</span></div>
+        <pre class="copy-text" data-limit="100" data-unit="byte">automovel,viatura,auto,carro,seminovo,comprar,vender,anunciar,desmonte,reparacao,mecanico,garagem</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Texto promocional</span><span class="field-sub">máx. 170 caracteres · editável sem nova versão</span></div>
+        <pre class="copy-text" data-limit="170" data-unit="char">Compre e venda carros usados e peças, encontre oficinas perto de si e fale direto com os vendedores. Navegue sem conta — entre só para anunciar ou favoritar.</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Descrição</span><span class="field-sub">máx. 4000 caracteres · as 3 primeiras linhas são o que converte</span></div>
+        <pre class="copy-text" data-limit="4000" data-unit="char">Carros usados, peças e oficinas — tudo numa só app, rápida e simples.
+
+A RecarGarage é o marketplace automóvel português para quem compra, vende e repara. Encontre o próximo carro, peças ao melhor preço e oficinas de confiança perto de si.
+
+COMPRAR E VENDER CARROS
+• Milhares de viaturas usadas com fotos, preço, quilómetros e detalhes.
+• Pesquise por marca, modelo ou localidade e filtre por preço.
+• Anuncie o seu carro em minutos: tire fotos, defina o preço e publique.
+
+PEÇAS USADAS E DESMONTE
+• Compre, venda ou procure peças para qualquer marca e modelo.
+• Anúncios de venda, desmonte e procura.
+
+OFICINAS PERTO DE SI
+• Diretório de oficinas com especialidades, contactos e avaliações.
+• Veja-as no mapa e encontre as mais próximas de si.
+• Registe a sua oficina e receba novos clientes.
+
+PROCURA UM CARRO?
+• Publique o que procura e deixe os vendedores virem ter consigo.
+
+FALE DIRETAMENTE
+• Chat dentro da app, com notificações de novas mensagens.
+• Contacte vendedores e oficinas por telefone ou WhatsApp.
+• Guarde os favoritos para ver mais tarde.
+
+PARA PARTICULARES E PROFISSIONAIS
+• Conta gratuita. Faça a gestão dos seus anúncios e acompanhe o estado de cada um.
+
+Navegue livremente sem criar conta — o início de sessão só é pedido para guardar favoritos, anunciar ou contactar.
+
+Descarregue a RecarGarage e junte-se ao maior mercado automóvel português.</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Novidades desta versão (What's New)</span><span class="field-sub">máx. 4000 caracteres</span></div>
+        <pre class="copy-text" data-limit="4000" data-unit="char">Bem-vindo à RecarGarage!
+
+• Listagens de carros, peças e oficinas em tempo real, com pesquisa e filtros.
+• Publique anúncios de carros, peças, oficinas e procuras, com fotos.
+• Chat em tempo real e notificações de novas mensagens.
+• Mapa de oficinas e avaliações.
+• Favoritos, perfil e gestão dos seus anúncios.
+• Início de sessão com email, Google e Apple.</pre>
+        <div class="row"><button class="copy">Copiar</button><span class="counter"></span></div>
+      </div>
+
+      <div class="card">
+        <div class="field-head"><span class="field-name">Legendas dos screenshots</span><span class="field-sub">indexadas desde jun/2025 · curtas, sobre cada imagem</span></div>
+        <pre class="copy-text">1. Milhares de carros usados num só lugar
+2. Filtre por marca, modelo e preço
+3. Peças para qualquer marca e modelo
+4. Oficinas de confiança no mapa
+5. Anuncie em minutos, direto do telemóvel
+6. Fale com o vendedor por chat</pre>
+        <div class="row"><button class="copy">Copiar</button></div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- REVIEW NOTES -->
+  <section>
+    <h2><span class="num">3</span> Notas para o App Review <span class="pill">um só campo, em inglês/português</span></h2>
+    <div class="card">
+      <pre class="copy-text">A app permite navegar como convidado, sem conta. O início de sessão só é pedido para ações (favoritar, anunciar, gerir perfil, contactar).
+
+Conta de teste:
+  Email: revisor@recargarage.com
+  Palavra-passe: (fornecer)
+
+• Eliminação de conta: disponível em Perfil → Eliminar conta (App Store 5.1.1(v)).
+• Sign in with Apple disponível no ecrã de início de sessão (App Store 4.8).
+• Navegação sem registo permitida (App Store 5.1.1(i)).
+• Permissões pedidas em runtime, só quando a funcionalidade as usa (câmara ao tirar foto, localização no mapa de oficinas, notificações no registo de push).</pre>
+      <div class="row"><button class="copy">Copiar</button></div>
+    </div>
+  </section>
+
+  <!-- DATA / PRIVACY -->
+  <section>
+    <h2><span class="num">4</span> App Privacy (etiqueta de privacidade)</h2>
+    <div class="card">
+      <p style="margin-top:0;font-size:14px;color:var(--muted)">A declarar no questionário de privacidade do App Store Connect:</p>
+      <ul class="clean">
+        <li><b>Informações de contacto</b> — email, telefone — associadas ao utilizador, para funcionamento do app.</li>
+        <li><b>Conteúdo do utilizador</b> — fotos dos anúncios e mensagens de chat — associadas ao utilizador.</li>
+        <li><b>Localização aproximada</b> — apenas em uso, para mostrar oficinas próximas no mapa.</li>
+        <li><b>Identificadores</b> — ID de utilizador e token de notificações (Firebase).</li>
+      </ul>
+      <div class="note" style="margin-top:12px">
+        Dados encriptados em trânsito · O utilizador pode eliminar a conta e os dados na app ·
+        <b>Sem partilha com terceiros para publicidade</b> · <b>Sem tracking entre apps</b>.
+      </div>
+    </div>
+  </section>
+
+  <!-- ASO RATIONALE -->
+  <section>
+    <h2><span class="num">5</span> Porquê estes textos (resumo ASO)</h2>
+    <div class="card">
+      <ul class="clean">
+        <li><b>Nome com keyword</b> — passámos de só "RecarGarage" para <b>"RecarGarage: Carros e Peças"</b>: a marca continua primeiro, mas ganhamos os dois termos de pesquisa mais valiosos sem gastar caracteres do subtítulo.</li>
+        <li><b>Zero sobreposição</b> entre Nome, Subtítulo e Palavras-chave — o Apple indexa cada palavra uma vez, por isso "carros"/"peças" (nome), "oficinas"/"stand"/"usados" (subtítulo) e os termos do keyword field são todos <b>distintos</b>, maximizando a cobertura.</li>
+        <li><b>Keyword field sem acentos nem espaços</b> — o Apple faz folding de acentos, e cada espaço desperdiça 1 byte; "comprar,vender" cobre mais do que "comprar, vender".</li>
+        <li><b>Primeiras 3 linhas da descrição</b> entregam a proposta de valor e a confiança ("sem conta", "perto de si") — 90% dos utilizadores não passam daí.</li>
+        <li><b>Legendas dos screenshots</b> preenchidas porque o Apple passou a indexá-las (jun/2025) — keywords extra de borla.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section>
+    <h2><span class="num">6</span> Checklist de submissão</h2>
+    <div class="card">
+      <ul class="check">
+        <li>Criar a app no App Store Connect com o bundle <code>com.recargarage</code>.</li>
+        <li>Definir Português (Portugal) como idioma principal da ficha.</li>
+        <li>Colar Nome, Subtítulo, Palavras-chave, Texto promocional e Descrição de cada idioma.</li>
+        <li>Carregar 6 screenshots (6.7" e 5.5" iPhone, + iPad se "supportsTablet") com as legendas acima.</li>
+        <li>(Opcional, +20–40% conversão) gravar 1 App Preview de 15–30s.</li>
+        <li>Preencher a etiqueta de privacidade (secção 4) e o URL de privacidade.</li>
+        <li>Colar as Notas para o App Review e criar a conta de teste <code>revisor@recargarage.com</code>.</li>
+        <li>Confirmar capability <b>Sign in with Apple</b> no App ID e método <b>Apple</b> ativo no Firebase Auth.</li>
+        <li>Definir categoria Compras (principal) + Estilo de vida (secundária) e classificação 4+.</li>
+        <li>Carregar o build via <code>npm run release:ios</code> e selecioná-lo na versão.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    Gerado para o lançamento da RecarGarage · textos pt-PT/pt-BR · rever antes de submeter.
+  </footer>
+
+</main>
+
+<script>
+  // UTF-8 byte length (App Store keyword field is measured in bytes)
+  const byteLen = (s) => new TextEncoder().encode(s).length;
+
+  // Live counters
+  document.querySelectorAll('.copy-text[data-limit]').forEach((el) => {
+    const limit = +el.dataset.limit;
+    const unit = el.dataset.unit;
+    const counter = el.parentElement.querySelector('.counter');
+    if (!counter) return;
+    const text = el.textContent;
+    const used = unit === 'byte' ? byteLen(text) : text.length;
+    const over = used > limit;
+    counter.textContent = `${used} / ${limit} ${unit === 'byte' ? 'bytes' : 'caracteres'}`;
+    counter.classList.add(over ? 'over' : 'ok');
+  });
+
+  // Copy buttons
+  document.querySelectorAll('button.copy').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const text = btn.closest('.card').querySelector('.copy-text').textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = 'Copiado ✓';
+        btn.classList.add('done');
+        setTimeout(() => { btn.textContent = old; btn.classList.remove('done'); }, 1400);
+      } catch { alert('Não foi possível copiar automaticamente — selecione e copie à mão.'); }
+    });
+  });
+
+</script>
+</body>
+</html>

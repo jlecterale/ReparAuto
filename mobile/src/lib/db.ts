@@ -8,6 +8,7 @@
 import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from './firebase';
 import type { Carro, Peca, Oficina, Usuario } from '@/types';
 
@@ -252,4 +253,24 @@ export async function bumpContador(
     .collection(colecao)
     .doc(id)
     .update({ [campo]: firestore.FieldValue.increment(delta) });
+}
+
+/**
+ * Bumps `visualizacoes` once per device per listing (mirrors the web's
+ * per-session `sessionStorage` dedup). Best-effort: never throws into the UI,
+ * and skips the AsyncStorage flag if the bump fails so it can retry later.
+ * `firestore.rules` allows unauthenticated `visualizacoes` increments.
+ */
+export async function registarVisualizacao(
+  colecao: 'cars' | 'parts',
+  id: string,
+): Promise<void> {
+  try {
+    const key = `viewed_${colecao}_${id}`;
+    if (await AsyncStorage.getItem(key)) return;
+    await bumpContador(colecao, id, 'visualizacoes', 1);
+    await AsyncStorage.setItem(key, '1');
+  } catch {
+    // view counting is non-critical; ignore failures.
+  }
 }

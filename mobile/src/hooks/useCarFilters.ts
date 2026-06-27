@@ -6,6 +6,8 @@ export type QuickChip = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
 export type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
 export interface CarAdvFilters {
+  marca: string;
+  modelo: string;
   precoMin: string;
   precoMax: string;
   kmMin: string;
@@ -24,6 +26,8 @@ export interface CarAdvFilters {
 }
 
 const INITIAL: CarAdvFilters = {
+  marca: '',
+  modelo: '',
   precoMin: '',
   precoMax: '',
   kmMin: '',
@@ -67,9 +71,25 @@ export function useCarFilters(carros: Carro[]) {
   const update = (partial: Partial<CarAdvFilters>) => setF((prev) => ({ ...prev, ...partial }));
   const limpar = () => setF(INITIAL);
 
+  // Marca/modelo options are derived from the loaded listings so only brands and
+  // models that actually have ads are offered. Modelos depend on the picked marca.
+  const marcaOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of carros) if (c.marca) set.add(c.marca);
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros]);
+
+  const modeloOpts = useMemo(() => {
+    if (!f.marca) return [];
+    const set = new Set<string>();
+    for (const c of carros) if (c.marca === f.marca && c.modelo) set.add(c.modelo);
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros, f.marca]);
+
   const filtersCount = useMemo(() => {
     const localizacaoActive = f.raioMode ? !!(f.raioCentro && f.raioKm) : !!(f.concelho || f.distrito);
     return [
+      f.marca || f.modelo,
       f.precoMin || f.precoMax,
       f.kmMin || f.kmMax,
       f.anoMin || f.anoMax,
@@ -93,6 +113,8 @@ export function useCarFilters(carros: Carro[]) {
     let cs = carros.filter((c) => {
       if (!aplicaChip(c, chip)) return false;
       if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
+      if (f.marca && c.marca !== f.marca) return false;
+      if (f.modelo && c.modelo !== f.modelo) return false;
       if (precoMin !== null && c.preco < precoMin) return false;
       if (precoMax !== null && c.preco > precoMax) return false;
       if (kmMin !== null && c.km < kmMin) return false;
@@ -133,5 +155,7 @@ export function useCarFilters(carros: Carro[]) {
     limpar,
     filtersCount,
     filtrados,
+    marcaOpts,
+    modeloOpts,
   };
 }

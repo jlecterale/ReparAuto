@@ -25,13 +25,22 @@ export const db = initializeFirestore(app, {
 export const storage = getStorage(app);
 
 export let analytics: Analytics | null = null;
+let analyticsPromise: Promise<Analytics | null> | null = null;
 
-if (typeof window !== 'undefined') {
-  isSupported().then((supported) => {
-    if (supported) {
-      analytics = getAnalytics(app);
-    }
-  });
-}
+export const getAnalyticsInstance = (): Promise<Analytics | null> => {
+  if (typeof window === 'undefined') return Promise.resolve(null);
+  if (analytics) return Promise.resolve(analytics);
+
+  if (!analyticsPromise) {
+    analyticsPromise = isSupported().then((supported) => {
+      if (supported) {
+        analytics = getAnalytics(app);
+        return analytics;
+      }
+      return null;
+    });
+  }
+  return analyticsPromise;
+};
 
 export default app;

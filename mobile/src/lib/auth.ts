@@ -16,12 +16,16 @@ import { auth } from './firebase';
 type User = FirebaseAuthTypes.User;
 
 /**
- * Configure Google Sign-In once at app start. `webClientId` must be the
- * OAuth client of type 3 (web) so the returned idToken is accepted by Firebase.
+ * Configure Google Sign-In once at app start. Must run on every platform before
+ * `GoogleSignin.signIn()` — calling signIn() unconfigured crashes natively on
+ * iOS (an uncatchable fatal exception). On iOS the iosClientId is read
+ * automatically from the bundled GoogleService-Info.plist, so no param is
+ * required. `webClientId` (OAuth client of type 3 / web) is recommended so the
+ * returned idToken is accepted by Firebase and is required for Android.
  */
-export function configureGoogleSignIn(webClientId: string) {
+export function configureGoogleSignIn(webClientId?: string) {
   GoogleSignin.configure({
-    webClientId,
+    webClientId: webClientId || undefined,
     offlineAccess: false,
   });
 }

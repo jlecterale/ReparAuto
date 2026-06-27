@@ -85,9 +85,9 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-slate-300">
+        <table className="w-full text-sm text-fg">
           <thead>
-            <tr className="text-left text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800 pb-3">
+            <tr className="text-left text-xs font-bold text-fg-muted uppercase tracking-wider border-b border-neutral-200 pb-3">
               <th className="pb-3 pr-4">Utilizador</th>
               <th className="pb-3 pr-4">Contacto</th>
               <th className="pb-3 pr-4">Conta</th>
@@ -105,33 +105,33 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                 <tr 
                   key={u.uid} 
                   onClick={() => setSelectedUser(u)}
-                  className="border-b border-slate-800/60 hover:bg-slate-800/30 transition cursor-pointer"
+                  className="border-b border-neutral-200 hover:bg-slate-50 transition cursor-pointer"
                 >
                   {/* Utilizador */}
                   <td className="py-3.5 pr-4">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 font-extrabold border border-slate-700 uppercase shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-fg-muted font-extrabold border border-neutral-300 uppercase shrink-0">
                         {u.nome ? u.nome.substring(0, 2) : 'U'}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-bold text-slate-100 truncate max-w-[150px]">{u.nome || '—'}</p>
-                        <p className="text-[10px] font-mono text-slate-500 truncate max-w-[100px]">{u.uid}</p>
+                        <p className="font-bold text-fg-heading truncate max-w-[150px]">{u.nome || '—'}</p>
+                        <p className="text-[10px] font-mono text-fg-muted truncate max-w-[100px]">{u.uid}</p>
                       </div>
                     </div>
                   </td>
 
                   {/* Contacto */}
                   <td className="py-3.5 pr-4 text-xs">
-                    <p className="text-slate-200">{u.email}</p>
-                    {u.telefone && <p className="text-slate-450 mt-0.5">{u.telefone}</p>}
+                    <p className="text-fg-strong">{u.email}</p>
+                    {u.telefone && <p className="text-fg-muted mt-0.5">{u.telefone}</p>}
                   </td>
 
                   {/* Tipo de Conta */}
                   <td className="py-3.5 pr-4">
                     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full capitalize ${
                       u.tipoConta === 'profissional'
-                        ? 'bg-blue-950/40 text-blue-400 border border-blue-900/40'
-                        : 'bg-zinc-800/60 text-slate-400 border border-zinc-700/40'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-zinc-800/60 text-fg-muted border border-zinc-700/40'
                     }`}>
                       {u.tipoConta || 'Particular'}
                     </span>
@@ -141,15 +141,15 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                   <td className="py-3.5 pr-4">
                     <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                       u.role === 'admin' 
-                        ? 'bg-purple-950/40 text-purple-400 border-purple-900/50' 
-                        : 'bg-slate-900 text-slate-400 border-slate-850'
+                        ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                        : 'bg-white text-fg-muted border-neutral-200'
                     }`}>
                       {u.role}
                     </span>
                   </td>
 
                   {/* Distrito */}
-                  <td className="py-3.5 pr-4 text-xs font-semibold text-slate-200">
+                  <td className="py-3.5 pr-4 text-xs font-semibold text-fg-strong">
                     {u.distrito || '—'}
                   </td>
 
@@ -157,16 +157,16 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                   <td className="py-3.5 pr-4">
                     <div className="flex gap-1.5 flex-wrap">
                       {u.emailVerified ? (
-                        <span className="text-[9px] font-bold px-2 py-0.5 bg-green-950/30 text-green-400 border border-green-900/30 rounded-full flex items-center gap-0.5">
+                        <span className="text-[9px] font-bold px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full flex items-center gap-0.5">
                           <CheckCircle size={8} /> Email
                         </span>
                       ) : (
-                        <span className="text-[9px] font-bold px-2 py-0.5 bg-red-950/30 text-red-400 border border-red-900/30 rounded-full">
+                        <span className="text-[9px] font-bold px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded-full">
                           Não Verif.
                         </span>
                       )}
                       {u.verificado && (
-                        <span className="text-[9px] font-bold px-2 py-0.5 bg-blue-950/30 text-blue-400 border border-blue-900/30 rounded-full flex items-center gap-0.5">
+                        <span className="text-[9px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full flex items-center gap-0.5">
                           <SealCheck size={8} /> ID
                         </span>
                       )}
@@ -176,11 +176,11 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                   {/* Plano */}
                   <td className="py-3.5 pr-4">
                     {hasPlan ? (
-                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 bg-amber-950/30 text-amber-400 border border-amber-900/30 rounded-full">
+                      <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
                         <Crown size={8} /> {u.planoAtivo!.nome}
                       </span>
                     ) : (
-                      <span className="text-xs text-slate-500">—</span>
+                      <span className="text-xs text-fg-muted">—</span>
                     )}
                   </td>
 
@@ -195,7 +195,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                           setConfirm({ uid: u.uid, nome: u.nome || u.email, role: newRole });
                         }
                       }}
-                      className="text-xs bg-slate-900 border border-slate-800 text-slate-300 rounded-lg px-2 py-1.5 focus:outline-none focus:border-accent cursor-pointer"
+                      className="text-xs bg-white border border-neutral-200 text-fg rounded-lg px-2 py-1.5 focus:outline-none focus:border-accent cursor-pointer"
                     >
                       <option value="user">user</option>
                       <option value="admin">admin</option>
@@ -212,8 +212,8 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                       onClick={() => handleToggleVerified(u)}
                       className={`p-1.5 rounded-lg border transition ${
                         u.verificado
-                          ? 'border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                          : 'border-slate-800 text-slate-500 hover:border-blue-500/20 hover:text-blue-400'
+                          ? 'border-blue-500/20 bg-blue-500/10 text-blue-700 hover:bg-blue-500/20'
+                          : 'border-neutral-200 text-fg-muted hover:border-blue-500/20 hover:text-blue-700'
                       }`}
                       title={u.verificado ? 'Remover Verificação' : 'Marcar como Verificado'}
                     >
@@ -224,8 +224,8 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                       onClick={() => handleToggleProfessional(u)}
                       className={`p-1.5 rounded-lg border transition ${
                         u.tipoConta === 'profissional'
-                          ? 'border-pink-500/20 bg-pink-500/10 text-pink-400 hover:bg-pink-500/20'
-                          : 'border-slate-800 text-slate-500 hover:border-pink-500/20 hover:text-pink-400'
+                          ? 'border-pink-500/20 bg-pink-500/10 text-pink-700 hover:bg-pink-500/20'
+                          : 'border-neutral-200 text-fg-muted hover:border-pink-500/20 hover:text-pink-700'
                       }`}
                       title={u.tipoConta === 'profissional' ? 'Tornar Particular' : 'Marcar como Profissional'}
                     >
@@ -237,7 +237,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
             })}
             {users.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-slate-500 text-sm">
+                <td colSpan={8} className="py-8 text-center text-fg-muted text-sm">
                   Nenhum utilizador encontrado.
                 </td>
               </tr>
@@ -256,28 +256,28 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
           />
           
           {/* Drawer container */}
-          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl p-6 z-[120] overflow-y-auto flex flex-col justify-between">
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white border-l border-neutral-200 shadow-2xl p-6 z-[120] overflow-y-auto flex flex-col justify-between">
             <div className="space-y-6">
               {/* Header */}
-              <div className="flex items-start justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-start justify-between border-b border-neutral-200 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-slate-850 flex items-center justify-center text-slate-300 font-black text-xl border border-slate-700 uppercase">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-fg font-black text-xl border border-neutral-300 uppercase">
                     {currentSelectedUser.nome ? currentSelectedUser.nome.substring(0, 2) : 'U'}
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base text-slate-100">{currentSelectedUser.nome || 'Utilizador Sem Nome'}</h3>
+                    <h3 className="font-extrabold text-base text-fg-heading">{currentSelectedUser.nome || 'Utilizador Sem Nome'}</h3>
                     <div className="flex gap-1.5 mt-1">
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full capitalize border ${
                         currentSelectedUser.tipoConta === 'profissional'
-                          ? 'bg-blue-950/40 text-blue-400 border-blue-900/40'
-                          : 'bg-zinc-800/60 text-slate-400 border-zinc-750'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-zinc-800/60 text-fg-muted border-zinc-750'
                       }`}>
                         {currentSelectedUser.tipoConta || 'particular'}
                       </span>
                       <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                         currentSelectedUser.role === 'admin' 
-                          ? 'bg-purple-950/40 text-purple-400 border-purple-900/50' 
-                          : 'bg-slate-850 text-slate-400 border-slate-800'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                          : 'bg-slate-100 text-fg-muted border-neutral-200'
                       }`}>
                         {currentSelectedUser.role}
                       </span>
@@ -286,7 +286,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                 </div>
                 <button 
                   onClick={() => setSelectedUser(null)}
-                  className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200 transition"
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-fg-muted hover:text-fg-strong transition"
                 >
                   <X size={18} />
                 </button>
@@ -295,30 +295,30 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
               {/* Personal details card */}
               <div className="space-y-4">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-450 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-fg-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <User size={13} /> Dados Pessoais
                   </h4>
-                  <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4 space-y-3">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-4 space-y-3">
                     <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">UID do Firebase</p>
-                      <p className="text-xs font-mono text-slate-300 mt-0.5 select-all">{currentSelectedUser.uid}</p>
+                      <p className="text-[10px] text-fg-muted font-bold uppercase">UID do Firebase</p>
+                      <p className="text-xs font-mono text-fg mt-0.5 select-all">{currentSelectedUser.uid}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">NIF / Contribuinte</p>
-                        <p className="text-xs text-slate-200 mt-0.5">{currentSelectedUser.nif || '—'}</p>
+                        <p className="text-[10px] text-fg-muted font-bold uppercase">NIF / Contribuinte</p>
+                        <p className="text-xs text-fg-strong mt-0.5">{currentSelectedUser.nif || '—'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Contacto Telefone</p>
-                        <p className="text-xs text-slate-200 mt-0.5">{currentSelectedUser.telefone || '—'}</p>
+                        <p className="text-[10px] text-fg-muted font-bold uppercase">Contacto Telefone</p>
+                        <p className="text-xs text-fg-strong mt-0.5">{currentSelectedUser.telefone || '—'}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">Endereço de E-mail</p>
-                      <p className="text-xs text-slate-200 mt-0.5 flex items-center gap-1.5">
+                      <p className="text-[10px] text-fg-muted font-bold uppercase">Endereço de E-mail</p>
+                      <p className="text-xs text-fg-strong mt-0.5 flex items-center gap-1.5">
                         {currentSelectedUser.email}
                         {currentSelectedUser.emailVerified && (
-                          <span className="text-[9px] text-green-400 bg-green-950/30 px-2 py-0.5 rounded-full font-bold">Verificado</span>
+                          <span className="text-[9px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full font-bold">Verificado</span>
                         )}
                       </p>
                     </div>
@@ -327,64 +327,64 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
 
                 {/* Address Card */}
                 <div>
-                  <h4 className="text-xs font-bold text-slate-450 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-fg-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <MapPin size={13} /> Morada e Localidade
                   </h4>
-                  <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4 space-y-3">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-4 space-y-3">
                     <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">Morada Completa</p>
-                      <p className="text-xs text-slate-200 mt-0.5">{currentSelectedUser.morada || '—'}</p>
+                      <p className="text-[10px] text-fg-muted font-bold uppercase">Morada Completa</p>
+                      <p className="text-xs text-fg-strong mt-0.5">{currentSelectedUser.morada || '—'}</p>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="col-span-2">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Localidade</p>
-                        <p className="text-xs text-slate-200 mt-0.5 truncate">{currentSelectedUser.localidade || '—'}</p>
+                        <p className="text-[10px] text-fg-muted font-bold uppercase">Localidade</p>
+                        <p className="text-xs text-fg-strong mt-0.5 truncate">{currentSelectedUser.localidade || '—'}</p>
                       </div>
                       <div>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">Distrito</p>
-                        <p className="text-xs text-slate-200 mt-0.5">{currentSelectedUser.distrito || '—'}</p>
+                        <p className="text-[10px] text-fg-muted font-bold uppercase">Distrito</p>
+                        <p className="text-xs text-fg-strong mt-0.5">{currentSelectedUser.distrito || '—'}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-[10px] text-slate-500 font-bold uppercase">Código Postal</p>
-                      <p className="text-xs text-slate-200 mt-0.5">{currentSelectedUser.codigoPostal || '—'}</p>
+                      <p className="text-[10px] text-fg-muted font-bold uppercase">Código Postal</p>
+                      <p className="text-xs text-fg-strong mt-0.5">{currentSelectedUser.codigoPostal || '—'}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Plan Card */}
                 <div>
-                  <h4 className="text-xs font-bold text-slate-450 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <h4 className="text-xs font-bold text-fg-muted uppercase tracking-wider mb-2 flex items-center gap-1.5">
                     <Crown size={13} /> Assinatura Premium
                   </h4>
-                  <div className="bg-slate-950/50 border border-slate-850 rounded-2xl p-4">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-4">
                     {planAtivoValido(currentSelectedUser) ? (
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-200 font-extrabold flex items-center gap-1">
-                            <Crown size={14} className="text-amber-500" /> {currentSelectedUser.planoAtivo!.nome}
+                          <span className="text-xs text-fg-strong font-extrabold flex items-center gap-1">
+                            <Crown size={14} className="text-amber-700" /> {currentSelectedUser.planoAtivo!.nome}
                           </span>
-                          <span className="text-[9px] font-bold px-2 py-0.5 bg-green-950/30 text-green-400 border border-green-900/30 rounded-full">Ativo</span>
+                          <span className="text-[9px] font-bold px-2 py-0.5 bg-green-50 text-green-700 border border-green-200 rounded-full">Ativo</span>
                         </div>
-                        <div className="grid grid-cols-2 gap-4 text-xs border-t border-slate-900 pt-3">
+                        <div className="grid grid-cols-2 gap-4 text-xs border-t border-neutral-200 pt-3">
                           <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase">Categoria</p>
-                            <p className="text-slate-350 mt-0.5 capitalize">{currentSelectedUser.planoAtivo!.categoria}</p>
+                            <p className="text-[10px] text-fg-muted font-bold uppercase">Categoria</p>
+                            <p className="text-fg mt-0.5 capitalize">{currentSelectedUser.planoAtivo!.categoria}</p>
                           </div>
                           <div>
-                            <p className="text-[10px] text-slate-500 font-bold uppercase">Expira a</p>
-                            <p className="text-slate-350 mt-0.5">{formatarData(currentSelectedUser.planoAtivo!.dataExpiracao)}</p>
+                            <p className="text-[10px] text-fg-muted font-bold uppercase">Expira a</p>
+                            <p className="text-fg mt-0.5">{formatarData(currentSelectedUser.planoAtivo!.dataExpiracao)}</p>
                           </div>
                         </div>
                         {currentSelectedUser.planoAtivo!.adminNome && (
-                          <div className="text-[10px] text-slate-500 pt-2 border-t border-slate-900">
-                            Atribuído por: <span className="font-semibold text-slate-400">{currentSelectedUser.planoAtivo!.adminNome}</span>
+                          <div className="text-[10px] text-fg-muted pt-2 border-t border-neutral-200">
+                            Atribuído por: <span className="font-semibold text-fg-muted">{currentSelectedUser.planoAtivo!.adminNome}</span>
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="text-center py-2 space-y-2">
-                        <p className="text-xs text-slate-500">Este utilizador não tem nenhum plano premium ativo.</p>
+                        <p className="text-xs text-fg-muted">Este utilizador não tem nenhum plano premium ativo.</p>
                         <Button 
                           tipo="secundario" 
                           tamanho="sm" 
@@ -398,7 +398,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                 </div>
 
                 {/* System info */}
-                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-4 border-t border-slate-800">
+                <div className="flex items-center justify-between text-[11px] text-fg-muted pt-4 border-t border-neutral-200">
                   <span className="flex items-center gap-1">
                     <Calendar size={12} /> Registo: {currentSelectedUser.dataCriacao ? formatarDataHora(currentSelectedUser.dataCriacao) : '—'}
                   </span>
@@ -411,7 +411,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
             </div>
 
             {/* Bottom drawer actions */}
-            <div className="pt-6 border-t border-slate-800 mt-6 flex gap-3">
+            <div className="pt-6 border-t border-neutral-200 mt-6 flex gap-3">
               <Button
                 tipo="secundario"
                 blocoCompleto
@@ -436,9 +436,9 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
 
       {confirm && (
         <div className="fixed inset-0 bg-black/70 z-[130] flex items-center justify-center p-4" onClick={() => setConfirm(null)}>
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-extrabold text-slate-100 mb-2">Confirmar alteração</h3>
-            <p className="text-sm text-slate-400 mb-4">
+          <div className="bg-white border border-neutral-200 rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">Confirmar alteração</h3>
+            <p className="text-sm text-fg-muted mb-4">
               Pretende alterar o role de <strong>{confirm.nome}</strong> para <strong>{confirm.role}</strong>?
             </p>
             <div className="flex gap-3 justify-end">

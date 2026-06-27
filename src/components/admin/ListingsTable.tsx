@@ -31,11 +31,12 @@ interface ListingsTableProps {
   onRejectPeca: (id: string) => Promise<void>;
   onUpdateCarro: (id: string, dados: Record<string, unknown>) => Promise<void>;
   onUpdatePeca: (id: string, dados: Record<string, unknown>) => Promise<void>;
+  onBulkAction: (tipo: 'carro' | 'peca', action: 'aprovar' | 'rejeitar' | 'eliminar', ids: string[]) => Promise<void>;
 }
 
 type TabAnuncios = 'carros' | 'pecas';
 
-export default function ListingsTable({ carros, pecas, defaultTab = 'carros', statusFilter, onDeleteCarro, onDeletePeca, onApproveCarro, onRejectCarro, onApprovePeca, onRejectPeca, onUpdateCarro, onUpdatePeca }: ListingsTableProps) {
+export default function ListingsTable({ carros, pecas, defaultTab = 'carros', statusFilter, onDeleteCarro, onDeletePeca, onApproveCarro, onRejectCarro, onApprovePeca, onRejectPeca, onUpdateCarro, onUpdatePeca, onBulkAction }: ListingsTableProps) {
   const [tab, setTab] = useState<TabAnuncios>(defaultTab);
 
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
@@ -47,6 +48,33 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
   const [editCarro, setEditCarro] = useState<Carro | null>(null);
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
   const [actionLoading, setActionLoading] = useState<Record<string, boolean>>({});
+
+  // Bulk selection (scoped to the visible tab + filter)
+  const idsVisiveis = (tab === 'carros' ? carrosFiltrados : pecasFiltrados).map((x) => x.id);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  useEffect(() => { setSelected(new Set()); }, [tab, statusFilter]);
+  const allSelected = idsVisiveis.length > 0 && idsVisiveis.every((id) => selected.has(id));
+  const someSelected = idsVisiveis.some((id) => selected.has(id));
+  const toggleOne = (id: string) => setSelected((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(idsVisiveis));
+  const runBulk = async (action: 'aprovar' | 'rejeitar' | 'eliminar') => {
+    const ids = idsVisiveis.filter((id) => selected.has(id));
+    if (ids.length === 0) return;
+    setBulkLoading(true);
+    try {
+      await onBulkAction(tab === 'carros' ? 'carro' : 'peca', action, ids);
+      setSelected(new Set());
+      setConfirmBulkDelete(false);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
@@ -89,10 +117,45 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
         )}
       </div>
 
+      {selected.size > 0 && (
+        <div className="flex items-center gap-2 flex-wrap mb-4 p-2.5 rounded-xl bg-accent/10 border border-accent/30">
+          <span className="text-xs font-bold text-fg-strong px-1">
+            {selected.size} selecionado{selected.size !== 1 ? 's' : ''}
+          </span>
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-xs font-semibold text-fg-muted hover:text-fg underline underline-offset-2"
+          >
+            Limpar
+          </button>
+          <div className="flex items-center gap-1.5 ml-auto flex-wrap">
+            <Button tipo="verde" tamanho="sm" icone={<Check />} onClick={() => runBulk('aprovar')} disabled={bulkLoading} carregando={bulkLoading}>
+              Aprovar
+            </Button>
+            <Button tipo="aviso" tamanho="sm" icone={<X />} onClick={() => runBulk('rejeitar')} disabled={bulkLoading} carregando={bulkLoading}>
+              Rejeitar
+            </Button>
+            <Button tipo="perigo" tamanho="sm" icone={<Trash />} onClick={() => setConfirmBulkDelete(true)} disabled={bulkLoading}>
+              Eliminar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs font-bold text-fg-subtle uppercase tracking-wider border-b border-slate-200">
+              <th className="pb-3 pr-3 w-0">
+                <input
+                  type="checkbox"
+                  aria-label="Selecionar todos"
+                  className="w-4 h-4 cursor-pointer accent-accent align-middle"
+                  checked={allSelected}
+                  ref={(el) => { if (el) el.indeterminate = !allSelected && someSelected; }}
+                  onChange={toggleAll}
+                />
+              </th>
               <th className="pb-3 pr-4">ID</th>
               <th className="pb-3 pr-4">Título</th>
               <th className="pb-3 pr-4">Preço</th>
@@ -105,14 +168,23 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
           <tbody>
               {tab === 'carros'
               ? carrosFiltrados.map((c) => (
-                  <tr key={c.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                  <tr key={c.id} className={`border-b border-slate-100 transition ${selected.has(c.id) ? 'bg-accent/5' : 'hover:bg-slate-50'}`}>
+                    <td className="py-3 pr-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Selecionar ${c.marca} ${c.modelo}`}
+                        className="w-4 h-4 cursor-pointer accent-accent align-middle"
+                        checked={selected.has(c.id)}
+                        onChange={() => toggleOne(c.id)}
+                      />
+                    </td>
                     <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{c.id}</td>
                     <td className="py-3 pr-4 font-medium text-fg-heading">
                       <div className="flex items-center gap-1.5">
                         {c.marca} {c.modelo}
                         {c.impulso?.ativo && (
                           <span title="Premium / Turbo">
-                            <Lightning weight="fill" className="text-amber-500 shrink-0" />
+                            <Lightning weight="fill" className="text-amber-700 shrink-0" />
                           </span>
                         )}
                       </div>
@@ -206,14 +278,23 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                   </tr>
                 ))
               : pecasFiltrados.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50 transition">
+                  <tr key={p.id} className={`border-b border-slate-100 transition ${selected.has(p.id) ? 'bg-accent/5' : 'hover:bg-slate-50'}`}>
+                    <td className="py-3 pr-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Selecionar ${p.titulo}`}
+                        className="w-4 h-4 cursor-pointer accent-accent align-middle"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggleOne(p.id)}
+                      />
+                    </td>
                     <td className="py-3 pr-4 font-mono text-xs text-fg-subtle max-w-[80px] truncate">{p.id}</td>
                     <td className="py-3 pr-4 font-medium text-fg-heading">
                       <div className="flex items-center gap-1.5">
                         {p.titulo}
                         {p.impulso?.ativo && (
                           <span title="Premium / Turbo">
-                            <Lightning weight="fill" className="text-amber-500 shrink-0" />
+                            <Lightning weight="fill" className="text-amber-700 shrink-0" />
                           </span>
                         )}
                       </div>
@@ -310,7 +391,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                 ))}
             {(tab === 'carros' ? carrosFiltrados.length === 0 : pecasFiltrados.length === 0) && (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-fg-subtle text-sm">
+                <td colSpan={8} className="py-8 text-center text-fg-subtle text-sm">
                   Nenhum anúncio encontrado.
                 </td>
               </tr>
@@ -361,6 +442,30 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                 carregando={deleting}
               >
                 {deleting ? 'A eliminar...' : 'Eliminar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmBulkDelete && (
+        <div
+          className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4"
+          onClick={() => !bulkLoading && setConfirmBulkDelete(false)}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">
+              Eliminar {selected.size} anúncio{selected.size !== 1 ? 's' : ''}
+            </h3>
+            <p className="text-sm text-fg-muted mb-4">
+              Vai eliminar {selected.size} anúncio{selected.size !== 1 ? 's' : ''} de forma permanente. Esta ação é irreversível.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button tipo="secundario" onClick={() => setConfirmBulkDelete(false)} disabled={bulkLoading}>
+                Cancelar
+              </Button>
+              <Button tipo="perigo" onClick={() => runBulk('eliminar')} disabled={bulkLoading} carregando={bulkLoading}>
+                {bulkLoading ? 'A eliminar...' : 'Eliminar'}
               </Button>
             </div>
           </div>

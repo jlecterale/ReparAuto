@@ -29,8 +29,12 @@ import type { Usuario, Role, TipoConta } from '@/types';
 const DEFAULT_ROLE: Role = 'user';
 const DEFAULT_TIPO_CONTA: TipoConta = 'particular';
 
+// Always configure Google Sign-In: calling signIn() unconfigured crashes
+// natively on iOS. iosClientId is auto-read from the bundled
+// GoogleService-Info.plist; webClientId (if set) is used for the Firebase
+// idToken and is required for Android.
 const WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
-if (WEB_CLIENT_ID) configureGoogleSignIn(WEB_CLIENT_ID);
+configureGoogleSignIn(WEB_CLIENT_ID || undefined);
 
 function criarUsuarioBase(fb: FirebaseAuthTypes.User): Usuario {
   return {

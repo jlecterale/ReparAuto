@@ -14,7 +14,7 @@ import type { AppContextValue } from '@/types/app';
 import { subscribePremiumConfig } from '@/lib/db';
 import type { PremiumConfig } from '@/types/usuario';
 import { logEvent } from 'firebase/analytics';
-import { analytics } from '@/lib/firebase';
+import { getAnalyticsInstance } from '@/lib/firebase';
 
 const AppContext = createContext<AppContextValue | null>(null);
 
@@ -48,12 +48,14 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (analytics) {
-      logEvent(analytics, 'page_view', {
-        page_path: pathname,
-        page_title: document.title,
-      });
-    }
+    getAnalyticsInstance().then((analyticsInstance) => {
+      if (analyticsInstance) {
+        logEvent(analyticsInstance, 'page_view', {
+          page_path: pathname,
+          page_title: document.title,
+        });
+      }
+    });
   }, [pathname]);
 
   const openLoginModal = useCallback((redirectTo?: string) => {

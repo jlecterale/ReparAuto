@@ -147,7 +147,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Fotos</label>
         <FotosEditor fotos={fotos} setFotos={setFotos} max={MAX_FOTOS_CARRO} filesRef={pendingFilesRef} />
         {fotos.length === 0 && (
-          <p className="text-xs text-red-500 mt-2">Adicione pelo menos 1 foto do veículo.</p>
+          <p className="text-xs text-red-700 mt-2">Adicione pelo menos 1 foto do veículo.</p>
         )}
       </div>
 
