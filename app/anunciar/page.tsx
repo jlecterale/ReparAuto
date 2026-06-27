@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import Anunciar from '@/screens/Anunciar';
 
 export const metadata: Metadata = {
@@ -8,5 +9,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <Anunciar />;
+  // Anunciar reads ?tipo via useSearchParams — needs a Suspense boundary.
+  return (
+    <Suspense fallback={null}>
+      <Anunciar />
+    </Suspense>
+  );
 }

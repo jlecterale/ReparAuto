@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { createUserProfile } from '@/lib/db';
 import { getDistritoForConcelho } from '@/lib/geo';
+import { getPendingIntent } from '@/lib/onboarding';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
@@ -60,8 +61,15 @@ export default function SetupPerfil() {
   }, [cpLookup.erro]);
 
   useEffect(() => {
-    if (!authLoading && (!isLoggedIn || profileCompleted)) {
-      router.replace(profileCompleted ? '/perfil' : '/');
+    if (authLoading) return;
+    if (!isLoggedIn) {
+      router.replace('/');
+      return;
+    }
+    // Profile complete: leave setup. When the visitor picked an onboarding
+    // intent, AppProvider resumes it; otherwise head to the profile.
+    if (profileCompleted && !getPendingIntent()) {
+      router.replace('/perfil');
     }
   }, [authLoading, isLoggedIn, profileCompleted, router]);
 
@@ -153,9 +161,13 @@ export default function SetupPerfil() {
         profileCompleted: true,
       };
 
+      const target = getPendingIntent();
       await createUserProfile(user!.uid, profileData);
       await refreshProfile();
-      router.replace('/perfil');
+      // Navigate deterministically so a transient refreshProfile failure can't
+      // strand the user here: head to the chosen creation flow if one is pending
+      // (AppProvider's resume effect clears it), otherwise to the profile.
+      router.replace(target ?? '/perfil');
     } catch (err: any) {
       setErro('Erro ao guardar perfil. Tente novamente.');
     } finally {

@@ -1,7 +1,7 @@
 'use client';
 
-import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -14,14 +14,16 @@ interface LoginModalProps {
   show: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  modoInicial?: 'login' | 'registar';
+  contexto?: string;
 }
 
-export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps) {
+export default function LoginModal({ show, onClose, onSuccess, modoInicial, contexto }: LoginModalProps) {
   const { auth } = useApp();
   const { login, registar, loginGoogle } = auth;
   const toast = useToast();
 
-  const [modo, setModo] = useState<'login' | 'registar' | 'reset'>('login');
+  const [modo, setModo] = useState<'login' | 'registar' | 'reset'>(modoInicial ?? 'login');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,6 +31,19 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+
+  // Sync the active tab to the requested mode only when the modal OPENS, so an
+  // onboarding-driven open lands on "Criar Conta" while a plain open stays on
+  // login. Gating on the closed→open transition preserves a mid-session manual
+  // switch even if another openLoginModal call changes modoInicial while open.
+  const wasShown = useRef(false);
+  useEffect(() => {
+    if (show && !wasShown.current) {
+      setModo(modoInicial ?? 'login');
+      setErro('');
+    }
+    wasShown.current = show;
+  }, [show, modoInicial]);
 
   const handleSubmit = async () => {
     setErro('');
@@ -106,6 +121,12 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
   return (
     <Modal show={show} onClose={onClose} titulo={modo === 'reset' ? 'Recuperar Palavra-passe' : modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
       <div className="space-y-4">
+        {contexto && modo !== 'reset' && (
+          <div className="flex items-start gap-2.5 rounded-xl bg-accent/10 border border-accent/20 p-3 text-sm text-fg">
+            <Sparkle weight="fill" className="text-accent mt-0.5 shrink-0" />
+            <span className="font-medium">{contexto}</span>
+          </div>
+        )}
         {modo !== 'reset' && (
           <>
             <Button

@@ -64,9 +64,18 @@ export interface OficinasContextValue {
   loading: boolean;
 }
 
+export interface OpenLoginOptions {
+  /** Which tab the modal opens on. Onboarding drives signups → 'registar'. */
+  modoInicial?: 'login' | 'registar';
+  /** Optional line explaining why the account is needed (shown atop the modal). */
+  contexto?: string;
+  /** Onboarding creation flow to resume once the account is ready. */
+  intent?: string;
+}
+
 export interface LoginModalContextValue {
   isOpen: boolean;
-  openLoginModal: (redirectTo?: string) => void;
+  openLoginModal: (redirectTo?: string, options?: OpenLoginOptions) => void;
   closeLoginModal: () => void;
 }
 

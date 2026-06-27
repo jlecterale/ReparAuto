@@ -2,7 +2,7 @@
 
 import { CheckCircle } from '@phosphor-icons/react';
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
@@ -48,13 +48,19 @@ const initialDados: CarroFormData = {
 
 export default function Anunciar() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { carros, auth } = useApp();
   const { publicarCarro } = carros;
   const { user } = auth;
   const toast = useToast();
 
-  const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(null);
-  const [passo, setPasso] = useState(0);
+  // Onboarding deep-links here with ?tipo=carro|peca to skip the category step.
+  const tipoParam = searchParams.get('tipo');
+  const categoriaInicial: CategoriaAnuncio | null =
+    tipoParam === 'carro' || tipoParam === 'peca' ? tipoParam : null;
+
+  const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(categoriaInicial);
+  const [passo, setPasso] = useState(categoriaInicial ? 1 : 0);
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);

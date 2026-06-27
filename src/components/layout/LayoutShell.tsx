@@ -12,17 +12,50 @@ import { useToast } from '@/components/ui/Toast';
 import { WarningCircle } from '@phosphor-icons/react';
 import NotificationPrePrompt from '@/components/ui/NotificationPrePrompt';
 import CookieConsent from '@/components/ui/CookieConsent';
+import OnboardingTour, { type OnboardingIntent } from '@/components/onboarding/OnboardingTour';
+import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/onboarding';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isAdminRoute = pathname?.startsWith('/admin');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { auth } = useApp();
+  const { auth, loginModal } = useApp();
   const { user, isLoggedIn, refreshProfile, reenviarEmailVerificacao } = auth;
   const toast = useToast();
 
+  // ---- Welcome onboarding (anonymous-first intent router) ----
+  const [showTour, setShowTour] = useState(false);
 
+  useEffect(() => {
+    if (auth.loading) return;
+    // Authenticated visitors never need the welcome; remember that so a later
+    // logout in the same session doesn't pop the first-launch tour at them.
+    if (isLoggedIn) {
+      markOnboardingSeen();
+      return;
+    }
+    if (isAdminRoute || pathname !== '/') return; // home entry point only
+    if (hasSeenOnboarding()) return; // once per visitor
+    // Let the home paint first, then welcome them — graceful, not a gate.
+    const t = setTimeout(() => setShowTour(true), 600);
+    return () => clearTimeout(t);
+  }, [auth.loading, isLoggedIn, isAdminRoute, pathname]);
+
+  const handleSelectIntent = (intent: OnboardingIntent) => {
+    markOnboardingSeen();
+    setShowTour(false);
+    loginModal.openLoginModal(undefined, {
+      modoInicial: 'registar',
+      contexto: intent.contexto,
+      intent: intent.route,
+    });
+  };
+
+  const handleDismissTour = () => {
+    markOnboardingSeen();
+    setShowTour(false);
+  };
 
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -132,6 +165,9 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
           onDismiss={handleNotifDismiss}
           onToken={handleNotifToken}
         />
+      )}
+      {showTour && (
+        <OnboardingTour onSelectIntent={handleSelectIntent} onDismiss={handleDismissTour} />
       )}
     </div>
   );
