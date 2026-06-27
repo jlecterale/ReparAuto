@@ -52,7 +52,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: 'RecarGarage',
   slug: 'recargarage',
   scheme: 'recargarage',
-  version: '1.0.0',
+  version: '1.2.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
@@ -64,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    buildNumber: '1',
+    buildNumber: '10',
     bundleIdentifier: BUNDLE_ID,
     supportsTablet: true,
     googleServicesFile: firebaseFile('GoogleService-Info.plist'),
@@ -76,7 +76,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: BUNDLE_ID,
-    versionCode: 1,
+    versionCode: 10,
     googleServicesFile: firebaseFile('google-services.json'),
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',

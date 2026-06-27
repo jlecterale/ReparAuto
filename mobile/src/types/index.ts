@@ -210,6 +210,7 @@ export type MotivoReport =
   | 'veiculo_roubado'
   | 'outro';
 export type TipoReport = 'carro' | 'peca' | 'utilizador';
+export type StatusReport = 'pendente' | 'em_analise' | 'resolvido' | 'rejeitado';
 
 export const MOTIVO_REPORT_LABELS: Record<MotivoReport, string> = {
   fraude: 'Fraude / burla',
@@ -219,6 +220,49 @@ export const MOTIVO_REPORT_LABELS: Record<MotivoReport, string> = {
   veiculo_roubado: 'Veículo roubado',
   outro: 'Outro',
 };
+
+export interface Report {
+  id: string;
+  denuncianteUid: string;
+  denuncianteEmail: string;
+  alvoId: string;
+  alvoTipo: TipoReport;
+  motivo: MotivoReport;
+  descricao: string;
+  status: StatusReport;
+  dataCriacao: Timestamp;
+  dataResolucao?: Timestamp;
+  resolvidoPor?: string;
+  notasAdmin?: string;
+}
+
+// ---------- Verificações ----------
+export type StatusVerificacao = 'pendente' | 'aprovado' | 'rejeitado';
+export type TipoVerificacao = 'identidade' | 'profissional';
+export type TipoDocumento = 'cc' | 'passaporte' | 'residencia';
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
+  cc: 'Cartão de Cidadão',
+  passaporte: 'Passaporte',
+  residencia: 'Autorização de Residência',
+};
+
+export interface Verification {
+  id: string;
+  uid: string;
+  email: string;
+  nome: string;
+  tipo: TipoVerificacao;
+  tipoDocumento: TipoDocumento;
+  documentoUrl: string;
+  selfieUrl: string;
+  nif?: string;
+  status: StatusVerificacao;
+  dataPedido: Timestamp;
+  dataResolucao?: Timestamp;
+  resolvidoPor?: string;
+  notasAdmin?: string;
+}
 
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';

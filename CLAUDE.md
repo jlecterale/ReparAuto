@@ -122,7 +122,7 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/hooks/useOnlineStatus.ts` — online/offline detection
 - `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
 - `src/hooks/useSwipe.ts` — touch swipe with drag feedback
-- `src/hooks/usePinchZoom.ts` — two-finger zoom for gallery
+- `src/hooks/useImageZoom.ts` — fullscreen gallery lightbox controller (pinch/wheel/double-tap zoom, pan, swipe-to-navigate, drag-down-to-close)
 - `public/firebase-messaging-sw.js` — FCM background message service worker
 
 ## Key Files
