@@ -51,15 +51,15 @@ export default function PortugalMap({ userCountsByDistrict }: PortugalMapProps) 
   };
 
   return (
-    <div className="relative w-full h-[400px] bg-slate-900/40 rounded-2xl border border-slate-800 p-4 flex flex-col items-center justify-between">
+    <div className="relative w-full h-[400px] bg-white rounded-2xl border border-neutral-200 p-4 flex flex-col items-center justify-between">
       <div className="w-full flex justify-between items-start mb-2">
         <div>
-          <h3 className="text-sm font-bold text-slate-100">Distribuição</h3>
-          <p className="text-[10px] text-slate-400">Densidade de Utilizadores por Distrito</p>
+          <h3 className="text-sm font-bold text-fg-heading">Distribuição</h3>
+          <p className="text-[10px] text-fg-muted">Densidade de Utilizadores por Distrito</p>
         </div>
-        <div className="flex gap-2 text-[10px] text-slate-400">
+        <div className="flex gap-2 text-[10px] text-fg-muted">
           <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 bg-slate-800 border border-slate-700 rounded-sm inline-block" />
+            <span className="w-2.5 h-2.5 bg-slate-100 border border-neutral-300 rounded-sm inline-block" />
             <span>0</span>
           </div>
           <div className="flex items-center gap-1">
@@ -86,7 +86,7 @@ export default function PortugalMap({ userCountsByDistrict }: PortugalMapProps) 
                 points={dist.points}
                 className="transition-all duration-200 cursor-pointer"
                 style={{
-                  fill: count > 0 ? `rgba(244, 63, 94, ${maxOpacity})` : 'rgba(30, 41, 59, 0.6)',
+                  fill: count > 0 ? `rgba(244, 63, 94, ${maxOpacity})` : 'rgba(148, 163, 184, 0.25)',
                   strokeWidth: isHovered ? 2 : 1,
                   stroke: isHovered ? '#f43f5e' : count > 0 ? 'rgba(244, 63, 94, 0.6)' : 'rgba(148, 163, 184, 0.3)',
                   filter: isHovered ? 'drop-shadow(0 0 4px rgba(244,63,94,0.5))' : 'none'
@@ -100,29 +100,29 @@ export default function PortugalMap({ userCountsByDistrict }: PortugalMapProps) 
 
         {hovered && (
           <div
-            className="absolute z-10 pointer-events-none bg-slate-950 border border-slate-800 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 shadow-2xl flex flex-col gap-0.5"
+            className="absolute z-10 pointer-events-none bg-white border border-neutral-200 text-fg text-xs font-bold rounded-lg px-2.5 py-1.5 shadow-xl flex flex-col gap-0.5"
             style={{ left: hovered.x, top: hovered.y }}
           >
-            <span className="text-slate-100">{hovered.name}</span>
-            <span className="text-pink-400 text-[10px] font-extrabold">
+            <span className="text-fg-heading">{hovered.name}</span>
+            <span className="text-pink-700 text-[10px] font-extrabold">
               {hovered.count} {hovered.count === 1 ? 'Utilizador' : 'Utilizadores'}
             </span>
           </div>
         )}
       </div>
 
-      <div className="w-full grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800/60">
-        <div className="bg-slate-900/60 rounded-xl p-2 text-center border border-slate-800/40">
-          <p className="text-xs font-black text-slate-100">
+      <div className="w-full grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-neutral-200">
+        <div className="bg-white rounded-xl p-2 text-center border border-neutral-200">
+          <p className="text-xs font-black text-fg-heading">
             {Object.keys(userCountsByDistrict).filter(k => k !== 'Não Especificado' && userCountsByDistrict[k] > 0).length}
           </p>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Distritos Ativos</p>
+          <p className="text-[9px] text-fg-muted font-bold uppercase tracking-wider">Distritos Ativos</p>
         </div>
-        <div className="bg-slate-900/60 rounded-xl p-2 text-center border border-slate-800/40">
-          <p className="text-xs font-black text-pink-500">
+        <div className="bg-white rounded-xl p-2 text-center border border-neutral-200">
+          <p className="text-xs font-black text-pink-700">
             {maxCount === 1 && counts.length === 0 ? 0 : maxCount}
           </p>
-          <p className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Pico / Distrito</p>
+          <p className="text-[9px] text-fg-muted font-bold uppercase tracking-wider">Pico / Distrito</p>
         </div>
       </div>
     </div>

@@ -285,7 +285,7 @@ export default function BannersTab() {
                         className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition ${
                           b.ativo
                             ? 'bg-green-50 text-green-700 hover:bg-green-100'
-                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
                         }`}
                         title={b.ativo ? 'Clique para desativar' : 'Clique para ativar'}
                       >
