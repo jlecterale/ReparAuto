@@ -52,14 +52,14 @@ export const metadata: Metadata = {
     title: 'RecarGarage — Carros Usados, Peças e Desmonte em Portugal',
     description:
       'Marketplace português de carros usados low-cost, peças e desmonte. Encontre o seu próximo carro, venda o seu ou descubra peças para reparação.',
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'RecarGarage' }],
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'RecarGarage' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'RecarGarage — Carros Usados, Peças e Desmonte em Portugal',
     description:
       'Marketplace português de carros usados low-cost, peças e desmonte.',
-    images: ['/og-default.png'],
+    images: ['/opengraph-image'],
   },
   robots: {
     index: true,

@@ -13,34 +13,36 @@ import { getPecaPorId } from '@/lib/db';
 import type { Peca } from '@/types/peca';
 import Button from '@/components/ui/Button';
 
-export default function Pecas() {
+export default function Pecas({ initialPecaId }: { initialPecaId?: string } = {}) {
   const { pecas } = useApp();
   const { pecasFiltradas, pecas: allPecas } = pecas;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pecaIdFromQuery = searchParams?.get('peca') ?? null;
+  // The part to auto-open: the /pecas/[id] route param wins, else the legacy
+  // ?peca= deep link.
+  const pecaIdAlvo = initialPecaId ?? searchParams?.get('peca') ?? null;
 
   const [criarModalAberto, setCriarModalAberto] = useState(false);
   const [desmancharAberto, setDesmancharAberto] = useState(false);
   const [detalhesPeca, setDetalhesPeca] = useState<Peca | null>(null);
 
   useEffect(() => {
-    if (!pecaIdFromQuery) return;
-    const local = allPecas.find((p) => p.id === pecaIdFromQuery);
+    if (!pecaIdAlvo) return;
+    const local = allPecas.find((p) => p.id === pecaIdAlvo);
     if (local) {
       setDetalhesPeca(local);
       return;
     }
     let cancelled = false;
-    getPecaPorId(pecaIdFromQuery).then((p) => {
+    getPecaPorId(pecaIdAlvo).then((p) => {
       if (!cancelled && p) setDetalhesPeca(p);
     });
     return () => { cancelled = true; };
-  }, [pecaIdFromQuery, allPecas]);
+  }, [pecaIdAlvo, allPecas]);
 
   const closeDetalhes = () => {
     setDetalhesPeca(null);
-    if (pecaIdFromQuery) router.replace('/pecas');
+    if (pecaIdAlvo) router.replace('/pecas');
   };
 
   const filtered = pecasFiltradas;

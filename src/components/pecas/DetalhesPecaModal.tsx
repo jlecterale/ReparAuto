@@ -5,6 +5,7 @@ import { GearSix, Car, MagnifyingGlass, User, WhatsappLogo, Phone, Envelope, Cha
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import ShareButton from '@/components/ui/ShareButton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { getUserByEmail, incrementCampo, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
@@ -87,7 +88,14 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           )}
         </div>
 
-        <h3 className="text-xl font-extrabold text-fg-heading">{peca.titulo}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-xl font-extrabold text-fg-heading">{peca.titulo}</h3>
+          <ShareButton
+            title={`${peca.titulo} - RecarGarage`}
+            text={peca.preco ? `${peca.titulo} - ${formatarPreco(peca.preco)}` : peca.titulo}
+            url={typeof window !== 'undefined' ? `${window.location.origin}/pecas/${peca.id}` : `/pecas/${peca.id}`}
+          />
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <PriceReferenceBadge peca={peca} />

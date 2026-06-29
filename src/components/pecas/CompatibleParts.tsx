@@ -82,7 +82,7 @@ export default function CompatibleParts({ carro, onSelect, limit = 12 }: Props) 
               {inner}
             </button>
           ) : (
-            <Link key={p.id} href={`/pecas?peca=${p.id}`} className="block">
+            <Link key={p.id} href={`/pecas/${p.id}`} className="block">
               {inner}
             </Link>
           );
