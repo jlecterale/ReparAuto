@@ -39,7 +39,7 @@ export default function MapSelector({ initialLat = 38.7436, initialLng = -9.1443
   }, [initialLat, initialLng]);
 
   return (
-    <div className="h-64 w-full rounded-xl overflow-hidden border border-neutral-300 dark:border-neutral-700">
+    <div className="h-64 w-full rounded-xl overflow-hidden border border-neutral-300">
       <MapContainer
         center={position}
         zoom={12}

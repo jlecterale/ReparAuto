@@ -22,7 +22,7 @@ export default function MapViewer({ lat, lng }: MapViewerProps) {
   const position: [number, number] = [lat, lng];
 
   return (
-    <div className="h-64 w-full rounded-2xl overflow-hidden border border-neutral-200 dark:border-neutral-800 shadow-sm">
+    <div className="h-64 w-full rounded-2xl overflow-hidden border border-neutral-200 shadow-sm">
       <MapContainer
         center={position}
         zoom={14}

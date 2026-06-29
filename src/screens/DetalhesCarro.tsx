@@ -196,10 +196,13 @@ export default function DetalhesCarro() {
         {carro.fotos && carro.fotos.length > 0 && (
           <div className="mb-6">
             <div
-              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-200 cursor-pointer relative group"
+              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
               onClick={() => { setIndiceGaleria(0); setGaleriaAberta(true); }}
             >
-              <FotoRender foto={carro.fotos[0]} classes="w-full h-full object-cover" />
+              {/* Blurred backdrop fills the letterbox area so the contained photo never shows bare gray bars */}
+              <FotoRender foto={carro.fotos[0]} classes="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" />
+              {/* Full photo, fit to height without cropping */}
+              <FotoRender foto={carro.fotos[0]} classes="relative w-full h-full object-contain" />
               {carro.fotos.length > 1 && (
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
                   <span className="text-white bg-black/50 px-3 py-1.5 rounded-full text-xs font-semibold opacity-0 group-hover:opacity-100 transition">
@@ -210,7 +213,7 @@ export default function DetalhesCarro() {
             </div>
             {carro.fotos.length > 1 && (
               <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide">
-                {carro.fotos.slice(1, 5).map((foto, i) => (
+                {carro.fotos.slice(1).map((foto, i) => (
                   <div
                     key={i}
                     className="w-20 h-16 rounded-lg overflow-hidden bg-slate-200 cursor-pointer flex-shrink-0 hover:opacity-80 transition"
