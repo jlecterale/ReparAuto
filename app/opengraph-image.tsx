@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 
 // Site-wide default share image (homepage + any route without its own).
 // Listing pages override this with the car/part/workshop photo.
@@ -12,6 +14,20 @@ export const contentType = 'image/png';
 const NAVY_800 = '#0c386b';
 const NAVY_950 = '#081d38';
 const ORANGE = '#ef7c2c';
+
+// Embed the original brand assets from /public as data URIs (pure-path SVGs,
+// so Satori rasterises them cleanly). Fall back to a text wordmark if the files
+// can't be read in some environment.
+function asset(file: string): string | null {
+  try {
+    const svg = readFileSync(join(process.cwd(), 'public', file)).toString('base64');
+    return `data:image/svg+xml;base64,${svg}`;
+  } catch {
+    return null;
+  }
+}
+const LOGO_SRC = asset('logo.svg');
+const ICON_SRC = asset('pwa-icon.svg');
 
 export default function Image() {
   return new ImageResponse(
@@ -29,13 +45,24 @@ export default function Image() {
           fontFamily: 'sans-serif',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'baseline', fontSize: 118, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>
-          <span>Recar</span>
-          <span style={{ color: ORANGE }}>Garage</span>
-        </div>
+        {/* App-icon mark */}
+        {ICON_SRC ? (
+          <img src={ICON_SRC} width={92} height={92} alt="" style={{ borderRadius: 18 }} />
+        ) : null}
+
+        {/* Brand wordmark (original logo.svg), with a text fallback */}
+        {LOGO_SRC ? (
+          <img src={LOGO_SRC} width={440} height={150} alt="" style={{ marginTop: 18 }} />
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 18, fontSize: 110, fontWeight: 800, letterSpacing: '-0.04em', color: '#ffffff' }}>
+            <span>Recar</span>
+            <span style={{ color: ORANGE }}>Garage</span>
+          </div>
+        )}
+
         <div
           style={{
-            marginTop: 22,
+            marginTop: 24,
             fontSize: 38,
             fontWeight: 500,
             color: 'rgba(255,255,255,0.85)',
@@ -46,9 +73,10 @@ export default function Image() {
         >
           O ecossistema automóvel que liga compradores, vendedores de peças, oficinas e mecânicos
         </div>
+
         <div
           style={{
-            marginTop: 44,
+            marginTop: 40,
             fontSize: 30,
             fontWeight: 700,
             color: ORANGE,
@@ -59,7 +87,8 @@ export default function Image() {
         >
           Disponível na Web · Android · iOS
         </div>
-        <div style={{ marginTop: 22, fontSize: 24, fontWeight: 500, color: 'rgba(255,255,255,0.6)' }}>
+
+        <div style={{ marginTop: 20, fontSize: 24, fontWeight: 500, color: 'rgba(255,255,255,0.6)' }}>
           recargarage.com
         </div>
       </div>
