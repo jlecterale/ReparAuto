@@ -73,7 +73,7 @@ Demo seed data lives in `scripts/seed-firestore.mjs` (`npm run seed`), not in cl
 
 ## Conventions
 
-- **Language**: code, comments, variable names, commit messages in English. Chat/UI text in Portuguese.
+- **Language (strict)**: **all code is written in English** — function names, variables, parameters, types/interfaces, enum members, file names, comments and commit messages. **Only strings shown to the user** (UI labels, toasts, chat, copy, metadata) are in Portuguese. Never name a new identifier in Portuguese. Some legacy identifiers are Portuguese (`carro`, `pecas`, `oficinas`, `favoritos`, `criarNotificacao`, `descricao`, …) and Firestore field names mirror them — leave those as-is (renaming them is a data-schema change), but do **not** add more: every new symbol you introduce must be English (e.g. `createNotification`, not `criarNotificacao`).
 - **Naming**: `camelCase` for identifiers. TypeScript interfaces in `PascalCase`.
 - **Imports**: always use `@/` path alias (maps to `src/`). No relative imports.
 - **Styling**: Tailwind utility classes only. Theme defined in `src/index.css` via `@theme`. PostCSS pipeline via `@tailwindcss/postcss`.

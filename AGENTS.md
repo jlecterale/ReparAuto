@@ -130,7 +130,7 @@ Only after this pass is clean should you open the PR (when the user asks) or rep
 
 - `camelCase` for identifiers; `PascalCase` for TypeScript interfaces.
 - Chat responses in Portuguese only.
-- Code (comments, variable names, commit messages) in English; UI text in Portuguese.
+- **All code in English** (strict): identifiers — functions, variables, params, types, enum members, file names — plus comments and commit messages. **Only user-facing strings** are Portuguese. Never introduce a new Portuguese identifier; prefer `createNotification` over `criarNotificacao`. Legacy Portuguese names (`carro`, `pecas`, `oficinas`, `descricao`, … and the Firestore fields that mirror them) stay as-is — renaming them is a data-schema change — but no new ones.
 - Imports always via the `@/` alias (maps to `src/`).
 - Navigation via `next/navigation` and `next/link` — never `react-router-dom`.
 - Firebase API keys are public (expected for Firebase Web SDKs).
