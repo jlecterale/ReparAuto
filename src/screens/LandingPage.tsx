@@ -25,6 +25,8 @@ import {
   Timer,
   CheckCircle,
   Handshake,
+  UserPlus,
+  Target,
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
 
@@ -80,6 +82,10 @@ const ECOSYSTEM_ITEMS = [
       'Compre ou venda carros novos e usados. Particulares ou stands, todos são bem-vindos.',
     color: 'bg-primary-50 text-primary-700 border-primary-200',
     iconColor: 'text-primary-600',
+    cta: 'Comprar Carro',
+    ctaSecondary: 'Vender Carro',
+    href: '/comprar',
+    hrefSecondary: '/anunciar?tipo=carro',
   },
   {
     icon: Engine,
@@ -88,6 +94,10 @@ const ECOSYSTEM_ITEMS = [
       'Encontre peças para o seu carro ou venda peças que já não precisa. Preços acessíveis.',
     color: 'bg-secondary-50 text-secondary-700 border-secondary-200',
     iconColor: 'text-secondary-600',
+    cta: 'Procurar Peças',
+    ctaSecondary: 'Vender Peças',
+    href: '/pecas',
+    hrefSecondary: '/anunciar?tipo=peca',
   },
   {
     icon: Wrench,
@@ -96,6 +106,10 @@ const ECOSYSTEM_ITEMS = [
       'Mecânicos independentes e oficinas divulgam os seus serviços e encontram clientes.',
     color: 'bg-success-50 text-success-700 border-success-200',
     iconColor: 'text-success-600',
+    cta: 'Ver Oficinas',
+    ctaSecondary: 'Registar Oficina',
+    href: '/oficinas',
+    hrefSecondary: '/oficinas/registar',
   },
   {
     icon: PaintBrush,
@@ -104,19 +118,21 @@ const ECOSYSTEM_ITEMS = [
       'Pintura, bate-chapa, eletricista auto, diagnóstico — todos os serviços automóveis.',
     color: 'bg-warning-50 text-warning-700 border-warning-200',
     iconColor: 'text-warning-600',
+    cta: 'Ver Serviços',
+    href: '/oficinas',
   },
 ];
 
 const FEATURES = [
   {
     icon: CurrencyEur,
-    title: '100% Gratuito',
-    description: 'Sem custos escondidos. Publique quantos anúncios quiser, sem pagar nada.',
+    title: 'Gratuito para Particulares',
+    description: 'Particulares publicam quantos anúncios quiserem, sem pagar nada — para sempre.',
   },
   {
     icon: InfinityIcon,
-    title: 'Sem Limites',
-    description: 'Anúncios ilimitados para todos. Sem pacotes, sem restrições.',
+    title: 'Sem Limites de Anúncios',
+    description: 'Sem pacotes nem restrições. Publique à vontade, sem contar anúncios.',
   },
   {
     icon: Lightning,
@@ -146,31 +162,39 @@ const SCENARIOS = [
     title: 'O carro precisa de arranjo antes de vender?',
     description:
       'Encontre a peça que falta, o mecânico para montar e publique o anúncio. Tudo na mesma plataforma.',
+    cta: 'Vender carro',
+    href: '/anunciar?tipo=carro',
   },
   {
     emoji: '🏪',
     title: 'Tem um stand ou oficina?',
     description:
       'Registe-se gratuitamente por tempo limitado. Divulgue os seus serviços e atraia novos clientes.',
+    cta: 'Registar oficina',
+    href: '/oficinas/registar',
   },
   {
     emoji: '🔍',
     title: 'Procura um mecânico de confiança?',
     description:
       'Veja avaliações, compare preços e contacte oficinas e mecânicos independentes na sua zona.',
+    cta: 'Ver oficinas',
+    href: '/oficinas',
   },
   {
     emoji: '🚗',
     title: 'Quer comprar um carro usado?',
     description:
       'Pesquise por marca, modelo, preço e localização. Encontre o carro ideal sem complicações.',
+    cta: 'Comprar carro',
+    href: '/comprar',
   },
 ];
 
 const FAQ_ITEMS = [
   {
     q: 'O RecarGarage é mesmo gratuito?',
-    a: 'Sim, completamente gratuito. Pode publicar quantos anúncios quiser — carros, peças ou serviços — sem qualquer custo.',
+    a: 'Para particulares, sim — totalmente gratuito e sem limites de anúncios, para sempre. Para profissionais (stands e oficinas), o acesso é gratuito por tempo limitado. Aproveite para se posicionar agora.',
   },
   {
     q: 'Quem pode usar a plataforma?',
@@ -356,12 +380,12 @@ export default function LandingPage() {
               style={{ animationDelay: '200ms' }}
             >
               Carros, peças, mecânicos e oficinas — tudo ligado num só lugar.
-              Simples, rápido e 100% gratuito.
+              Simples, rápido e gratuito para particulares.
             </p>
 
             {/* CTAs */}
             <div
-              className="flex flex-col sm:flex-row items-start gap-4 mb-12 animate-fade-in"
+              className="flex flex-col sm:flex-row items-start gap-4 mb-6 animate-fade-in"
               style={{ animationDelay: '300ms' }}
             >
               <Link
@@ -380,6 +404,27 @@ export default function LandingPage() {
                 <GooglePlayLogo size={22} weight="fill" />
                 Google Play
               </a>
+              <div className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/5 text-white/40 text-base font-bold border border-white/10 cursor-default">
+                <AppleLogo size={22} weight="fill" />
+                <div>
+                  <span className="block text-sm leading-tight">App Store</span>
+                  <span className="block text-[10px] text-white/30 font-semibold">Em breve</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Register CTA */}
+            <div
+              className="mb-12 animate-fade-in"
+              style={{ animationDelay: '350ms' }}
+            >
+              <Link
+                href="/anunciar"
+                className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm font-semibold underline underline-offset-4 decoration-white/30 hover:decoration-white/60 transition-colors"
+              >
+                Criar conta e publicar anúncio grátis
+                <ArrowRight size={14} weight="bold" />
+              </Link>
             </div>
 
             {/* Social proof */}
@@ -389,7 +434,7 @@ export default function LandingPage() {
             >
               <div className="flex items-center gap-2">
                 <CheckCircle size={18} weight="fill" className="text-success-400" />
-                <span>Gratuito para sempre</span>
+                <span>Gratuito para particulares</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle size={18} weight="fill" className="text-success-400" />
@@ -397,7 +442,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle size={18} weight="fill" className="text-success-400" />
-                <span>Disponível em Portugal</span>
+                <span>Gratuito para profissionais por tempo limitado</span>
               </div>
             </div>
           </div>
@@ -430,7 +475,7 @@ export default function LandingPage() {
             {ECOSYSTEM_ITEMS.map((item, i) => (
               <AnimatedSection key={item.title} delay={i * 100}>
                 <div
-                  className={`relative p-6 sm:p-8 rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 group`}
+                  className="relative p-6 sm:p-8 rounded-2xl border bg-white hover:shadow-lg transition-all duration-300 group flex flex-col h-full"
                 >
                   <div
                     className={`w-14 h-14 rounded-xl ${item.color} flex items-center justify-center mb-5 border group-hover:scale-110 transition-transform`}
@@ -438,7 +483,25 @@ export default function LandingPage() {
                     <item.icon size={28} weight="duotone" className={item.iconColor} />
                   </div>
                   <h3 className="text-lg text-fg-heading mb-2">{item.title}</h3>
-                  <p className="text-fg-muted leading-relaxed">{item.description}</p>
+                  <p className="text-fg-muted leading-relaxed mb-5">{item.description}</p>
+                  <div className="mt-auto flex flex-wrap gap-2">
+                    <Link
+                      href={item.href}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary-50 hover:bg-primary-100 text-primary-700 text-sm font-bold border border-primary-100 transition-colors"
+                    >
+                      {item.cta}
+                      <ArrowRight size={14} weight="bold" />
+                    </Link>
+                    {item.ctaSecondary && item.hrefSecondary && (
+                      <Link
+                        href={item.hrefSecondary}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-fg-muted hover:text-fg-heading text-sm font-semibold hover:bg-neutral-100 transition-colors"
+                      >
+                        {item.ctaSecondary}
+                        <ArrowRight size={14} weight="bold" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </AnimatedSection>
             ))}
@@ -502,11 +565,18 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {SCENARIOS.map((item, i) => (
               <AnimatedSection key={item.title} delay={i * 80}>
-                <div className="flex gap-5 p-6 sm:p-8 rounded-2xl bg-neutral-50 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all">
+                <div className="flex gap-5 p-6 sm:p-8 rounded-2xl bg-neutral-50 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all h-full">
                   <span className="text-3xl shrink-0 mt-1">{item.emoji}</span>
-                  <div>
+                  <div className="flex flex-col">
                     <h3 className="text-base text-fg-heading mb-2">{item.title}</h3>
-                    <p className="text-fg-muted text-sm leading-relaxed">{item.description}</p>
+                    <p className="text-fg-muted text-sm leading-relaxed mb-4">{item.description}</p>
+                    <Link
+                      href={item.href}
+                      className="mt-auto inline-flex items-center gap-1.5 text-accent hover:text-accent-hover text-sm font-bold transition-colors"
+                    >
+                      {item.cta}
+                      <ArrowRight size={14} weight="bold" />
+                    </Link>
                   </div>
                 </div>
               </AnimatedSection>
@@ -573,14 +643,14 @@ export default function LandingPage() {
                 </div>
                 <div className="flex flex-col gap-3 shrink-0">
                   <Link
-                    href="/app"
+                    href="/anunciar?tipo=carro"
                     className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white text-primary-900 text-base font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
                   >
                     <Storefront size={22} weight="bold" />
-                    Registar Stand
+                    Publicar Anúncio
                   </Link>
                   <Link
-                    href="/app"
+                    href="/oficinas/registar"
                     className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white/15 backdrop-blur-sm text-white text-base font-bold border border-white/30 hover:bg-white/25 transition-all hover:-translate-y-0.5"
                   >
                     <Wrench size={22} weight="bold" />
@@ -611,6 +681,81 @@ export default function LandingPage() {
                 <FAQItem key={i} item={item} />
               ))}
             </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
+      {/* ─── REGISTER CTA ─── */}
+      <section className="py-20 sm:py-28 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <AnimatedSection className="text-center mb-12">
+            <span className="inline-block px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-bold mb-4 border border-accent/20">
+              Comece Agora
+            </span>
+            <h2 className="text-3xl sm:text-4xl text-fg-heading mb-4">
+              O que pretende fazer?
+            </h2>
+            <p className="text-fg-muted text-lg max-w-2xl mx-auto">
+              Escolha a ação e comece já. Sem complicações — registe-se apenas quando publicar.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedSection>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
+              <Link
+                href="/anunciar?tipo=carro"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-neutral-200 bg-white hover:border-accent hover:shadow-lg transition-all group text-center"
+              >
+                <div className="w-14 h-14 rounded-xl bg-primary-50 flex items-center justify-center border border-primary-100 group-hover:bg-primary-100 transition-colors">
+                  <Car size={28} weight="duotone" className="text-primary-600" />
+                </div>
+                <span className="text-fg-heading font-bold text-sm">Vender Carro</span>
+                <span className="text-fg-muted text-xs">Publicar anúncio grátis</span>
+              </Link>
+
+              <Link
+                href="/anunciar?tipo=peca"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-neutral-200 bg-white hover:border-accent hover:shadow-lg transition-all group text-center"
+              >
+                <div className="w-14 h-14 rounded-xl bg-secondary-50 flex items-center justify-center border border-secondary-100 group-hover:bg-secondary-100 transition-colors">
+                  <Engine size={28} weight="duotone" className="text-secondary-600" />
+                </div>
+                <span className="text-fg-heading font-bold text-sm">Vender Peças</span>
+                <span className="text-fg-muted text-xs">Anuncie peças e desmonte</span>
+              </Link>
+
+              <Link
+                href="/oficinas/registar"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-neutral-200 bg-white hover:border-accent hover:shadow-lg transition-all group text-center"
+              >
+                <div className="w-14 h-14 rounded-xl bg-success-50 flex items-center justify-center border border-success-100 group-hover:bg-success-100 transition-colors">
+                  <Wrench size={28} weight="duotone" className="text-success-600" />
+                </div>
+                <span className="text-fg-heading font-bold text-sm">Registar Oficina</span>
+                <span className="text-fg-muted text-xs">Gratuito por tempo limitado</span>
+              </Link>
+
+              <Link
+                href="/comprar"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-neutral-200 bg-white hover:border-accent hover:shadow-lg transition-all group text-center"
+              >
+                <div className="w-14 h-14 rounded-xl bg-warning-50 flex items-center justify-center border border-warning-100 group-hover:bg-warning-100 transition-colors">
+                  <Target size={28} weight="duotone" className="text-warning-600" />
+                </div>
+                <span className="text-fg-heading font-bold text-sm">Criar Procura</span>
+                <span className="text-fg-muted text-xs">Diga o que procura</span>
+              </Link>
+            </div>
+          </AnimatedSection>
+
+          <AnimatedSection className="text-center mt-8">
+            <Link
+              href="/app"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-accent hover:bg-accent-hover text-white text-base font-bold shadow-lg shadow-accent/25 hover:shadow-xl hover:shadow-accent/30 transition-all hover:-translate-y-0.5"
+            >
+              <UserPlus size={22} weight="bold" />
+              Criar Conta Gratuita
+            </Link>
           </AnimatedSection>
         </div>
       </section>
