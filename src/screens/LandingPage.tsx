@@ -11,19 +11,14 @@ import {
   ArrowRight,
   GooglePlayLogo,
   AppleLogo,
-  HandshakeIcon,
   MagnifyingGlass,
   CurrencyEur,
   Lightning,
   ShieldCheck,
-  Users,
   ChatCircle,
-  Star,
   CaretDown,
   ArrowDown,
   PaintBrush,
-  GearSix,
-  MapPin,
   DeviceMobile,
   Globe,
   Infinity as InfinityIcon,
@@ -199,7 +194,7 @@ const FAQ_ITEMS = [
   },
 ];
 
-function FAQItem({ item, index }: { item: (typeof FAQ_ITEMS)[number]; index: number }) {
+function FAQItem({ item }: { item: (typeof FAQ_ITEMS)[number] }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border border-neutral-200 rounded-2xl overflow-hidden transition-shadow hover:shadow-sm">
@@ -613,7 +608,7 @@ export default function LandingPage() {
           <AnimatedSection>
             <div className="flex flex-col gap-3">
               {FAQ_ITEMS.map((item, i) => (
-                <FAQItem key={i} item={item} index={i} />
+                <FAQItem key={i} item={item} />
               ))}
             </div>
           </AnimatedSection>
