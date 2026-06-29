@@ -54,7 +54,7 @@ export default function DetalhesIntencao() {
       <div className="text-center py-12">
         <Warning className="text-4xl text-slate-300 mb-3" />
         <p className="font-semibold text-fg-muted">Intenção não encontrada</p>
-        <Button tipo="terciario" tamanho="sm" icone={<ArrowLeft />} onClick={() => router.push('/')} className="mt-4">
+        <Button tipo="terciario" tamanho="sm" icone={<ArrowLeft />} onClick={() => router.push('/app')} className="mt-4">
           Voltar à página inicial
         </Button>
       </div>

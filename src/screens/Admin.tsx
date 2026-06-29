@@ -81,7 +81,7 @@ export default function Admin() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAdmin) {
-      router.replace('/');
+      router.replace('/app');
       return;
     }
     carregarDados();
@@ -716,7 +716,7 @@ export default function Admin() {
           {/* User profile & exit section in sidebar footer */}
           <div className="space-y-2 mt-4 pt-3 border-t border-neutral-200">
             <Link
-              href="/"
+              href="/app"
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold bg-white hover:bg-slate-100 border border-neutral-200 hover:border-neutral-300 text-fg hover:text-fg-heading transition-all duration-200"
             >
               <House className="text-sm text-pink-700" />

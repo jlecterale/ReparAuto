@@ -25,6 +25,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const isAdminRoute = pathname?.startsWith('/admin');
+  const isLandingPage = pathname === '/';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { auth, loginModal } = useApp();
@@ -49,7 +50,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   // auth check below resolves into either the tour or the real page. Repeat
   // visitors and non-home routes skip the cover entirely.
   useIsomorphicLayoutEffect(() => {
-    if (isAdminRoute || pathname !== '/') return;
+    if (isAdminRoute || isLandingPage || pathname !== '/app') return;
     if (hasSeenOnboarding()) return;
     setDeciding(true);
   }, []);
@@ -73,16 +74,16 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     }
     // Only the home entry point shows the tour; everywhere else (and repeat
     // visitors) the onboarding is already resolved, so the cookie banner may show.
-    if (isAdminRoute || pathname !== '/' || hasSeenOnboarding()) {
+    if (isAdminRoute || isLandingPage || pathname !== '/app' || hasSeenOnboarding()) {
       setOnboardingResolved(true);
       setDeciding(false);
       return;
     }
-    // Anonymous first-time visitor on home: reveal the welcome now. The cover is
+    // Anonymous first-time visitor on /app: reveal the welcome now. The cover is
     // swapped straight for the tour (same gradient), so there's no listings flash.
     setShowTour(true);
     setDeciding(false);
-  }, [auth.loading, isLoggedIn, isAdminRoute, pathname]);
+  }, [auth.loading, isLoggedIn, isAdminRoute, isLandingPage, pathname]);
 
   const handleSelectIntent = (intent: OnboardingIntent) => {
     markOnboardingSeen();
@@ -178,6 +179,15 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
   if (isAdminRoute) {
     return <div className="min-h-screen bg-slate-950 flex flex-col">{children}</div>;
+  }
+
+  if (isLandingPage) {
+    return (
+      <>
+        {children}
+        <CookieConsent deferred={false} />
+      </>
+    );
   }
 
   return (

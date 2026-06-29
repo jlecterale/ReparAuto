@@ -1,21 +1,27 @@
 import type { Metadata } from 'next';
-import Home from '@/screens/Home';
+import LandingPage from '@/screens/LandingPage';
 
-export const revalidate = 60;
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
 export const metadata: Metadata = {
-  title: 'Carros usados, peças e desmonte em Portugal',
+  title: 'RecarGarage — O Ecossistema Automóvel Completo em Portugal',
   description:
-    'Marketplace português de carros usados low-cost e em estado de reparação. Encontre o seu próximo carro a partir de 350€ ou venda o seu.',
+    'Mais do que comprar e vender. Carros, peças, mecânicos e oficinas — tudo ligado num só lugar. 100% gratuito e sem limites de anúncios.',
   alternates: { canonical: '/' },
   openGraph: {
-    title: 'RecarGarage — Carros usados, peças e desmonte em Portugal',
+    title: 'RecarGarage — O Ecossistema Automóvel Completo em Portugal',
     description:
-      'Marketplace português de carros usados low-cost. Encontre o seu próximo carro a partir de 350€.',
-    url: '/',
+      'Carros, peças, mecânicos e oficinas — tudo ligado num só lugar. Simples, rápido e 100% gratuito.',
+    url: SITE_URL,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'RecarGarage — O Ecossistema Automóvel Completo em Portugal',
+    description:
+      'Carros, peças, mecânicos e oficinas — tudo ligado num só lugar. 100% gratuito.',
   },
 };
 
 export default function Page() {
-  return <Home />;
+  return <LandingPage />;
 }

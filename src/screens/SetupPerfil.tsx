@@ -63,7 +63,7 @@ export default function SetupPerfil() {
   useEffect(() => {
     if (authLoading) return;
     if (!isLoggedIn) {
-      router.replace('/');
+      router.replace('/app');
       return;
     }
     // Profile complete: leave setup. When the visitor picked an onboarding

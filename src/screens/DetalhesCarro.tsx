@@ -73,7 +73,7 @@ export default function DetalhesCarro() {
     setDeleting(true);
     try {
       await deleteCarro(carro.id);
-      router.push('/');
+      router.push('/app');
     } catch (err) {
       console.error('[Detalhes] Erro ao eliminar:', err);
     } finally {
@@ -99,7 +99,7 @@ export default function DetalhesCarro() {
           tipo="terciario"
           tamanho="sm"
           icone={<ArrowLeft />}
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="mt-4"
         >
           Voltar à página inicial
@@ -117,7 +117,7 @@ export default function DetalhesCarro() {
           tipo="terciario"
           tamanho="sm"
           icone={<ArrowLeft />}
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="mt-4"
         >
           Voltar à página inicial
