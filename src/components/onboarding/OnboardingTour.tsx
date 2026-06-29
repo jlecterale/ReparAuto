@@ -36,8 +36,8 @@ interface IntentCard extends OnboardingIntent {
 
 /**
  * Four doors, not a feature parade. Each card states the job the visitor came
- * to do and, in one line, the thing ReparAuto does differently from the generic
- * classifieds — so the welcome doubles as the showcase.
+ * to do and, in one line, the thing RecarGarage does differently from the
+ * generic classifieds — so the welcome doubles as the showcase.
  */
 const INTENTS: IntentCard[] = [
   {
@@ -79,7 +79,7 @@ const INTENTS: IntentCard[] = [
     titulo: 'Quero comprar',
     descricao: 'Diga o que procura e deixe os vendedores virem até si.',
     iconWrap: 'bg-warning-50 text-warning-700',
-    destaque: 'Só na ReparAuto',
+    destaque: 'Só na RecarGarage',
   },
 ];
 
@@ -131,17 +131,17 @@ export default function OnboardingTour({ onSelectIntent, onDismiss }: Onboarding
         <div className="w-full max-w-3xl page-enter">
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 text-fg-inverse text-xs font-bold px-3 py-1 mb-4">
-              <Sparkle weight="fill" className="text-warning-300" /> Bem-vindo à ReparAuto
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 text-fg-inverse text-xs sm:text-sm font-bold px-3 py-1.5 mb-4">
+              <Sparkle weight="fill" className="text-warning-300" /> Bem-vindo à RecarGarage
             </span>
             <h1
               id="onboarding-title"
-              className="text-fg-inverse text-3xl sm:text-4xl font-extrabold"
+              className="text-fg-inverse text-3xl sm:text-4xl font-extrabold leading-tight"
             >
-              O que o traz aqui hoje?
+              O ecossistema que liga mecânicos, vendedores e compradores
             </h1>
-            <p className="text-white/80 mt-2.5 text-base sm:text-lg">
-              Escolha um caminho e nós tratamos do resto. Sem rodeios.
+            <p className="text-white/85 mt-4 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
+              Tudo num só lugar. Diga-nos o que o traz aqui hoje — tratamos do resto.
             </p>
           </div>
 
@@ -177,7 +177,7 @@ export default function OnboardingTour({ onSelectIntent, onDismiss }: Onboarding
                       </Badge>
                     )}
                   </div>
-                  <p className="text-fg-muted text-sm mt-0.5">{intent.descricao}</p>
+                  <p className="text-fg-muted text-sm sm:text-base mt-0.5 leading-snug">{intent.descricao}</p>
                 </div>
                 <ArrowRight
                   size={20}
@@ -192,7 +192,7 @@ export default function OnboardingTour({ onSelectIntent, onDismiss }: Onboarding
             <button
               type="button"
               onClick={onDismiss}
-              className="text-white/80 hover:text-fg-inverse text-sm font-semibold underline underline-offset-4 decoration-white/40 hover:decoration-white transition"
+              className="text-white/80 hover:text-fg-inverse text-sm sm:text-base font-semibold underline underline-offset-4 decoration-white/40 hover:decoration-white transition"
             >
               Só quero ver os anúncios
             </button>
