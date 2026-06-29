@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
+import { isValidYoutubeUrl } from '@/lib/youtube';
 import {
   CAMBIOS,
   COMBUSTIVEIS,
@@ -44,6 +45,7 @@ export default function AnunciarCarroScreen() {
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
   const [local, setLocal] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -70,6 +72,7 @@ export default function AnunciarCarroScreen() {
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
         setDescricao(c.descricao ?? '');
+        setVideoUrl(c.videoUrl ?? '');
         setTelefone(c.vendedorTelefone ?? user?.telefone ?? '');
         setWhatsapp(c.vendedorWhatsApp ?? '');
       })
@@ -92,6 +95,8 @@ export default function AnunciarCarroScreen() {
     if (!combustivel) return 'Selecione o combustível.';
     if (!cambio) return 'Selecione a caixa.';
     if (!local.trim()) return 'Indique a localidade.';
+    if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
+      return 'O link do vídeo do YouTube é inválido.';
     return null;
   }
 
@@ -124,6 +129,7 @@ export default function AnunciarCarroScreen() {
         estadoVeiculo: estado,
         local: local.trim(),
         descricao: descricao.trim(),
+        videoUrl: videoUrl.trim() || undefined,
         fotos: urls,
         vendedorNome: user.nome,
         vendedorTelefone: telefone.trim() || undefined,
@@ -268,6 +274,15 @@ export default function AnunciarCarroScreen() {
           numberOfLines={4}
           className="h-28"
           style={{ textAlignVertical: 'top' }}
+        />
+
+        <Input
+          label="Vídeo do YouTube (opcional)"
+          value={videoUrl}
+          onChangeText={setVideoUrl}
+          placeholder="https://www.youtube.com/watch?v=…"
+          autoCapitalize="none"
+          keyboardType="url"
         />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>

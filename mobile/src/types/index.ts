@@ -58,6 +58,7 @@ export interface Carro {
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
+  videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   fotos: string[];
@@ -338,6 +339,7 @@ export interface Oficina {
   coordenadas?: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
+  videoUrl?: string;
   fotos?: string[];
   status: StatusAnuncio;
   mediaAvaliacoes?: number;

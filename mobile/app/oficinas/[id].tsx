@@ -14,6 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { StarRating } from '@/components/ui/StarRating';
+import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getOficinaById } from '@/lib/db';
 import { subscribeReviews } from '@/lib/trust';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -140,6 +141,13 @@ export default function DetalhesOficinaScreen() {
             <View className="mt-5">
               <Text className="mb-2 text-lg font-bold text-fg-heading">Sobre</Text>
               <Text className="text-base leading-6 text-fg">{oficina.descricao}</Text>
+            </View>
+          )}
+
+          {!!oficina.videoUrl && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Vídeo</Text>
+              <VideoPreview url={oficina.videoUrl} />
             </View>
           )}
 

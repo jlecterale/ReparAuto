@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
@@ -172,6 +173,13 @@ export default function DetalhesCarroScreen() {
             <View className="mt-5">
               <Text className="mb-2 text-lg font-bold text-fg-heading">Descrição</Text>
               <Text className="text-base leading-6 text-fg">{carro.descricao}</Text>
+            </View>
+          )}
+
+          {!!carro.videoUrl && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Vídeo</Text>
+              <VideoPreview url={carro.videoUrl} />
             </View>
           )}
         </View>
