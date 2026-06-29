@@ -43,8 +43,20 @@ export default function RegistarScreen() {
       showToast('Preencha todos os campos.', 'error');
       return;
     }
-    if (password.length < 6) {
-      showToast('A palavra-passe deve ter pelo menos 6 caracteres.', 'error');
+    if (password.length < 8) {
+      showToast('A palavra-passe deve ter pelo menos 8 caracteres.', 'error');
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      showToast('A palavra-passe deve conter pelo menos uma letra maiúscula.', 'error');
+      return;
+    }
+    if (!/\d/.test(password)) {
+      showToast('A palavra-passe deve conter pelo menos um número.', 'error');
+      return;
+    }
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      showToast('A palavra-passe deve conter pelo menos um símbolo.', 'error');
       return;
     }
     setLoading(true);
@@ -103,11 +115,37 @@ export default function RegistarScreen() {
               label="Palavra-passe"
               value={password}
               onChangeText={setPassword}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               secureTextEntry
               autoComplete="password-new"
             />
-            <Button label="Criar conta" onPress={handleRegistar} loading={loading} />
+            {password.length > 0 && (
+              <View className="-mt-1 gap-1.5">
+                {([
+                  { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+                  { label: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
+                  { label: 'Um número', valid: /\d/.test(password) },
+                  { label: 'Um símbolo (!@#$...)', valid: /[^A-Za-z0-9]/.test(password) },
+                ] as const).map((check) => (
+                  <View key={check.label} className="flex-row items-center gap-1.5">
+                    <Ionicons
+                      name={check.valid ? 'checkmark-circle' : 'ellipse-outline'}
+                      size={14}
+                      color={check.valid ? colors.success[500] : colors.neutral[400]}
+                    />
+                    <Text className={`text-xs ${check.valid ? 'font-medium text-success-600' : 'text-fg-subtle'}`}>
+                      {check.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Button
+              label="Criar conta"
+              onPress={handleRegistar}
+              loading={loading}
+              disabled={!nome.trim() || !email.trim() || !password || password.length < 8 || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)}
+            />
           </View>
 
           <View className="mt-8 flex-row justify-center">
