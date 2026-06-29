@@ -20,6 +20,8 @@ export interface OnboardingIntent {
   id: 'vender-carro' | 'vender-peca' | 'oficina' | 'comprar';
   route: string;
   contexto: string;
+  /** Short destination phrase for the "A redirecionar…" cover (e.g. "Para anunciar o seu carro"). */
+  label: string;
 }
 
 interface IntentCard extends OnboardingIntent {
@@ -42,6 +44,7 @@ const INTENTS: IntentCard[] = [
     id: 'vender-carro',
     route: '/anunciar?tipo=carro',
     contexto: 'Crie a sua conta para anunciar o seu carro — é grátis e leva menos de um minuto.',
+    label: 'Para anunciar o seu carro',
     icon: <Car size={26} weight="duotone" />,
     titulo: 'Vender o meu carro',
     descricao: 'Anúncio grátis e com selo de confiança — carros verificados vendem mais rápido.',
@@ -51,6 +54,7 @@ const INTENTS: IntentCard[] = [
     id: 'vender-peca',
     route: '/anunciar?tipo=peca',
     contexto: 'Crie a sua conta para anunciar as suas peças ou desmonte.',
+    label: 'Para anunciar as suas peças',
     icon: <Wrench size={26} weight="duotone" />,
     titulo: 'Vender peças',
     descricao: 'Publique e quem procura essa peça é avisado na hora.',
@@ -60,6 +64,7 @@ const INTENTS: IntentCard[] = [
     id: 'oficina',
     route: '/oficinas/registar',
     contexto: 'Crie a sua conta para registar a sua oficina e receber clientes.',
+    label: 'Para registar a sua oficina',
     icon: <Storefront size={26} weight="duotone" />,
     titulo: 'Tenho uma oficina',
     descricao: 'Apareça para quem precisa de mecânico na sua zona.',
@@ -69,6 +74,7 @@ const INTENTS: IntentCard[] = [
     id: 'comprar',
     route: '/comprar',
     contexto: 'Crie a sua conta para criar o seu alerta de procura e receber ofertas.',
+    label: 'Para criar o seu alerta de procura',
     icon: <MagnifyingGlass size={26} weight="duotone" />,
     titulo: 'Quero comprar',
     descricao: 'Diga o que procura e deixe os vendedores virem até si.',

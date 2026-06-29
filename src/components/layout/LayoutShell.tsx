@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import MobileTopBar from '@/components/layout/MobileTopBar';
 import Footer from '@/components/layout/Footer';
@@ -13,10 +13,12 @@ import { WarningCircle } from '@phosphor-icons/react';
 import NotificationPrePrompt from '@/components/ui/NotificationPrePrompt';
 import CookieConsent from '@/components/ui/CookieConsent';
 import OnboardingTour, { type OnboardingIntent } from '@/components/onboarding/OnboardingTour';
+import RedirectingOverlay from '@/components/onboarding/RedirectingOverlay';
 import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/onboarding';
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAdminRoute = pathname?.startsWith('/admin');
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -30,6 +32,9 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   // The cookie banner stays deferred until this is true, so the two first-visit
   // overlays are sequenced instead of stacking on top of each other.
   const [onboardingResolved, setOnboardingResolved] = useState(false);
+  // Full-screen cover shown while navigating to the chosen intent's page, so
+  // the home listings never flash through the async route transition.
+  const [redirecting, setRedirecting] = useState<{ route: string; label: string } | null>(null);
 
   useEffect(() => {
     if (auth.loading) return;
@@ -53,14 +58,35 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
   const handleSelectIntent = (intent: OnboardingIntent) => {
     markOnboardingSeen();
-    setShowTour(false);
     setOnboardingResolved(true);
+    // Swap the tour straight for the redirect cover (same gradient → no flash),
+    // then take the visitor to the page for the job they picked and open the
+    // signup modal on top of it. The cover hides the async route transition so
+    // the home listings — which can feel sparse while the marketplace is young —
+    // never show through; the cover lifts once the destination page is active.
+    setRedirecting({ route: intent.route, label: intent.label });
+    setShowTour(false);
+    router.push(intent.route);
     loginModal.openLoginModal(undefined, {
       modoInicial: 'registar',
       contexto: intent.contexto,
       intent: intent.route,
     });
   };
+
+  // Lift the redirect cover once we've arrived at the destination route (give it
+  // one beat to paint under the modal). The timeout is a safety net so a stalled
+  // navigation can never trap the visitor behind the cover.
+  useEffect(() => {
+    if (!redirecting) return;
+    const targetPath = redirecting.route.split('?')[0];
+    if (pathname === targetPath) {
+      const t = setTimeout(() => setRedirecting(null), 200);
+      return () => clearTimeout(t);
+    }
+    const fallback = setTimeout(() => setRedirecting(null), 4000);
+    return () => clearTimeout(fallback);
+  }, [pathname, redirecting]);
 
   const handleDismissTour = () => {
     markOnboardingSeen();
@@ -180,6 +206,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
       {showTour && (
         <OnboardingTour onSelectIntent={handleSelectIntent} onDismiss={handleDismissTour} />
       )}
+      {redirecting && <RedirectingOverlay label={redirecting.label} />}
     </div>
   );
 }
