@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
@@ -34,6 +34,8 @@ interface CarFiltersSheetProps {
   update: (partial: Partial<CarAdvFilters>) => void;
   onClear: () => void;
   resultCount: number;
+  marcaOpts: string[];
+  modeloOpts: string[];
 }
 
 export function CarFiltersSheet({
@@ -43,7 +45,11 @@ export function CarFiltersSheet({
   update,
   onClear,
   resultCount,
+  marcaOpts,
+  modeloOpts,
 }: CarFiltersSheetProps) {
+  const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
+  const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
   const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
 
@@ -67,7 +73,23 @@ export function CarFiltersSheet({
         </>
       }
     >
-      <SheetSection title="Preço (€)" first>
+      {marcaOpts.length > 0 && (
+        <SheetSection title="Marca" first>
+          <ChipSelect
+            options={marcaSelectOpts}
+            value={f.marca}
+            onChange={(v) => update({ marca: v, modelo: '' })}
+          />
+        </SheetSection>
+      )}
+
+      {!!f.marca && modeloOpts.length > 0 && (
+        <SheetSection title="Modelo">
+          <ChipSelect options={modeloSelectOpts} value={f.modelo} onChange={(v) => update({ modelo: v })} />
+        </SheetSection>
+      )}
+
+      <SheetSection title="Preço (€)" first={marcaOpts.length === 0}>
         <RangeRow
           minValue={f.precoMin}
           maxValue={f.precoMax}

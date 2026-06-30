@@ -48,7 +48,7 @@ export default function PremiumTogglePanel() {
       title: 'Impulsionamento de Anúncios',
       description: 'Permite aos utilizadores adquirir planos de destaque para os seus anúncios de carros ou peças no topo dos resultados.',
       icon: Lightning,
-      color: 'text-amber-500 bg-amber-50',
+      color: 'text-amber-700 bg-amber-50',
       activeColor: 'bg-amber-500',
     },
     {
@@ -56,7 +56,7 @@ export default function PremiumTogglePanel() {
       title: 'Diretório de Oficinas',
       description: 'Permite aos profissionais registar oficinas, e aos clientes visualizar e pesquisar oficinas no mapa.',
       icon: Wrench,
-      color: 'text-blue-500 bg-blue-50',
+      color: 'text-blue-700 bg-blue-50',
       activeColor: 'bg-blue-500',
     },
     {
@@ -64,7 +64,7 @@ export default function PremiumTogglePanel() {
       title: 'Gestão de Leads',
       description: 'Permite que oficinas recebam leads de clientes e respondam a pedidos de orçamento e serviços.',
       icon: Target,
-      color: 'text-emerald-500 bg-emerald-50',
+      color: 'text-emerald-700 bg-emerald-50',
       activeColor: 'bg-emerald-500',
     },
   ];
@@ -110,14 +110,14 @@ export default function PremiumTogglePanel() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className={`p-4 rounded-xl shrink-0 transition-all duration-300 ${
-              isMasterActive ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-300 text-slate-500'
+              isMasterActive ? 'bg-amber-500 text-white shadow-md' : 'bg-slate-300 text-fg-muted'
             }`}>
               <Power className="text-2xl shrink-0" weight="bold" />
             </div>
             <div>
               <h3 className="font-extrabold text-base text-fg-heading">Chave Geral de Serviços Premium</h3>
               <p className="text-xs text-fg-subtle mt-1 leading-relaxed max-w-xl">
-                Ativa ou desativa completamente todos os serviços premium da plataforma ReparAuto. 
+                Ativa ou desativa completamente todos os serviços premium da plataforma RecarGarage. 
                 Quando desligado, todas as funcionalidades premium e tabelas de planos serão totalmente ocultadas para os utilizadores.
               </p>
               <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-2 ${
@@ -144,7 +144,7 @@ export default function PremiumTogglePanel() {
                 <span className={`pointer-events-none flex items-center justify-center h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                   isMasterActive ? 'translate-x-5' : 'translate-x-0'
                 }`}>
-                  <CircleNotch className="animate-spin text-[10px] text-slate-500" />
+                  <CircleNotch className="animate-spin text-[10px] text-fg-muted" />
                 </span>
               ) : (
                 <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -177,7 +177,7 @@ export default function PremiumTogglePanel() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl ${
-                      isMasterActive ? mod.color : 'text-slate-400 bg-slate-100'
+                      isMasterActive ? mod.color : 'text-fg-muted bg-slate-100'
                     } transition-all duration-300`}>
                       <IconComponent className="text-xl shrink-0" weight={isActive ? 'fill' : 'regular'} />
                     </div>
@@ -216,7 +216,7 @@ export default function PremiumTogglePanel() {
                           isActive ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       >
-                        <CircleNotch className="animate-spin text-[10px] text-slate-500" />
+                        <CircleNotch className="animate-spin text-[10px] text-fg-muted" />
                       </span>
                     ) : (
                       <span
@@ -242,7 +242,7 @@ export default function PremiumTogglePanel() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className={`p-4 rounded-xl shrink-0 transition-all duration-300 ${
-              isParceriasActive && isMasterActive ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-300 text-slate-500'
+              isParceriasActive && isMasterActive ? 'bg-emerald-500 text-white shadow-md' : 'bg-slate-300 text-fg-muted'
             }`}>
               <Handshake className="text-2xl shrink-0" weight="bold" />
             </div>
@@ -275,7 +275,7 @@ export default function PremiumTogglePanel() {
                 <span className={`pointer-events-none flex items-center justify-center h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                   isParceriasActive ? 'translate-x-5' : 'translate-x-0'
                 }`}>
-                  <CircleNotch className="animate-spin text-[10px] text-slate-500" />
+                  <CircleNotch className="animate-spin text-[10px] text-fg-muted" />
                 </span>
               ) : (
                 <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -308,7 +308,7 @@ export default function PremiumTogglePanel() {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-xl ${
-                      isMasterActive && isParceriasActive ? mod.color : 'text-slate-400 bg-slate-100'
+                      isMasterActive && isParceriasActive ? mod.color : 'text-fg-muted bg-slate-100'
                     } transition-all duration-300`}>
                       <IconComponent className="text-xl shrink-0" weight={isActive ? 'fill' : 'regular'} />
                     </div>
@@ -347,7 +347,7 @@ export default function PremiumTogglePanel() {
                           isActive ? 'translate-x-5' : 'translate-x-0'
                         }`}
                       >
-                        <CircleNotch className="animate-spin text-[10px] text-slate-500" />
+                        <CircleNotch className="animate-spin text-[10px] text-fg-muted" />
                       </span>
                     ) : (
                       <span

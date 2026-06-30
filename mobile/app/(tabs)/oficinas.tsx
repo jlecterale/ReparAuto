@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { OficinaCard } from '@/components/OficinaCard';
 import { OficinasMapa } from '@/components/OficinasMapa';
 import { useOficinas } from '@/hooks/useOficinas';
+import { mapsDisponivel } from '@/lib/geo';
 import { colors } from '@/theme/colors';
 
 type Vista = 'lista' | 'mapa';
@@ -62,10 +63,12 @@ export default function OficinasScreen() {
       <SectionHeader
         title="Oficinas"
         right={
-          <View className="flex-row rounded-full bg-neutral-100 p-1">
-            <Toggle label="Lista" icon="list" ativo={vista === 'lista'} onPress={() => setVista('lista')} />
-            <Toggle label="Mapa" icon="map" ativo={vista === 'mapa'} onPress={() => setVista('mapa')} />
-          </View>
+          mapsDisponivel ? (
+            <View className="flex-row rounded-full bg-neutral-100 p-1">
+              <Toggle label="Lista" icon="list" ativo={vista === 'lista'} onPress={() => setVista('lista')} />
+              <Toggle label="Mapa" icon="map" ativo={vista === 'mapa'} onPress={() => setVista('mapa')} />
+            </View>
+          ) : undefined
         }
       />
 
@@ -93,7 +96,7 @@ export default function OficinasScreen() {
           titulo="Não foi possível carregar"
           texto="Verifique a sua ligação e tente novamente."
         />
-      ) : vista === 'mapa' ? (
+      ) : mapsDisponivel && vista === 'mapa' ? (
         <OficinasMapa oficinas={filtradas} onSelect={abrir} />
       ) : (
         <FlatList
@@ -102,11 +105,20 @@ export default function OficinasScreen() {
           contentContainerClassName="px-4 pb-6 pt-2"
           renderItem={({ item }) => <OficinaCard oficina={item} onPress={abrir} />}
           ListEmptyComponent={
-            <EmptyState
-              icon="business-outline"
-              titulo="Sem oficinas"
-              texto={busca || filtersCount > 0 ? 'Tente outros critérios.' : 'Ainda não há oficinas.'}
-            />
+            busca || filtersCount > 0 ? (
+              <EmptyState icon="business-outline" titulo="Sem oficinas" texto="Tente outros critérios." />
+            ) : (
+              <EmptyState
+                icon="business-outline"
+                titulo="Anuncie sua oficina gratuitamente"
+                texto="Seja a primeira oficina a aparecer aqui."
+                action={{
+                  label: 'Anunciar oficina',
+                  icon: 'add-circle-outline',
+                  onPress: () => router.push('/anunciar/oficina'),
+                }}
+              />
+            )
           }
           showsVerticalScrollIndicator={false}
         />

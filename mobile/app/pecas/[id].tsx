@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -12,7 +13,9 @@ import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
-import { getPecaById } from '@/lib/db';
+import { OwnerStats } from '@/components/ui/OwnerStats';
+import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -27,16 +30,22 @@ export default function DetalhesPecaScreen() {
   const requireAuth = useRequireAuth();
   const [peca, setPeca] = useState<Peca | null>(null);
   const [loading, setLoading] = useState(true);
+  const [visorAberto, setVisorAberto] = useState(false);
 
   useEffect(() => {
     let active = true;
     getPecaById(id)
-      .then((p) => active && setPeca(p))
+      .then((p) => {
+        if (!active) return;
+        setPeca(p);
+        // Count the view for everyone except the owner.
+        if (p && p.criadorUid !== user?.uid) registarVisualizacao('parts', id);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, user?.uid]);
 
   if (loading) {
     return (
@@ -56,6 +65,7 @@ export default function DetalhesPecaScreen() {
   }
 
   const tel = peca.vendedorTelefone || peca.contacto;
+  const ehDono = !!peca.criadorUid && peca.criadorUid === user?.uid;
   const podeMensagem = !!peca.criadorUid && peca.criadorUid !== user?.uid;
 
   return (
@@ -82,12 +92,23 @@ export default function DetalhesPecaScreen() {
       />
       <ScrollView contentContainerClassName="pb-28">
         {peca.foto ? (
-          <Image
-            source={peca.foto}
-            style={{ width, height: width * 0.72 }}
-            contentFit="cover"
-            transition={200}
-          />
+          <View>
+            <Pressable
+              onPress={() => setVisorAberto(true)}
+              accessibilityRole="imagebutton"
+              accessibilityLabel="Ampliar foto"
+            >
+              <Image
+                source={peca.foto}
+                style={{ width, height: width * 0.72 }}
+                contentFit="cover"
+                transition={200}
+              />
+            </Pressable>
+            <View className="absolute bottom-3 right-3 rounded-full bg-black/55 p-1.5">
+              <Ionicons name="expand-outline" size={14} color="#fff" />
+            </View>
+          </View>
         ) : (
           <View
             style={{ width, height: width * 0.6 }}
@@ -107,6 +128,17 @@ export default function DetalhesPecaScreen() {
           <Text className="mt-1 text-3xl font-black text-accent">
             {formatPrecoOpcional(peca.preco)}
           </Text>
+
+          {ehDono && (
+            <View className="mt-4">
+              <Text className="mb-2 text-sm font-bold text-fg-heading">As suas estatísticas</Text>
+              <OwnerStats
+                variant="card"
+                visualizacoes={peca.visualizacoes}
+                contagemMensagens={peca.contagemMensagens}
+              />
+            </View>
+          )}
 
           <View className="mt-5 flex-row flex-wrap">
             <Spec icon="pricetag-outline" label="Categoria" value={peca.categoria} />
@@ -171,6 +203,14 @@ export default function DetalhesPecaScreen() {
           />
         ) : null}
       </View>
+
+      {peca.foto && (
+        <PhotoViewer
+          visible={visorAberto}
+          fotos={[peca.foto]}
+          onClose={() => setVisorAberto(false)}
+        />
+      )}
     </View>
   );
 }

@@ -70,6 +70,17 @@ const defaultOnRequireLogin = () => {};
 
 export default function useFavoritos(user: Usuario | null, onRequireLogin?: () => void) {
   const [favoritos, setFavoritosState] = useState<string[]>([]);
+  // Bumped when the visitor changes their cookie consent, so anonymous local
+  // favourites are re-read (or dropped) live — without a full page reload.
+  const [consentVersion, setConsentVersion] = useState(0);
+
+  useEffect(() => {
+    function handleConsentChange() {
+      setConsentVersion((v) => v + 1);
+    }
+    window.addEventListener('cookieConsentChanged', handleConsentChange);
+    return () => window.removeEventListener('cookieConsentChanged', handleConsentChange);
+  }, []);
 
   useEffect(() => {
     if (user?.uid) {
@@ -106,7 +117,7 @@ export default function useFavoritos(user: Usuario | null, onRequireLogin?: () =
       }
       setFavoritosState(migrados);
     }
-  }, [user?.uid]);
+  }, [user?.uid, consentVersion]);
 
   useEffect(() => {
     const uid = user?.uid || null;

@@ -58,6 +58,7 @@ export interface Carro {
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
+  videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   fotos: string[];
@@ -139,6 +140,18 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
   outro: 'Outro Serviço',
 };
 
+// ---------- Marcas & modelos (source of truth: Firestore `marcas_modelos`) ----------
+export type TipoVeiculo = 'carro' | 'moto' | 'caminhao';
+
+/** Document in the `marcas_modelos` collection — `nome` is the document ID. */
+export interface MarcaModeloDoc {
+  nome: string;
+  tipos: TipoVeiculo[];
+  modelos: string[];
+  ativo: boolean;
+  ordem?: number;
+}
+
 // ---------- Intenções de compra ----------
 export type CategoriaIntencao = 'carro' | 'moto' | 'viatura_comercial' | 'pecas';
 export type StatusIntencao = 'pendente' | 'ativa' | 'pausada' | 'expirada' | 'deletada';
@@ -210,6 +223,7 @@ export type MotivoReport =
   | 'veiculo_roubado'
   | 'outro';
 export type TipoReport = 'carro' | 'peca' | 'utilizador';
+export type StatusReport = 'pendente' | 'em_analise' | 'resolvido' | 'rejeitado';
 
 export const MOTIVO_REPORT_LABELS: Record<MotivoReport, string> = {
   fraude: 'Fraude / burla',
@@ -219,6 +233,49 @@ export const MOTIVO_REPORT_LABELS: Record<MotivoReport, string> = {
   veiculo_roubado: 'Veículo roubado',
   outro: 'Outro',
 };
+
+export interface Report {
+  id: string;
+  denuncianteUid: string;
+  denuncianteEmail: string;
+  alvoId: string;
+  alvoTipo: TipoReport;
+  motivo: MotivoReport;
+  descricao: string;
+  status: StatusReport;
+  dataCriacao: Timestamp;
+  dataResolucao?: Timestamp;
+  resolvidoPor?: string;
+  notasAdmin?: string;
+}
+
+// ---------- Verificações ----------
+export type StatusVerificacao = 'pendente' | 'aprovado' | 'rejeitado';
+export type TipoVerificacao = 'identidade' | 'profissional';
+export type TipoDocumento = 'cc' | 'passaporte' | 'residencia';
+
+export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
+  cc: 'Cartão de Cidadão',
+  passaporte: 'Passaporte',
+  residencia: 'Autorização de Residência',
+};
+
+export interface Verification {
+  id: string;
+  uid: string;
+  email: string;
+  nome: string;
+  tipo: TipoVerificacao;
+  tipoDocumento: TipoDocumento;
+  documentoUrl: string;
+  selfieUrl: string;
+  nif?: string;
+  status: StatusVerificacao;
+  dataPedido: Timestamp;
+  dataResolucao?: Timestamp;
+  resolvidoPor?: string;
+  notasAdmin?: string;
+}
 
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';
@@ -282,6 +339,7 @@ export interface Oficina {
   coordenadas?: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
+  videoUrl?: string;
   fotos?: string[];
   status: StatusAnuncio;
   mediaAvaliacoes?: number;

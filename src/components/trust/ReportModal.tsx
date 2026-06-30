@@ -88,7 +88,7 @@ export default function ReportModal({ show, onClose, alvoTipo, onSubmit }: Repor
           ) : (
             <>
               <p className="text-sm text-fg-muted mb-4">
-                Selecione o motivo da denúncia. A equipa da ReparAuto irá analisar o caso e tomar as medidas necessárias.
+                Selecione o motivo da denúncia. A equipa da RecarGarage irá analisar o caso e tomar as medidas necessárias.
               </p>
 
               <div className="space-y-2 mb-4">

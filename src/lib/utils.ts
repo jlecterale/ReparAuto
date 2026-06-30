@@ -107,6 +107,36 @@ export function renderFoto(foto: string, classes = 'w-full h-full object-cover')
   return { type: 'emoji', emoji };
 }
 
+// Extracts the YouTube video id from the common URL forms (watch, youtu.be,
+// embed, shorts, live) and returns a privacy-friendly nocookie embed URL.
+// Returns null when the input is empty or not a recognizable YouTube link.
+export function getYoutubeEmbedUrl(url: string | null | undefined): string | null {
+  const id = getYoutubeId(url);
+  return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+}
+
+export function getYoutubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?(?:.*&)?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+    /(?:youtube\.com\/live\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+export function isValidYoutubeUrl(url: string | null | undefined): boolean {
+  return getYoutubeId(url) !== null;
+}
+
 export function dataAtualISO(): string {
   return new Date().toISOString();
 }

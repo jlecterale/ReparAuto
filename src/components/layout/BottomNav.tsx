@@ -11,12 +11,12 @@ export default function BottomNav() {
 
   const isActive = (path: string) => {
     if (!pathname) return false;
-    if (path === '/') return pathname === '/' || pathname === '';
+    if (path === '/app') return pathname === '/app' || pathname === '/';
     return pathname.startsWith(path);
   };
 
   const items: { path: string; Icon: Icon; label: string }[] = [
-    { path: '/', Icon: MagnifyingGlass, label: 'Pesquisar' },
+    { path: '/app', Icon: MagnifyingGlass, label: 'Pesquisar' },
     { path: '/anunciar', Icon: PlusCircle, label: 'Anunciar' },
     { path: '/pecas', Icon: GearSix, label: 'Peças' },
     { path: '/oficinas', Icon: Wrench, label: 'Oficinas' },

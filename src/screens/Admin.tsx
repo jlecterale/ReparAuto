@@ -81,7 +81,7 @@ export default function Admin() {
   useEffect(() => {
     if (authLoading) return;
     if (!isAdmin) {
-      router.replace('/');
+      router.replace('/app');
       return;
     }
     carregarDados();
@@ -186,7 +186,7 @@ export default function Admin() {
       const target = users.find((u) => u.uid === uid);
       if (target) {
         await criarNotificacao(uid, 'info', 'Plano Premium Ativado!',
-          `Recebeu o plano "${nome}" cortesia da equipa ReparAuto. Válido por ${dias} dias.`,
+          `Recebeu o plano "${nome}" cortesia da equipa RecarGarage. Válido por ${dias} dias.`,
           '/admin');
       }
       toast?.sucesso(`Plano "${nome}" concedido com sucesso!`);
@@ -305,6 +305,37 @@ export default function Admin() {
       if (p) await notificarUtilizador(p.criador, 'rejeitado', p.titulo);
     } catch {
       toast?.erro('Erro ao rejeitar peça.');
+    }
+  };
+
+  // Bulk actions over multiple selected listings (approve / reject / delete)
+  const handleBulkAction = async (tipo: 'carro' | 'peca', action: 'aprovar' | 'rejeitar' | 'eliminar', ids: string[]) => {
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    const plural = ids.length !== 1;
+    try {
+      if (action === 'eliminar') {
+        await Promise.all(ids.map((id) => (tipo === 'carro' ? deleteCarro(id) : deletePeca(id))));
+        if (tipo === 'carro') setCarros((prev) => prev.filter((c) => !idSet.has(c.id)));
+        else setPecas((prev) => prev.filter((p) => !idSet.has(p.id)));
+        toast?.sucesso(`${ids.length} anúncio${plural ? 's' : ''} eliminado${plural ? 's' : ''}.`);
+        return;
+      }
+      const novoStatus = action === 'aprovar' ? ('aprovado' as const) : ('rejeitado' as const);
+      if (tipo === 'carro') {
+        const alvos = carros.filter((c) => idSet.has(c.id));
+        await Promise.all(alvos.map((c) => updateCarroStatus(c.id, novoStatus)));
+        setCarros((prev) => prev.map((c) => (idSet.has(c.id) ? { ...c, status: novoStatus } : c)));
+        await Promise.all(alvos.map((c) => notificarUtilizador(c.criador, novoStatus, `${c.marca} ${c.modelo}`, novoStatus === 'aprovado' ? `/detalhes/${c.id}` : undefined)));
+      } else {
+        const alvos = pecas.filter((p) => idSet.has(p.id));
+        await Promise.all(alvos.map((p) => updatePecaStatus(p.id, novoStatus)));
+        setPecas((prev) => prev.map((p) => (idSet.has(p.id) ? { ...p, status: novoStatus } : p)));
+        await Promise.all(alvos.map((p) => notificarUtilizador(p.criador, novoStatus, p.titulo)));
+      }
+      toast?.sucesso(`${ids.length} anúncio${plural ? 's' : ''} ${novoStatus}${plural ? 's' : ''}.`);
+    } catch {
+      toast?.erro('Erro ao executar ação em massa.');
     }
   };
 
@@ -480,7 +511,7 @@ export default function Admin() {
       await atualizarStatusVerification(id, uid, status, auth.user?.email || 'admin', notasAdmin);
       const u = users.find((u) => u.uid === uid);
       if (u && status === 'aprovado') {
-        await criarNotificacao(uid, 'info', 'Conta Verificada!', 'A sua conta foi verificada com sucesso pela equipa ReparAuto.');
+        await criarNotificacao(uid, 'info', 'Conta Verificada!', 'A sua conta foi verificada com sucesso pela equipa RecarGarage.');
       } else if (u && status === 'rejeitado') {
         await criarNotificacao(uid, 'info', 'Verificação Rejeitada', 'O seu pedido de verificação foi rejeitado.' + (notasAdmin ? ` Motivo: ${notasAdmin}` : ''));
       }
@@ -503,8 +534,8 @@ export default function Admin() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center py-20 bg-slate-950 min-h-screen">
-        <CircleNotch className="animate-spin text-3xl text-pink-500" />
+      <div className="flex items-center justify-center py-20 bg-neutral-50 min-h-screen">
+        <CircleNotch className="animate-spin text-3xl text-pink-700" />
       </div>
     );
   }
@@ -515,11 +546,11 @@ export default function Admin() {
       label: 'Visão Geral',
       Icon: ChartBar,
       value: null,
-      gradient: 'from-slate-800/40 to-slate-900/40',
-      borderClass: 'border-slate-800/80',
-      activeGradient: 'from-slate-800 to-slate-900',
-      activeBorder: 'border-slate-700',
-      textColor: 'text-slate-400',
+      gradient: 'from-slate-100 to-slate-50',
+      borderClass: 'border-neutral-200',
+      activeGradient: 'from-primary-600 to-primary-700',
+      activeBorder: 'border-primary-700',
+      textColor: 'text-primary-700',
       activeTextColor: 'text-white',
     },
     {
@@ -531,7 +562,7 @@ export default function Admin() {
       borderClass: 'border-pink-500/10',
       activeGradient: 'from-pink-500 via-purple-500 to-indigo-600',
       activeBorder: 'border-pink-400/30',
-      textColor: 'text-pink-400',
+      textColor: 'text-pink-700',
       activeTextColor: 'text-white',
     },
     {
@@ -543,7 +574,7 @@ export default function Admin() {
       borderClass: 'border-amber-500/10',
       activeGradient: 'from-amber-500 via-orange-500 to-red-600',
       activeBorder: 'border-amber-400/30',
-      textColor: 'text-amber-500',
+      textColor: 'text-amber-700',
       activeTextColor: 'text-white',
     },
     {
@@ -555,7 +586,7 @@ export default function Admin() {
       borderClass: 'border-blue-500/10',
       activeGradient: 'from-blue-500 via-indigo-500 to-violet-600',
       activeBorder: 'border-blue-400/30',
-      textColor: 'text-blue-400',
+      textColor: 'text-blue-700',
       activeTextColor: 'text-white',
     },
     {
@@ -567,7 +598,7 @@ export default function Admin() {
       borderClass: 'border-purple-500/10',
       activeGradient: 'from-purple-500 via-fuchsia-500 to-rose-600',
       activeBorder: 'border-purple-400/30',
-      textColor: 'text-purple-400',
+      textColor: 'text-purple-700',
       activeTextColor: 'text-white',
     },
     {
@@ -579,7 +610,7 @@ export default function Admin() {
       borderClass: 'border-yellow-500/10',
       activeGradient: 'from-yellow-500 to-amber-600',
       activeBorder: 'border-yellow-400/30',
-      textColor: 'text-yellow-500',
+      textColor: 'text-yellow-700',
       activeTextColor: 'text-white',
     },
     {
@@ -591,7 +622,7 @@ export default function Admin() {
       borderClass: 'border-emerald-500/10',
       activeGradient: 'from-emerald-500 to-teal-600',
       activeBorder: 'border-emerald-400/30',
-      textColor: 'text-emerald-400',
+      textColor: 'text-emerald-700',
       activeTextColor: 'text-white',
     },
     {
@@ -603,7 +634,7 @@ export default function Admin() {
       borderClass: 'border-blue-500/10',
       activeGradient: 'from-blue-600 via-cyan-500 to-indigo-650',
       activeBorder: 'border-blue-400/30',
-      textColor: 'text-blue-400',
+      textColor: 'text-blue-700',
       activeTextColor: 'text-white',
     },
     {
@@ -615,31 +646,31 @@ export default function Admin() {
       borderClass: 'border-red-500/25',
       activeGradient: 'from-red-600 via-rose-600 to-orange-600',
       activeBorder: 'border-red-400/40',
-      textColor: 'text-red-500',
+      textColor: 'text-red-700',
       activeTextColor: 'text-white',
     },
   ];
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+    <div className="flex h-screen bg-neutral-50 text-fg font-sans overflow-hidden">
       
       {/* Sleek Left Sidebar Navigation */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-850 flex flex-col justify-between flex-shrink-0 z-30">
+      <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col justify-between flex-shrink-0 z-30">
         <div className="p-5 flex flex-col h-full justify-between">
           <div className="space-y-6">
             {/* Logo */}
-            <div className="flex items-center gap-2.5 pb-4 border-b border-slate-800/80">
+            <div className="flex items-center gap-2.5 pb-4 border-b border-neutral-200">
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-pink-500/25 text-white font-black text-lg">
                 R
               </div>
               <div>
-                <h1 className="font-extrabold text-sm text-slate-100 tracking-tight">ReparAuto</h1>
-                <p className="text-[9px] text-pink-500 font-extrabold uppercase tracking-wider">Painel Admin</p>
+                <h1 className="font-extrabold text-sm text-fg-heading tracking-tight">RecarGarage</h1>
+                <p className="text-[9px] text-pink-700 font-extrabold uppercase tracking-wider">Painel Admin</p>
               </div>
             </div>
 
             {/* Navigation Links */}
-            <nav className="space-y-2 overflow-y-auto max-h-[calc(100vh-210px)] pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+            <nav className="space-y-2 overflow-y-auto max-h-[calc(100vh-210px)] pr-1 scrollbar-thin scrollbar-thumb-slate-300">
               {sidebarButtons.map((btn) => {
                 const isActive = tab === btn.key;
                 return (
@@ -649,11 +680,11 @@ export default function Admin() {
                     className={`w-full relative rounded-xl p-2.5 flex items-center justify-between text-left transition-all duration-200 border group ${
                       isActive
                         ? `bg-gradient-to-r ${btn.activeGradient} ${btn.activeBorder} shadow-lg shadow-black/20 text-white scale-[1.01]`
-                        : `bg-slate-950/40 ${btn.borderClass} text-slate-400 hover:text-slate-200 hover:bg-slate-800/30 hover:scale-[1.005]`
+                        : `bg-white ${btn.borderClass} text-fg-muted hover:text-fg-strong hover:bg-slate-50 hover:scale-[1.005]`
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className={`p-1.5 rounded-lg ${isActive ? 'bg-white/10' : 'bg-slate-950/60 border border-slate-800 group-hover:bg-slate-850'} transition-colors flex items-center justify-center shrink-0`}>
+                      <div className={`p-1.5 rounded-lg ${isActive ? 'bg-white/10' : 'bg-white border border-neutral-200 group-hover:bg-slate-100'} transition-colors flex items-center justify-center shrink-0`}>
                         <btn.Icon
                           className={`text-sm shrink-0 ${
                             isActive ? 'text-white' : btn.textColor
@@ -661,7 +692,7 @@ export default function Admin() {
                           weight={isActive ? 'bold' : 'regular'}
                         />
                       </div>
-                      <span className={`text-[11px] font-bold tracking-tight truncate ${isActive ? 'text-white' : 'text-slate-300'}`}>
+                      <span className={`text-[11px] font-bold tracking-tight truncate ${isActive ? 'text-white' : 'text-fg'}`}>
                         {btn.label}
                       </span>
                     </div>
@@ -670,7 +701,7 @@ export default function Admin() {
                         className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
                           isActive
                             ? 'bg-white/20 text-white'
-                            : `bg-slate-950/60 border border-slate-850 ${btn.textColor}`
+                            : `bg-white border border-neutral-200 ${btn.textColor}`
                         }`}
                       >
                         {btn.value}
@@ -683,22 +714,22 @@ export default function Admin() {
           </div>
 
           {/* User profile & exit section in sidebar footer */}
-          <div className="space-y-2 mt-4 pt-3 border-t border-slate-800/80">
+          <div className="space-y-2 mt-4 pt-3 border-t border-neutral-200">
             <Link
-              href="/"
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold bg-slate-950/60 hover:bg-slate-850 border border-slate-850 hover:border-slate-800 text-slate-300 hover:text-white transition-all duration-200"
+              href="/app"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold bg-white hover:bg-slate-100 border border-neutral-200 hover:border-neutral-300 text-fg hover:text-fg-heading transition-all duration-200"
             >
-              <House className="text-sm text-pink-500" />
+              <House className="text-sm text-pink-700" />
               <span>Voltar ao Site</span>
             </Link>
 
-            <div className="p-3 bg-slate-950/20 rounded-xl flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-300 border border-slate-700 font-extrabold uppercase text-xs shrink-0">
+            <div className="p-3 bg-slate-50 rounded-xl flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-fg border border-neutral-300 font-extrabold uppercase text-xs shrink-0">
                 {auth.user?.nome ? auth.user.nome.substring(0, 2) : 'A'}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-200 truncate">{auth.user?.nome || 'Administrador'}</p>
-                <p className="text-[9px] text-slate-500 font-semibold truncate">{auth.user?.email}</p>
+                <p className="text-xs font-bold text-fg-strong truncate">{auth.user?.nome || 'Administrador'}</p>
+                <p className="text-[9px] text-fg-muted font-semibold truncate">{auth.user?.email}</p>
               </div>
             </div>
           </div>
@@ -706,16 +737,16 @@ export default function Admin() {
       </aside>
 
       {/* Main content viewport */}
-      <main className="flex-1 bg-slate-950 overflow-y-auto flex flex-col z-10 relative">
+      <main className="flex-1 bg-neutral-50 overflow-y-auto flex flex-col z-10 relative">
         
         {/* Header bar */}
-        <header className="sticky top-0 bg-slate-950/80 backdrop-blur-md border-b border-slate-850 p-5 flex items-center justify-between z-20">
-          <h2 className="text-lg font-black text-slate-100 flex items-center gap-2 capitalize">
+        <header className="sticky top-0 bg-white backdrop-blur-md border-b border-neutral-200 p-5 flex items-center justify-between z-20">
+          <h2 className="text-lg font-black text-fg-heading flex items-center gap-2 capitalize">
             {tabs.find(t => t.key === tab)?.label.split(' (')[0]}
           </h2>
           
           <div className="flex items-center gap-3">
-            <span className="text-[10px] bg-pink-950/40 border border-pink-900/30 text-pink-400 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span className="text-[10px] bg-pink-50 border border-pink-200 text-pink-700 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse" /> Live Admin
             </span>
             <Button
@@ -737,21 +768,21 @@ export default function Admin() {
               
               {/* Summary Cards with real totals */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Utilizadores</span>
-                  <p className="text-xl font-black text-pink-400 mt-0.5">{users.length}</p>
+                <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+                  <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Utilizadores</span>
+                  <p className="text-xl font-black text-pink-700 mt-0.5">{users.length}</p>
                 </div>
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Anúncios</span>
-                  <p className="text-xl font-black text-amber-400 mt-0.5">{carros.length + pecas.length}</p>
+                <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+                  <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Anúncios</span>
+                  <p className="text-xl font-black text-amber-700 mt-0.5">{carros.length + pecas.length}</p>
                 </div>
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Oficinas</span>
-                  <p className="text-xl font-black text-blue-400 mt-0.5">{oficinasAdmin.length}</p>
+                <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+                  <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Oficinas</span>
+                  <p className="text-xl font-black text-blue-700 mt-0.5">{oficinasAdmin.length}</p>
                 </div>
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-3.5">
-                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Intenções</span>
-                  <p className="text-xl font-black text-purple-400 mt-0.5">{intencoesAdmin.length}</p>
+                <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
+                  <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Intenções</span>
+                  <p className="text-xl font-black text-purple-700 mt-0.5">{intencoesAdmin.length}</p>
                 </div>
               </div>
 
@@ -762,10 +793,10 @@ export default function Admin() {
                 <div className="md:col-span-2 space-y-6">
                   
                   {/* District Distribution Chart */}
-                  <div className="bg-slate-900/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-5 space-y-4">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-100">Clientes por Distrito</h4>
-                      <p className="text-[10px] text-slate-400">Distribuição com base nas moradas de registo.</p>
+                      <h4 className="text-sm font-bold text-fg-heading">Clientes por Distrito</h4>
+                      <p className="text-[10px] text-fg-muted">Distribuição com base nas moradas de registo.</p>
                     </div>
                     <div className="space-y-3">
                       {Object.entries(
@@ -782,10 +813,10 @@ export default function Admin() {
                           return (
                             <div key={idx} className="space-y-1">
                               <div className="flex justify-between text-xs font-semibold">
-                                <span className="text-slate-300">{dist}</span>
-                                <span className="text-pink-400">{percentage}% ({count})</span>
+                                <span className="text-fg">{dist}</span>
+                                <span className="text-pink-700">{percentage}% ({count})</span>
                               </div>
-                              <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-850">
+                              <div className="w-full bg-neutral-50 h-2 rounded-full overflow-hidden border border-neutral-200">
                                 <div 
                                   className="bg-gradient-to-r from-pink-500 to-rose-500 h-full rounded-full transition-all duration-500" 
                                   style={{ width: `${percentage}%` }}
@@ -798,19 +829,19 @@ export default function Admin() {
                   </div>
 
                   {/* Account Age Distribution (real data) */}
-                  <div className="bg-slate-900/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-5 space-y-4">
                     <div>
-                      <h4 className="text-sm font-bold text-slate-100">Tempo na Plataforma</h4>
-                      <p className="text-[10px] text-slate-400">Antiguidade dos utilizadores com base na data de registo.</p>
+                      <h4 className="text-sm font-bold text-fg-heading">Tempo na Plataforma</h4>
+                      <p className="text-[10px] text-fg-muted">Antiguidade dos utilizadores com base na data de registo.</p>
                     </div>
                     <div className="space-y-3">
                       {(dashboardStats?.antiguidade ?? []).map((item, idx) => (
                         <div key={idx} className="space-y-1">
                           <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-slate-300">{item.range}</span>
-                            <span className="text-purple-400">{item.percent}% ({item.count})</span>
+                            <span className="text-fg">{item.range}</span>
+                            <span className="text-purple-700">{item.percent}% ({item.count})</span>
                           </div>
-                          <div className="w-full bg-slate-950 h-2 rounded-full overflow-hidden border border-slate-850">
+                          <div className="w-full bg-neutral-50 h-2 rounded-full overflow-hidden border border-neutral-200">
                             <div 
                               className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full transition-all duration-500" 
                               style={{ width: `${item.percent}%` }}
@@ -819,7 +850,7 @@ export default function Admin() {
                         </div>
                       ))}
                       {(!dashboardStats || dashboardStats.antiguidade.every(a => a.count === 0)) && (
-                        <p className="text-xs text-slate-500 text-center py-2">A aguardar dados de antiguidade...</p>
+                        <p className="text-xs text-fg-muted text-center py-2">A aguardar dados de antiguidade...</p>
                       )}
                     </div>
                   </div>
@@ -840,13 +871,13 @@ export default function Admin() {
               </div>
 
               {/* Activity Metrics (real data replacing mock downloads) */}
-              <div className="bg-slate-900/40 border border-slate-850 rounded-2xl p-5 space-y-4">
+              <div className="bg-white border border-neutral-200 rounded-2xl p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-100">Métricas de Atividade</h4>
-                    <p className="text-[10px] text-slate-400">Engajamento real dos utilizadores na plataforma.</p>
+                    <h4 className="text-sm font-bold text-fg-heading">Métricas de Atividade</h4>
+                    <p className="text-[10px] text-fg-muted">Engajamento real dos utilizadores na plataforma.</p>
                   </div>
-                  <div className="flex gap-4 text-xs font-bold text-slate-400">
+                  <div className="flex gap-4 text-xs font-bold text-fg-muted">
                     <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Anúncios</span>
                     <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Utilizadores</span>
                   </div>
@@ -854,35 +885,35 @@ export default function Admin() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   
-                  <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl flex items-center justify-between">
+                  <div className="bg-slate-50 border border-neutral-200 p-4 rounded-xl flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Utilizadores Ativos</span>
-                      <p className="text-xl font-black text-emerald-400 mt-1">{dashboardStats?.utilizadoresAtivos ?? '—'} <span className="text-[10px] font-normal text-slate-500">criaram anúncios</span></p>
+                      <span className="text-[10px] text-fg-muted font-bold uppercase tracking-wider">Utilizadores Ativos</span>
+                      <p className="text-xl font-black text-emerald-700 mt-1">{dashboardStats?.utilizadoresAtivos ?? '—'} <span className="text-[10px] font-normal text-fg-muted">criaram anúncios</span></p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-900/30 flex items-center justify-center text-emerald-500 text-xs font-black">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-200 flex items-center justify-center text-emerald-700 text-xs font-black">
                       UA
                     </div>
                   </div>
 
-                  <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl flex items-center justify-between">
+                  <div className="bg-slate-50 border border-neutral-200 p-4 rounded-xl flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Média Anúncios / Utilizador</span>
-                      <p className="text-xl font-black text-blue-400 mt-1">{dashboardStats?.mediaAnunciosPorUtilizador ?? '—'} <span className="text-[10px] font-normal text-slate-500">anúncios</span></p>
+                      <span className="text-[10px] text-fg-muted font-bold uppercase tracking-wider">Média Anúncios / Utilizador</span>
+                      <p className="text-xl font-black text-blue-700 mt-1">{dashboardStats?.mediaAnunciosPorUtilizador ?? '—'} <span className="text-[10px] font-normal text-fg-muted">anúncios</span></p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-900/30 flex items-center justify-center text-blue-500 text-xs font-black">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-200 flex items-center justify-center text-blue-700 text-xs font-black">
                       MÉD
                     </div>
                   </div>
 
-                  <div className="bg-slate-950/40 border border-slate-850 p-4 rounded-xl flex items-center justify-between sm:col-span-2 md:col-span-1">
+                  <div className="bg-slate-50 border border-neutral-200 p-4 rounded-xl flex items-center justify-between sm:col-span-2 md:col-span-1">
                     <div>
-                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Visualizações Totais</span>
-                      <p className="text-xl font-black text-pink-400 mt-1">
+                      <span className="text-[10px] text-fg-muted font-bold uppercase tracking-wider">Visualizações Totais</span>
+                      <p className="text-xl font-black text-pink-700 mt-1">
                         {dashboardStats ? (dashboardStats.totalVisualizacoes >= 1000 ? `${(dashboardStats.totalVisualizacoes / 1000).toFixed(1)}k` : dashboardStats.totalVisualizacoes) : '—'} 
-                        <span className="text-[10px] font-normal text-slate-500"> views</span>
+                        <span className="text-[10px] font-normal text-fg-muted"> views</span>
                       </p>
                     </div>
-                    <div className="w-10 h-10 rounded-lg bg-pink-500/10 border border-pink-900/30 flex items-center justify-center text-pink-500 text-xs font-black">
+                    <div className="w-10 h-10 rounded-lg bg-pink-500/10 border border-pink-200 flex items-center justify-center text-pink-700 text-xs font-black">
                       VIEW
                     </div>
                   </div>
@@ -890,13 +921,13 @@ export default function Admin() {
                 </div>
 
                 {/* Real Evolution Chart (last 6 months) */}
-                <div className="bg-slate-950/40 border border-slate-850 rounded-xl p-4">
-                  <h5 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Evolução Mensal (últimos 6 meses)</h5>
+                <div className="bg-slate-50 border border-neutral-200 rounded-xl p-4">
+                  <h5 className="text-[10px] font-bold text-fg-muted uppercase tracking-wider mb-3">Evolução Mensal (últimos 6 meses)</h5>
                   <div className="h-36 relative">
                     {dashboardStats ? (
                       <>
                         {/* Y-axis labels */}
-                        <div className="absolute -left-0.5 top-0 bottom-5 flex flex-col justify-between text-[8px] font-bold text-slate-600 pr-1">
+                        <div className="absolute -left-0.5 top-0 bottom-5 flex flex-col justify-between text-[8px] font-bold text-fg-muted pr-1">
                           {[100, 75, 50, 25, 0].map((pct) => {
                             const maxVal = Math.max(
                               1,
@@ -930,7 +961,7 @@ export default function Admin() {
                                     title={`Utilizadores: ${m.utilizadores}`}
                                   />
                                 </div>
-                                <span className="text-[8px] font-bold text-slate-500 shrink-0">{m.mes}</span>
+                                <span className="text-[8px] font-bold text-fg-muted shrink-0">{m.mes}</span>
                               </div>
                             );
                           })}
@@ -938,7 +969,7 @@ export default function Admin() {
                       </>
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-xs text-slate-500">A carregar dados de evolução...</span>
+                        <span className="text-xs text-fg-muted">A carregar dados de evolução...</span>
                       </div>
                     )}
                   </div>
@@ -948,9 +979,9 @@ export default function Admin() {
           )}
 
           {tab === 'utilizadores' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-              <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                <Users className="text-pink-500" /> Gestão de Utilizadores
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+              <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                <Users className="text-pink-700" /> Gestão de Utilizadores
               </h2>
               <UserTable
                 users={users}
@@ -965,9 +996,9 @@ export default function Admin() {
           )}
 
           {tab === 'anuncios' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-100">
-              <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                <List className="text-pink-500" /> Gestão de Anúncios
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-fg-heading">
+              <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                <List className="text-pink-700" /> Gestão de Anúncios
               </h2>
               <ListingsTable
                 carros={carrosOrdenados}
@@ -982,6 +1013,7 @@ export default function Admin() {
                 onRejectPeca={handleRejectPeca}
                 onUpdateCarro={handleUpdateCarro}
                 onUpdatePeca={handleUpdatePeca}
+                onBulkAction={handleBulkAction}
               />
             </div>
           )}
@@ -989,20 +1021,20 @@ export default function Admin() {
 
 
           {tab === 'intencoes' && (
-            <div className="space-y-6 text-slate-100">
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-                <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                  <MagnifyingGlass className="text-pink-500" /> Gestão de Intenções de Compra
+            <div className="space-y-6 text-fg-heading">
+              <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+                <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                  <MagnifyingGlass className="text-pink-700" /> Gestão de Intenções de Compra
                 </h2>
                 {intencoesAdmin.length === 0 ? (
-                  <p className="text-sm text-slate-500">Nenhuma intenção encontrada.</p>
+                  <p className="text-sm text-fg-muted">Nenhuma intenção encontrada.</p>
                 ) : (
                   <div className="space-y-2">
                     {intencoesOrdenadas.filter((i) => i.status !== 'deletada').map((intencao) => (
-                      <div key={intencao.id} className="flex items-center justify-between bg-slate-950 border border-slate-850 rounded-xl p-3">
+                      <div key={intencao.id} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl p-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-200 truncate">{intencao.titulo}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="text-sm font-bold text-fg-strong truncate">{intencao.titulo}</p>
+                          <p className="text-xs text-fg-muted mt-0.5">
                             {intencao.criterios.marca} {intencao.criterios.modelo} • {intencao.status} • {intencao.stats.visualizacoes} visualizações
                           </p>
                         </div>
@@ -1029,19 +1061,19 @@ export default function Admin() {
                 )}
               </div>
 
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-                <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                  <Flag className="text-red-500" /> Denúncias de Intenções
+              <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+                <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                  <Flag className="text-red-700" /> Denúncias de Intenções
                 </h2>
                 {denunciasIntencao.length === 0 ? (
-                  <p className="text-sm text-slate-500">Nenhuma denúncia pendente.</p>
+                  <p className="text-sm text-fg-muted">Nenhuma denúncia pendente.</p>
                 ) : (
                   <div className="space-y-2">
                     {denunciasIntencao.map((denuncia) => (
-                      <div key={denuncia.id} className="flex items-center justify-between bg-slate-950 border border-slate-850 rounded-xl p-3">
+                      <div key={denuncia.id} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl p-3">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-200">Motivo: {denuncia.motivo}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{denuncia.descricao} • Status: {denuncia.status}</p>
+                          <p className="text-sm font-bold text-fg-strong">Motivo: {denuncia.motivo}</p>
+                          <p className="text-xs text-fg-muted mt-0.5">{denuncia.descricao} • Status: {denuncia.status}</p>
                         </div>
                         <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                           <Button tipo="perigo" tamanho="sm" onClick={async () => { await updateIntencaoStatus(denuncia.intencaoId, 'deletada'); await updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'remocao'); setIntencoesAdmin((prev) => prev.filter((i) => i.id !== denuncia.intencaoId)); }}>Remover Intenção</Button>
@@ -1056,30 +1088,30 @@ export default function Admin() {
           )}
 
           {tab === 'oficinas' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-100">
-              <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                <Wrench className="text-pink-500" /> Moderação de Oficinas & Mecânicos
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-fg-heading">
+              <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                <Wrench className="text-pink-700" /> Moderação de Oficinas & Mecânicos
               </h2>
               {oficinasAdmin.length === 0 ? (
-                <p className="text-sm text-slate-500">Nenhuma oficina registada.</p>
+                <p className="text-sm text-fg-muted">Nenhuma oficina registada.</p>
               ) : (
                 <div className="space-y-4">
                   {oficinasAdmin.map((oficina) => (
-                    <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-950 border border-slate-850 rounded-2xl p-4 gap-4">
+                    <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 border border-neutral-200 rounded-2xl p-4 gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm font-bold text-slate-200 truncate">{oficina.nome}</p>
+                          <p className="text-sm font-bold text-fg-strong truncate">{oficina.nome}</p>
                           <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
-                            oficina.status === 'aprovado' ? 'bg-green-950/40 text-green-400 border-green-900/40' :
-                            oficina.status === 'rejeitado' ? 'bg-red-950/40 text-red-400 border-red-900/40' : 'bg-yellow-950/40 text-yellow-400 border-yellow-900/40'
+                            oficina.status === 'aprovado' ? 'bg-green-50 text-green-700 border-green-200' :
+                            oficina.status === 'rejeitado' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                           }`}>
                             {oficina.status.toUpperCase()}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-fg-muted mt-1">
                           Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
                         </p>
-                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                        <p className="text-xs text-fg-muted mt-0.5 font-medium">
                           Especialidades: {oficina.especialidades.map(e => ESPECIALIDADES_LABELS[e]).join(', ')}
                         </p>
                       </div>
@@ -1106,16 +1138,16 @@ export default function Admin() {
           )}
 
           {tab === 'pendentes' && (
-            <div className="space-y-6 text-slate-100">
+            <div className="space-y-6 text-fg-heading">
               
               {/* Header/Subtabs for Pendentes */}
-              <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center gap-2">
+              <div className="bg-white border border-neutral-200 rounded-2xl p-4 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setSubTabPendentes('anuncios')}
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 ${
                     subTabPendentes === 'anuncios'
                       ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
-                      : 'bg-slate-950/40 text-slate-400 hover:text-slate-200 border border-slate-850'
+                      : 'bg-slate-50 text-fg-muted hover:text-fg-strong border border-neutral-200'
                   }`}
                 >
                   <List className="text-sm" /> Anúncios ({totalAnunciosPendentes})
@@ -1126,7 +1158,7 @@ export default function Admin() {
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 ${
                     subTabPendentes === 'oficinas'
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
-                      : 'bg-slate-950/40 text-slate-400 hover:text-slate-200 border border-slate-850'
+                      : 'bg-slate-50 text-fg-muted hover:text-fg-strong border border-neutral-200'
                   }`}
                 >
                   <Wrench className="text-sm" /> Oficinas ({totalOficinasPendentes})
@@ -1137,7 +1169,7 @@ export default function Admin() {
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 ${
                     subTabPendentes === 'avaliacoes'
                       ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md'
-                      : 'bg-slate-950/40 text-slate-400 hover:text-slate-200 border border-slate-850'
+                      : 'bg-slate-50 text-fg-muted hover:text-fg-strong border border-neutral-200'
                   }`}
                 >
                   <StarHalf className="text-sm" /> Avaliações ({reviewsPendentes})
@@ -1148,7 +1180,7 @@ export default function Admin() {
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 ${
                     subTabPendentes === 'denuncias'
                       ? 'bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md'
-                      : 'bg-slate-950/40 text-slate-400 hover:text-slate-200 border border-slate-850'
+                      : 'bg-slate-50 text-fg-muted hover:text-fg-strong border border-neutral-200'
                   }`}
                 >
                   <Flag className="text-sm" /> Denúncias ({reportsPendentes + intencoesDenunciasPendentes})
@@ -1159,7 +1191,7 @@ export default function Admin() {
                   className={`px-4 py-2 text-xs font-bold rounded-xl transition flex items-center gap-2 ${
                     subTabPendentes === 'verificacoes'
                       ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
-                      : 'bg-slate-950/40 text-slate-400 hover:text-slate-200 border border-slate-850'
+                      : 'bg-slate-50 text-fg-muted hover:text-fg-strong border border-neutral-200'
                   }`}
                 >
                   <ShieldCheck className="text-sm" /> Verificações ({verificationsPendentes})
@@ -1168,9 +1200,9 @@ export default function Admin() {
 
               {/* Subtab content */}
               {subTabPendentes === 'anuncios' && (
-                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-                  <h3 className="text-sm font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                    <List className="text-amber-500" /> Anúncios Pendentes de Moderação
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+                  <h3 className="text-sm font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                    <List className="text-amber-700" /> Anúncios Pendentes de Moderação
                   </h3>
                   <ListingsTable
                     carros={carrosOrdenados}
@@ -1185,24 +1217,25 @@ export default function Admin() {
                     onRejectPeca={handleRejectPeca}
                     onUpdateCarro={handleUpdateCarro}
                     onUpdatePeca={handleUpdatePeca}
+                    onBulkAction={handleBulkAction}
                   />
                 </div>
               )}
 
               {subTabPendentes === 'oficinas' && (
-                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-                  <h3 className="text-sm font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                    <Wrench className="text-blue-500" /> Oficinas & Mecânicos Pendentes
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+                  <h3 className="text-sm font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                    <Wrench className="text-blue-700" /> Oficinas & Mecânicos Pendentes
                   </h3>
                   {oficinasAdmin.filter(o => o.status === 'pendente').length === 0 ? (
-                    <p className="text-xs text-slate-500">Nenhuma oficina pendente de moderação.</p>
+                    <p className="text-xs text-fg-muted">Nenhuma oficina pendente de moderação.</p>
                   ) : (
                     <div className="space-y-4">
                       {oficinasAdmin.filter(o => o.status === 'pendente').map((oficina) => (
-                        <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-950 border border-slate-850 rounded-2xl p-4 gap-4">
+                        <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 border border-neutral-200 rounded-2xl p-4 gap-4">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-200 truncate">{oficina.nome}</p>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-sm font-bold text-fg-strong truncate">{oficina.nome}</p>
+                            <p className="text-xs text-fg-muted mt-1">
                               Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
                             </p>
                           </div>
@@ -1219,7 +1252,7 @@ export default function Admin() {
               )}
 
               {subTabPendentes === 'avaliacoes' && (
-                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5">
                   <ReviewsQueue
                     reviews={adminReviews}
                     loading={reviewsAdminLoading}
@@ -1232,7 +1265,7 @@ export default function Admin() {
 
               {subTabPendentes === 'denuncias' && (
                 <div className="space-y-6">
-                  <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
+                  <div className="bg-white border border-neutral-200 rounded-2xl p-5">
                     <ReportsQueue
                       reports={reports}
                       loading={reportsLoading}
@@ -1241,16 +1274,16 @@ export default function Admin() {
                   </div>
 
                   {denunciasIntencao.length > 0 && (
-                    <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
-                      <h3 className="text-sm font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                        <Flag className="text-red-500" /> Denúncias de Intenções
+                    <div className="bg-white border border-neutral-200 rounded-2xl p-5">
+                      <h3 className="text-sm font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                        <Flag className="text-red-700" /> Denúncias de Intenções
                       </h3>
                       <div className="space-y-2">
                         {denunciasIntencao.map((denuncia) => (
-                          <div key={denuncia.id} className="flex items-center justify-between bg-slate-950 border border-slate-850 rounded-xl p-3">
+                          <div key={denuncia.id} className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-xl p-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-bold text-slate-200">Motivo: {denuncia.motivo}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">{denuncia.descricao} • Status: {denuncia.status}</p>
+                              <p className="text-sm font-bold text-fg-strong">Motivo: {denuncia.motivo}</p>
+                              <p className="text-xs text-fg-muted mt-0.5">{denuncia.descricao} • Status: {denuncia.status}</p>
                             </div>
                             <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                               <Button tipo="perigo" tamanho="sm" onClick={async () => { await updateIntencaoStatus(denuncia.intencaoId, 'deletada'); await updateDenunciaIntencaoStatus(denuncia.id, 'resolvida', auth.user?.email || 'admin', 'remocao'); setIntencoesAdmin((prev) => prev.filter((i) => i.id !== denuncia.intencaoId)); }}>Remover Intenção</Button>
@@ -1265,7 +1298,7 @@ export default function Admin() {
               )}
 
               {subTabPendentes === 'verificacoes' && (
-                <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5">
+                <div className="bg-white border border-neutral-200 rounded-2xl p-5">
                   <VerificationsQueue
                     verifications={verifications}
                     loading={verificationsLoading}
@@ -1277,22 +1310,22 @@ export default function Admin() {
           )}
 
           {tab === 'premium' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-100">
-              <h2 className="text-lg font-extrabold text-slate-100 mb-4 flex items-center gap-2">
-                <Crown className="text-pink-500 shrink-0" weight="fill" /> Controlo de Módulos Premium
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-fg-heading">
+              <h2 className="text-lg font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+                <Crown className="text-pink-700 shrink-0" weight="fill" /> Controlo de Módulos Premium
               </h2>
               <PremiumTogglePanel />
             </div>
           )}
 
           {tab === 'seguro-financiamento' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-100">
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-fg-heading">
               <SeguroFinanciamentoTab />
             </div>
           )}
 
           {tab === 'banners' && (
-            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-slate-150">
+            <div className="bg-white border border-neutral-200 rounded-2xl p-5 text-fg-heading">
               <BannersTab />
             </div>
           )}

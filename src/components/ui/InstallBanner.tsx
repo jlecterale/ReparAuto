@@ -16,7 +16,7 @@ export default function InstallBanner() {
     >
       <DeviceMobile className="text-2xl text-accent flex-shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm">Instalar ReparAuto</p>
+        <p className="font-bold text-sm">Instalar RecarGarage</p>
         <p className="text-xs text-brand-200">Acesso rápido direto do ecrã inicial.</p>
       </div>
       <Button

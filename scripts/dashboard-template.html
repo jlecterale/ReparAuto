@@ -978,72 +978,38 @@
             <h2 class="card-title">Automatização do Dashboard</h2>
           </div>
           <p style="font-size: 0.9rem; color: var(--text-muted);">
-            Para garantir que cada mudança efetuada no código do projeto seja refletida no dashboard de forma 100% automatizada, pode usar as seguintes duas estratégias:
+            Este dashboard é um <strong>snapshot técnico do projeto</strong> (git, ficheiros, PRs, roadmap), gerado <strong>localmente sob demanda</strong>. As métricas operacionais ao vivo (carros, peças, oficinas, intenções, utilizadores, moderação) vivem agora no <strong>Painel Admin → Visão Geral</strong> do site.
           </p>
 
           <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
-            
-            <!-- Git Hook Option -->
+
+            <!-- Local npm command -->
             <div style="border-left: 4px solid var(--accent); padding-left: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <h3 style="color: var(--text-heading); font-size: 1rem;">Opção A: Automatização Local via Git Hooks</h3>
+              <h3 style="color: var(--text-heading); font-size: 1rem;">Gerar localmente</h3>
               <p style="font-size: 0.85rem; color: var(--text-muted);">
-                Sempre que fizer um <code>git commit</code> localmente, o Git Hook corre o gerador. Crie o ficheiro <code>.git/hooks/post-commit</code> com o seguinte código (e dê permissão de execução com <code>chmod +x</code> se estiver em Linux/macOS):
+                Corra o comando abaixo na raiz do projeto sempre que quiser atualizar este ficheiro. O resultado (<code>docs/dashboard.html</code>) é ignorado pelo Git — é um artefacto local, não versionado.
+              </p>
+              <div class="copy-block">
+                <button class="copy-btn" onclick="copyText('npm-cmd-code', this)">Copiar</button>
+                <pre class="code-block" id="npm-cmd-code">npm run generate:dashboard</pre>
+              </div>
+            </div>
+
+            <!-- Optional git hook -->
+            <div style="border-left: 4px solid var(--green); padding-left: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="color: var(--text-heading); font-size: 1rem;">Opcional: regenerar a cada commit (Git Hook local)</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Se quiser regenerar automaticamente em cada <code>git commit</code>, crie <code>.git/hooks/post-commit</code> (e <code>chmod +x</code> em Linux/macOS):
               </p>
               <div class="copy-block">
                 <button class="copy-btn" onclick="copyText('post-commit-code', this)">Copiar</button>
                 <pre class="code-block" id="post-commit-code">#!/bin/sh
-echo "Atualizando o Dashboard do Projeto automaticamente..."
+echo "Atualizando o Dashboard do Projeto..."
 npm run generate:dashboard
-git add docs/dashboard.html
-git commit --amend --no-verify -C HEAD
 </pre>
               </div>
             </div>
 
-            <!-- GitHub Actions Option -->
-            <div style="border-left: 4px solid var(--green); padding-left: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
-              <h3 style="color: var(--text-heading); font-size: 1rem;">Opção B: Automatização Remota via GitHub Actions</h3>
-              <p style="font-size: 0.85rem; color: var(--text-muted);">
-                Sempre que fizer push para o GitHub, o workflow compila o dashboard atualizado. Crie o ficheiro <code>.github/workflows/update-dashboard.yml</code> com este workflow:
-              </p>
-              <div class="copy-block">
-                <button class="copy-btn" onclick="copyText('github-action-code', this)">Copiar</button>
-                <pre class="code-block" id="github-action-code">name: Update Project Dashboard
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Generate Dashboard
-        run: node scripts/generate-dashboard.mjs
-
-      - name: Commit & Push Dashboard
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/dashboard.html
-          git diff-index --quiet HEAD || git commit -m "chore: auto-update project dashboard [skip ci]"
-          git push
-</pre>
-              </div>
-            </div>
-            
           </div>
         </div>
       </section>

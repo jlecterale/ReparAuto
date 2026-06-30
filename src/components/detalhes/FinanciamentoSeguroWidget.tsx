@@ -179,7 +179,7 @@ export default function FinanciamentoSeguroWidget({
           className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-accent focus:ring-accent/30"
         />
         <span className="text-[10px] text-fg-subtle leading-relaxed">
-          Autorizo a partilha dos meus dados de contacto com os parceiros de crédito e seguro da ReparAuto
+          Autorizo a partilha dos meus dados de contacto com os parceiros de crédito e seguro da RecarGarage
           para receber propostas, nos termos da Política de Privacidade (RGPD).
         </span>
       </label>

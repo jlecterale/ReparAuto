@@ -50,7 +50,7 @@ export default function Favoritos() {
           <p className="text-sm text-fg-subtle mt-1 mb-4">
             Toque no coração de um anúncio para o guardar aqui.
           </p>
-          <Button tipo="primario" tamanho="sm" onClick={() => router.push('/')}>
+          <Button tipo="primario" tamanho="sm" onClick={() => router.push('/app')}>
             Ver anúncios
           </Button>
         </div>

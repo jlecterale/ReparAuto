@@ -24,6 +24,7 @@ export interface Carro {
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
+  videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   manutencaoOutro?: string;
@@ -71,6 +72,7 @@ export interface CarroFormData {
   localizacaoDistrito: string;
   preco: string;
   descricao: string;
+  videoUrl: string;
   estadoVeiculo: EstadoVeiculo;
   rodando: string;
   inspecao: string;

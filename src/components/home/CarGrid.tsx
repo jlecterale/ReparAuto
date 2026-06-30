@@ -362,7 +362,7 @@ export default function CarGrid() {
                   <div key={oficina.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 hover:border-accent/40 hover:shadow-md transition-all flex flex-col justify-between">
                     <div>
                       <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 border border-brand-100 dark:border-brand-900">
+                        <div className="w-10 h-10 bg-brand-50 text-brand-600 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 border border-brand-100">
                           {oficina.logoUrl ? (
                             <img src={oficina.logoUrl} alt={oficina.nome || ''} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-lg" />
                           ) : (

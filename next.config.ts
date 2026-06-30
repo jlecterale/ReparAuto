@@ -33,7 +33,7 @@ const cspDirectives = [
   "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org https://www.google-analytics.com https://*.google-analytics.com",
   "font-src 'self' https://fonts.gstatic.com",
   `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org`,
-  "frame-src 'self' https://*.firebaseapp.com https://apis.google.com",
+  "frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://www.youtube-nocookie.com https://www.youtube.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",

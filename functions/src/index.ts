@@ -54,7 +54,13 @@ export const pushOnNotification = onDocumentCreated(
         body: data.mensagem ?? "",
       },
       data: { link: data.link ?? "", tipo: data.tipo ?? "" },
-      android: { priority: "high" },
+      // channelId must match the channel the mobile app creates in
+      // src/lib/push.ts (ANDROID_CHANNEL_ID = 'default'); otherwise Android 8+
+      // drops background notifications instead of showing them.
+      android: {
+        priority: "high",
+        notification: { channelId: "default", sound: "default" },
+      },
       apns: { payload: { aps: { sound: "default" } } },
     });
 
@@ -79,4 +85,73 @@ export const pushOnNotification = onDocumentCreated(
       pruned: invalid.length,
     });
   },
+);
+
+/**
+ * Alerts every admin when a new listing lands for moderation. Runs server-side
+ * on creation of cars/parts/services (so it covers listings created from the web
+ * and from mobile alike), writing one `info` notification per admin. The
+ * `pushOnNotification` trigger above then turns each doc into an FCM push, so the
+ * admin gets both an in-app notification and a push that deep-links to `/admin`.
+ */
+type ListingKind = "carro" | "peca" | "oficina";
+
+async function notifyAdminsOfPendingListing(
+  data: Record<string, unknown> | undefined,
+  kind: ListingKind,
+): Promise<void> {
+  if (!data || data.status !== "pendente") return;
+
+  const db = getFirestore();
+  const adminsSnap = await db
+    .collection("users")
+    .where("role", "==", "admin")
+    .get();
+  if (adminsSnap.empty) return;
+
+  const label =
+    kind === "carro" ? "Carro" : kind === "peca" ? "Peça" : "Oficina";
+  const nome =
+    kind === "carro"
+      ? `${data.marca ?? ""} ${data.modelo ?? ""}`.trim()
+      : kind === "peca"
+        ? String(data.titulo ?? "")
+        : String(data.nome ?? "");
+  const mensagem = nome
+    ? `${label} "${nome}" aguarda revisão.`
+    : `Um novo anúncio (${label.toLowerCase()}) aguarda revisão.`;
+
+  const batch = db.batch();
+  adminsSnap.docs.forEach((adminDoc) => {
+    batch.set(db.collection("notifications").doc(), {
+      uid: adminDoc.id,
+      tipo: "info",
+      titulo: "Novo anúncio pendente",
+      mensagem,
+      link: "/admin",
+      lida: false,
+      dataCriacao: FieldValue.serverTimestamp(),
+    });
+  });
+  await batch.commit();
+
+  logger.info("admin pending alert", { kind, admins: adminsSnap.size });
+}
+
+export const notifyAdminsOnCarPending = onDocumentCreated(
+  "cars/{id}",
+  async (event) =>
+    notifyAdminsOfPendingListing(event.data?.data(), "carro"),
+);
+
+export const notifyAdminsOnPartPending = onDocumentCreated(
+  "parts/{id}",
+  async (event) =>
+    notifyAdminsOfPendingListing(event.data?.data(), "peca"),
+);
+
+export const notifyAdminsOnServicePending = onDocumentCreated(
+  "services/{id}",
+  async (event) =>
+    notifyAdminsOfPendingListing(event.data?.data(), "oficina"),
 );

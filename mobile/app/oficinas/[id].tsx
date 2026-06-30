@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -13,6 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { StarRating } from '@/components/ui/StarRating';
+import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getOficinaById } from '@/lib/db';
 import { subscribeReviews } from '@/lib/trust';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -64,6 +66,14 @@ export default function DetalhesOficinaScreen() {
   const morada = [oficina.morada, oficina.localidade, oficina.distrito]
     .filter(Boolean)
     .join(', ');
+  // Universal Google Maps link — opens the Maps app if installed, else the
+  // browser. Needs no API key. Prefer exact coordinates, fall back to the
+  // address text.
+  const mapaUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    oficina.coordenadas
+      ? `${oficina.coordenadas.latitude},${oficina.coordenadas.longitude}`
+      : morada,
+  )}`;
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -134,11 +144,24 @@ export default function DetalhesOficinaScreen() {
             </View>
           )}
 
+          {!!oficina.videoUrl && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Vídeo</Text>
+              <VideoPreview url={oficina.videoUrl} />
+            </View>
+          )}
+
           {!!morada && (
-            <View className="mt-5 flex-row items-start">
+            <Pressable
+              onPress={() => Linking.openURL(mapaUrl)}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir morada no Google Maps"
+              className="mt-5 flex-row items-start active:opacity-60"
+            >
               <Ionicons name="location-outline" size={18} color={colors.primary[600]} />
               <Text className="ml-2 flex-1 text-base text-fg">{morada}</Text>
-            </View>
+              <Text className="ml-2 mt-0.5 text-sm font-semibold text-primary-700">Ver no mapa</Text>
+            </Pressable>
           )}
 
           {/* Avaliações */}

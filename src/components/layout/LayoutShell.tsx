@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect, useLayoutEffect, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import MobileTopBar from '@/components/layout/MobileTopBar';
 import Footer from '@/components/layout/Footer';
@@ -12,17 +12,116 @@ import { useToast } from '@/components/ui/Toast';
 import { WarningCircle } from '@phosphor-icons/react';
 import NotificationPrePrompt from '@/components/ui/NotificationPrePrompt';
 import CookieConsent from '@/components/ui/CookieConsent';
+import OnboardingTour, { type OnboardingIntent } from '@/components/onboarding/OnboardingTour';
+import RedirectingOverlay from '@/components/onboarding/RedirectingOverlay';
+import BrandSplash from '@/components/onboarding/BrandSplash';
+import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/onboarding';
+
+// useLayoutEffect runs before the browser paints (so we can cover the home
+// before it's ever shown), but warns during SSR — fall back to useEffect there.
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 export default function LayoutShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isAdminRoute = pathname?.startsWith('/admin');
+  const isLandingPage = pathname === '/';
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { auth } = useApp();
+  const { auth, loginModal } = useApp();
   const { user, isLoggedIn, refreshProfile, reenviarEmailVerificacao } = auth;
   const toast = useToast();
 
+  // ---- Welcome onboarding (anonymous-first intent router) ----
+  const [showTour, setShowTour] = useState(false);
+  // Whether the welcome flow is settled (shown-and-closed, or never needed).
+  // The cookie banner stays deferred until this is true, so the two first-visit
+  // overlays are sequenced instead of stacking on top of each other.
+  const [onboardingResolved, setOnboardingResolved] = useState(false);
+  // While we're still deciding whether a first-time home visitor gets the tour
+  // (i.e. waiting on auth), cover the screen so the listings never flash first.
+  const [deciding, setDeciding] = useState(false);
+  // Full-screen cover shown while navigating to the chosen intent's page, so
+  // the home listings never flash through the async route transition.
+  const [redirecting, setRedirecting] = useState<{ route: string; label: string } | null>(null);
 
+  // Runs before the first paint: if this could be a first-time visitor landing
+  // on the home route, drop the cover immediately so nothing shows until the
+  // auth check below resolves into either the tour or the real page. Repeat
+  // visitors and non-home routes skip the cover entirely.
+  useIsomorphicLayoutEffect(() => {
+    if (isAdminRoute || isLandingPage || pathname !== '/app') return;
+    if (hasSeenOnboarding()) return;
+    setDeciding(true);
+  }, []);
+
+  // Safety net: never keep the cover up for more than a moment if auth stalls.
+  useEffect(() => {
+    if (!deciding) return;
+    const t = setTimeout(() => setDeciding(false), 3000);
+    return () => clearTimeout(t);
+  }, [deciding]);
+
+  useEffect(() => {
+    if (auth.loading) return;
+    // Authenticated visitors never need the welcome; remember that so a later
+    // logout in the same session doesn't pop the first-launch tour at them.
+    if (isLoggedIn) {
+      markOnboardingSeen();
+      setOnboardingResolved(true);
+      setDeciding(false);
+      return;
+    }
+    // Only the home entry point shows the tour; everywhere else (and repeat
+    // visitors) the onboarding is already resolved, so the cookie banner may show.
+    if (isAdminRoute || isLandingPage || pathname !== '/app' || hasSeenOnboarding()) {
+      setOnboardingResolved(true);
+      setDeciding(false);
+      return;
+    }
+    // Anonymous first-time visitor on /app: reveal the welcome now. The cover is
+    // swapped straight for the tour (same gradient), so there's no listings flash.
+    setShowTour(true);
+    setDeciding(false);
+  }, [auth.loading, isLoggedIn, isAdminRoute, isLandingPage, pathname]);
+
+  const handleSelectIntent = (intent: OnboardingIntent) => {
+    markOnboardingSeen();
+    setOnboardingResolved(true);
+    // Swap the tour straight for the redirect cover (same gradient → no flash),
+    // then take the visitor to the page for the job they picked and open the
+    // signup modal on top of it. The cover hides the async route transition so
+    // the home listings — which can feel sparse while the marketplace is young —
+    // never show through; the cover lifts once the destination page is active.
+    setRedirecting({ route: intent.route, label: intent.label });
+    setShowTour(false);
+    router.push(intent.route);
+    loginModal.openLoginModal(undefined, {
+      modoInicial: 'registar',
+      contexto: intent.contexto,
+      intent: intent.route,
+    });
+  };
+
+  // Lift the redirect cover once we've arrived at the destination route (give it
+  // one beat to paint under the modal). The timeout is a safety net so a stalled
+  // navigation can never trap the visitor behind the cover.
+  useEffect(() => {
+    if (!redirecting) return;
+    const targetPath = redirecting.route.split('?')[0];
+    if (pathname === targetPath) {
+      const t = setTimeout(() => setRedirecting(null), 200);
+      return () => clearTimeout(t);
+    }
+    const fallback = setTimeout(() => setRedirecting(null), 4000);
+    return () => clearTimeout(fallback);
+  }, [pathname, redirecting]);
+
+  const handleDismissTour = () => {
+    markOnboardingSeen();
+    setShowTour(false);
+    setOnboardingResolved(true);
+  };
 
   const [resending, setResending] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -82,6 +181,15 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
     return <div className="min-h-screen bg-slate-950 flex flex-col">{children}</div>;
   }
 
+  if (isLandingPage) {
+    return (
+      <>
+        {children}
+        <CookieConsent deferred={false} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <Sidebar open={drawerOpen} onClose={() => setDrawerOpen(false)} />
@@ -125,7 +233,7 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
 
       <BottomNav />
       <ChatModal />
-      <CookieConsent />
+      <CookieConsent deferred={!onboardingResolved} />
       {showNotifPrompt && user && (
         <NotificationPrePrompt
           uid={user.uid}
@@ -133,6 +241,11 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
           onToken={handleNotifToken}
         />
       )}
+      {showTour && (
+        <OnboardingTour onSelectIntent={handleSelectIntent} onDismiss={handleDismissTour} />
+      )}
+      {deciding && !showTour && <BrandSplash />}
+      {redirecting && <RedirectingOverlay label={redirecting.label} />}
     </div>
   );
 }

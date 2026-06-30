@@ -1,7 +1,7 @@
 import type { ButtonProps } from '@/types/ui';
 
 /**
- * Canonical action button for ReparAuto.
+ * Canonical action button for RecarGarage.
  *
  * Variants (`tipo`):
  *  - `primario`   — main call to action (brand orange, white text)

@@ -1,16 +1,19 @@
-import { useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { router } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { addPeca, uploadAnuncioFoto } from '@/lib/db';
+import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
+import { colors } from '@/theme/colors';
 import { TIPO_PECA_LABELS, type TipoPeca } from '@/types';
 
 const TIPOS = (Object.keys(TIPO_PECA_LABELS) as TipoPeca[]).map((t) => ({
@@ -21,10 +24,13 @@ const TIPOS = (Object.keys(TIPO_PECA_LABELS) as TipoPeca[]).map((t) => ({
 const ESTADOS = ['Novo', 'Usado', 'Recondicionado'].map((e) => ({ value: e, label: e }));
 
 export default function AnunciarPecaScreen() {
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
 
   const [foto, setFoto] = useState<string[]>([]);
   const [tipo, setTipo] = useState<TipoPeca>('venda');
@@ -39,8 +45,37 @@ export default function AnunciarPecaScreen() {
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [carregando, setCarregando] = useState(!!editId);
+  const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   const precisaPreco = tipo !== 'procura';
+
+  useEffect(() => {
+    if (!editId) return;
+    let cancelled = false;
+    getPecaById(editId)
+      .then((p) => {
+        if (cancelled || !p) return;
+        setFoto(p.foto ? [p.foto] : []);
+        setTipo(p.tipo ?? 'venda');
+        setTitulo(p.titulo ?? '');
+        setCategoria(p.categoria ?? '');
+        setMarca(p.marcaCarro ?? '');
+        setModelo(p.modeloCarro ?? '');
+        setPreco(p.preco != null ? String(p.preco) : '');
+        setEstado(p.estado ?? 'Usado');
+        setLocal(p.local ?? '');
+        setDescricao(p.descricao ?? '');
+        setTelefone(p.vendedorTelefone ?? user?.telefone ?? '');
+        setWhatsapp(p.vendedorWhatsApp ?? '');
+      })
+      .finally(() => {
+        if (!cancelled) setCarregando(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editId, user?.telefone]);
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título.';
@@ -65,9 +100,9 @@ export default function AnunciarPecaScreen() {
 
     setEnviando(true);
     try {
-      const fotoUrl = foto[0] ? await uploadAnuncioFoto(user.uid, foto[0], 0) : undefined;
+      const fotoUrl = foto[0] ? await uploadFotoIfLocal(user.uid, foto[0], 0) : undefined;
 
-      await addPeca({
+      const dados = {
         tipo,
         titulo: titulo.trim(),
         categoria: categoria.trim(),
@@ -78,28 +113,45 @@ export default function AnunciarPecaScreen() {
         local: local.trim(),
         descricao: descricao.trim(),
         foto: fotoUrl,
-        criador: user.email,
-        criadorUid: user.uid,
         vendedorNome: user.nome,
         vendedorTelefone: telefone.trim() || undefined,
         vendedorWhatsApp: whatsapp.trim() || undefined,
-        vendedorEmail: user.email,
-      });
+      };
+
+      if (editId) {
+        await updatePeca(editId, { ...dados, status: 'pendente' });
+      } else {
+        await addPeca({
+          ...dados,
+          criador: user.email,
+          criadorUid: user.uid,
+          vendedorEmail: user.email,
+        });
+      }
 
       Alert.alert(
-        'Anúncio enviado',
+        editId ? 'Peça atualizada' : 'Anúncio enviado',
         'A sua peça foi submetida e ficará visível após aprovação.',
         [{ text: 'OK', onPress: () => router.dismissAll() }],
       );
     } catch {
-      showToast('Não foi possível publicar. Tente novamente.', 'error');
+      showToast('Não foi possível guardar. Tente novamente.', 'error');
     } finally {
       setEnviando(false);
     }
   }
 
+  if (carregando) {
+    return (
+      <View className="flex-1 items-center justify-center bg-neutral-50">
+        <ActivityIndicator size="large" color={colors.primary[600]} />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoider offset={headerHeight} className="flex-1 bg-neutral-50">
+      <Stack.Screen options={{ title: editId ? 'Editar peça' : 'Anunciar peça' }} />
       <ScrollView
         contentContainerClassName="p-4 gap-4"
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
@@ -111,14 +163,29 @@ export default function AnunciarPecaScreen() {
         <Input label="Título *" value={titulo} onChangeText={setTitulo} placeholder="Farol dianteiro esquerdo" />
         <Input label="Categoria *" value={categoria} onChangeText={setCategoria} placeholder="Iluminação" />
 
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <Input label="Marca do carro *" value={marca} onChangeText={setMarca} placeholder="Renault" />
-          </View>
-          <View className="flex-1">
-            <Input label="Modelo" value={modelo} onChangeText={setModelo} placeholder="Clio" />
-          </View>
-        </View>
+        <SelectField
+          label="Marca do carro *"
+          value={marca}
+          onChange={(v) => {
+            setMarca(v);
+            setModelo('');
+          }}
+          options={marcas}
+          loading={marcasLoading}
+          allowCustom
+          placeholder="Selecionar marca"
+          title="Marca do carro"
+        />
+        <SelectField
+          label="Modelo"
+          value={modelo}
+          onChange={setModelo}
+          options={modelos}
+          allowCustom
+          disabled={!marca}
+          placeholder={marca ? 'Selecionar modelo' : 'Escolha a marca primeiro'}
+          title="Modelo"
+        />
 
         {precisaPreco && (
           <Input
@@ -154,7 +221,7 @@ export default function AnunciarPecaScreen() {
         </View>
 
         <Button
-          label={enviando ? 'A publicar…' : 'Publicar peça'}
+          label={enviando ? 'A guardar…' : editId ? 'Guardar alterações' : 'Publicar peça'}
           onPress={publicar}
           loading={enviando}
           className="mt-2"

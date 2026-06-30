@@ -1,7 +1,7 @@
 'use client';
 
-import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle, CheckCircle, Circle } from '@phosphor-icons/react';
+import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -14,14 +14,16 @@ interface LoginModalProps {
   show: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  modoInicial?: 'login' | 'registar';
+  contexto?: string;
 }
 
-export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps) {
+export default function LoginModal({ show, onClose, onSuccess, modoInicial, contexto }: LoginModalProps) {
   const { auth } = useApp();
   const { login, registar, loginGoogle } = auth;
   const toast = useToast();
 
-  const [modo, setModo] = useState<'login' | 'registar' | 'reset'>('login');
+  const [modo, setModo] = useState<'login' | 'registar' | 'reset'>(modoInicial ?? 'login');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,6 +31,19 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
   const [emailSent, setEmailSent] = useState(false);
+
+  // Sync the active tab to the requested mode only when the modal OPENS, so an
+  // onboarding-driven open lands on "Criar Conta" while a plain open stays on
+  // login. Gating on the closed→open transition preserves a mid-session manual
+  // switch even if another openLoginModal call changes modoInicial while open.
+  const wasShown = useRef(false);
+  useEffect(() => {
+    if (show && !wasShown.current) {
+      setModo(modoInicial ?? 'login');
+      setErro('');
+    }
+    wasShown.current = show;
+  }, [show, modoInicial]);
 
   const handleSubmit = async () => {
     setErro('');
@@ -41,9 +56,23 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
       setErro('Preencha o nome completo.');
       return;
     }
-    if (password.length < 6) {
-      setErro('A palavra-passe deve ter pelo menos 6 caracteres.');
-      return;
+    if (modo === 'registar') {
+      if (password.length < 8) {
+        setErro('A palavra-passe deve ter pelo menos 8 caracteres.');
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos uma letra maiúscula.');
+        return;
+      }
+      if (!/\d/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos um número.');
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos um símbolo.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -106,6 +135,12 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
   return (
     <Modal show={show} onClose={onClose} titulo={modo === 'reset' ? 'Recuperar Palavra-passe' : modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
       <div className="space-y-4">
+        {contexto && modo !== 'reset' && (
+          <div className="flex items-start gap-2.5 rounded-xl bg-accent/10 border border-accent/20 p-3 text-sm text-fg">
+            <Sparkle weight="fill" className="text-accent mt-0.5 shrink-0" />
+            <span className="font-medium">{contexto}</span>
+          </div>
+        )}
         {modo !== 'reset' && (
           <>
             <Button
@@ -166,7 +201,7 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
               name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
@@ -181,6 +216,28 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
                 </button>
               }
             />
+
+            {modo === 'registar' && password.length > 0 && (
+              <div className="-mt-2 space-y-1">
+                {([
+                  { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+                  { label: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
+                  { label: 'Um número', valid: /\d/.test(password) },
+                  { label: 'Um símbolo (!@#$...)', valid: /[^A-Za-z0-9]/.test(password) },
+                ] as const).map((check) => (
+                  <div key={check.label} className="flex items-center gap-1.5">
+                    {check.valid ? (
+                      <CheckCircle size={14} weight="fill" className="text-success-600 shrink-0" />
+                    ) : (
+                      <Circle size={14} className="text-neutral-400 shrink-0" />
+                    )}
+                    <span className={`text-xs ${check.valid ? 'text-success-600 font-medium' : 'text-fg-subtle'}`}>
+                      {check.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {modo === 'login' && (
               <p className="text-xs -mt-2">
@@ -225,7 +282,7 @@ export default function LoginModal({ show, onClose, onSuccess }: LoginModalProps
             tamanho="lg"
             blocoCompleto
             carregando={loading}
-            disabled={loading || !email.trim() || !password.trim()}
+            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && (password.length < 8 || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)))}
             onClick={handleSubmit}
           >
             {modo === 'login' ? 'Entrar' : 'Criar Conta'}

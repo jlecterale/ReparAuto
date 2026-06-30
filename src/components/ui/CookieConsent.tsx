@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Cookie, Gear } from '@phosphor-icons/react';
 import Button from './Button';
 
-export default function CookieConsent() {
+export default function CookieConsent({ deferred = false }: { deferred?: boolean }) {
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   
@@ -45,11 +45,10 @@ export default function CookieConsent() {
       localStorage.removeItem('favs_reparauto');
     }
     
-    // Dispatch custom event to notify other hooks
+    // Notify consent-aware hooks (e.g. favourites) to re-read preferences live.
+    // No full reload — a reload here flashes the page and, on first visit, would
+    // re-trigger the welcome tour. Hooks listen for this event instead.
     window.dispatchEvent(new Event('cookieConsentChanged'));
-    
-    // Reload page to apply changes cleanly across all hooks/providers
-    window.location.reload();
   };
 
   const handleAcceptAll = () => {
@@ -64,7 +63,9 @@ export default function CookieConsent() {
     saveConsent({ necessarios: true, funcionais, analiticos });
   };
 
-  if (!showBanner) return null;
+  // While the welcome tour is up, hold the banner back so the two first-visit
+  // overlays don't compete; it slides in once the tour is resolved.
+  if (deferred || !showBanner) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[100] bg-white border-t border-slate-200 shadow-2xl p-4 sm:p-6 page-enter">

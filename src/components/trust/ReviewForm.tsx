@@ -73,7 +73,7 @@ export default function ReviewForm({
   if (enviado) {
     return (
       <Alert tipo="aviso" align="center" icone={<Clock />} titulo="Avaliação enviada!">
-        A sua avaliação será visível após aprovação pela equipa ReparAuto.
+        A sua avaliação será visível após aprovação pela equipa RecarGarage.
       </Alert>
     );
   }

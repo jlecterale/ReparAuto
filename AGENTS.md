@@ -4,6 +4,8 @@ Portuguese marketplace for used cars, parts, workshops and purchase intents. Nex
 
 `CLAUDE.md` holds the day-to-day conventions and architecture summary; this file adds the source map, implementation notes and the feature workflow.
 
+> 🏷️ **Brand name: the product is called RecarGarage (one word).** It is the only name allowed in anything users see — UI copy, metadata, emails, chat, OpenGraph/JSON-LD. "ReparAuto" (this file's title, the repo, the `reparauto-site` Firebase project, the `favs_reparauto` key) is an **internal** historical name only — never show it to users, and never write variants like "Recar Garage" or "Repar Auto". Default to `RecarGarage`. Public domain: `recargarage.com`.
+
 > 🚫 **The `mobile/` folder is off-limits by default.** It holds the separate React Native / Expo app (see `docs/plans/19-app-react-native.html`). Do **not** read, search, analyze, or modify anything under `mobile/` unless the user's request is *explicitly* about the mobile app. For all web/marketplace work, ignore `mobile/` entirely — don't grep it, don't touch it. (Likewise treat `functions/` as a separate Cloud Functions surface — only enter it for explicit Functions work.)
 
 > ⚠️ **Never run `firebase deploy` (in any form) on your own.** Deploying — App Hosting, Firestore/Storage rules, Cloud Functions, indexes, anything — is **always** an explicit, user-initiated action. Do not run `npm run deploy:rules`, `npm run deploy:hosting`, `firebase deploy ...`, or any `firebase`/`gcloud` deploy command unless the user asks for that specific deploy in the current turn. Approval to deploy in one turn does **not** carry over to a later turn. When a change is ready to ship, build/type-check it and then **tell the user which command to run** — let them run it.
@@ -128,7 +130,7 @@ Only after this pass is clean should you open the PR (when the user asks) or rep
 
 - `camelCase` for identifiers; `PascalCase` for TypeScript interfaces.
 - Chat responses in Portuguese only.
-- Code (comments, variable names, commit messages) in English; UI text in Portuguese.
+- **All code in English** (strict): identifiers — functions, variables, params, types, enum members, file names — plus comments and commit messages. **Only user-facing strings** are Portuguese. Never introduce a new Portuguese identifier; prefer `createNotification` over `criarNotificacao`. Legacy Portuguese names (`carro`, `pecas`, `oficinas`, `descricao`, … and the Firestore fields that mirror them) stay as-is — renaming them is a data-schema change — but no new ones.
 - Imports always via the `@/` alias (maps to `src/`).
 - Navigation via `next/navigation` and `next/link` — never `react-router-dom`.
 - Firebase API keys are public (expected for Firebase Web SDKs).

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Link, router, useLocalSearchParams, type Href } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as WebBrowser from 'expo-web-browser';
@@ -21,12 +21,24 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { next, contexto, fromTour } = useLocalSearchParams<{ next?: string; contexto?: string; fromTour?: string }>();
+  const authParams: Record<string, string> = {};
+  if (next) authParams.next = next;
+  if (contexto) authParams.contexto = contexto;
+  if (fromTour) authParams.fromTour = fromTour;
 
-  // After authenticating (the auth flow is a modal): if the profile is
+  // After authenticating (the auth flow is a modal): from the welcome, head
+  // straight to the chosen flow (`next`); otherwise, if the profile is
   // incomplete, send the user to Perfil to finish it (mirrors the web's
-  // setup-perfil redirect); otherwise return to where they were.
+  // setup-perfil redirect); else return to where they were.
   function aposLogin(profileCompleted: boolean) {
     if (router.canDismiss()) router.dismiss();
+    if (next) {
+      // Defer a tick so the (auth) modal finishes dismissing before its target
+      // modal (e.g. /anunciar/*) is presented.
+      setTimeout(() => router.navigate(next as Href), 0);
+      return;
+    }
     if (!profileCompleted) router.navigate('/perfil');
     else if (!router.canGoBack()) router.replace('/');
   }
@@ -97,6 +109,13 @@ export default function LoginScreen() {
             </Text>
           </View>
 
+          {contexto ? (
+            <View className="mb-5 flex-row items-start gap-2 rounded-xl border border-accent/20 bg-accent/10 p-3">
+              <Ionicons name="sparkles" size={16} color={colors.accent} style={{ marginTop: 1 }} />
+              <Text className="flex-1 text-sm font-medium text-fg">{contexto}</Text>
+            </View>
+          ) : null}
+
           <View className="gap-4">
             <Input
               label="Email"
@@ -145,7 +164,7 @@ export default function LoginScreen() {
 
           <View className="mt-8 flex-row justify-center">
             <Text className="text-fg-muted">Ainda não tem conta? </Text>
-            <Link href="/registar" asChild>
+            <Link href={{ pathname: '/registar', params: authParams }} asChild>
               <Pressable>
                 <Text className="font-bold text-primary-700">Criar conta</Text>
               </Pressable>

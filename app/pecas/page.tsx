@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     'Mercado de peças automóveis e veículos completos para desmantelamento em Portugal. Compre, venda ou procure peças usadas.',
   alternates: { canonical: '/pecas' },
   openGraph: {
-    title: 'Peças & Desmonte · ReparAuto',
+    title: 'Peças & Desmonte · RecarGarage',
     description:
       'Mercado de peças automóveis e veículos completos para desmantelamento em Portugal.',
     url: '/pecas',

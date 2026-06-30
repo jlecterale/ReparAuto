@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
+  Pressable,
   ScrollView,
   Text,
   View,
@@ -13,7 +14,10 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
-import { getCarroById } from '@/lib/db';
+import { OwnerStats } from '@/components/ui/OwnerStats';
+import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { VideoPreview } from '@/components/ui/VideoPreview';
+import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -28,16 +32,23 @@ export default function DetalhesCarroScreen() {
   const requireAuth = useRequireAuth();
   const [carro, setCarro] = useState<Carro | null>(null);
   const [loading, setLoading] = useState(true);
+  const [visorAberto, setVisorAberto] = useState(false);
+  const [indiceVisor, setIndiceVisor] = useState(0);
 
   useEffect(() => {
     let active = true;
     getCarroById(id)
-      .then((c) => active && setCarro(c))
+      .then((c) => {
+        if (!active) return;
+        setCarro(c);
+        // Count the view for everyone except the owner.
+        if (c && c.criadorUid !== user?.uid) registarVisualizacao('cars', id);
+      })
       .finally(() => active && setLoading(false));
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, user?.uid]);
 
   if (loading) {
     return (
@@ -57,6 +68,7 @@ export default function DetalhesCarroScreen() {
   }
 
   const fotos = carro.fotos?.length ? carro.fotos : [];
+  const ehDono = !!carro.criadorUid && carro.criadorUid === user?.uid;
   const podeMensagem = !!carro.criadorUid && carro.criadorUid !== user?.uid;
 
   return (
@@ -90,25 +102,42 @@ export default function DetalhesCarroScreen() {
       />
       <ScrollView contentContainerClassName="pb-28">
         {/* Gallery */}
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-          {fotos.map((url, i) => (
-            <Image
-              key={i}
-              source={url}
-              style={{ width, height: width * 0.72 }}
-              contentFit="cover"
-              transition={200}
-            />
-          ))}
-          {fotos.length === 0 && (
-            <View
-              style={{ width, height: width * 0.72 }}
-              className="items-center justify-center bg-neutral-200"
-            >
-              <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />
+        <View>
+          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+            {fotos.map((url, i) => (
+              <Pressable
+                key={i}
+                onPress={() => {
+                  setIndiceVisor(i);
+                  setVisorAberto(true);
+                }}
+                accessibilityRole="imagebutton"
+                accessibilityLabel={`Ampliar foto ${i + 1}`}
+              >
+                <Image
+                  source={url}
+                  style={{ width, height: width * 0.72 }}
+                  contentFit="cover"
+                  transition={200}
+                />
+              </Pressable>
+            ))}
+            {fotos.length === 0 && (
+              <View
+                style={{ width, height: width * 0.72 }}
+                className="items-center justify-center bg-neutral-200"
+              >
+                <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />
+              </View>
+            )}
+          </ScrollView>
+          {fotos.length > 0 && (
+            <View className="absolute bottom-3 right-3 flex-row items-center gap-1 rounded-full bg-black/55 px-2.5 py-1">
+              <Ionicons name="expand-outline" size={13} color="#fff" />
+              <Text className="text-xs font-semibold text-white">{fotos.length}</Text>
             </View>
           )}
-        </ScrollView>
+        </View>
 
         <View className="p-4">
           <Text className="text-2xl font-extrabold text-fg-heading">
@@ -117,6 +146,18 @@ export default function DetalhesCarroScreen() {
           <Text className="mt-1 text-3xl font-black text-accent">
             {formatPreco(carro.preco)}
           </Text>
+
+          {ehDono && (
+            <View className="mt-4">
+              <Text className="mb-2 text-sm font-bold text-fg-heading">As suas estatísticas</Text>
+              <OwnerStats
+                variant="card"
+                visualizacoes={carro.visualizacoes}
+                contagemMensagens={carro.contagemMensagens}
+                contagemFavoritos={carro.contagemFavoritos ?? 0}
+              />
+            </View>
+          )}
 
           {/* Specs */}
           <View className="mt-5 flex-row flex-wrap">
@@ -132,6 +173,13 @@ export default function DetalhesCarroScreen() {
             <View className="mt-5">
               <Text className="mb-2 text-lg font-bold text-fg-heading">Descrição</Text>
               <Text className="text-base leading-6 text-fg">{carro.descricao}</Text>
+            </View>
+          )}
+
+          {!!carro.videoUrl && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Vídeo</Text>
+              <VideoPreview url={carro.videoUrl} />
             </View>
           )}
         </View>
@@ -182,6 +230,13 @@ export default function DetalhesCarroScreen() {
           />
         ) : null}
       </View>
+
+      <PhotoViewer
+        visible={visorAberto}
+        fotos={fotos}
+        initialIndex={indiceVisor}
+        onClose={() => setVisorAberto(false)}
+      />
     </View>
   );
 }

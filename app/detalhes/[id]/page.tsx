@@ -18,10 +18,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Anúncio não encontrado', robots: { index: false, follow: false } };
   }
   const title = `${carro.marca} ${carro.modelo} ${carro.anoFabricacao} · ${carro.preco.toLocaleString('pt-PT')}€`;
-  const description = `${carro.marca} ${carro.modelo} de ${carro.anoFabricacao}, ${(carro.km || 0).toLocaleString('pt-PT')} km, ${carro.combustivel}, ${carro.cambio}, em ${carro.local || 'Portugal'}. ${carro.estadoVeiculo === 'manutencao' ? 'Precisa de manutenção. ' : ''}Anúncio no ReparAuto.`;
+  const description = `${carro.marca} ${carro.modelo} de ${carro.anoFabricacao}, ${(carro.km || 0).toLocaleString('pt-PT')} km, ${carro.combustivel}, ${carro.cambio}, em ${carro.local || 'Portugal'}. ${carro.estadoVeiculo === 'manutencao' ? 'Precisa de manutenção. ' : ''}Anúncio no RecarGarage.`;
 
   const fotoData = carro.fotos?.[0] ? renderFoto(carro.fotos[0]) : null;
-  const images = fotoData?.type === 'img' ? [fotoData.src] : [`${SITE_URL}/og-default.png`];
+  const images = fotoData?.type === 'img' ? [fotoData.src] : [`${SITE_URL}/opengraph-image`];
 
   return {
     title,

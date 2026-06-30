@@ -9,7 +9,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const carros = await getCarrosServer().catch(() => []);
 
   const staticEntries: MetadataRoute.Sitemap = [
-    { url: `${SITE_URL}/`, changeFrequency: 'daily', priority: 1 },
+    { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1 },
+    { url: `${SITE_URL}/app`, changeFrequency: 'daily', priority: 0.95 },
     { url: `${SITE_URL}/pecas`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/oficinas`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/faq`, changeFrequency: 'weekly', priority: 0.7 },

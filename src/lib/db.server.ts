@@ -3,6 +3,7 @@ import { cache } from 'react';
 import { getAdminDb, ADMIN_PROJECT_ID } from './firebase.admin';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
+import type { OficinaMecanico } from '@/types/oficina';
 import type { IntencaoCompra } from '@/types/intencao';
 
 const REST_BASE = `https://firestore.googleapis.com/v1/projects/${ADMIN_PROJECT_ID}/databases/(default)/documents`;
@@ -126,6 +127,21 @@ export async function getPecasServer(): Promise<Peca[]> {
   const all = adminResult ?? (await restList('parts')).map((d) => decodeDoc<Peca>(d));
   return all.filter((p) => p.status === 'aprovado');
 }
+
+export const getPecaPorIdServer = cache(async (id: string): Promise<Peca | null> => {
+  const adminResult = await adminGet<Peca>('parts', id);
+  if (adminResult) return adminResult;
+  const doc = await restGet('parts', id);
+  return doc ? decodeDoc<Peca>(doc) : null;
+});
+
+// Workshops/mechanics live in the `services` collection (public-read).
+export const getOficinaPorIdServer = cache(async (id: string): Promise<OficinaMecanico | null> => {
+  const adminResult = await adminGet<OficinaMecanico>('services', id);
+  if (adminResult) return adminResult;
+  const doc = await restGet('services', id);
+  return doc ? decodeDoc<OficinaMecanico>(doc) : null;
+});
 
 const INTENCOES_COLLECTION = 'intencoes_compra';
 

@@ -4,6 +4,8 @@ Portuguese used-car and parts marketplace. Next.js 15 (App Router) + React 19 + 
 
 See `AGENTS.md` for full source map, implementation deviations, and feature workflow.
 
+> 🏷️ **Brand name: the product is called RecarGarage (one word).** This is the *only* name that may appear in anything a user sees — UI text, copy, metadata, emails, chat replies, OpenGraph/JSON-LD, etc. The repository, this doc's title, the Firebase project (`reparauto-site`), and identifiers like the `favs_reparauto` storage key are named "ReparAuto" for historical reasons — that is an **internal** name only. **Never surface "ReparAuto" to users, and never invent variants like "Recar Garage" or "Repar Auto".** When in doubt, write `RecarGarage`. Public domain: `recargarage.com`.
+
 > 🚫 **The `mobile/` folder is off-limits by default.** It holds the separate React Native / Expo app (see plan 19). Do **not** read, search, analyze, or modify anything under `mobile/` unless the user's request is *explicitly* about the mobile app. For all web/marketplace work, ignore `mobile/` entirely — don't grep it, don't touch it. (Likewise treat `functions/` as a separate Cloud Functions surface — only enter it for explicit Functions work.)
 
 > ⚠️ **Never run `firebase deploy` (in any form) on your own.** Deploying — App Hosting, Firestore/Storage rules, Cloud Functions, indexes, anything — is **always** an explicit, user-initiated action. Do not run `npm run deploy:rules`, `npm run deploy:hosting`, `firebase deploy ...`, or `gcloud`/`firebase` deploy commands unless the user asks for that specific deploy in the current turn. Approval to deploy in one turn does **not** carry over to a later turn. When a change needs deploying, build/type-check it and then **tell the user which command to run** — let them run it.
@@ -71,7 +73,7 @@ Demo seed data lives in `scripts/seed-firestore.mjs` (`npm run seed`), not in cl
 
 ## Conventions
 
-- **Language**: code, comments, variable names, commit messages in English. Chat/UI text in Portuguese.
+- **Language (strict)**: **all code is written in English** — function names, variables, parameters, types/interfaces, enum members, file names, comments and commit messages. **Only strings shown to the user** (UI labels, toasts, chat, copy, metadata) are in Portuguese. Never name a new identifier in Portuguese. Some legacy identifiers are Portuguese (`carro`, `pecas`, `oficinas`, `favoritos`, `criarNotificacao`, `descricao`, …) and Firestore field names mirror them — leave those as-is (renaming them is a data-schema change), but do **not** add more: every new symbol you introduce must be English (e.g. `createNotification`, not `criarNotificacao`).
 - **Naming**: `camelCase` for identifiers. TypeScript interfaces in `PascalCase`.
 - **Imports**: always use `@/` path alias (maps to `src/`). No relative imports.
 - **Styling**: Tailwind utility classes only. Theme defined in `src/index.css` via `@theme`. PostCSS pipeline via `@tailwindcss/postcss`.
@@ -122,7 +124,7 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/hooks/useOnlineStatus.ts` — online/offline detection
 - `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
 - `src/hooks/useSwipe.ts` — touch swipe with drag feedback
-- `src/hooks/usePinchZoom.ts` — two-finger zoom for gallery
+- `src/hooks/useImageZoom.ts` — fullscreen gallery lightbox controller (pinch/wheel/double-tap zoom, pan, swipe-to-navigate, drag-down-to-close)
 - `public/firebase-messaging-sw.js` — FCM background message service worker
 
 ## Key Files

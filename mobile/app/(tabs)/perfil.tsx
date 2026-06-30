@@ -7,12 +7,14 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { useAdminPendencias } from '@/hooks/useAdminPendencias';
 import { REQUIRES_RECENT_LOGIN } from '@/lib/auth';
 import { colors } from '@/theme/colors';
 
 export default function PerfilScreen() {
-  const { user, logout, eliminarConta } = useAuth();
+  const { user, isAdmin, logout, eliminarConta } = useAuth();
   const { showToast } = useToast();
+  const { total: pendenciasAdmin } = useAdminPendencias(isAdmin);
 
   function confirmarLogout() {
     Alert.alert('Terminar sessão', 'Tem a certeza que quer sair?', [
@@ -138,6 +140,14 @@ export default function PerfilScreen() {
             label="Editar perfil"
             onPress={() => router.push('/perfil/editar')}
           />
+          {isAdmin && (
+            <Row
+              icon="shield-checkmark-outline"
+              label="Painel Admin"
+              badge={pendenciasAdmin}
+              onPress={() => router.push('/admin')}
+            />
+          )}
           <Row
             icon="settings-outline"
             label="Definições"
@@ -166,11 +176,13 @@ function Row({
   icon,
   label,
   last,
+  badge,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   last?: boolean;
+  badge?: number;
   onPress?: () => void;
 }) {
   return (
@@ -183,6 +195,11 @@ function Row({
     >
       <Ionicons name={icon} size={20} color={colors.primary[600]} />
       <Text className="ml-3 flex-1 text-base font-medium text-fg">{label}</Text>
+      {!!badge && badge > 0 && (
+        <View className="mr-2 min-w-[24px] items-center rounded-full bg-danger-500 px-2 py-0.5">
+          <Text className="text-xs font-bold text-white">{badge}</Text>
+        </View>
+      )}
       <Ionicons name="chevron-forward" size={18} color={colors.neutral[400]} />
     </Pressable>
   );

@@ -17,6 +17,7 @@ import {
   SignIn
 } from '@phosphor-icons/react';
 import { getOficinaPorId, addReview, subscribeReviewsOficina } from '@/lib/db';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 import type { Review } from '@/types/review';
@@ -29,7 +30,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 // Dynamically import MapViewer to prevent SSR errors
 const MapViewer = dynamic(() => import('@/components/ui/MapViewer'), {
   ssr: false,
-  loading: () => <div className="h-64 bg-neutral-100 dark:bg-neutral-800 animate-pulse rounded-2xl flex items-center justify-center text-sm text-neutral-400">A carregar mapa...</div>
+  loading: () => <div className="h-64 bg-neutral-100 animate-pulse rounded-2xl flex items-center justify-center text-sm text-neutral-400">A carregar mapa...</div>
 });
 
 interface DetalhesOficinaProps {
@@ -134,8 +135,8 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center animate-pulse">
-        <div className="h-8 bg-neutral-200 dark:bg-neutral-800 rounded w-1/4 mx-auto mb-4" />
-        <div className="h-6 bg-neutral-200 dark:bg-neutral-800 rounded w-1/3 mx-auto" />
+        <div className="h-8 bg-neutral-200 rounded w-1/4 mx-auto mb-4" />
+        <div className="h-6 bg-neutral-200 rounded w-1/3 mx-auto" />
       </div>
     );
   }
@@ -162,11 +163,11 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
         {/* Left Column: Workshop details */}
         <div className="space-y-6">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm">
             {/* Header info */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-neutral-100 pb-6">
               <div className="flex items-start gap-4">
-                <div className="w-16 h-16 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 rounded-2xl flex items-center justify-center font-bold text-2xl border border-brand-100 dark:border-brand-900 shrink-0">
+                <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center font-bold text-2xl border border-brand-100 shrink-0">
                   {oficina.logoUrl ? (
                     <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-2xl" />
                   ) : (
@@ -191,7 +192,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
             </div>
 
             {/* Specialties */}
-            <div className="py-6 border-b border-neutral-100 dark:border-neutral-800">
+            <div className="py-6 border-b border-neutral-100">
               <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">Especialidades do Profissional</h2>
               <div className="flex flex-wrap gap-2">
                 {oficina.especialidades.map((esp) => (
@@ -211,21 +212,29 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
             </div>
           </div>
 
+          {/* Workshop video */}
+          {oficina.videoUrl && (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+              <h2 className="text-base font-bold text-fg-strong mb-4">Vídeo de Apresentação</h2>
+              <YoutubeEmbed url={oficina.videoUrl} title={`Vídeo da oficina ${oficina.nome}`} />
+            </div>
+          )}
+
           {/* Location Map */}
           {oficina.coordenadas && (
-            <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm">
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm">
               <h2 className="text-base font-bold text-fg-strong mb-4">Localização Geográfica</h2>
               <MapViewer lat={oficina.coordenadas.latitude} lng={oficina.coordenadas.longitude} />
             </div>
           )}
 
           {/* Reviews section */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
             <h2 className="text-lg font-bold text-fg-strong">Avaliações do Profissional</h2>
 
             {/* Review Form */}
             {user?.email !== oficina.criador ? (
-              <form onSubmit={handleSubmitReview} className="bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl p-5 border border-neutral-150 dark:border-neutral-800">
+              <form onSubmit={handleSubmitReview} className="bg-neutral-50 rounded-2xl p-5 border border-neutral-150">
                 <h3 className="text-sm font-bold text-fg-strong mb-3">Deixe a sua avaliação</h3>
                 
                 {/* Stars selector */}
@@ -249,7 +258,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                     placeholder="Escreva a sua avaliação sobre o serviço prestado, pontualidade, simpatia e qualidade..."
                     value={comentario}
                     onChange={(e) => setComentario(e.target.value)}
-                    className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                   />
                   <Button
                     type="submit"
@@ -262,7 +271,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 </div>
               </form>
             ) : (
-              <div className="bg-neutral-50 dark:bg-neutral-800/40 rounded-2xl p-4 text-center border border-neutral-150 dark:border-neutral-800 text-xs text-fg-subtle">
+              <div className="bg-neutral-50 rounded-2xl p-4 text-center border border-neutral-150 text-xs text-fg-subtle">
                 Como proprietário desta oficina, não pode submeter avaliações para o seu próprio perfil.
               </div>
             )}
@@ -273,7 +282,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 <p className="text-sm text-fg-subtle text-center py-6">Ainda não existem avaliações aprovadas para este profissional.</p>
               ) : (
                 reviews.map((review) => (
-                  <div key={review.id} className="border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 pb-4 last:pb-0">
+                  <div key={review.id} className="border-b border-neutral-100 last:border-b-0 pb-4 last:pb-0">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-3">
                         <UserAvatar user={{ nome: review.autorNome, foto: review.autorFoto } as any} size="sm" />
@@ -303,7 +312,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
         {/* Right Column: Contact info & metadata */}
         <div className="space-y-6">
           {/* Action contacts Card */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm space-y-4">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm space-y-4">
             <h2 className="text-base font-bold text-fg-strong">Contactar Profissional</h2>
             
             {user ? (
@@ -311,7 +320,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 {/* Call */}
                 <a
                   href={`tel:${oficina.telefone}`}
-                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
                 >
                   <Phone size={18} weight="fill" className="text-brand-600" />
                   Ligar para Oficina
@@ -333,7 +342,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 {/* Email */}
                 <a
                   href={`mailto:${oficina.email}`}
-                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
                 >
                   <EnvelopeSimple size={18} weight="bold" className="text-neutral-500" />
                   Enviar Email
@@ -345,7 +354,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                     href={oficina.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 w-full border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                    className="flex items-center justify-center gap-3 w-full border border-neutral-300 hover:bg-neutral-50 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
                   >
                     <Globe size={18} />
                     Visitar Website
@@ -364,19 +373,19 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
           </div>
 
           {/* Details Metadata Card */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl p-6 shadow-sm">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">
             <h2 className="text-base font-bold text-fg-strong mb-4">Informação de Registo</h2>
             
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
+              <div className="flex justify-between border-b border-neutral-100 pb-2">
                 <span className="text-fg-subtle">Responsável</span>
                 <span className="font-semibold text-fg-strong">{oficina.responsavel}</span>
               </div>
-              <div className="flex justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
+              <div className="flex justify-between border-b border-neutral-100 pb-2">
                 <span className="text-fg-subtle">Distrito</span>
                 <span className="font-semibold text-fg-strong">{oficina.distrito}</span>
               </div>
-              <div className="flex justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
+              <div className="flex justify-between border-b border-neutral-100 pb-2">
                 <span className="text-fg-subtle">Concelho</span>
                 <span className="font-semibold text-fg-strong">{oficina.localidade}</span>
               </div>

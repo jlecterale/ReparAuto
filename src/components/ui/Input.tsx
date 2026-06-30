@@ -10,7 +10,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 /**
- * Canonical text input for ReparAuto.
+ * Canonical text input for RecarGarage.
  *
  * Label, placeholder and value all meet WCAG AA contrast on white:
  *  - label       → neutral-700 (~8:1)

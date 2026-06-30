@@ -239,7 +239,7 @@ export default function MonetizationCarousel() {
             <div
               key={slide.id}
               style={bgStyle}
-              className={`w-full shrink-0 p-6 sm:p-8 flex flex-col justify-between text-white relative transition-all duration-300 ${
+              className={`w-full shrink-0 p-6 sm:py-8 sm:px-16 flex flex-col justify-between text-white relative transition-all duration-300 ${
                 !hasImage ? `bg-gradient-to-r ${slide.gradient}` : 'bg-slate-900'
               }`}
             >
@@ -257,7 +257,7 @@ export default function MonetizationCarousel() {
                   )}
                 </div>
 
-                <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight pr-12">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight pr-12 sm:pr-0">
                   {slide.title}
                 </h2>
 

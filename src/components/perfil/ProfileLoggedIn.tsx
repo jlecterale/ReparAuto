@@ -115,7 +115,7 @@ export default function ProfileLoggedIn() {
         await currentUser.delete();
       }
       logout();
-      router.push('/');
+      router.push('/app');
     } catch (err: any) {
       console.error('[GDPR] Erro ao eliminar conta:', err);
       if (err?.code === 'auth/requires-recent-login') {
@@ -265,7 +265,7 @@ export default function ProfileLoggedIn() {
 
         <div className="mt-5 pt-4 border-t border-neutral-100 flex flex-wrap gap-2">
           <button
-            onClick={() => { logout(); router.push('/'); }}
+            onClick={() => { logout(); router.push('/app'); }}
             className="inline-flex items-center gap-1.5 text-xs text-danger-600 hover:text-white hover:bg-danger-600 font-bold border border-danger-200 px-4 py-2 rounded-full transition"
           >
             <SignOut /> Sair

@@ -25,12 +25,12 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'ReparAuto — Carros Usados, Peças e Desmonte em Portugal',
-    template: '%s · ReparAuto',
+    default: 'RecarGarage — Carros Usados, Peças e Desmonte em Portugal',
+    template: '%s · RecarGarage',
   },
   description:
     'Marketplace português de carros usados low-cost, peças e desmonte. Encontre o seu próximo carro, venda o seu ou descubra peças para reparação.',
-  applicationName: 'ReparAuto',
+  applicationName: 'RecarGarage',
   generator: 'Next.js',
   keywords: [
     'carros usados',
@@ -42,24 +42,24 @@ export const metadata: Metadata = {
     'comprar carro usado',
     'vender carro',
   ],
-  authors: [{ name: 'ReparAuto' }],
+  authors: [{ name: 'RecarGarage' }],
   alternates: { canonical: '/' },
   openGraph: {
     type: 'website',
     locale: 'pt_PT',
     url: SITE_URL,
-    siteName: 'ReparAuto',
-    title: 'ReparAuto — Carros Usados, Peças e Desmonte em Portugal',
+    siteName: 'RecarGarage',
+    title: 'RecarGarage — Carros Usados, Peças e Desmonte em Portugal',
     description:
       'Marketplace português de carros usados low-cost, peças e desmonte. Encontre o seu próximo carro, venda o seu ou descubra peças para reparação.',
-    images: [{ url: '/og-default.png', width: 1200, height: 630, alt: 'ReparAuto' }],
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'RecarGarage' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ReparAuto — Carros Usados, Peças e Desmonte em Portugal',
+    title: 'RecarGarage — Carros Usados, Peças e Desmonte em Portugal',
     description:
       'Marketplace português de carros usados low-cost, peças e desmonte.',
-    images: ['/og-default.png'],
+    images: ['/opengraph-image'],
   },
   robots: {
     index: true,
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
 const organizationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'ReparAuto',
+  name: 'RecarGarage',
   url: SITE_URL,
   logo: `${SITE_URL}/favicon.svg`,
   sameAs: [] as string[],

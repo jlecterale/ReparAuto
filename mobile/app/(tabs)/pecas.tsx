@@ -36,11 +36,13 @@ export default function PecasScreen() {
   const [categoria, setCategoria] = useState('');
   const [estado, setEstado] = useState('');
   const [distrito, setDistrito] = useState('');
+  const [marca, setMarca] = useState('');
+  const [modelo, setModelo] = useState('');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
-  const filtersCount = [categoria, estado, distrito].filter(Boolean).length;
+  const filtersCount = [categoria, estado, distrito, marca, modelo].filter(Boolean).length;
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -52,6 +54,8 @@ export default function PecasScreen() {
         return false;
       if (categoria && p.categoria !== categoria) return false;
       if (estado && p.estado !== estado) return false;
+      if (marca && (p.marcaCarro ?? '').toLowerCase() !== marca.toLowerCase()) return false;
+      if (modelo && (p.modeloCarro ?? '').toLowerCase() !== modelo.toLowerCase()) return false;
       if (dist) {
         const pd = (p.distrito ?? '').toLowerCase();
         if (pd !== dist && !(p.local ?? '').toLowerCase().includes(dist)) return false;
@@ -68,12 +72,14 @@ export default function PecasScreen() {
       });
     }
     return ps;
-  }, [pecas, busca, filtro, categoria, estado, distrito, ordenar]);
+  }, [pecas, busca, filtro, categoria, estado, distrito, marca, modelo, ordenar]);
 
   function limparFiltros() {
     setCategoria('');
     setEstado('');
     setDistrito('');
+    setMarca('');
+    setModelo('');
   }
 
   return (
@@ -111,15 +117,20 @@ export default function PecasScreen() {
             <PecaCard peca={item} onPress={(id) => router.push(`/pecas/${id}`)} />
           )}
           ListEmptyComponent={
-            <EmptyState
-              icon="construct-outline"
-              titulo="Sem peças"
-              texto={
-                busca || filtro !== 'todos' || filtersCount > 0
-                  ? 'Tente outros critérios.'
-                  : 'Ainda não há peças.'
-              }
-            />
+            busca || filtro !== 'todos' || filtersCount > 0 ? (
+              <EmptyState icon="construct-outline" titulo="Sem peças" texto="Tente outros critérios." />
+            ) : (
+              <EmptyState
+                icon="construct-outline"
+                titulo="Anuncie sua peça gratuitamente"
+                texto="Seja o primeiro a anunciar uma peça aqui."
+                action={{
+                  label: 'Anunciar peça',
+                  icon: 'add-circle-outline',
+                  onPress: () => router.push('/anunciar/peca'),
+                }}
+              />
+            )
           }
           showsVerticalScrollIndicator={false}
         />
@@ -134,6 +145,10 @@ export default function PecasScreen() {
         setEstado={setEstado}
         distrito={distrito}
         setDistrito={setDistrito}
+        marca={marca}
+        setMarca={setMarca}
+        modelo={modelo}
+        setModelo={setModelo}
         onClear={limparFiltros}
         resultCount={filtradas.length}
       />

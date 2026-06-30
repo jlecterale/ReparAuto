@@ -67,7 +67,7 @@ export default function VerificationRequest({
   if (verificado) {
     return (
       <Alert tipo="info" icone={<CheckCircle />} titulo="Conta Verificada" className="!items-center">
-        A sua identidade foi verificada pela equipa ReparAuto.
+        A sua identidade foi verificada pela equipa RecarGarage.
       </Alert>
     );
   }

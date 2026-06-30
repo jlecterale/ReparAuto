@@ -11,6 +11,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { OwnerStats } from '@/components/ui/OwnerStats';
 import {
   deleteCarro,
   deleteOficina,
@@ -26,12 +27,20 @@ import { colors } from '@/theme/colors';
 type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
 type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'outro';
 
+interface ItemStats {
+  visualizacoes?: number;
+  contagemMensagens?: number;
+  /** Cars only — parts have no favourite counter. */
+  contagemFavoritos?: number;
+}
+
 interface Item {
   kind: Kind;
   id: string;
   titulo: string;
   subtitulo: string;
   status: EstadoItem;
+  stats?: ItemStats;
 }
 
 const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
@@ -76,6 +85,11 @@ export default function MeusAnunciosScreen() {
         titulo: `${c.marca} ${c.modelo}`,
         subtitulo: `${c.anoFabricacao} · ${c.local}`,
         status: estado(c.status),
+        stats: {
+          visualizacoes: c.visualizacoes,
+          contagemMensagens: c.contagemMensagens,
+          contagemFavoritos: c.contagemFavoritos ?? 0,
+        },
       })),
       ...pecas.map((p) => ({
         kind: 'peca' as const,
@@ -83,6 +97,10 @@ export default function MeusAnunciosScreen() {
         titulo: p.titulo,
         subtitulo: `${p.categoria} · ${p.local}`,
         status: estado(p.status),
+        stats: {
+          visualizacoes: p.visualizacoes,
+          contagemMensagens: p.contagemMensagens,
+        },
       })),
       ...oficinas.map((o) => ({
         kind: 'oficina' as const,
@@ -120,6 +138,13 @@ export default function MeusAnunciosScreen() {
     else if (item.kind === 'peca') router.push(`/pecas/${item.id}`);
     else if (item.kind === 'oficina') router.push(`/oficinas/${item.id}`);
     else router.push(`/intencoes/${item.id}`);
+  }
+
+  /** carro / peca / oficina have an edit form; intencao isn't editable here. */
+  function editar(item: Item) {
+    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
+    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: { id: item.id } });
+    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: { id: item.id } });
   }
 
   function confirmarRemover(item: Item) {
@@ -181,7 +206,23 @@ export default function MeusAnunciosScreen() {
                 {STATUS[item.status].label}
               </Text>
             </View>
+            {item.stats && (
+              <View className="mt-1.5">
+                <OwnerStats {...item.stats} />
+              </View>
+            )}
           </View>
+          {item.kind !== 'intencao' && (
+            <Pressable
+              onPress={() => editar(item)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Editar"
+              className="p-2"
+            >
+              <Ionicons name="create-outline" size={20} color={colors.primary[600]} />
+            </Pressable>
+          )}
           <Pressable
             onPress={() => confirmarRemover(item)}
             hitSlop={8}

@@ -36,6 +36,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     local: carro.local,
     distrito: carro.distrito ?? getDistritoForConcelho(carro.local) ?? '',
     descricao: carro.descricao,
+    videoUrl: carro.videoUrl ?? '',
     estadoVeiculo: carro.estadoVeiculo,
   });
   const [fotos, setFotos] = useState<string[]>(carro.fotos || []);
@@ -81,6 +82,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         distrito: form.distrito || undefined,
         coordenadas: form.local ? getCoordenadas(form.local) : undefined,
         descricao: form.descricao,
+        videoUrl: form.videoUrl.trim() || null,
         estadoVeiculo: form.estadoVeiculo,
         fotos: fotosFinais,
       });
@@ -147,7 +149,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Fotos</label>
         <FotosEditor fotos={fotos} setFotos={setFotos} max={MAX_FOTOS_CARRO} filesRef={pendingFilesRef} />
         {fotos.length === 0 && (
-          <p className="text-xs text-red-500 mt-2">Adicione pelo menos 1 foto do veículo.</p>
+          <p className="text-xs text-red-700 mt-2">Adicione pelo menos 1 foto do veículo.</p>
         )}
       </div>
 
@@ -157,6 +159,17 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
           rows={4}
           value={form.descricao}
           onChange={(e) => atualizar('descricao', e.target.value)}
+          className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-fg-subtle mb-1">Vídeo do YouTube (opcional)</label>
+        <input
+          type="url"
+          value={form.videoUrl}
+          onChange={(e) => atualizar('videoUrl', e.target.value)}
+          placeholder="Ex: https://www.youtube.com/watch?v=..."
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         />
       </div>
