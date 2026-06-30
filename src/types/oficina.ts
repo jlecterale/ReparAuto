@@ -45,6 +45,7 @@ export interface OficinaMecanico {
   };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
+  videoUrl?: string;
   fotos?: string[];
   status: 'pendente' | 'aprovado' | 'rejeitado';
   mediaAvaliacoes?: number;

@@ -11,6 +11,7 @@ import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
+import { isValidYoutubeUrl } from '@/lib/youtube';
 import { colors } from '@/theme/colors';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
 
@@ -33,6 +34,7 @@ export default function RegistarOficinaScreen() {
   const [whatsapp, setWhatsapp] = useState('');
   const [email, setEmail] = useState(user?.email ?? '');
   const [website, setWebsite] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
   const [morada, setMorada] = useState('');
@@ -54,6 +56,7 @@ export default function RegistarOficinaScreen() {
         setWhatsapp(o.whatsapp ?? '');
         setEmail(o.email ?? '');
         setWebsite(o.website ?? '');
+        setVideoUrl(o.videoUrl ?? '');
         setDistrito(o.distrito ?? '');
         setLocalidade(o.localidade ?? '');
         setMorada(o.morada ?? '');
@@ -81,6 +84,8 @@ export default function RegistarOficinaScreen() {
     if (!email.trim()) return 'Indique um email.';
     if (!distrito.trim() || !localidade.trim()) return 'Indique distrito e localidade.';
     if (especialidades.length === 0) return 'Selecione pelo menos uma especialidade.';
+    if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
+      return 'O link do vídeo do YouTube é inválido.';
     return null;
   }
 
@@ -107,6 +112,7 @@ export default function RegistarOficinaScreen() {
         whatsapp: whatsapp.trim() || undefined,
         email: email.trim(),
         website: website.trim() || undefined,
+        videoUrl: videoUrl.trim() || undefined,
         distrito: distrito.trim(),
         localidade: localidade.trim(),
         morada: morada.trim(),
@@ -193,6 +199,7 @@ export default function RegistarOficinaScreen() {
         </View>
         <Input label="Email *" value={email} onChangeText={setEmail} placeholder="geral@oficina.pt" autoCapitalize="none" keyboardType="email-address" />
         <Input label="Website" value={website} onChangeText={setWebsite} placeholder="https://…" autoCapitalize="none" keyboardType="url" />
+        <Input label="Vídeo do YouTube" value={videoUrl} onChangeText={setVideoUrl} placeholder="https://www.youtube.com/watch?v=…" autoCapitalize="none" keyboardType="url" />
 
         <Button
           label={enviando ? 'A guardar…' : editId ? 'Guardar alterações' : 'Registar oficina'}

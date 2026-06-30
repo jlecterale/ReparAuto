@@ -8,8 +8,10 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
+import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 
 // Dynamically import MapSelector to prevent SSR/window errors
 const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
@@ -43,6 +45,7 @@ export default function RegistarOficina() {
   });
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
 
   const handleToggleEspecialidade = (esp: EspecialidadeOficina) => {
     if (especialidades.includes(esp)) {
@@ -71,6 +74,11 @@ export default function RegistarOficina() {
       return;
     }
 
+    if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl)) {
+      toast?.erro('O link do vídeo do YouTube é inválido. Cole o endereço completo do vídeo.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -89,6 +97,7 @@ export default function RegistarOficina() {
         coordenadas,
         especialidades,
         logoUrl: logoUrl || null,
+        videoUrl: videoUrl.trim() || null,
         mediaAvaliacoes: 5.0,
         totalAvaliacoes: 0,
       });
@@ -148,6 +157,7 @@ export default function RegistarOficina() {
               setMorada('');
               setEspecialidades([]);
               setLogoUrl('');
+              setVideoUrl('');
             }}
           >
             Registar outra
@@ -230,6 +240,24 @@ export default function RegistarOficina() {
                 onChange={(e) => setLogoUrl(e.target.value)}
                 className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-fg mb-1.5">
+                Vídeo do YouTube (Opcional)
+              </label>
+              <input
+                type="url"
+                inputMode="url"
+                placeholder="Ex: https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+              />
+              <p className="text-xs text-fg-subtle mt-1.5">Apresente a sua oficina, instalações ou trabalhos num vídeo para gerar mais confiança.</p>
+              {videoUrl.trim() && isValidYoutubeUrl(videoUrl) && (
+                <YoutubeEmbed url={videoUrl} title="Pré-visualização do vídeo" className="mt-3" />
+              )}
             </div>
           </div>
 

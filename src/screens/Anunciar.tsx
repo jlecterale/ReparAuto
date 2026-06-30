@@ -32,6 +32,7 @@ const initialDados: CarroFormData = {
   localizacaoDistrito: '',
   preco: '',
   descricao: '',
+  videoUrl: '',
   estadoVeiculo: 'pronto',
   rodando: 'sim',
   inspecao: 'sim',
@@ -111,6 +112,7 @@ export default function Anunciar() {
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
+        videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         preco: Number(dados.preco),
         km: Number(dados.km),
@@ -160,7 +162,7 @@ export default function Anunciar() {
     setCategoria(null);
     setPasso(0);
     setFotos([]);
-    setDados((prev) => ({ ...prev, preco: '', descricao: '', tiposManutencao: [] }));
+    setDados((prev) => ({ ...prev, preco: '', descricao: '', videoUrl: '', tiposManutencao: [] }));
   };
 
   if (publicado) {

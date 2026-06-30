@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -17,6 +17,7 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import EditarCarroModal from '@/components/admin/EditarCarroModal';
 import type { Carro } from '@/types/carro';
 
@@ -244,6 +245,15 @@ export default function DetalhesCarro() {
               className="text-sm text-fg leading-relaxed"
               dangerouslySetInnerHTML={{ __html: renderDescricao(carro.descricao) }}
             />
+          </div>
+        )}
+
+        {carro.videoUrl && (
+          <div className="mb-6">
+            <h3 className="font-extrabold text-fg-heading mb-2 flex items-center gap-2">
+              <YoutubeLogo weight="fill" className="text-red-600" /> Vídeo
+            </h3>
+            <YoutubeEmbed url={carro.videoUrl} title={`Vídeo do ${carro.marca} ${carro.modelo}`} />
           </div>
         )}
 

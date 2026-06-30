@@ -17,6 +17,7 @@ import {
   SignIn
 } from '@phosphor-icons/react';
 import { getOficinaPorId, addReview, subscribeReviewsOficina } from '@/lib/db';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 import type { Review } from '@/types/review';
@@ -210,6 +211,14 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
               </p>
             </div>
           </div>
+
+          {/* Workshop video */}
+          {oficina.videoUrl && (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+              <h2 className="text-base font-bold text-fg-strong mb-4">Vídeo de Apresentação</h2>
+              <YoutubeEmbed url={oficina.videoUrl} title={`Vídeo da oficina ${oficina.nome}`} />
+            </div>
+          )}
 
           {/* Location Map */}
           {oficina.coordenadas && (
