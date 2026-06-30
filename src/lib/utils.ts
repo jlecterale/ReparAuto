@@ -137,6 +137,46 @@ export function isValidYoutubeUrl(url: string | null | undefined): boolean {
   return getYoutubeId(url) !== null;
 }
 
+// Registration password policy: at least 8 chars, one uppercase letter, one
+// digit and one symbol. The single source of truth for the rules so the submit
+// check, the live requirements checklist and the disabled-button state never
+// drift apart. `label` feeds the checklist; `message` is the submit error.
+export interface PasswordRule {
+  label: string;
+  message: string;
+  test: (password: string) => boolean;
+}
+
+export const PASSWORD_RULES: PasswordRule[] = [
+  {
+    label: 'Mínimo 8 caracteres',
+    message: 'A palavra-passe deve ter pelo menos 8 caracteres.',
+    test: (p) => p.length >= 8,
+  },
+  {
+    label: 'Uma letra maiúscula',
+    message: 'A palavra-passe deve conter pelo menos uma letra maiúscula.',
+    test: (p) => /[A-Z]/.test(p),
+  },
+  {
+    label: 'Um número',
+    message: 'A palavra-passe deve conter pelo menos um número.',
+    test: (p) => /\d/.test(p),
+  },
+  {
+    label: 'Um símbolo (!@#$...)',
+    message: 'A palavra-passe deve conter pelo menos um símbolo.',
+    test: (p) => /[^A-Za-z0-9]/.test(p),
+  },
+];
+
+// Returns the first failing rule's user-facing message, or null when the
+// password satisfies every rule. Order is fixed so the message is deterministic.
+export function validatePassword(password: string): string | null {
+  const failing = PASSWORD_RULES.find((rule) => !rule.test(password));
+  return failing ? failing.message : null;
+}
+
 export function dataAtualISO(): string {
   return new Date().toISOString();
 }
