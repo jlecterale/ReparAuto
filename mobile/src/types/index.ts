@@ -23,6 +23,8 @@ export interface Usuario {
   notificacoes: boolean;
   foto: string | null;
   profileCompleted: boolean;
+  /** Firebase Auth email verification state (not persisted in Firestore). */
+  emailVerified?: boolean;
   verificado?: boolean;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;

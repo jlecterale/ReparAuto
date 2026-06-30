@@ -8,6 +8,24 @@ service cloud.firestore {
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
+    // Signed in, regardless of email verification. Used ONLY for a user
+    // writing their OWN profile document — every other write still requires
+    // isAuthenticated() (verified email).
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isProfileOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    // A profile owner may save their profile but may NEVER grant themselves a
+    // privileged role — only an admin (isAdmin branch) can set role to anything
+    // other than 'user'. On create: role absent or 'user'. On update: role
+    // unchanged or 'user'. Closes a self-promotion hole.
+    function ownerRoleAllowed() {
+      return !('role' in request.resource.data)
+        || request.resource.data.role == 'user'
+        || (resource != null && request.resource.data.role == resource.data.role);
+    }
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
@@ -29,7 +47,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if true;
-      allow write: if isOwner(userId) || isAdmin();
+      // Profile create/update is allowed without email verification so new
+      // accounts can finish their profile; listings/messages/etc. still require
+      // a verified email (isAuthenticated) in their own rules below.
+      allow create: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
+      allow update: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
+      allow delete: if isProfileOwner(userId) || isAdmin();
     }
 
     match /cars/{carId} {

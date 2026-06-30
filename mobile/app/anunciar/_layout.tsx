@@ -1,7 +1,19 @@
 import { Stack } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
+import { VerifyEmailGate } from '@/components/auth/VerifyEmailGate';
 import { colors } from '@/theme/colors';
 
 export default function AnunciarLayout() {
+  const { isLoggedIn, emailVerified } = useAuth();
+
+  // Listing creation (cars, parts, services, buy intents) requires a verified
+  // email per Firestore rules. Block the forms up front with a clear message
+  // instead of letting the submit fail. Guests fall through to the normal flow,
+  // which prompts login where needed.
+  if (isLoggedIn && !emailVerified) {
+    return <VerifyEmailGate />;
+  }
+
   return (
     <Stack
       screenOptions={{

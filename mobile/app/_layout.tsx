@@ -18,6 +18,7 @@ import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
+import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
 import type { Href } from 'expo-router';
 import { colors } from '@/theme/colors';
 
@@ -99,6 +100,7 @@ export default function RootLayout() {
                     <StatusBar style="dark" />
                     <UpdateBanner />
                     <OfflineBanner />
+                    <EmailVerificationBanner />
                     <RootNavigator />
                     <OnboardingGate />
                   </OnboardingProvider>

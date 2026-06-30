@@ -12,11 +12,13 @@ import {
   configureGoogleSignIn,
   criarConta,
   deleteAccount,
+  enviarVerificacaoEmail,
   loginComApple,
   loginComEmail,
   loginComGoogle,
   logoutFirebase,
   onAuthChange,
+  recarregarVerificacao,
 } from '@/lib/auth';
 import {
   createUserProfile,
@@ -52,6 +54,7 @@ function criarUsuarioBase(fb: FirebaseAuthTypes.User): Usuario {
     notificacoes: true,
     foto: fb.photoURL ?? null,
     profileCompleted: false,
+    emailVerified: fb.emailVerified,
   };
 }
 
@@ -61,6 +64,7 @@ interface AuthContextValue {
   isLoggedIn: boolean;
   isAdmin: boolean;
   profileCompleted: boolean;
+  emailVerified: boolean;
   login: (email: string, password: string) => Promise<Usuario>;
   registar: (nome: string, email: string, password: string) => Promise<Usuario>;
   loginGoogle: () => Promise<Usuario>;
@@ -70,6 +74,10 @@ interface AuthContextValue {
   eliminarConta: () => Promise<void>;
   updateProfile: (data: Partial<Usuario>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  /** (Re)sends the email-verification message to the signed-in user. */
+  reenviarVerificacaoEmail: () => Promise<void>;
+  /** Reloads auth state; returns the latest email-verified flag. */
+  recarregarVerificacao: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -92,7 +100,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await createUserProfile(fb.uid, base as unknown as Record<string, unknown>);
           profile = base;
         }
-        return { ...base, ...profile };
+        // emailVerified is an auth property — always trust the live Firebase
+        // value over whatever happens to be stored on the profile document.
+        return { ...base, ...profile, emailVerified: fb.emailVerified };
       } catch {
         return base;
       }
@@ -171,6 +181,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (profile) setUser((prev) => (prev ? { ...prev, ...profile } : null));
   }, [user?.uid]);
 
+  const reenviarVerificacaoEmail = useCallback(async () => {
+    await enviarVerificacaoEmail();
+  }, []);
+
+  const recarregarVerificacaoState = useCallback(async () => {
+    const verified = await recarregarVerificacao();
+    setUser((prev) => (prev ? { ...prev, emailVerified: verified } : null));
+    return verified;
+  }, []);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -178,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isLoggedIn: !!user,
       isAdmin: user?.role === 'admin',
       profileCompleted: user?.profileCompleted ?? false,
+      emailVerified: user?.emailVerified ?? false,
       login,
       registar,
       loginGoogle,
@@ -187,6 +208,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       eliminarConta,
       updateProfile,
       refreshProfile,
+      reenviarVerificacaoEmail,
+      recarregarVerificacao: recarregarVerificacaoState,
     }),
     [
       user,
@@ -200,6 +223,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       eliminarConta,
       updateProfile,
       refreshProfile,
+      reenviarVerificacaoEmail,
+      recarregarVerificacaoState,
     ],
   );
 
