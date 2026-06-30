@@ -30,7 +30,7 @@ Portuguese marketplace for used cars, parts, workshops and purchase intents. Nex
 - **firebase-admin** — server-only, used by `src/lib/db.server.ts` and `scripts/`.
 - **@phosphor-icons/react** — icons (files importing them need `'use client'`).
 - **leaflet / react-leaflet** — maps; always loaded via `dynamic(..., { ssr: false })`.
-- **No test/lint/format tooling** — verification is `npx tsc --noEmit` + `npm run build`.
+- **Tests**: Jest + React Testing Library, written test-first (TDD — see Feature Workflow). Verification is `npm test` + `npx tsc --noEmit` + `npm run build`.
 
 ## Data Layer
 
@@ -79,12 +79,18 @@ src/
 npm run dev          # Next.js dev server
 npm run build        # production build
 npx tsc --noEmit     # type-check (strict)
+npm test             # Jest test suite
+npm run test:watch   # Jest watch mode (TDD inner loop)
 npm run deploy:rules # deploy Firestore rules — USER-INITIATED ONLY (see warning at top)
 npm run seed         # seed demo data into empty collections (Admin SDK / ADC)
 npm run seed:dry     # report what would be seeded
 ```
 
 ## Feature Workflow
+
+### 0. Test-Driven Development (TDD) — default for all changes
+
+**Write the test first** for any feature, fix, or refactor touching testable logic. Use the `tdd` + `javascript-typescript-jest` skills; follow red → green → refactor in vertical slices (one test → minimal code → repeat). No production code for testable logic without a failing test first. `*.test.ts(x)` sit next to the code; mock Firebase at the boundary and assert observable behavior. Full testable-surface map and rollout: `docs/plans/20-testes-tdd.md`. Exceptions (use `tsc`/`build`/manual review): visual/Tailwind-only changes, static content, async Server Components / `db.server.ts`, and thin SDK wrappers.
 
 ### 1. Investigation & planning (research first)
 
@@ -122,6 +128,7 @@ Before opening a PR or marking a task done, **always do a self-review pass** —
 - **Error handling & edge cases** covered; props validated with sensible fallbacks.
 - **Performance** — unnecessary re-renders, memoization (cards/context values), bundle size.
 - **Firestore-rules provability** — any new query is provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
+- **Tests** — written test-first for new/changed logic; `npm test` green; new behavior has a test that would fail without the change.
 - **Type safety** — run `npx tsc --noEmit` and `npm run build`; fix every error before reporting done.
 
 Only after this pass is clean should you open the PR (when the user asks) or report the task complete.

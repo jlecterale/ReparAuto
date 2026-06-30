@@ -17,11 +17,14 @@ npm run dev          # Next.js dev server (hot reload)
 npm run build        # Production build → .next/
 npm run start        # Run production build locally
 npx tsc --noEmit     # Type-check (strict mode)
+npm test             # Run the Jest test suite
+npm run test:watch   # Jest in watch mode (TDD inner loop)
+npm run test:coverage# Jest with coverage report
 npm run deploy:rules # Deploy Firestore rules — USER-INITIATED ONLY (see warning above)
 npm run seed         # Seed demo data into empty collections (Admin SDK)
 ```
 
-No test runner or formatter is configured. Verification is `npx tsc --noEmit` + `npm run build`.
+Verification is `npm test` + `npx tsc --noEmit` + `npm run build`. (Test suite rollout is `docs/plans/20-testes-tdd.md`; until its setup commit lands, the `test*` scripts may not exist yet.)
 
 ## Architecture
 
@@ -84,7 +87,7 @@ Demo seed data lives in `scripts/seed-firestore.mjs` (`npm run seed`), not in cl
 - **Auth**: Firebase Auth (email/password + Google). Roles: `user`, `admin`. New listings default to `status: 'pendente'` (admin approves).
 - **Commits**: conventional style (`feat:`, `fix:`) with descriptive summaries.
 - **TypeScript**: strict mode enabled. Types live in `src/types/`.
-- **No tests**: no test framework exists — do not attempt to run tests.
+- **Tests**: Jest + React Testing Library. `*.test.ts(x)` live next to the code they test. Write tests **test-first (TDD)** — see the TDD section below.
 
 ## SEO
 
@@ -141,6 +144,18 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 
 ## Workflow Protocols
 
+### Test-Driven Development (TDD) — default for all changes
+
+**Before implementing any feature, fix, refactor, or plan that touches testable logic, write the test first.** Use the `tdd` and `javascript-typescript-jest` skills. Follow red → green → refactor in **vertical slices** (one test → minimal code to pass → repeat). Never write all tests up front ("horizontal slicing") and never write production code for testable logic without a failing test first.
+
+1. **RED** — write a failing test that describes the desired behavior through the public interface (not implementation details).
+2. **GREEN** — write the minimum code to make it pass.
+3. **REFACTOR** — clean up with the test green; never refactor while red.
+
+Test files are `*.test.ts(x)` next to the code they test. Mock Firebase/Storage at the boundary (`jest.mock`), use the factories/helpers in `src/test/`, and assert observable behavior. Prioritize critical paths and complex logic (`src/lib/utils.ts`, `compatibility.ts`, `db.ts` business logic, `offlineQueue.ts`, key hooks) — see `docs/plans/20-testes-tdd.md` for the full testable-surface map.
+
+**TDD exceptions** (verify with `tsc --noEmit` + `build` + manual review instead): purely visual/Tailwind changes, static content, async Server Components / `db.server.ts` (Jest can't run them), and thin SDK wrappers (`auth.ts`, `upload.ts`, `fcm.ts`).
+
 ### Investigation & planning (research first)
 
 When asked to investigate a feature, scope a change, or generate a plan, **do online research before writing any plan or code**:
@@ -175,7 +190,8 @@ Before opening a PR or reporting a task as done, **always do a self-review pass*
 5. **UI/UX** — loading/empty/error states, visual feedback/micro-interactions, responsiveness, accessibility (WCAG), and consistency with the existing design system. Use the `frontend-design` skill for any UI change.
 6. **Design-system compliance** — semantic Tailwind tokens (no raw hex/`slate-*`), shared `src/components/ui/` primitives over hand-rolled markup (enforced by `frontend-design`).
 7. **Firestore-rules provability** — any new query must be provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
-8. **Type safety** — run `npx tsc --noEmit` and `npm run build`. Fix every error before reporting done.
+8. **Tests** — tests were written test-first (TDD) for any new/changed logic; `npm test` is green. New behavior has a test that would fail without the change.
+9. **Type safety** — run `npx tsc --noEmit` and `npm run build`. Fix every error before reporting done.
 
 Only after this pass is clean should you open the PR or report the task complete.
 

@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { enviarEmailReset } from '@/lib/auth';
+import { validatePassword, PASSWORD_RULES } from '@/lib/utils';
 
 interface LoginModalProps {
   show: boolean;
@@ -57,20 +58,9 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       return;
     }
     if (modo === 'registar') {
-      if (password.length < 8) {
-        setErro('A palavra-passe deve ter pelo menos 8 caracteres.');
-        return;
-      }
-      if (!/[A-Z]/.test(password)) {
-        setErro('A palavra-passe deve conter pelo menos uma letra maiúscula.');
-        return;
-      }
-      if (!/\d/.test(password)) {
-        setErro('A palavra-passe deve conter pelo menos um número.');
-        return;
-      }
-      if (!/[^A-Za-z0-9]/.test(password)) {
-        setErro('A palavra-passe deve conter pelo menos um símbolo.');
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        setErro(passwordError);
         return;
       }
     }
@@ -219,23 +209,21 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
 
             {modo === 'registar' && password.length > 0 && (
               <div className="-mt-2 space-y-1">
-                {([
-                  { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
-                  { label: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
-                  { label: 'Um número', valid: /\d/.test(password) },
-                  { label: 'Um símbolo (!@#$...)', valid: /[^A-Za-z0-9]/.test(password) },
-                ] as const).map((check) => (
-                  <div key={check.label} className="flex items-center gap-1.5">
-                    {check.valid ? (
-                      <CheckCircle size={14} weight="fill" className="text-success-600 shrink-0" />
-                    ) : (
-                      <Circle size={14} className="text-neutral-400 shrink-0" />
-                    )}
-                    <span className={`text-xs ${check.valid ? 'text-success-600 font-medium' : 'text-fg-subtle'}`}>
-                      {check.label}
-                    </span>
-                  </div>
-                ))}
+                {PASSWORD_RULES.map((rule) => {
+                  const valid = rule.test(password);
+                  return (
+                    <div key={rule.label} className="flex items-center gap-1.5">
+                      {valid ? (
+                        <CheckCircle size={14} weight="fill" className="text-success-600 shrink-0" />
+                      ) : (
+                        <Circle size={14} className="text-neutral-400 shrink-0" />
+                      )}
+                      <span className={`text-xs ${valid ? 'text-success-600 font-medium' : 'text-fg-subtle'}`}>
+                        {rule.label}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -282,7 +270,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
             tamanho="lg"
             blocoCompleto
             carregando={loading}
-            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && (password.length < 8 || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)))}
+            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && validatePassword(password) !== null)}
             onClick={handleSubmit}
           >
             {modo === 'login' ? 'Entrar' : 'Criar Conta'}
