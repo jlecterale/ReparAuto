@@ -182,16 +182,22 @@ service cloud.firestore {
       allow read: if isAuthenticated() && request.auth.uid == resource.data.ownerUid;
       allow create: if request.resource.data.keys()
         .hasOnly(['ownerUid', 'date', 'views', 'contacts', 'updatedAt']);
+      // setDoc(merge) re-sends ownerUid/date with identical values on every
+      // bump; allow them in affectedKeys so a no-op rewrite can't fail the rule.
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['views', 'contacts', 'updatedAt']);
+        .hasOnly(['ownerUid', 'date', 'views', 'contacts', 'updatedAt']);
     }
 
     match /clients/{clientId} {
       // A professional's private client book — strictly owner-scoped. The owner
       // controls their own records, so forging `matchedUserUid` only ever links
-      // to an already-public profile (no data leak); no field-level lock needed.
-      allow read, update, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerUid;
+      // to an already-public profile (no data leak).
+      allow read, delete: if isAuthenticated() && request.auth.uid == resource.data.ownerUid;
       allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
+      // Owner-only, and ownerUid is immutable (can't re-home a record onto someone else).
+      allow update: if isAuthenticated()
+        && request.auth.uid == resource.data.ownerUid
+        && request.resource.data.ownerUid == resource.data.ownerUid;
     }
 
     match /config/{document} {

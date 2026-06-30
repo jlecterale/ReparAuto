@@ -54,12 +54,13 @@ export default function usePainel(user: Usuario | null, period: DashboardPeriod)
     let cancelled = false;
     setLoading(true);
     (async () => {
-      // Always fetch a 90-day window so switching periods needs no refetch.
+      // Fetch 180 days so any period (≤90) has a full preceding window to
+      // compare against, and switching periods needs no refetch.
       const [c, p, o, pts] = await Promise.all([
         getCarrosByCreator(email),
         getPecasByCreator(email),
         getOficinasByCreator(email),
-        getSellerDailyRange(uid, 90),
+        getSellerDailyRange(uid, 180),
       ]);
       if (cancelled) return;
       setCarros(c);

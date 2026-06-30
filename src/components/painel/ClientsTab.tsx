@@ -15,6 +15,8 @@ import {
 } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Input from '@/components/ui/Input';
+import SegmentedControl from '@/components/ui/SegmentedControl';
 import { useToast } from '@/components/ui/Toast';
 import useClients from '@/hooks/useClients';
 import ClientFormModal from './ClientFormModal';
@@ -42,25 +44,25 @@ const FILTERS: { value: ClientStage | 'todos'; label: string }[] = [
 
 export default function ClientsTab({ ownerUid }: Props) {
   const toast = useToast();
-  const { clients, loading, adicionar, importar, atualizar, remover } = useClients(ownerUid);
-  const [busca, setBusca] = useState('');
-  const [filtro, setFiltro] = useState<ClientStage | 'todos'>('todos');
+  const { clients, loading, add, importBatch, update, remove } = useClients(ownerUid);
+  const [search, setSearch] = useState('');
+  const [stageFilter, setStageFilter] = useState<ClientStage | 'todos'>('todos');
   const [formOpen, setFormOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState<Client | null>(null);
 
-  const filtrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
     return clients.filter((c) => {
-      if (filtro !== 'todos' && c.estado !== filtro) return false;
-      if (!termo) return true;
+      if (stageFilter !== 'todos' && c.estado !== stageFilter) return false;
+      if (!term) return true;
       return (
-        c.nome.toLowerCase().includes(termo) ||
-        (c.email || '').toLowerCase().includes(termo) ||
-        (c.telefone || '').includes(termo)
+        c.nome.toLowerCase().includes(term) ||
+        (c.email || '').toLowerCase().includes(term) ||
+        (c.telefone || '').includes(term)
       );
     });
-  }, [clients, busca, filtro]);
+  }, [clients, search, stageFilter]);
 
   const openNew = () => {
     setEditing(null);
@@ -71,15 +73,15 @@ export default function ClientsTab({ ownerUid }: Props) {
     setFormOpen(true);
   };
 
-  const handleSave = async (data: Parameters<typeof adicionar>[0], emailChanged: boolean) => {
-    if (editing) await atualizar(editing.id, data, emailChanged);
-    else await adicionar(data);
+  const handleSave = async (data: Parameters<typeof add>[0], emailChanged: boolean) => {
+    if (editing) await update(editing.id, data, emailChanged);
+    else await add(data);
   };
 
   const handleDelete = async (c: Client) => {
     if (!window.confirm(`Apagar o cliente "${c.nome}"? Esta ação é irreversível.`)) return;
     try {
-      await remover(c.id);
+      await remove(c.id);
       toast?.sucesso('Cliente removido.');
     } catch {
       toast?.erro('Não foi possível remover.');
@@ -89,13 +91,13 @@ export default function ClientsTab({ ownerUid }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 justify-between">
-        <div className="relative flex-1 min-w-[200px]">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-fg-subtle" />
-          <input
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+        <div className="flex-1 min-w-[200px]">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Procurar por nome, email ou telefone"
-            className="w-full bg-white rounded-xl pl-9 pr-3 py-2.5 text-sm border border-neutral-300 focus:outline-none focus:ring-3 focus:ring-accent/25 focus:border-accent"
+            aria-label="Procurar clientes"
+            iconeFim={<MagnifyingGlass className="text-fg-subtle" />}
           />
         </div>
         <div className="flex gap-2">
@@ -108,28 +110,19 @@ export default function ClientsTab({ ownerUid }: Props) {
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setFiltro(f.value)}
-            className={`text-xs font-bold px-3 py-1.5 rounded-full border transition ${
-              filtro === f.value
-                ? 'bg-accent text-white border-accent'
-                : 'bg-white text-fg-muted border-neutral-200 hover:border-accent/40'
-            }`}
-            aria-pressed={filtro === f.value}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        value={stageFilter}
+        onChange={setStageFilter}
+        ariaLabel="Filtrar clientes por estado"
+        blocoCompleto={false}
+        options={FILTERS}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-16 text-fg-muted">
           <CircleNotch className="animate-spin" size={28} />
         </div>
-      ) : filtrados.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 flex flex-col items-center justify-center text-center py-16 text-fg-muted">
           <UsersThree size={40} className="mb-3 text-neutral-300" />
           <p className="font-semibold text-fg">
@@ -139,7 +132,7 @@ export default function ClientsTab({ ownerUid }: Props) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {filtrados.map((c) => {
+          {filtered.map((c) => {
             const v = c.veiculos?.[0];
             return (
               <div key={c.id} className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-4">
@@ -196,7 +189,7 @@ export default function ClientsTab({ ownerUid }: Props) {
       )}
 
       <ClientFormModal show={formOpen} onClose={() => setFormOpen(false)} client={editing} onSave={handleSave} />
-      <ClientCsvImport show={importOpen} onClose={() => setImportOpen(false)} onImport={importar} />
+      <ClientCsvImport show={importOpen} onClose={() => setImportOpen(false)} onImport={importBatch} />
     </div>
   );
 }

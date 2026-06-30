@@ -318,7 +318,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           </button>
         </div>
 
-        <div className="flex items-center justify-between bg-slate-50 rounded-xl p-3">
+        <div className="flex items-center justify-between bg-neutral-50 rounded-xl p-3">
           <div className="pr-3">
             <p className="text-sm font-semibold text-fg-heading">Visível para profissionais</p>
             <p className="text-xs text-fg-subtle">Permitir que empresas e oficinas o associem à sua conta pelo email</p>
@@ -329,7 +329,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             aria-pressed={discoverableByPros}
             aria-label="Visível para profissionais"
             className={`w-12 h-6 rounded-full transition relative shrink-0 ${
-              discoverableByPros ? 'bg-accent' : 'bg-gray-300'
+              discoverableByPros ? 'bg-accent' : 'bg-neutral-300'
             }`}
           >
             <span

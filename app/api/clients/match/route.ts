@@ -33,10 +33,22 @@ export async function POST(request: Request): Promise<NextResponse<MatchResult>>
   const header = request.headers.get('authorization') || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : '';
   if (!token) return NextResponse.json({ matched: false }, { status: 401 });
+  let callerUid = '';
   try {
-    await auth.verifyIdToken(token);
+    callerUid = (await auth.verifyIdToken(token)).uid;
   } catch {
     return NextResponse.json({ matched: false }, { status: 401 });
+  }
+
+  // Only professional accounts may use the CRM match (the feature's audience),
+  // which also narrows the membership-lookup surface.
+  try {
+    const caller = await db.collection('users').doc(callerUid).get();
+    if (caller.data()?.tipoConta !== 'profissional') {
+      return NextResponse.json({ matched: false }, { status: 403 });
+    }
+  } catch {
+    return NextResponse.json({ matched: false });
   }
 
   let email = '';

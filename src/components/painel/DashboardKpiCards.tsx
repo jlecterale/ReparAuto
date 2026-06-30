@@ -40,7 +40,7 @@ export default function DashboardKpiCards({ summary, period }: Props) {
       label: `Contactos (${period}d)`,
       value: summary.contactsPeriodo,
       Icon: ChatCircle,
-      cor: 'bg-green-600',
+      cor: 'bg-success-600',
       trend: delta(summary.contactsPeriodo, summary.contactsPeriodoAnterior),
     },
     { label: 'Favoritos', value: summary.favoritosTotais, Icon: Heart, cor: 'bg-pink-600' },

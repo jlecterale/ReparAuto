@@ -173,9 +173,14 @@ export function useChat(uid: string | null, nome: string = '') {
             chatListingId,
             'contagemMensagens',
           );
-          // Count inbound messages to the seller (skip the seller's own replies).
+          // Count one inbound contact per conversation, not every message
+          // (mirrors the session-deduped view counter).
           if (uid !== chatVendedorUid) {
-            recordDailyMetric(chatVendedorUid, 'contact');
+            const ck = `contacted_${chatListingType}_${chatListingId}`;
+            if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(ck)) {
+              sessionStorage.setItem(ck, '1');
+              recordDailyMetric(chatVendedorUid, 'contact');
+            }
           }
         }
       } catch (err) {

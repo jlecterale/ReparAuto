@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Target, Star, CircleNotch } from '@phosphor-icons/react';
 import { getContatosByVendedor, marcarContatoRelevante } from '@/lib/db';
+import { formatarData } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 import Badge from '@/components/ui/Badge';
 import type { ContatoIntencao } from '@/types/intencao';
@@ -93,9 +94,7 @@ export default function LeadsInbox({ vendedorId }: Props) {
                 </Badge>
               )}
             </div>
-            <p className="text-xs text-fg-muted mt-0.5">
-              {c.criadoEm?.toDate?.().toLocaleDateString('pt-PT') || ''}
-            </p>
+            <p className="text-xs text-fg-muted mt-0.5">{formatarData(c.criadoEm)}</p>
           </div>
           {!c.marcadoComoRelevante && (
             <button

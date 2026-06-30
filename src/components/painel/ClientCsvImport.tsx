@@ -20,8 +20,41 @@ interface ParseResult {
   errors: string[];
 }
 
+/** Splits one CSV line honouring double-quoted fields (which may contain the delimiter). */
+function splitCsvLine(line: string, delimiter: string): string[] {
+  const out: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        cur += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      out.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  out.push(cur);
+  return out.map((c) => c.trim());
+}
+
 function parseCsv(text: string): ParseResult {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+  // Strip a UTF-8 BOM (Excel/Numbers prepend one) so the first header matches.
+  const clean = text.replace(/^\uFEFF/, '');
+  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
   const rows: ClientInput[] = [];
   const errors: string[] = [];
   if (lines.length < 2) {
@@ -29,10 +62,10 @@ function parseCsv(text: string): ParseResult {
     return { rows, errors };
   }
   const delimiter = lines[0].includes(';') ? ';' : ',';
-  const headers = lines[0].split(delimiter).map((h) => h.trim().toLowerCase());
+  const headers = splitCsvLine(lines[0], delimiter).map((h) => h.toLowerCase());
 
   for (let i = 1; i < lines.length; i++) {
-    const cells = lines[i].split(delimiter).map((c) => c.trim());
+    const cells = splitCsvLine(lines[i], delimiter);
     const get = (key: string) => {
       const idx = headers.indexOf(key);
       return idx >= 0 ? cells[idx] || '' : '';

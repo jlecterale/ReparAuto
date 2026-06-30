@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Timestamp } from 'firebase/firestore';
 import { auth } from '@/lib/firebase';
 import {
   subscribeClients,
@@ -58,15 +59,21 @@ export default function useClients(ownerUid: string | null | undefined) {
   }, [ownerUid]);
 
   // Resolve an email match and persist the result onto the client record.
+  // A blank email clears any previous match instead of leaving it stale.
   const refreshMatch = useCallback(async (clientId: string, email: string | undefined) => {
-    if (!email) return;
-    const result = await lookupMatch(email);
+    const trimmed = (email || '').trim();
+    if (!trimmed) {
+      await updateClient(clientId, { matchedUserUid: null, matchedAt: null });
+      return;
+    }
+    const result = await lookupMatch(trimmed);
     await updateClient(clientId, {
       matchedUserUid: result.matched ? result.uid ?? null : null,
+      matchedAt: result.matched ? Timestamp.now() : null,
     });
   }, []);
 
-  const adicionar = useCallback(
+  const add = useCallback(
     async (data: ClientInput): Promise<string> => {
       if (!ownerUid) throw new Error('Sem sessão');
       const id = await createClient(ownerUid, data);
@@ -76,7 +83,7 @@ export default function useClients(ownerUid: string | null | undefined) {
     [ownerUid, refreshMatch],
   );
 
-  const importar = useCallback(
+  const importBatch = useCallback(
     async (list: ClientInput[]): Promise<number> => {
       if (!ownerUid) throw new Error('Sem sessão');
       return createClientsBatch(ownerUid, list);
@@ -84,20 +91,20 @@ export default function useClients(ownerUid: string | null | undefined) {
     [ownerUid],
   );
 
-  const atualizar = useCallback(
+  const update = useCallback(
     async (id: string, data: Partial<Client>, emailChanged?: boolean): Promise<void> => {
       await updateClient(id, data);
-      if (emailChanged && data.email !== undefined) void refreshMatch(id, data.email);
+      if (emailChanged) void refreshMatch(id, data.email);
     },
     [refreshMatch],
   );
 
-  const remover = useCallback(async (id: string): Promise<void> => {
+  const remove = useCallback(async (id: string): Promise<void> => {
     await deleteClient(id);
   }, []);
 
   return useMemo(
-    () => ({ clients, loading, adicionar, importar, atualizar, remover }),
-    [clients, loading, adicionar, importar, atualizar, remover],
+    () => ({ clients, loading, add, importBatch, update, remove }),
+    [clients, loading, add, importBatch, update, remove],
   );
 }
