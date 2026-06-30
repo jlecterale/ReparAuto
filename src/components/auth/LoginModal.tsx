@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle } from '@phosphor-icons/react';
+import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle, CheckCircle, Circle } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Alert from '@/components/ui/Alert';
@@ -56,9 +56,23 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       setErro('Preencha o nome completo.');
       return;
     }
-    if (password.length < 6) {
-      setErro('A palavra-passe deve ter pelo menos 6 caracteres.');
-      return;
+    if (modo === 'registar') {
+      if (password.length < 8) {
+        setErro('A palavra-passe deve ter pelo menos 8 caracteres.');
+        return;
+      }
+      if (!/[A-Z]/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos uma letra maiúscula.');
+        return;
+      }
+      if (!/\d/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos um número.');
+        return;
+      }
+      if (!/[^A-Za-z0-9]/.test(password)) {
+        setErro('A palavra-passe deve conter pelo menos um símbolo.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -187,7 +201,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
               name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
@@ -202,6 +216,28 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
                 </button>
               }
             />
+
+            {modo === 'registar' && password.length > 0 && (
+              <div className="-mt-2 space-y-1">
+                {([
+                  { label: 'Mínimo 8 caracteres', valid: password.length >= 8 },
+                  { label: 'Uma letra maiúscula', valid: /[A-Z]/.test(password) },
+                  { label: 'Um número', valid: /\d/.test(password) },
+                  { label: 'Um símbolo (!@#$...)', valid: /[^A-Za-z0-9]/.test(password) },
+                ] as const).map((check) => (
+                  <div key={check.label} className="flex items-center gap-1.5">
+                    {check.valid ? (
+                      <CheckCircle size={14} weight="fill" className="text-success-600 shrink-0" />
+                    ) : (
+                      <Circle size={14} className="text-neutral-400 shrink-0" />
+                    )}
+                    <span className={`text-xs ${check.valid ? 'text-success-600 font-medium' : 'text-fg-subtle'}`}>
+                      {check.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {modo === 'login' && (
               <p className="text-xs -mt-2">
@@ -246,7 +282,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
             tamanho="lg"
             blocoCompleto
             carregando={loading}
-            disabled={loading || !email.trim() || !password.trim()}
+            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && (password.length < 8 || !/[A-Z]/.test(password) || !/\d/.test(password) || !/[^A-Za-z0-9]/.test(password)))}
             onClick={handleSubmit}
           >
             {modo === 'login' ? 'Entrar' : 'Criar Conta'}
