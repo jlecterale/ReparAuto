@@ -57,7 +57,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // the automatic load-time check and never block launch on the network.
   updates: EAS_PROJECT_ID
     ? {
-        url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+        url: "https://u.expo.dev/2b361ebe-abb0-4514-b884-a0db195e07a5",
         fallbackToCacheTimeout: 0,
         checkAutomatically: 'ON_ERROR_RECOVERY',
       }
@@ -173,7 +173,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     router: {},
     eas: {
       // Fill in after `eas init` (set EAS_PROJECT_ID in `.env` / EAS env).
-      projectId: EAS_PROJECT_ID,
+      projectId: "2b361ebe-abb0-4514-b884-a0db195e07a5",
     },
   },
 });
