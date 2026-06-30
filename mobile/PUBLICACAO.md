@@ -145,10 +145,14 @@ Transporter) e o `.aab` na **Play Console**.
 
 ## 7. Atualizações futuras
 
-- **Código JS/TS (sem alterar nativo)**: `eas update --branch production` (OTA,
-  sem nova revisão da loja).
+- **Código JS/TS (sem alterar nativo)**: `npm run update:production` (OTA via
+  EAS Update, **sem** nova revisão da loja). A app já está ligada para receber
+  estes updates — passo a passo completo (ativação, publicação, rollback) em
+  [`docs/OTA-UPDATES.md`](./docs/OTA-UPDATES.md). Requer `EAS_PROJECT_ID`
+  definido antes de fazer o build da loja.
 - **Alterações nativas** (novas libs/permissões, ex.: Fases 4/5): novo
-  `eas build` + `eas submit` e nova revisão.
+  `eas build` + `eas submit` e nova revisão. Estas mudam o *fingerprint* do
+  runtime, por isso **não** podem ir por OTA.
 - **Versionamento**: subir `version` no `app.config.ts`; o `buildNumber`/
   `versionCode` é auto-incrementado (`autoIncrement` no perfil `production`).
 

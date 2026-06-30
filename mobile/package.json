@@ -9,6 +9,12 @@
     "android:release": "expo prebuild --platform android --clean && cd android && ./gradlew assembleRelease -x lintVitalRelease",
     "android:bundle": "expo prebuild --platform android --clean && cd android && ./gradlew bundleRelease -x lintVitalRelease",
     "android:install": "expo prebuild --platform android && cd android && (test -x ./gradlew && ./gradlew :app:installRelease || gradle :app:installRelease)",
+    "android:submit": "eas build --profile production --platform android --submit",
+    "ios:prod": "expo prebuild --platform ios --clean && expo run:ios --configuration Release",
+    "ios:archive": "scripts/build-ios.sh archive",
+    "ios:export": "scripts/build-ios.sh export",
+    "ios:upload": "scripts/build-ios.sh upload",
+    "ios:release": "scripts/build-ios.sh release",
     "ios": "expo run:ios",
     "ios:prod": "expo prebuild --platform ios --clean && expo run:ios --configuration Release",
     "archive:ios": "bash scripts/build-ios.sh archive",
@@ -17,7 +23,10 @@
     "release:ios": "bash scripts/build-ios.sh release",
     "prebuild": "expo prebuild",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "update": "eas update",
+    "update:preview": "eas update --branch preview",
+    "update:production": "eas update --branch production"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -48,6 +57,7 @@
     "expo-splash-screen": "~55.0.21",
     "expo-status-bar": "~55.0.6",
     "expo-system-ui": "~55.0.18",
+    "expo-updates": "~55.0.24",
     "expo-web-browser": "~55.0.16",
     "nativewind": "^4.2.5",
     "react": "19.2.0",

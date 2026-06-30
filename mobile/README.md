@@ -100,3 +100,11 @@ assets/                   # ícones e splash gerados a partir do logo da marca
 O passo a passo completo (Apple App Store + Google Play, via EAS) está em
 [`PUBLICACAO.md`](./PUBLICACAO.md). Os textos das fichas das lojas (pt-PT) estão
 em [`store/textos-lojas-pt-PT.md`](./store/textos-lojas-pt-PT.md).
+
+## Atualizações OTA (EAS Update)
+
+Correções e melhorias de **JS/TS, estilos e assets** chegam aos utilizadores
+**sem nova revisão da loja** via **EAS Update** (`expo-updates`). A app já está
+ligada para verificar e descarregar updates em silêncio (aplica no próximo
+arranque). Ativação, publicação (`npm run update:production`) e rollback em
+[`docs/OTA-UPDATES.md`](./docs/OTA-UPDATES.md).

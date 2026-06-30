@@ -14,6 +14,7 @@ import { NotificacoesProvider } from '@/context/NotificacoesContext';
 import { ToastProvider } from '@/context/ToastContext';
 import { OnboardingProvider } from '@/context/OnboardingContext';
 import { registerForPush, setupPushHandlers, unregisterPush } from '@/lib/push';
+import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
@@ -25,6 +26,9 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function RootNavigator() {
   const { loading, user } = useAuth();
   const uid = user?.uid ?? null;
+
+  // Silently check for and download OTA updates (applied on next launch).
+  useOTAUpdates();
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
