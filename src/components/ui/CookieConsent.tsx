@@ -3,27 +3,34 @@
 import { useState, useEffect } from 'react';
 import { Cookie, Gear } from '@phosphor-icons/react';
 import Button from './Button';
+import { CONSENT_STORAGE_KEY, parseConsent, toGtagConsent, type CookieConsent as Consent } from '@/lib/consent';
+import { getGtag } from '@/lib/gtag';
+
+/** Push the current consent choices to Google Consent Mode v2. */
+function applyGtagConsent(consent: Pick<Consent, 'analiticos' | 'marketing'>) {
+  getGtag()('consent', 'update', toGtagConsent(consent));
+}
 
 export default function CookieConsent({ deferred = false }: { deferred?: boolean }) {
   const [showBanner, setShowBanner] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
-  
+
   const [funcionais, setFuncionais] = useState(true);
   const [analiticos, setAnaliticos] = useState(false);
+  const [marketing, setMarketing] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const consent = localStorage.getItem('reparauto_cookie_consent');
-    if (!consent) {
+    const parsed = parseConsent(localStorage.getItem(CONSENT_STORAGE_KEY));
+    if (!parsed) {
       setShowBanner(true);
     } else {
-      try {
-        const parsed = JSON.parse(consent);
-        setFuncionais(!!parsed.funcionais);
-        setAnaliticos(!!parsed.analiticos);
-      } catch {
-        setShowBanner(true);
-      }
+      setFuncionais(parsed.funcionais);
+      setAnaliticos(parsed.analiticos);
+      setMarketing(parsed.marketing);
+      // Re-apply the stored choice to gtag for returning visitors (the layout
+      // sets everything to 'denied' by default on each load).
+      applyGtagConsent(parsed);
     }
 
     // Event listener to open settings from footer
@@ -35,16 +42,19 @@ export default function CookieConsent({ deferred = false }: { deferred?: boolean
     return () => window.removeEventListener('reparauto_open_cookie_settings', handleOpenSettings);
   }, []);
 
-  const saveConsent = (preferences: { necessarios: boolean; funcionais: boolean; analiticos: boolean }) => {
-    localStorage.setItem('reparauto_cookie_consent', JSON.stringify(preferences));
+  const saveConsent = (preferences: Consent) => {
+    localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(preferences));
     setShowBanner(false);
     setShowPreferences(false);
-    
+
+    // Reflect the choice in Google Consent Mode v2 (Google Ads / analytics).
+    applyGtagConsent(preferences);
+
     // If they rejected functional cookies, clear local storage favorites
     if (!preferences.funcionais) {
       localStorage.removeItem('favs_reparauto');
     }
-    
+
     // Notify consent-aware hooks (e.g. favourites) to re-read preferences live.
     // No full reload — a reload here flashes the page and, on first visit, would
     // re-trigger the welcome tour. Hooks listen for this event instead.
@@ -52,15 +62,15 @@ export default function CookieConsent({ deferred = false }: { deferred?: boolean
   };
 
   const handleAcceptAll = () => {
-    saveConsent({ necessarios: true, funcionais: true, analiticos: true });
+    saveConsent({ necessarios: true, funcionais: true, analiticos: true, marketing: true });
   };
 
   const handleRejectAll = () => {
-    saveConsent({ necessarios: true, funcionais: false, analiticos: false });
+    saveConsent({ necessarios: true, funcionais: false, analiticos: false, marketing: false });
   };
 
   const handleSavePreferences = () => {
-    saveConsent({ necessarios: true, funcionais, analiticos });
+    saveConsent({ necessarios: true, funcionais, analiticos, marketing });
   };
 
   // While the welcome tour is up, hold the banner back so the two first-visit
@@ -80,8 +90,9 @@ export default function CookieConsent({ deferred = false }: { deferred?: boolean
             <h4 className="font-extrabold text-sm text-fg-heading">Respeitamos a sua Privacidade</h4>
             <p className="text-xs text-fg-muted mt-1 leading-relaxed">
               Utilizamos cookies e tecnologias semelhantes para melhorar a sua experiência de navegação,
-              salvar as suas preferências (como favoritos locais e pesquisas recentes) e analisar o nosso tráfego,
-              em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD).
+              salvar as suas preferências (como favoritos locais e pesquisas recentes), analisar o nosso tráfego
+              e medir a eficácia da nossa publicidade, em conformidade com o Regulamento Geral sobre a
+              Proteção de Dados (RGPD).
             </p>
           </div>
         </div>
@@ -159,6 +170,25 @@ export default function CookieConsent({ deferred = false }: { deferred?: boolean
                   </label>
                   <p className="text-[10px] text-fg-subtle leading-relaxed mt-0.5">
                     Ajudam-nos a perceber como os visitantes interagem com o site, contabilizando as visitas às páginas de forma 100% anónima.
+                  </p>
+                </div>
+              </div>
+
+              {/* Marketing */}
+              <div className="flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="cookie-marketing"
+                  checked={marketing}
+                  onChange={(e) => setMarketing(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent/30 cursor-pointer"
+                />
+                <div>
+                  <label htmlFor="cookie-marketing" className="text-xs font-bold text-fg-heading cursor-pointer">
+                    Cookies de Marketing e Publicidade
+                  </label>
+                  <p className="text-[10px] text-fg-subtle leading-relaxed mt-0.5">
+                    Utilizados pelo Google Ads para medir a eficácia dos anúncios e mostrar-lhe conteúdos relevantes noutros sites (remarketing).
                   </p>
                 </div>
               </div>

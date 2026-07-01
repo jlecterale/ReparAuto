@@ -42,6 +42,18 @@ export type Combustivel =
   | 'Elétrico'
   | 'Híbrido';
 export type Cambio = 'Manual' | 'Automático' | 'CVT';
+export type BodyType =
+  | 'Citadino'
+  | 'Utilitário'
+  | 'Sedan'
+  | 'Carrinha'
+  | 'SUV'
+  | 'Monovolume'
+  | 'Coupé'
+  | 'Cabrio'
+  | 'Pick-up';
+export type Condition = 'Novo' | 'Usado' | 'Para peças';
+export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {
@@ -56,6 +68,13 @@ export interface Carro {
   cambio: Cambio;
   cor: string;
   portas: number;
+  bodyType?: BodyType;
+  seats?: number;
+  condition?: Condition;
+  power?: number;
+  displacement?: number;
+  traction?: Traction;
+  features?: string[];
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };

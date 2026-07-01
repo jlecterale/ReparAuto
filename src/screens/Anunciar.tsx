@@ -7,6 +7,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
+import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -28,6 +29,13 @@ const initialDados: CarroFormData = {
   combustivel: 'Gasolina',
   cambio: 'Manual',
   portas: '',
+  bodyType: '',
+  seats: '',
+  condition: 'Usado',
+  power: '',
+  displacement: '',
+  traction: '',
+  features: [],
   localizacao: '',
   localizacaoDistrito: '',
   preco: '',
@@ -119,6 +127,13 @@ export default function Anunciar() {
         portas: Number(dados.portas),
         anoFabricacao: Number(dados.anoFabricacao),
         anoModelo: Number(dados.anoModelo),
+        bodyType: dados.bodyType || undefined,
+        seats: parsePositiveInt(dados.seats) ?? undefined,
+        condition: dados.condition || undefined,
+        power: parsePositiveInt(dados.power) ?? undefined,
+        displacement: parsePositiveInt(dados.displacement) ?? undefined,
+        traction: dados.traction || undefined,
+        features: dados.features.length ? dados.features : undefined,
         rodando: dados.rodando === 'sim',
         inspecao: dados.inspecao === 'sim',
         criador: user.email,
@@ -162,7 +177,7 @@ export default function Anunciar() {
     setCategoria(null);
     setPasso(0);
     setFotos([]);
-    setDados((prev) => ({ ...prev, preco: '', descricao: '', videoUrl: '', tiposManutencao: [] }));
+    setDados((prev) => ({ ...prev, preco: '', descricao: '', videoUrl: '', tiposManutencao: [], features: [] }));
   };
 
   if (publicado) {

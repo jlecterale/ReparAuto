@@ -18,6 +18,7 @@ import {
   requestPermissionOnFirstLaunch,
   setupPushHandlers,
   unregisterPush,
+  watchTokenRefresh,
 } from '@/lib/push';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
@@ -54,6 +55,8 @@ function RootNavigator() {
   useEffect(() => {
     if (!uid || !pushEnabled) return;
     registerForPush(uid).catch(() => {});
+    // Keep the stored token fresh if FCM rotates it while signed in.
+    const unsubTokenRefresh = watchTokenRefresh(uid);
     const unsub = setupPushHandlers((data) => {
       const link = data?.link;
       if (typeof link === 'string' && link.startsWith('/')) {
@@ -64,6 +67,7 @@ function RootNavigator() {
     });
     return () => {
       unsub();
+      unsubTokenRefresh();
       unregisterPush(uid).catch(() => {});
     };
   }, [uid, pushEnabled]);

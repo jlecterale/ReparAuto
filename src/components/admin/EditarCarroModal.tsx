@@ -3,10 +3,21 @@
 import { useState, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, MAX_FOTOS_CARRO } from '@/lib/constants';
+import {
+  TIPOS_COMBUSTIVEL,
+  TIPOS_CAMBIO,
+  TIPOS_CARROCERIA,
+  CONDICOES_VEICULO,
+  TIPOS_TRACAO,
+  EQUIPAMENTOS_CARRO,
+  MAX_FOTOS_CARRO,
+} from '@/lib/constants';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
+import { toggleInList, parsePositiveInt } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
+import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import ToggleChip from '@/components/ui/ToggleChip';
 import FotosEditor from '@/components/anunciar/FotosEditor';
 import { uploadFileToStorage } from '@/lib/upload';
 import type { Carro } from '@/types/carro';
@@ -20,6 +31,7 @@ interface EditarCarroModalProps {
 
 export default function EditarCarroModal({ show, onClose, carro, onSave }: EditarCarroModalProps) {
   const { auth } = useApp();
+  const toast = useToast();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
   const [form, setForm] = useState({
@@ -33,13 +45,26 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     cambio: carro.cambio,
     cor: carro.cor,
     portas: String(carro.portas),
+    bodyType: carro.bodyType ?? '',
+    seats: carro.seats != null ? String(carro.seats) : '',
+    // Condition is always meaningful (a car is Novo/Usado/Para peças) — legacy
+    // listings without one get backfilled as 'Usado' on save, matching mobile.
+    condition: carro.condition ?? 'Usado',
+    power: carro.power != null ? String(carro.power) : '',
+    displacement: carro.displacement != null ? String(carro.displacement) : '',
+    traction: carro.traction ?? '',
     local: carro.local,
     distrito: carro.distrito ?? getDistritoForConcelho(carro.local) ?? '',
     descricao: carro.descricao,
     videoUrl: carro.videoUrl ?? '',
     estadoVeiculo: carro.estadoVeiculo,
   });
+  const [features, setFeatures] = useState<string[]>(carro.features ?? []);
   const [fotos, setFotos] = useState<string[]>(carro.fotos || []);
+
+  const toggleFeature = (feature: string) => {
+    setFeatures((prev) => toggleInList(prev, feature));
+  };
   const [saving, setSaving] = useState(false);
 
   const atualizar = (campo: string, valor: string) => {
@@ -78,9 +103,18 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         cambio: form.cambio,
         cor: form.cor,
         portas: Number(form.portas),
+        bodyType: form.bodyType || null,
+        seats: parsePositiveInt(form.seats),
+        condition: form.condition || null,
+        power: parsePositiveInt(form.power),
+        displacement: parsePositiveInt(form.displacement),
+        traction: form.traction || null,
+        features: features.length ? features : null,
         local: form.local,
-        distrito: form.distrito || undefined,
-        coordenadas: form.local ? getCoordenadas(form.local) : undefined,
+        // updateDoc rejects undefined (no ignoreUndefinedProperties), so empty
+        // optionals must be null — undefined here throws and aborts the save.
+        distrito: form.distrito || null,
+        coordenadas: (form.local ? getCoordenadas(form.local) : null) ?? null,
         descricao: form.descricao,
         videoUrl: form.videoUrl.trim() || null,
         estadoVeiculo: form.estadoVeiculo,
@@ -89,6 +123,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       onClose();
     } catch (err) {
       console.error('[EditarCarro] Erro:', err);
+      toast?.erro('Erro ao guardar as alterações. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -98,7 +133,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     label: string,
     campoId: string,
     type = 'text',
-    options: string[] | null = null
+    options: readonly string[] | null = null,
+    allowEmpty = false,
   ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">{label}</label>
@@ -108,6 +144,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
           onChange={(e) => atualizar(campoId, e.target.value)}
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         >
+          {allowEmpty && <option value="">—</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -136,12 +173,33 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Câmbio', 'cambio', 'text', TIPOS_CAMBIO)}
         {campo('Cor', 'cor')}
         {campo('Nº Portas', 'portas', 'number')}
+        {campo('Categoria', 'bodyType', 'text', TIPOS_CARROCERIA, true)}
+        {campo('Condição', 'condition', 'text', CONDICOES_VEICULO)}
+        {campo('Lugares', 'seats', 'number')}
+        {campo('Potência (cv)', 'power', 'number')}
+        {campo('Cilindrada (cc)', 'displacement', 'number')}
+        {campo('Tração', 'traction', 'text', TIPOS_TRACAO, true)}
         <div className="col-span-2">
           <SeletorLocalizacao
             distrito={form.distrito}
             concelho={form.local}
             onChange={(d, c) => setForm((prev) => ({ ...prev, distrito: d, local: c }))}
           />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
+        <div className="flex flex-wrap gap-2">
+          {EQUIPAMENTOS_CARRO.map((feature) => (
+            <ToggleChip
+              key={feature}
+              active={features.includes(feature)}
+              onClick={() => toggleFeature(feature)}
+            >
+              {feature}
+            </ToggleChip>
+          ))}
         </div>
       </div>
 
