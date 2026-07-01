@@ -152,7 +152,7 @@ const FEATURES = [
   {
     icon: DeviceMobile,
     title: 'App Nativa',
-    description: 'Disponível para Android e brevemente para iOS. Leve o RecarGarage no bolso.',
+    description: 'Disponível para Android e iOS. Leve o RecarGarage no bolso.',
   },
 ];
 
@@ -210,7 +210,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'A app está disponível para telemóvel?',
-    a: 'Sim! A app Android já está disponível na Google Play Store. A versão iOS está em processo de aprovação pela Apple e será lançada em breve.',
+    a: 'Sim! A app já está disponível tanto na Google Play Store (Android) como na App Store (iOS).',
   },
   {
     q: 'Como funciona o sistema de avaliações?',
@@ -404,15 +404,15 @@ export default function LandingPage() {
                 <GooglePlayLogo size={22} weight="fill" />
                 Google Play
               </a>
-              <div
-                className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/5 text-white/50 text-base font-bold border border-white/10 cursor-default"
-                aria-disabled="true"
-                aria-label="App Store — em breve"
+              <a
+                href="https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-base font-bold border border-white/20 transition-all hover:-translate-y-0.5"
               >
                 <AppleLogo size={22} weight="fill" />
                 App Store
-                <span className="text-[10px] text-white/40 font-semibold bg-white/10 rounded-full px-2 py-0.5">Em breve</span>
-              </div>
+              </a>
             </div>
 
             {/* Register CTA */}
@@ -802,18 +802,23 @@ export default function LandingPage() {
                   </div>
                 </a>
 
-                {/* iOS Coming Soon */}
-                <div className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-neutral-100 text-fg-muted font-bold border border-neutral-200 cursor-default">
+                {/* App Store */}
+                <a
+                  href="https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                >
                   <AppleLogo size={24} weight="fill" />
                   <div className="text-left">
-                    <span className="block text-xs text-fg-subtle font-semibold">Em breve na</span>
+                    <span className="block text-xs text-white/70 font-semibold">Disponível na</span>
                     <span className="block text-base">App Store</span>
                   </div>
-                </div>
+                </a>
               </div>
 
               <p className="text-sm text-fg-subtle">
-                A app para iOS está em processo de aprovação pela Apple.
+                Disponível para Android e iOS. Grátis para descarregar.
               </p>
             </div>
           </AnimatedSection>
