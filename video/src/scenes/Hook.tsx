@@ -52,9 +52,9 @@ export const Hook: React.FC = () => {
             color: colors.white,
           }}
         >
-          À procura do teu
+          Mais do que
           <br />
-          próximo carro?
+          comprar e vender.
         </div>
 
         <div
@@ -65,9 +65,10 @@ export const Hook: React.FC = () => {
             fontSize: 40,
             color: colors.mist,
             textAlign: "center",
+            paddingInline: 40,
           }}
         >
-          O marketplace automóvel de Portugal
+          Carros, peças e oficinas num só lugar
         </div>
       </AbsoluteFill>
     </AbsoluteFill>

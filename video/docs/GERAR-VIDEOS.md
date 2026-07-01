@@ -30,21 +30,26 @@ video/
 │   ├── fonts.ts              # Tipografia da marca (Libre Franklin)
 │   ├── anim.ts               # Animações reutilizáveis (fadeUp, popIn)
 │   ├── scenes/               # Uma cena por ficheiro
-│   │   ├── Hook.tsx          #  0–4s  · Gancho + logótipo
-│   │   ├── Carros.tsx        #  Carros usados (cartões de anúncio)
+│   │   ├── Hook.tsx          #  Gancho — "Mais do que comprar e vender" + logótipo
+│   │   ├── Carros.tsx        #  Carros usados, incl. low-cost (cartões de anúncio)
 │   │   ├── Pecas.tsx         #  Peças & desmonte (grelha de categorias)
-│   │   ├── Seguranca.tsx     #  Compra/venda com confiança (selos)
+│   │   ├── Oficinas.tsx      #  Oficinas & mecânicos — o ecossistema ligado
+│   │   ├── Seguranca.tsx     #  Anúncios verificados, avaliações, confiança
 │   │   ├── Chat.tsx          #  Mensagens diretas com o vendedor
-│   │   └── CTA.tsx           #  Disponível para iOS e Android + lojas
+│   │   └── CTA.tsx           #  Disponível na Web, iOS e Android + lojas
 │   └── components/           # Peças reutilizáveis (Logo, Fundo, Cartão, Selos…)
 ├── public/brand/            # Ícone da app, logótipo e fotos de carros
+├── public/images/           # Fotos de anúncios (ex.: Clio low-cost)
+├── public/audio/            # Música de fundo (rockit.mp3)
 ├── docs/                    # Este guia + imagens de pré-visualização
-└── package.json             # Comandos (dev, render, …)
+└── package.json             # Comandos (studio, render, …)
 ```
 
-O vídeo final tem **1080×1920 (vertical 9:16), 30 fps, ~27,5 s** — o formato ideal
+O vídeo final tem **1080×1920 (vertical 9:16), 30 fps, ~30 s** — o formato ideal
 para Instagram Reels/Stories, YouTube Shorts e TikTok, e também aceite pelo
-Google Ads.
+Google Ads. Apresenta o **ecossistema automóvel** do RecarGarage (carros, peças,
+oficinas e mecânicos ligados) e termina com a disponibilidade na **Web, iOS e
+Android**.
 
 ---
 

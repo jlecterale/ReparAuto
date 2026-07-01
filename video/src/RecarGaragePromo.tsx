@@ -11,6 +11,7 @@ import { fade } from "@remotion/transitions/fade";
 import { Hook } from "./scenes/Hook";
 import { Carros } from "./scenes/Carros";
 import { Pecas } from "./scenes/Pecas";
+import { Oficinas } from "./scenes/Oficinas";
 import { Seguranca } from "./scenes/Seguranca";
 import { Chat } from "./scenes/Chat";
 import { CTA } from "./scenes/CTA";
@@ -68,6 +69,10 @@ export const RecarGaragePromo: React.FC = () => {
         {transition()}
         <TransitionSeries.Sequence durationInFrames={scenes.pecas}>
           <Pecas />
+        </TransitionSeries.Sequence>
+        {transition()}
+        <TransitionSeries.Sequence durationInFrames={scenes.oficinas}>
+          <Oficinas />
         </TransitionSeries.Sequence>
         {transition()}
         <TransitionSeries.Sequence durationInFrames={scenes.seguranca}>

@@ -7,9 +7,12 @@ import { brandFont } from "../fonts";
 import { fadeUp, popIn } from "../anim";
 
 const POINTS = [
-  { title: "Vendedores verificados", desc: "Perfis e anúncios validados" },
+  {
+    title: "Anúncios verificados",
+    desc: "Revistos manualmente pela equipa",
+  },
   { title: "Avaliações reais", desc: "Reputação de quem compra e vende" },
-  { title: "Denúncia em 1 toque", desc: "Comunidade protegida e moderada" },
+  { title: "Vendedores de confiança", desc: "Perfis validados e moderados" },
 ];
 
 const CheckMark: React.FC = () => (

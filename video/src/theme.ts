@@ -32,12 +32,13 @@ export const format = {
  * these minus the overlapping transition frames — see `Root.tsx`.
  */
 export const scenes = {
-  hook: 120, // 4s
-  carros: 150, // 5s
-  pecas: 150, // 5s
-  seguranca: 150, // 5s
-  chat: 120, // 4s
-  cta: 210, // 7s
+  hook: 105, // ecosystem positioning + logo
+  carros: 140, // used cars, incl. low-cost
+  pecas: 130, // parts & dismantling
+  oficinas: 155, // workshops/mechanics + "it all connects" flow
+  seguranca: 140, // manually verified listings + reviews
+  chat: 120, // direct messages
+  cta: 200, // available on Web, iOS and Android
 } as const;
 
 export const TRANSITION_FRAMES = 15;

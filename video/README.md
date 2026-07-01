@@ -5,8 +5,9 @@ Projeto [Remotion](https://www.remotion.dev) para gerar vídeos promocionais do
 site e da app móvel.
 
 Traz um vídeo pronto: o **promo vertical de ~30 s** (`RecarGaragePromo`,
-1080×1920, 30 fps) que apresenta os principais recursos da app e termina com a
-disponibilidade para **iOS e Android**.
+1080×1920, 30 fps) que apresenta o **ecossistema automóvel** do RecarGarage —
+carros, peças, oficinas e mecânicos ligados num só lugar — e termina com a
+disponibilidade na **Web, iOS e Android**.
 
 ![Pré-visualização das cenas](docs/preview/02-carros.png)
 
@@ -20,7 +21,7 @@ npm run render   # exporta out/RecarGarage-promo.mp4
 
 ## Estrutura
 
-- `src/scenes/` — uma cena por ficheiro (Hook, Carros, Peças, Segurança, Chat, CTA)
+- `src/scenes/` — uma cena por ficheiro (Hook, Carros, Peças, Oficinas, Segurança, Chat, CTA)
 - `src/components/` — peças reutilizáveis (Logo, Background, ListingCard, …)
 - `src/theme.ts` — cores da marca, formato e durações
 - `public/brand/` — ícone, logótipo e fotos
