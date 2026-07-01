@@ -11,6 +11,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { WarningCircle } from '@phosphor-icons/react';
 import NotificationPrePrompt from '@/components/ui/NotificationPrePrompt';
+import { onForegroundMessage } from '@/lib/fcm';
 import CookieConsent from '@/components/ui/CookieConsent';
 import OnboardingTour, { type OnboardingIntent } from '@/components/onboarding/OnboardingTour';
 import RedirectingOverlay from '@/components/onboarding/RedirectingOverlay';
@@ -31,6 +32,20 @@ export default function LayoutShell({ children }: { children: ReactNode }) {
   const { auth, loginModal } = useApp();
   const { user, isLoggedIn, refreshProfile, reenviarEmailVerificacao } = auth;
   const toast = useToast();
+  const notifyInfo = toast?.info;
+
+  // FCM does not auto-display foreground pushes on web — when a message arrives
+  // with the app focused, surface it as a toast instead of dropping it silently.
+  useEffect(() => {
+    if (!isLoggedIn || !notifyInfo) return;
+    const unsub = onForegroundMessage((payload) => {
+      const title = payload.notification?.title;
+      const body = payload.notification?.body;
+      const text = [title, body].filter(Boolean).join(' — ');
+      if (text) notifyInfo(text);
+    });
+    return () => unsub?.();
+  }, [isLoggedIn, notifyInfo]);
 
   // ---- Welcome onboarding (anonymous-first intent router) ----
   const [showTour, setShowTour] = useState(false);
