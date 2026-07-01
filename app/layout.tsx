@@ -13,6 +13,9 @@ const libreFranklin = Libre_Franklin({
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
+// Google Ads (gtag.js) conversion tracking / remarketing tag.
+const GOOGLE_ADS_ID = 'AW-786052925';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -90,6 +93,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <Script
+          id="gtag-src"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            // Consent Mode v2: deny ad/analytics storage by default (RGPD opt-in).
+            // The cookie banner flips these to 'granted' once the user consents.
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: 'denied',
+              wait_for_update: 500,
+            });
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_ID}');
+          `}
+        </Script>
       </head>
       <body className={`${libreFranklin.className} antialiased`}>
         <Providers>
