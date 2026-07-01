@@ -4,6 +4,7 @@ import Script from 'next/script';
 import '@/index.css';
 import Providers from './providers';
 import LayoutShell from '@/components/layout/LayoutShell';
+import { GOOGLE_ADS_ID } from '@/lib/gtag';
 
 const libreFranklin = Libre_Franklin({
   subsets: ['latin'],
@@ -12,9 +13,6 @@ const libreFranklin = Libre_Franklin({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
-
-// Google Ads (gtag.js) conversion tracking / remarketing tag.
-const GOOGLE_ADS_ID = 'AW-786052925';
 
 export const viewport: Viewport = {
   width: 'device-width',

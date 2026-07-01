@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle, CheckCircle, Circle } from '@phosphor-icons/react';
+import { GoogleLogo, AppleLogo, WarningCircle, Eye, EyeSlash, ArrowLeft, Sparkle, CheckCircle, Circle } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Alert from '@/components/ui/Alert';
@@ -21,7 +21,7 @@ interface LoginModalProps {
 
 export default function LoginModal({ show, onClose, onSuccess, modoInicial, contexto }: LoginModalProps) {
   const { auth } = useApp();
-  const { login, registar, loginGoogle } = auth;
+  const { login, registar, loginGoogle, loginApple } = auth;
   const toast = useToast();
 
   const [modo, setModo] = useState<'login' | 'registar' | 'reset'>(modoInicial ?? 'login');
@@ -122,6 +122,22 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
     }
   };
 
+  const handleApple = async () => {
+    setLoading(true);
+    setErro('');
+    try {
+      await loginApple();
+      toast?.sucesso('Login com Apple efetuado!');
+      onClose();
+      onSuccess?.();
+    } catch (err: any) {
+      const msg = traduzirErroFirebase(err.code);
+      setErro(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Modal show={show} onClose={onClose} titulo={modo === 'reset' ? 'Recuperar Palavra-passe' : modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
       <div className="space-y-4">
@@ -143,6 +159,18 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
               disabled={loading}
             >
               Continuar com Google
+            </Button>
+
+            <Button
+              tipo="secundario"
+              tamanho="lg"
+              blocoCompleto
+              icone={<AppleLogo weight="fill" className="text-fg" />}
+              carregando={loading}
+              onClick={handleApple}
+              disabled={loading}
+            >
+              Continuar com Apple
             </Button>
 
             <div className="flex items-center gap-3 text-xs font-semibold text-fg-subtle">

@@ -4,25 +4,11 @@ import { useState, useEffect } from 'react';
 import { Cookie, Gear } from '@phosphor-icons/react';
 import Button from './Button';
 import { CONSENT_STORAGE_KEY, parseConsent, toGtagConsent, type CookieConsent as Consent } from '@/lib/consent';
+import { getGtag } from '@/lib/gtag';
 
-/**
- * Push the current consent choices to Google Consent Mode v2. Falls back to a
- * dataLayer shim so the update is queued and processed even if gtag.js has not
- * finished loading yet (the banner effect can race the afterInteractive script).
- */
+/** Push the current consent choices to Google Consent Mode v2. */
 function applyGtagConsent(consent: Pick<Consent, 'analiticos' | 'marketing'>) {
-  const w = window as unknown as {
-    dataLayer?: unknown[];
-    gtag?: (...args: unknown[]) => void;
-  };
-  w.dataLayer = w.dataLayer || [];
-  if (!w.gtag) {
-    w.gtag = function gtag() {
-      // eslint-disable-next-line prefer-rest-params
-      w.dataLayer!.push(arguments);
-    };
-  }
-  w.gtag('consent', 'update', toGtagConsent(consent));
+  getGtag()('consent', 'update', toGtagConsent(consent));
 }
 
 export default function CookieConsent({ deferred = false }: { deferred?: boolean }) {

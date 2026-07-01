@@ -6,6 +6,7 @@ import { useApp } from '@/providers/AppProvider';
 import { obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
 import { getUserByEmail } from '@/lib/db';
+import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import useReviews from '@/hooks/useReviews';
 import useReports from '@/hooks/useReports';
 import SellerBadges from '@/components/trust/SellerBadges';
@@ -40,6 +41,10 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
   }, [vendedorEmail]);
 
   if (!carro) return null;
+
+  // Google Ads: contacting the seller (any channel) is the high-intent lead
+  // conversion. Google's "count = one" setting dedups repeat clicks per session.
+  const trackContact = () => reportConversion(CONVERSION_LABELS.contactSeller);
 
   const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone, docCountry(carro));
   const telefone = carro.vendedorTelefone;
@@ -88,6 +93,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
                   href={gerarLinkWhatsApp(whatsapp, `${carro.marca} ${carro.modelo}`)}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={trackContact}
                   className="flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl transition text-sm"
                 >
                   <WhatsappLogo className="text-lg" />
@@ -106,6 +112,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
               {temEmail ? (
                 <a
                   href={`mailto:${email}`}
+                  onClick={trackContact}
                   className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-fg font-semibold py-3 px-4 rounded-xl transition border border-slate-300 text-sm"
                 >
                   <Envelope />
@@ -124,7 +131,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
 
             <div className="mt-3">
               {temTelefone && !mostrarTelefone && (
-                <Button tipo="primario" tamanho="lg" blocoCompleto onClick={() => setMostrarTelefone(true)} icone={<Phone />}>
+                <Button tipo="primario" tamanho="lg" blocoCompleto onClick={() => { trackContact(); setMostrarTelefone(true); }} icone={<Phone />}>
                   Ver Telefone
                 </Button>
               )}
@@ -156,7 +163,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
                   tipo="azul"
                   tamanho="lg"
                   blocoCompleto
-                  onClick={() => abrirChat(carro.id, 'carro', `${carro.marca} ${carro.modelo}`, vendedorUid!, carro.vendedorNome || carro.criador || 'Vendedor')}
+                  onClick={() => { trackContact(); abrirChat(carro.id, 'carro', `${carro.marca} ${carro.modelo}`, vendedorUid!, carro.vendedorNome || carro.criador || 'Vendedor'); }}
                   icone={<ChatCircleDots />}
                 >
                   Enviar Mensagem (Chat Interno)
