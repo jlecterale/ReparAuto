@@ -19,6 +19,7 @@ import {
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
+import { docCountry, getActiveCountry } from './country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -104,11 +105,12 @@ export async function getCarroPorId(id: string): Promise<Carro | null> {
 export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
   try {
     const docRef = await addDoc(collection(db, CARROS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Carro;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Carro;
   } catch (err) {
     console.error('[DB] Erro ao adicionar carro:', err);
     throw err;
@@ -182,11 +184,12 @@ export async function getPecaPorId(id: string): Promise<Peca | null> {
 export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   try {
     const docRef = await addDoc(collection(db, PECAS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
     throw err;
@@ -201,7 +204,7 @@ export async function addPecasBatch(dadosList: Record<string, unknown>[]): Promi
     const now = Timestamp.now();
     for (const dados of dadosList) {
       const ref = doc(collection(db, PECAS_COLLECTION));
-      batch.set(ref, { ...dados, status: 'pendente', dataCriacao: now });
+      batch.set(ref, { country: getActiveCountry(), ...dados, status: 'pendente', dataCriacao: now });
       ids.push(ref.id);
     }
     await batch.commit();
@@ -243,6 +246,7 @@ export async function createUserProfile(uid: string, data: Record<string, unknow
   try {
     const userRef = doc(db, USERS_COLLECTION, uid);
     await setDoc(userRef, {
+      country: getActiveCountry(),
       ...data,
       dataCriacao: Timestamp.now(),
       dataAtualizacao: Timestamp.now(),
@@ -897,6 +901,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       prioritaria: false,
@@ -1037,6 +1042,8 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
 
     resultados = resultados.filter((intencao) => {
       if (intencao.userId === usuarioId) return false;
+      // Market isolation (plan 20): an intent only matches cars from its own market.
+      if (docCountry(intencao) !== docCountry(carro)) return false;
       const c = intencao.criterios;
       const cat = intencao.categoria;
 
@@ -1309,11 +1316,12 @@ export async function getOficinaPorId(id: string): Promise<OficinaMecanico | nul
 export async function addOficina(dados: Record<string, unknown>): Promise<OficinaMecanico> {
   try {
     const docRef = await addDoc(collection(db, OFICINAS_COLLECTION), {
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     });
-    return { id: docRef.id, ...dados, status: 'pendente' } as OficinaMecanico;
+    return { id: docRef.id, country: getActiveCountry(), ...dados, status: 'pendente' } as OficinaMecanico;
   } catch (err) {
     console.error('[DB] Erro ao adicionar oficina:', err);
     throw err;
@@ -1385,7 +1393,7 @@ export async function criarProposta(dados: PropostaInput): Promise<Proposta> {
   try {
     const id = doc(collection(db, PROPOSTAS_COLLECTION)).id;
     const agora = Timestamp.now();
-    const proposta: Proposta = { id, ...dados, criadaEm: agora, atualizadaEm: agora };
+    const proposta: Proposta = { id, country: getActiveCountry(), ...dados, criadaEm: agora, atualizadaEm: agora };
     await setDoc(doc(db, PROPOSTAS_COLLECTION, id), cleanUndefined({ ...proposta }));
 
     // Criar notificação para o vendedor

@@ -3,6 +3,7 @@
 import { Calendar, Envelope, Phone, User, WhatsappLogo } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { formatarPreco, obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import type { Carro } from '@/types/carro';
@@ -21,7 +22,7 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
     <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 shadow-sm">
       <div className="text-center sm:text-left">
         <span className="text-3xl sm:text-4xl font-extrabold text-accent">
-          {formatarPreco(carro.preco)}
+          {formatarPreco(carro.preco, docCountry(carro))}
         </span>
         {carro.preco <= 2000 && (
           <div className="mt-1">

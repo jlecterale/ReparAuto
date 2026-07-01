@@ -3,6 +3,7 @@
 import { Check, X, ChatCircle } from '@phosphor-icons/react';
 import { formatarPreco } from '@/lib/utils';
 import { formatarData } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import type { Proposta, StatusProposta } from '@/types/proposal';
 
 interface PropostaCardProps {
@@ -48,14 +49,14 @@ export default function PropostaCard({ proposta, role, onAceitar, onRejeitar, on
       <div className="flex items-center gap-4 mb-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-fg-subtle font-bold">Contra-proposta</p>
-          <p className="text-lg font-extrabold text-accent">{formatarPreco(proposta.valor)}</p>
+          <p className="text-lg font-extrabold text-accent">{formatarPreco(proposta.valor, docCountry(proposta))}</p>
         </div>
         {proposta.anuncioPrecoOriginal > 0 && (
           <>
             <div className="h-8 w-px bg-slate-200" />
             <div>
               <p className="text-[10px] uppercase tracking-wider text-fg-subtle font-bold">Preço original</p>
-              <p className="text-sm font-bold text-fg-muted">{formatarPreco(proposta.anuncioPrecoOriginal)}</p>
+              <p className="text-sm font-bold text-fg-muted">{formatarPreco(proposta.anuncioPrecoOriginal, docCountry(proposta))}</p>
             </div>
             <div className="ml-auto">
               {proposta.valor < proposta.anuncioPrecoOriginal ? (

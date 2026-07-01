@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 
@@ -10,7 +12,8 @@ import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 // public car list skip streaming the whole collection. Data from a previous
 // route is kept in state so navigating back doesn't flash empty.
 export default function useCarros(active: boolean = true) {
-  const [carros, setCarrosState] = useState<Carro[]>([]);
+  const { country } = useCountry();
+  const [todosCarros, setCarrosState] = useState<Carro[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroAtivo>('qualquer');
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +36,14 @@ export default function useCarros(active: boolean = true) {
     );
     return unsub;
   }, [active]);
+
+  // Market isolation (plan 20): only the active country's listings are ever
+  // exposed. The status query stays country-agnostic (no composite index);
+  // legacy docs without a country resolve to PT.
+  const carros = useMemo(
+    () => todosCarros.filter((c) => docCountry(c) === country),
+    [todosCarros, country],
+  );
 
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.

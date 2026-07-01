@@ -10,6 +10,8 @@ import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
@@ -25,6 +27,7 @@ const quickChips = [
 
 export default function CarGrid() {
   const { carros, auth, chat, loginModal } = useApp();
+  const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
@@ -94,17 +97,21 @@ export default function CarGrid() {
   };
 
   useEffect(() => {
+    // Market isolation (plan 20): these direct fetches bypass the context
+    // hooks, so they filter by the active country themselves.
+    const doMercado = <T extends { country?: string }>(items: T[]) =>
+      items.filter((item) => docCountry(item) === country);
     if (tipo === 'intencoes') {
       setLoadingIntencoes(true);
       if (searchQuery) {
         const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
         buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(doMercado(list)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       } else {
         getIntencoesAtivas()
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(doMercado(list)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       }
@@ -112,7 +119,7 @@ export default function CarGrid() {
       setLoadingOficinas(true);
       const unsub = subscribeOficinas(
         (data) => {
-          setOficinas(data);
+          setOficinas(doMercado(data));
           setLoadingOficinas(false);
         },
         (err) => {
@@ -122,7 +129,7 @@ export default function CarGrid() {
       );
       return unsub;
     }
-  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
+  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid, country]);
 
   const oficinasFiltradas = oficinas.filter((o) => {
     const correspondeBusca = !searchQuery ||
@@ -454,7 +461,7 @@ export default function CarGrid() {
                         ) : (
                           <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>
                         )}
-                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
+                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))}</p>
                         <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
                       </div>
                     </div>

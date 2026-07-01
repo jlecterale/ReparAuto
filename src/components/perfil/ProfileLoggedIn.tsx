@@ -6,6 +6,7 @@ import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth as firebaseAuth } from '@/lib/firebase';
@@ -374,7 +375,7 @@ export default function ProfileLoggedIn() {
                     <p className="text-xs text-fg-subtle">{carro.km?.toLocaleString('pt-PT')} km</p>
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco)}</span>
+                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco, docCountry(carro))}</span>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditCarro(carro); }}
                       className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
@@ -431,7 +432,7 @@ export default function ProfileLoggedIn() {
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     {peca.preco != null && (
-                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco)}</span>
+                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco, docCountry(peca))}</span>
                     )}
                     <button
                       onClick={() => setEditPeca(peca)}

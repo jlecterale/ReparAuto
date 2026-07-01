@@ -3,13 +3,16 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
 // `active` controls the realtime subscription: routes that never render the
 // public parts list skip streaming the whole collection. Data from a previous
 // route is kept in state so navigating back doesn't flash empty.
 export default function usePecas(active: boolean = true) {
-  const [pecas, setPecasState] = useState<Peca[]>([]);
+  const { country } = useCountry();
+  const [todasPecas, setPecasState] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipoPeca>('todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +34,12 @@ export default function usePecas(active: boolean = true) {
     );
     return unsub;
   }, [active]);
+
+  // Market isolation (plan 20): legacy docs without a country resolve to PT.
+  const pecas = useMemo(
+    () => todasPecas.filter((p) => docCountry(p) === country),
+    [todasPecas, country],
+  );
 
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.

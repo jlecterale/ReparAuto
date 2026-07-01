@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
@@ -152,7 +153,7 @@ export default function DetalhesCarro() {
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-2xl sm:text-3xl font-extrabold text-accent">
-                {formatarPreco(carro.preco)}
+                {formatarPreco(carro.preco, docCountry(carro))}
               </span>
               {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             </div>
@@ -173,7 +174,7 @@ export default function DetalhesCarro() {
             </button>
             <ShareButton
               title={`${carro.marca} ${carro.modelo} - RecarGarage`}
-              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco)}`}
+              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco, docCountry(carro))}`}
             />
             {(carro.criador === user?.email || isAdmin) && (
               <>

@@ -19,6 +19,7 @@ import { useApp } from '@/providers/AppProvider';
 import { subscribeBanners } from '@/lib/db';
 import type { Banner } from '@/types/banner';
 import { formatarPreco, renderFoto } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 
 const DISMISS_KEY = 'monetization_carousel_dismissed';
 
@@ -132,11 +133,11 @@ export default function MonetizationCarousel() {
     const firstPhoto = c.fotos && c.fotos.length > 0 ? c.fotos[0] : undefined;
     return {
       id: `carro-${c.id}`,
-      title: `${c.marca} ${c.modelo} • ${formatarPreco(c.preco)}`,
+      title: `${c.marca} ${c.modelo} • ${formatarPreco(c.preco, docCountry(c))}`,
       description: `Ano ${c.anoFabricacao} • ${c.km.toLocaleString('pt-PT')} km • ${c.combustivel} • ${c.local}. ${c.descricao}`,
       badge: 'Destaque Turbo',
       badgeCor: 'accent',
-      price: formatarPreco(c.preco),
+      price: formatarPreco(c.preco, docCountry(c)),
       ctaText: 'Ver Veículo',
       icon: <Lightning size={48} className="text-amber-500/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
       imageUrl: firstPhoto,
