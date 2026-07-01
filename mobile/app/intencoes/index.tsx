@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IntencaoCard } from '@/components/IntencaoCard';
 import { subscribeIntencoesAtivas } from '@/lib/trust';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/context/CountryContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { IntencaoCompra } from '@/types';
@@ -29,10 +29,7 @@ export default function IntencoesScreen() {
   }, []);
 
   // The subscription is market-agnostic; the active market is applied in memory.
-  const filtered = useMemo(
-    () => intencoes.filter((i) => docCountry(i) === country),
-    [intencoes, country],
-  );
+  const filtered = useMemo(() => filterByCountry(intencoes, country), [intencoes, country]);
 
   return (
     <View className="flex-1 bg-neutral-50">

@@ -117,7 +117,7 @@ export default function DefinicoesScreen() {
                       active ? 'text-primary-700' : 'text-fg-muted'
                     }`}
                   >
-                    {COUNTRY_INFO[c].nome}
+                    {COUNTRY_INFO[c].name}
                   </Text>
                 </Pressable>
               );

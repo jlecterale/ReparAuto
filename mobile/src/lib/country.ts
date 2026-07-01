@@ -14,7 +14,7 @@ export const COUNTRY_STORAGE_KEY = 'country_reparauto';
 
 export interface CountryInfo {
   code: Country;
-  nome: string;
+  name: string;
   flag: string;
   currency: 'EUR' | 'BRL';
   locale: 'pt-PT' | 'pt-BR';
@@ -23,8 +23,8 @@ export interface CountryInfo {
 }
 
 export const COUNTRY_INFO: Record<Country, CountryInfo> = {
-  PT: { code: 'PT', nome: 'Portugal', flag: '🇵🇹', currency: 'EUR', locale: 'pt-PT', phonePrefix: '351' },
-  BR: { code: 'BR', nome: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
+  PT: { code: 'PT', name: 'Portugal', flag: '🇵🇹', currency: 'EUR', locale: 'pt-PT', phonePrefix: '351' },
+  BR: { code: 'BR', name: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
 };
 
 /**
@@ -45,6 +45,14 @@ export function parseCountry(raw: string | null): Country | null {
   return raw === 'PT' || raw === 'BR' ? raw : null;
 }
 
+/** Keep only the docs that belong to the given market. */
+export function filterByCountry<T extends { country?: string | null }>(
+  items: T[],
+  country: Country,
+): T[] {
+  return items.filter((item) => docCountry(item) === country);
+}
+
 // AsyncStorage is async, so — unlike the web, which reads localStorage on
 // demand — the active market lives in this module-level variable that
 // CountryContext keeps in sync. Creation code (db.ts / trust.ts) reads it
@@ -58,4 +66,38 @@ export function setActiveCountry(country: Country): void {
 /** The active market as maintained by CountryContext (defaults to PT). */
 export function getActiveCountry(): Country {
   return activeCountry;
+}
+
+// One-shot first-launch resolution. A signup racing the async AsyncStorage /
+// GeoIP resolution must not stamp the default (PT) on a Brazilian account and
+// permanently lock it to the wrong market, so account-binding code awaits
+// this instead of reading the active country synchronously.
+let resolveInitialCountry: ((country: Country) => void) | null = null;
+const initialCountryResolution = new Promise<Country>((resolve) => {
+  resolveInitialCountry = resolve;
+});
+
+/**
+ * Called by CountryContext when the first-launch resolution settles (stored
+ * preference, GeoIP result, GeoIP failure, or an account lock that beat it).
+ * Subsequent calls only update the active country.
+ */
+export function markCountryResolved(country: Country): void {
+  setActiveCountry(country);
+  resolveInitialCountry?.(country);
+  resolveInitialCountry = null;
+}
+
+/**
+ * The market a new account should bind to: waits for the first-launch
+ * resolution, falling back to the current active country after 5s so a hung
+ * GeoIP request can never block signup.
+ */
+export function getBindingCountry(): Promise<Country> {
+  return Promise.race([
+    initialCountryResolution,
+    new Promise<Country>((resolve) => {
+      setTimeout(() => resolve(getActiveCountry()), 5000);
+    }),
+  ]);
 }

@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   COUNTRY_STORAGE_KEY,
   DEFAULT_COUNTRY,
+  getActiveCountry,
+  markCountryResolved,
   parseCountry,
   setActiveCountry,
   type Country,
@@ -60,10 +62,17 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       } catch {
         stored = null;
       }
-      if (cancelled || lockedRef.current) return;
+      if (cancelled) return;
+      // Every settled branch below calls markCountryResolved so account
+      // binding (getBindingCountry) never waits on an already-decided market.
+      if (lockedRef.current) {
+        // An account lock beat the first-launch resolution — it wins.
+        markCountryResolved(getActiveCountry());
+        return;
+      }
       if (stored) {
         setCountryState(stored);
-        setActiveCountry(stored);
+        markCountryResolved(stored);
         return;
       }
       // First launch: pre-select the user's market. Only a positive BR match
@@ -73,12 +82,18 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch(GEOIP_ENDPOINT);
         const data: { country?: string } | null = res.ok ? await res.json() : null;
         const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
-        if (cancelled || lockedRef.current) return;
+        if (cancelled) return;
+        if (lockedRef.current) {
+          markCountryResolved(getActiveCountry());
+          return;
+        }
         setCountryState(detected);
-        setActiveCountry(detected);
+        markCountryResolved(detected);
         await AsyncStorage.setItem(COUNTRY_STORAGE_KEY, detected);
       } catch {
-        // Offline or blocked — keep the default; detection runs again next launch.
+        // Offline or blocked — settle on the current market (default PT);
+        // detection runs again next launch.
+        markCountryResolved(getActiveCountry());
       }
     }
 

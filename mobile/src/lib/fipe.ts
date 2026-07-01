@@ -27,9 +27,9 @@ function fipeVehiclePath(tipo?: TipoVeiculo): string {
  * stopping at the first spec token (engine size, valve count, short all-caps
  * trim code). Numeric model names (Peugeot 206) keep only the number.
  */
-export function simplifyFipeModelName(nome: string): string {
-  const tokens = nome.trim().split(/\s+/);
-  if (tokens.length === 0) return nome.trim();
+export function simplifyFipeModelName(name: string): string {
+  const tokens = name.trim().split(/\s+/);
+  if (tokens.length === 0) return name.trim();
   const kept = [tokens[0]];
   if (!/\d/.test(tokens[0])) {
     for (const token of tokens.slice(1)) {
@@ -47,10 +47,10 @@ export function simplifyFipeModelName(nome: string): string {
 }
 
 /** Simplify every trim name and collapse duplicates into a sorted model list. */
-export function dedupeModelNames(nomes: string[]): string[] {
+export function dedupeModelNames(names: string[]): string[] {
   const seen = new Map<string, string>();
-  for (const nome of nomes) {
-    const base = simplifyFipeModelName(nome);
+  for (const name of names) {
+    const base = simplifyFipeModelName(name);
     const key = base.toLocaleLowerCase('pt-BR');
     if (!seen.has(key)) seen.set(key, base);
   }
@@ -59,7 +59,7 @@ export function dedupeModelNames(nomes: string[]): string[] {
 
 interface CacheEntry<T> {
   timestamp: number;
-  dados: T;
+  data: T;
 }
 
 async function readCache<T>(key: string): Promise<T | null> {
@@ -68,15 +68,15 @@ async function readCache<T>(key: string): Promise<T | null> {
     if (!raw) return null;
     const entry = JSON.parse(raw) as CacheEntry<T>;
     if (Date.now() - entry.timestamp >= CACHE_TTL_MS) return null;
-    return entry.dados;
+    return entry.data;
   } catch {
     return null;
   }
 }
 
-async function writeCache<T>(key: string, dados: T): Promise<void> {
+async function writeCache<T>(key: string, data: T): Promise<void> {
   try {
-    const entry: CacheEntry<T> = { timestamp: Date.now(), dados };
+    const entry: CacheEntry<T> = { timestamp: Date.now(), data };
     await AsyncStorage.setItem(key, JSON.stringify(entry));
   } catch {
     // storage full or unavailable — caching is best-effort.
@@ -106,10 +106,10 @@ export async function fetchFipeModels(brandCode: string, tipo?: TipoVeiculo): Pr
   const cacheKey = `${MODELS_CACHE_KEY}_${path}_${brandCode}`;
   const cached = await readCache<string[]>(cacheKey);
   if (cached) return cached;
-  const data = await fetchJson<{ modelos: { nome: string }[] }>(
+  const payload = await fetchJson<{ modelos: { nome: string }[] }>(
     `${FIPE_BASE_URL}/${path}/marcas/${brandCode}/modelos`,
   );
-  const modelos = dedupeModelNames(data.modelos.map((m) => m.nome));
-  await writeCache(cacheKey, modelos);
-  return modelos;
+  const models = dedupeModelNames(payload.modelos.map((m) => m.nome));
+  await writeCache(cacheKey, models);
+  return models;
 }

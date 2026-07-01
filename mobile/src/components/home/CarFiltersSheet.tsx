@@ -55,8 +55,8 @@ export function CarFiltersSheet({
   const distritoOpts = [TODOS, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
   const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
   const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
-  const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
-  const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
+  const concelhoOpts = [TODOS, ...getConcelhos(f.distrito, country).map((c) => ({ value: c.nome, label: c.nome }))];
+  const centroOpts = getConcelhos(f.raioDist, country).map((c) => ({ value: c.nome, label: c.nome }));
 
   function toggleCombustivel(value: Combustivel) {
     update({

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { subscribePecas } from '@/lib/db';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/context/CountryContext';
 import type { Peca } from '@/types';
 
@@ -27,10 +27,7 @@ export function usePecas() {
 
   // The subscription is market-agnostic (rules only allow the status filter);
   // the active market is applied in memory, like the web.
-  const filtered = useMemo(
-    () => pecas.filter((p) => docCountry(p) === country),
-    [pecas, country],
-  );
+  const filtered = useMemo(() => filterByCountry(pecas, country), [pecas, country]);
 
   return { pecas: filtered, loading, error };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { subscribeCarros } from '@/lib/db';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/context/CountryContext';
 import type { Carro } from '@/types';
 
@@ -27,10 +27,7 @@ export function useCarros() {
 
   // The subscription is market-agnostic (rules only allow the status filter);
   // the active market is applied in memory, like the web.
-  const filtered = useMemo(
-    () => carros.filter((c) => docCountry(c) === country),
-    [carros, country],
-  );
+  const filtered = useMemo(() => filterByCountry(carros, country), [carros, country]);
 
   return { carros: filtered, loading, error };
 }

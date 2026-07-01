@@ -10,7 +10,7 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from './firebase';
-import { getActiveCountry } from './country';
+import { getActiveCountry, getBindingCountry } from './country';
 import type { Carro, Peca, Oficina, Usuario } from '@/types';
 
 /** Firestore rejects `undefined`; drop those keys before writing. */
@@ -251,15 +251,17 @@ export async function createUserProfile(
   uid: string,
   data: Record<string, unknown>,
 ): Promise<void> {
+  // Accounts belong to one market, bound at signup. Await the first-launch
+  // resolution so a signup racing the AsyncStorage/GeoIP detection can't
+  // stamp the wrong market; an explicit caller value always wins.
+  const country = (data.country as string) ?? (await getBindingCountry());
   await db
     .collection(USERS)
     .doc(uid)
     .set(
       {
-        // Accounts belong to one market, bound at signup; callers may
-        // override via `data`.
-        country: getActiveCountry(),
         ...data,
+        country,
         dataCriacao: firestore.FieldValue.serverTimestamp(),
       },
       { merge: true },

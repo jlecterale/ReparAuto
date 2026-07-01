@@ -75,7 +75,9 @@ export function useMarcasModelos(tipo?: TipoVeiculo): UseMarcasModelosResult {
           setFipeModelos((prev) => ({ ...prev, [marca]: modelos }));
         })
         .catch(() => {
-          fipePending.current.delete(marca);
+          // Keep the marca in fipePending: getModelos runs on every render, so
+          // clearing it here would re-issue the request in a retry loop against
+          // a rate-limited API. A failed brand retries only on remount.
         });
     },
     [fipeBrands, tipo],
