@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo, type ReactNode } from 'react';
 import {
   COUNTRY_STORAGE_KEY,
   DEFAULT_COUNTRY,
@@ -16,6 +16,10 @@ export interface CountryContextValue {
   /** The active market: drives listing filters, vocabulary and location pickers. */
   country: Country;
   setCountry: (country: Country) => void;
+  /** True while the market is bound to the signed-in account (selector disabled). */
+  locked: boolean;
+  /** Bound by AppProvider: accounts belong to one market, so signing in locks it. */
+  setLocked: (locked: boolean) => void;
 }
 
 const CountryContext = createContext<CountryContextValue | null>(null);
@@ -32,6 +36,13 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
   // Starts at the default on both server and client so hydration matches;
   // the stored preference (or GeoIP) is applied right after mount.
   const [country, setCountryState] = useState<Country>(DEFAULT_COUNTRY);
+  const [locked, setLocked] = useState(false);
+  // The async GeoIP result must never override a market that was meanwhile
+  // bound to the signed-in account.
+  const lockedRef = useRef(false);
+  useEffect(() => {
+    lockedRef.current = locked;
+  }, [locked]);
 
   const setCountry = useCallback((next: Country) => {
     setCountryState(next);
@@ -60,6 +71,7 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
     fetch(GEOIP_ENDPOINT, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { country?: string } | null) => {
+        if (lockedRef.current) return;
         const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
         setCountryState(detected);
         try {
@@ -74,7 +86,10 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, []);
 
-  const value = useMemo(() => ({ country, setCountry }), [country, setCountry]);
+  const value = useMemo(
+    () => ({ country, setCountry, locked, setLocked }),
+    [country, setCountry, locked],
+  );
 
   return <CountryContext.Provider value={value}>{children}</CountryContext.Provider>;
 }

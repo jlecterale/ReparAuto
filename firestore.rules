@@ -51,6 +51,21 @@ service cloud.firestore {
       let data = request.resource.data;
       return !('country' in data) || data.country in ['PT', 'BR'];
     }
+    // Plan 20: accounts belong to one market, bound at signup. Listings must
+    // be created in the creator account's market (accounts without a country
+    // resolve to PT). Docs from legacy clients that send no country at all
+    // stay allowed — the app resolves them to PT.
+    function accountCountry() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('country', 'PT');
+    }
+    function matchesAccountCountry() {
+      let data = request.resource.data;
+      return !('country' in data) || data.country == accountCountry();
+    }
+    // A doc's market never changes after creation; only admins may fix mistakes.
+    function keepsCountry() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['country']);
+    }
 
     match /users/{userId} {
       allow read: if true;
@@ -58,14 +73,14 @@ service cloud.firestore {
       // accounts can finish their profile; listings/messages/etc. still require
       // a verified email (isAuthenticated) in their own rules below.
       allow create: if ((isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin()) && hasValidCountry();
-      allow update: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
+      allow update: if (isProfileOwner(userId) && ownerRoleAllowed() && keepsCountry()) || isAdmin();
       allow delete: if isProfileOwner(userId) || isAdmin();
     }
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry();
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin()
+      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry() && matchesAccountCountry();
+      allow update: if (isOwnerByEmail() && hasValidImageCount(7) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])
@@ -77,8 +92,8 @@ service cloud.firestore {
 
     match /parts/{partId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(3) && hasValidCountry();
-      allow update: if (isOwnerByEmail() && hasValidImageCount(3)) || isAdmin()
+      allow create: if isAuthenticated() && hasValidImageCount(3) && hasValidCountry() && matchesAccountCountry();
+      allow update: if (isOwnerByEmail() && hasValidImageCount(3) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])
@@ -90,8 +105,8 @@ service cloud.firestore {
 
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry();
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin();
+      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry() && matchesAccountCountry();
+      allow update: if (isOwnerByEmail() && hasValidImageCount(7) && keepsCountry()) || isAdmin();
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
@@ -148,10 +163,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid
-        && hasValidCountry();
+        && hasValidCountry()
+        && matchesAccountCountry();
       // Any signed-in user may bump view/contact counters (stats map only),
       // mirroring the counter exception on /cars and /parts.
-      allow update: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin()
+      allow update: if (isAuthenticated() && request.auth.uid == resource.data.userId && keepsCountry()) || isAdmin()
         || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['stats']));
       allow delete: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin();
