@@ -63,6 +63,9 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
     placeholder = '',
     options: readonly string[] | null = null,
     obrigatorio = true,
+    // Selects with an exhaustive value set and a default (e.g. condition) skip
+    // the empty "Indiferente" option so they always persist a meaningful value.
+    emptyOption = true,
   ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
@@ -74,7 +77,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           onChange={(e) => atualizar(campoId, e.target.value)}
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         >
-          {!obrigatorio && <option value="">Indiferente</option>}
+          {!obrigatorio && emptyOption && <option value="">Indiferente</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -120,7 +123,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         {campo('Nº Portas', 'portas', 'number', 'Ex: 5')}
         {campo('Lugares', 'seats', 'number', 'Ex: 5', null, false)}
         {campo('Categoria', 'bodyType', 'text', '', TIPOS_CARROCERIA, false)}
-        {campo('Condição', 'condition', 'text', '', CONDICOES_VEICULO, false)}
+        {campo('Condição', 'condition', 'text', '', CONDICOES_VEICULO, false, false)}
         <div className="col-span-2">
           <SeletorLocalizacao
             distrito={dados.localizacaoDistrito}
