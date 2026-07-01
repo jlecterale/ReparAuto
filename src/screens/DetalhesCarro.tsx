@@ -57,7 +57,10 @@ export default function DetalhesCarro() {
       if (!sessionStorage.getItem(key)) {
         sessionStorage.setItem(key, '1');
         incrementCampo('cars', id, 'visualizacoes');
-        recordDailyMetric(data.criadorUid, 'view');
+        // Owners previewing their own listing don't count as interest.
+        if (data.criadorUid && data.criadorUid !== user?.uid) {
+          recordDailyMetric(data.criadorUid, 'view');
+        }
       }
     }
     fetchCarro();

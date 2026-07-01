@@ -48,7 +48,10 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
     if (!sessionStorage.getItem(key)) {
       sessionStorage.setItem(key, '1');
       incrementCampo('parts', peca.id, 'visualizacoes');
-      recordDailyMetric(peca.criadorUid, 'view');
+      // Owners previewing their own listing don't count as interest.
+      if (peca.criadorUid && peca.criadorUid !== user?.uid) {
+        recordDailyMetric(peca.criadorUid, 'view');
+      }
     }
   }, [peca?.id]);
 

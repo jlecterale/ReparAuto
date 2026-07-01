@@ -201,14 +201,26 @@ service cloud.firestore {
     match /seller_daily/{docId} {
       // Per-seller engagement buckets. Readable only by the seller; metric
       // fields may be bumped by anyone (incl. anonymous viewers), mirroring the
-      // `visualizacoes` counter exception on /cars. No sensitive data lives here.
+      // `visualizacoes` counter exception on /cars — but each write may only
+      // move a counter by +1 and the doc id must be `${ownerUid}_${date}`, so
+      // values can't be set directly and buckets can't be re-homed or forged
+      // with arbitrary ids. (setDoc(merge) re-sending identical ownerUid/date
+      // is fine: unchanged keys never appear in affectedKeys.)
       allow read: if isAuthenticated() && request.auth.uid == resource.data.ownerUid;
       allow create: if request.resource.data.keys()
-        .hasOnly(['ownerUid', 'date', 'views', 'contacts', 'updatedAt']);
-      // setDoc(merge) re-sends ownerUid/date with identical values on every
-      // bump; allow them in affectedKeys so a no-op rewrite can't fail the rule.
+          .hasOnly(['ownerUid', 'date', 'views', 'contacts', 'updatedAt'])
+        && request.resource.data.ownerUid is string
+        && request.resource.data.date is string
+        && request.resource.data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && docId == request.resource.data.ownerUid + '_' + request.resource.data.date
+        && request.resource.data.get('views', 0) in [0, 1]
+        && request.resource.data.get('contacts', 0) in [0, 1];
       allow update: if request.resource.data.diff(resource.data).affectedKeys()
-        .hasOnly(['ownerUid', 'date', 'views', 'contacts', 'updatedAt']);
+          .hasOnly(['views', 'contacts', 'updatedAt'])
+        && request.resource.data.get('views', 0) >= resource.data.get('views', 0)
+        && request.resource.data.get('views', 0) <= resource.data.get('views', 0) + 1
+        && request.resource.data.get('contacts', 0) >= resource.data.get('contacts', 0)
+        && request.resource.data.get('contacts', 0) <= resource.data.get('contacts', 0) + 1;
     }
 
     match /clients/{clientId} {

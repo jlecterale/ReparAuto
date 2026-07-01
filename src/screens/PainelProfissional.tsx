@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChartLineUp, ListChecks, Target, UsersThree, CircleNotch, Plus, type Icon } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
+import Alert from '@/components/ui/Alert';
 import usePainel from '@/hooks/usePainel';
 import DashboardKpiCards from '@/components/painel/DashboardKpiCards';
 import MetricsTimeChart from '@/components/painel/MetricsTimeChart';
@@ -61,6 +62,13 @@ export default function PainelProfissional() {
           Novo anúncio
         </Button>
       </header>
+
+      {user?.emailVerified === false && (
+        <Alert tipo="aviso" titulo="Email por verificar">
+          As estatísticas e a lista de clientes só carregam depois de confirmar o seu email — use o
+          aviso no topo da página para reenviar a confirmação.
+        </Alert>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-neutral-200 overflow-x-auto scrollbar-hide" role="tablist">

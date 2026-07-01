@@ -6,7 +6,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import { useToast } from '@/components/ui/Toast';
-import { CLIENT_CSV_HEADERS } from '@/lib/constants';
+import { parseClientsCsv, buildClientsCsvTemplate, type ClientsCsvParseResult } from '@/lib/clientCsv';
 import type { ClientInput } from '@/types/client';
 
 interface Props {
@@ -15,93 +15,8 @@ interface Props {
   onImport: (list: ClientInput[]) => Promise<number>;
 }
 
-interface ParseResult {
-  rows: ClientInput[];
-  errors: string[];
-}
-
-/** Splits one CSV line honouring double-quoted fields (which may contain the delimiter). */
-function splitCsvLine(line: string, delimiter: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"') {
-        if (line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        cur += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === delimiter) {
-      out.push(cur);
-      cur = '';
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur);
-  return out.map((c) => c.trim());
-}
-
-function parseCsv(text: string): ParseResult {
-  // Strip a UTF-8 BOM (Excel/Numbers prepend one) so the first header matches.
-  const clean = text.replace(/^\uFEFF/, '');
-  const lines = clean.split(/\r?\n/).filter((l) => l.trim().length > 0);
-  const rows: ClientInput[] = [];
-  const errors: string[] = [];
-  if (lines.length < 2) {
-    errors.push('O ficheiro precisa de uma linha de cabeçalho e pelo menos uma linha de dados.');
-    return { rows, errors };
-  }
-  const delimiter = lines[0].includes(';') ? ';' : ',';
-  const headers = splitCsvLine(lines[0], delimiter).map((h) => h.toLowerCase());
-
-  for (let i = 1; i < lines.length; i++) {
-    const cells = splitCsvLine(lines[i], delimiter);
-    const get = (key: string) => {
-      const idx = headers.indexOf(key);
-      return idx >= 0 ? cells[idx] || '' : '';
-    };
-    const nome = get('nome');
-    if (!nome) {
-      errors.push(`Linha ${i + 1}: nome em falta — ignorada.`);
-      continue;
-    }
-    const marca = get('marca');
-    const modelo = get('modelo');
-    const anoRaw = get('ano');
-    const ano = anoRaw && /^\d{4}$/.test(anoRaw) ? Number(anoRaw) : undefined;
-    const veiculos =
-      marca || modelo
-        ? [{ marca, modelo, ano, matricula: get('matricula') || undefined }]
-        : undefined;
-    rows.push({
-      nome,
-      email: get('email') || undefined,
-      telefone: get('telefone') || undefined,
-      morada: get('morada') || undefined,
-      distrito: get('distrito') || undefined,
-      estado: 'lead',
-      origem: 'csv',
-      veiculos,
-      notas: get('notas') || undefined,
-    });
-  }
-  return { rows, errors };
-}
-
 function downloadTemplate() {
-  const header = CLIENT_CSV_HEADERS.join(',');
-  const example = 'João Silva,joao@exemplo.pt,912345678,Rua A 1,Porto,VW,Golf,2018,00-AA-00,Cliente desde 2020';
-  const blob = new Blob([`${header}\n${example}\n`], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([buildClientsCsvTemplate()], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -112,13 +27,13 @@ function downloadTemplate() {
 
 export default function ClientCsvImport({ show, onClose, onImport }: Props) {
   const toast = useToast();
-  const [parsed, setParsed] = useState<ParseResult | null>(null);
+  const [parsed, setParsed] = useState<ClientsCsvParseResult | null>(null);
   const [importing, setImporting] = useState(false);
 
   const handleFile = async (file: File | null) => {
     if (!file) return;
     const text = await file.text();
-    setParsed(parseCsv(text));
+    setParsed(parseClientsCsv(text));
   };
 
   const handleImport = async () => {

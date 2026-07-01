@@ -14,11 +14,13 @@ import {
   Timestamp,
   onSnapshot,
   increment,
+  deleteField,
   type DocumentData,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
+import { lisbonDateKey, lisbonDateWindow } from './dates';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -42,8 +44,14 @@ const BANNERS_COLLECTION = 'banners';
 // Public listings filter on status server-side so clients never download
 // pending/rejected documents. Sorting stays client-side to avoid requiring
 // a composite (status, dataCriacao) index.
+type MaybeTimestamp = { toMillis?: () => number } | undefined;
+
+function sortByTimestampDesc<T>(items: T[], pick: (item: T) => MaybeTimestamp): T[] {
+  return items.sort((a, b) => (pick(b)?.toMillis?.() || 0) - (pick(a)?.toMillis?.() || 0));
+}
+
 function sortByDataCriacaoDesc<T extends { dataCriacao?: { toMillis?: () => number } }>(items: T[]): T[] {
-  return items.sort((a, b) => (b.dataCriacao?.toMillis?.() || 0) - (a.dataCriacao?.toMillis?.() || 0));
+  return sortByTimestampDesc(items, (i) => i.dataCriacao);
 }
 
 
@@ -602,17 +610,6 @@ export async function decrementCampo(colecao: string, id: string, campo: string)
 
 const SELLER_DAILY_COLLECTION = 'seller_daily';
 
-/** 'YYYY-MM-DD' for a date in the Europe/Lisbon timezone (the bucket key). */
-export function lisbonDateKey(date: Date = new Date()): string {
-  // en-CA renders as ISO (YYYY-MM-DD); the timeZone option does the shift.
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Europe/Lisbon',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date);
-}
-
 /**
  * Records one engagement event into the seller's daily bucket. Best-effort and
  * silent: it must never break the view/contact flow it piggybacks on. The write
@@ -645,7 +642,6 @@ export async function getSellerDailyRange(
   ownerUid: string,
   days: number,
 ): Promise<import('@/types/dashboard').MetricPoint[]> {
-  const points: import('@/types/dashboard').MetricPoint[] = [];
   const byDate = new Map<string, { views: number; contacts: number }>();
   try {
     const q = query(collection(db, SELLER_DAILY_COLLECTION), where('ownerUid', '==', ownerUid));
@@ -657,15 +653,11 @@ export async function getSellerDailyRange(
   } catch (err) {
     console.error('[DB] Erro ao buscar métricas diárias:', err);
   }
-  // Build a contiguous, zero-filled window ending today (Lisbon time).
-  const now = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
-    const key = lisbonDateKey(d);
+  // Contiguous, zero-filled calendar window ending today (Lisbon time).
+  return lisbonDateWindow(days).map((key) => {
     const hit = byDate.get(key);
-    points.push({ date: key, views: hit?.views || 0, contacts: hit?.contacts || 0 });
-  }
-  return points;
+    return { date: key, views: hit?.views || 0, contacts: hit?.contacts || 0 };
+  });
 }
 
 // ============ CRM DE CLIENTES (PAINEL PROFISSIONAL) ============
@@ -678,8 +670,7 @@ export async function getClientsByOwner(ownerUid: string): Promise<Client[]> {
     const snap = await getDocs(q);
     const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Client));
     // Sort newest-updated first in memory (avoids a composite index).
-    results.sort((a, b) => (b.atualizadoEm?.toMillis?.() || 0) - (a.atualizadoEm?.toMillis?.() || 0));
-    return results;
+    return sortByTimestampDesc(results, (c) => c.atualizadoEm);
   } catch (err) {
     console.error('[DB] Erro ao buscar clientes:', err);
     return [];
@@ -696,8 +687,7 @@ export function subscribeClients(
     q,
     (snap) => {
       const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Client));
-      results.sort((a, b) => (b.atualizadoEm?.toMillis?.() || 0) - (a.atualizadoEm?.toMillis?.() || 0));
-      onData(results);
+      onData(sortByTimestampDesc(results, (c) => c.atualizadoEm));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de clientes:', err);
@@ -724,33 +714,51 @@ export async function createClient(ownerUid: string, data: ClientInput): Promise
   }
 }
 
+// Firestore hard-caps a WriteBatch at 500 operations.
+const MAX_BATCH_WRITES = 450;
+
 export async function createClientsBatch(ownerUid: string, list: ClientInput[]): Promise<number> {
   if (list.length === 0) return 0;
+  let written = 0;
   try {
-    const batch = writeBatch(db);
-    list.forEach((data) => {
-      const ref = doc(collection(db, CLIENTS_COLLECTION));
-      batch.set(
-        ref,
-        cleanUndefined({
-          ...data,
-          ownerUid,
-          criadoEm: Timestamp.now(),
-          atualizadoEm: Timestamp.now(),
-        }),
-      );
-    });
-    await batch.commit();
-    return list.length;
+    for (let start = 0; start < list.length; start += MAX_BATCH_WRITES) {
+      const chunk = list.slice(start, start + MAX_BATCH_WRITES);
+      const batch = writeBatch(db);
+      chunk.forEach((data) => {
+        const ref = doc(collection(db, CLIENTS_COLLECTION));
+        batch.set(
+          ref,
+          cleanUndefined({
+            ...data,
+            ownerUid,
+            criadoEm: Timestamp.now(),
+            atualizadoEm: Timestamp.now(),
+          }),
+        );
+      });
+      await batch.commit();
+      written += chunk.length;
+    }
+    return written;
   } catch (err) {
-    console.error('[DB] Erro ao importar clientes:', err);
+    console.error(`[DB] Erro ao importar clientes (importados: ${written}):`, err);
     throw err;
   }
 }
 
 export async function updateClient(id: string, data: Partial<Client>): Promise<void> {
   try {
-    await updateDoc(doc(db, CLIENTS_COLLECTION, id), cleanUndefined({ ...data, atualizadoEm: Timestamp.now() }));
+    // Top-level `undefined` means "clear this field" → deleteField(), so
+    // erasing e.g. the phone in the edit form actually removes it (dropping
+    // the key would silently keep the old value). Nested values still go
+    // through cleanUndefined, which strips undefined inside objects/arrays
+    // (Firestore rejects undefined anywhere in the payload).
+    const cleaned = cleanUndefined(data as Record<string, unknown>);
+    const payload: Record<string, unknown> = { atualizadoEm: Timestamp.now() };
+    for (const key of Object.keys(data)) {
+      payload[key] = key in cleaned ? cleaned[key] : deleteField();
+    }
+    await updateDoc(doc(db, CLIENTS_COLLECTION, id), payload);
   } catch (err) {
     console.error('[DB] Erro ao atualizar cliente:', err);
     throw err;
@@ -772,8 +780,7 @@ export async function getContatosByVendedor(vendedorId: string): Promise<Contato
     const q = query(collection(db, CONTATOS_INTENCAO_COLLECTION), where('vendedorId', '==', vendedorId));
     const snap = await getDocs(q);
     const results = snap.docs.map((d) => ({ id: d.id, ...d.data() } as ContatoIntencao));
-    results.sort((a, b) => (b.criadoEm?.toMillis?.() || 0) - (a.criadoEm?.toMillis?.() || 0));
-    return results;
+    return sortByTimestampDesc(results, (c) => c.criadoEm);
   } catch (err) {
     console.error('[DB] Erro ao buscar contatos do vendedor:', err);
     return [];

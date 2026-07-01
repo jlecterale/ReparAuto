@@ -30,6 +30,7 @@ export default function ClientFormModal({ show, onClose, client, onSave }: Props
   const [estado, setEstado] = useState<ClientStage>('lead');
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
+  const [ano, setAno] = useState('');
   const [matricula, setMatricula] = useState('');
   const [notas, setNotas] = useState('');
   const [erro, setErro] = useState('');
@@ -46,6 +47,7 @@ export default function ClientFormModal({ show, onClose, client, onSave }: Props
     setEstado(client?.estado || 'lead');
     setMarca(v?.marca || '');
     setModelo(v?.modelo || '');
+    setAno(v?.ano ? String(v.ano) : '');
     setMatricula(v?.matricula || '');
     setNotas(client?.notas || '');
     setErro('');
@@ -57,9 +59,24 @@ export default function ClientFormModal({ show, onClose, client, onSave }: Props
       return;
     }
     setSaving(true);
+    // Merge over the existing first vehicle (preserving fields the form doesn't
+    // edit, like km/notas) and keep any extra vehicles untouched.
+    const existing = client?.veiculos?.[0];
+    const rest = client?.veiculos?.slice(1) || [];
     const veiculos = marca.trim() || modelo.trim()
-      ? [{ marca: marca.trim(), modelo: modelo.trim(), matricula: matricula.trim() || undefined }]
-      : undefined;
+      ? [
+          {
+            ...existing,
+            marca: marca.trim(),
+            modelo: modelo.trim(),
+            ano: /^\d{4}$/.test(ano.trim()) ? Number(ano.trim()) : undefined,
+            matricula: matricula.trim() || undefined,
+          },
+          ...rest,
+        ]
+      : rest.length > 0
+        ? rest
+        : undefined;
     const data: ClientInput = {
       nome: nome.trim(),
       email: email.trim() || undefined,
@@ -112,9 +129,10 @@ export default function ClientFormModal({ show, onClose, client, onSave }: Props
 
         <fieldset className="border border-neutral-200 rounded-xl p-3">
           <legend className="text-xs font-bold text-fg-muted px-1">Veículo (opcional)</legend>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Input label="Marca" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="VW" />
             <Input label="Modelo" value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Golf" />
+            <Input label="Ano" inputMode="numeric" maxLength={4} value={ano} onChange={(e) => setAno(e.target.value)} placeholder="2018" />
             <Input label="Matrícula" value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="00-AA-00" />
           </div>
         </fieldset>
