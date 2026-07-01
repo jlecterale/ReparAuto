@@ -28,6 +28,9 @@ export default function useMarketStats(filter: MarketStatsFilter = {}): MarketSt
     const marcaNorm = filter.marca ? normalizeMarca(filter.marca) : '';
 
     const filtrados = carros.carros.filter((c) => {
+      // "Para peças" (parts-only, non-running) listings are a different
+      // product — same reasoning as filtrarCarrosSimilares in priceUtils.ts.
+      if (c.condition === 'Para peças') return false;
       if (marcaNorm && normalizeMarca(c.marca) !== marcaNorm) return false;
       if (filter.modelo && !isSameModel(filter.modelo, c.modelo)) return false;
       if (filter.combustivel && c.combustivel !== filter.combustivel) return false;

@@ -42,6 +42,9 @@ export default function MarketDashboard() {
   const topMarcas = useMemo(() => {
     const map = new Map<string, { count: number; total: number }>();
     for (const c of carrosCtx.carros) {
+      // Keep "Para peças" listings out of the average-price ranking, same as
+      // useMarketStats — they'd drag brand averages toward salvage prices.
+      if (c.condition === 'Para peças') continue;
       const cur = map.get(c.marca) ?? { count: 0, total: 0 };
       cur.count++;
       cur.total += c.preco;

@@ -96,6 +96,44 @@ describe('usePriceIndicator', () => {
     expect(result.current.indicator).toBe('excelente');
   });
 
+  it('returns "indisponivel" for a "Para peças" listing — it is not comparable to running-car pricing', () => {
+    // Without this guard, a wrecked/parts-only car's (legitimately low) price
+    // would always read as an "excelente" deal against the running-car
+    // median, which is misleading rather than informative.
+    const forParts = carro({
+      id: 'wreck',
+      marca: 'VW',
+      modelo: 'Golf IV',
+      preco: 300,
+      anoFabricacao: 2003,
+      condition: 'Para peças',
+    });
+    mockCarrosRef.list = [4700, 4800, 4900, 5000, 5100, 5200].map((p, i) =>
+      carro({ id: `c${i}`, marca: 'VW', modelo: 'Golf IV', preco: p, anoFabricacao: 2003 }),
+    );
+    const { result } = renderHook(() => usePriceIndicator(forParts));
+    expect(result.current.indicator).toBe('indisponivel');
+    expect(result.current.sampleSize).toBe(0);
+  });
+
+  it('excludes "Para peças" listings from another car\'s comparison sample', () => {
+    const target = carro({ id: 'me', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003 });
+    const comps = [4700, 4800, 4900, 5100, 5200].map((p, i) =>
+      carro({ id: `c${i}`, marca: 'VW', modelo: 'Golf IV', preco: p, anoFabricacao: 2003 }),
+    );
+    const forParts = carro({
+      id: 'wreck',
+      marca: 'VW',
+      modelo: 'Golf IV',
+      preco: 300,
+      anoFabricacao: 2003,
+      condition: 'Para peças',
+    });
+    mockCarrosRef.list = [...comps, forParts];
+    const { result } = renderHook(() => usePriceIndicator(target));
+    expect(result.current.sampleSize).toBe(5);
+  });
+
   it('recomputes when the carros list reference changes (WeakMap invalidation)', () => {
     const target = carro({ id: 'me', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003 });
     const listA = [4700, 4800, 4900, 5000, 5100, 5200].map((p, i) =>

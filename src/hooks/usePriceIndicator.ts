@@ -16,6 +16,12 @@ export default function usePriceIndicator(carro: Carro | null): PriceIndicatorRe
     if (!carro) {
       return { indicator: 'indisponivel', deviation: 0, stats: null, sampleSize: 0 };
     }
+    // A "Para peças" listing is priced against a market of non-running cars,
+    // not the working-car median we compare it to — it would otherwise always
+    // read as an "excelente" deal, which is misleading on a wreck/parts ad.
+    if (carro.condition === 'Para peças') {
+      return { indicator: 'indisponivel', deviation: 0, stats: null, sampleSize: 0 };
+    }
     const similares = filtrarCarrosSimilares(carros.carros, {
       marca: carro.marca,
       modelo: carro.modelo,

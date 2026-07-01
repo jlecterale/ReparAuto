@@ -3,6 +3,7 @@
 **Prioridade:** ALTA
 **Estimativa Total:** 15-20 dias de desenvolvimento
 **Impacto Principal:** Decisao de compra informada, diferenciacao competitiva, retencao
+**Status:** Implementado (parcial). Entregue: badge de preco de 5 niveis (excelente/bom/justo/acima/sobrevalorizado) nos cards e na ficha do anuncio, pagina `/avaliar-veiculo` (estimador com intervalo P25-P75), dashboard `/mercado` (estatisticas + distribuicao + top marcas). Ficam para o proximo ciclo: alertas de queda de preco (depende do Plano 3.1 / Cloud Functions) e o cron que popula `priceSnapshots` para o grafico de tendencia historica (o componente `PriceChart` ja existe, so falta a fonte de dados).
 
 ---
 

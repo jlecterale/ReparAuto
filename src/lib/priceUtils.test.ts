@@ -243,6 +243,21 @@ describe('filtrarCarrosSimilares', () => {
     expect(filtrarCarrosSimilares([same], { marca: '', modelo: 'Golf' })).toEqual([]);
     expect(filtrarCarrosSimilares([same], { marca: 'VW', modelo: '' })).toEqual([]);
   });
+
+  it('excludes "Para peças" (parts-only, non-running) listings from comparables', () => {
+    // A wrecked car sold for parts is not a market comp for a running one of
+    // the same model — including it would drag the median toward salvage
+    // prices instead of actual asking prices.
+    const forParts = carro({
+      id: 's6',
+      marca: 'VW',
+      modelo: 'Golf IV',
+      preco: 300,
+      anoFabricacao: 2003,
+      condition: 'Para peças',
+    });
+    expect(filtrarCarrosSimilares([same, forParts], target).map((c) => c.id)).toEqual(['s1']);
+  });
 });
 
 describe('calculatePriceEstimate', () => {

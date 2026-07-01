@@ -174,6 +174,10 @@ export function filtrarCarrosSimilares(
   return candidatos.filter((c) => {
     if (criterios.excludeId && c.id === criterios.excludeId) return false;
     if (!isSameModel(criterios.modelo, c.modelo)) return false;
+    // "Para peças" (parts-only, non-running) listings are a different product
+    // from a working car of the same model — including them would drag the
+    // median toward salvage prices instead of market value.
+    if (c.condition === 'Para peças') return false;
     if (criterios.ano && c.anoFabricacao) {
       const diff = Math.abs(c.anoFabricacao - criterios.ano);
       if (diff > PRICE_THRESHOLDS.similarYearRange) return false;

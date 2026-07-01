@@ -1887,6 +1887,9 @@ export async function getCarrosSimilares(
       .filter((c) => {
         if (options?.excludeId && c.id === options.excludeId) return false;
         if (!isSameModel(modelo, c.modelo)) return false;
+        // See filtrarCarrosSimilares in priceUtils.ts: "Para peças" listings
+        // are excluded from price comparables.
+        if (c.condition === 'Para peças') return false;
         if (options?.anoMin && c.anoFabricacao < options.anoMin) return false;
         if (options?.anoMax && c.anoFabricacao > options.anoMax) return false;
         return true;
