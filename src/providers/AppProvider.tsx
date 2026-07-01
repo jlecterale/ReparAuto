@@ -75,7 +75,14 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   // Only stream the heavy public collections on routes that render them.
   // Other routes still get the action methods (publicarCarro/publicarPeca);
   // add the route here if a new screen starts reading carros/pecas data.
-  const needsCarros = pathname === '/app' || pathname.startsWith('/favoritos');
+  // /mercado, /avaliar-veiculo and /detalhes/[id] compute price analytics
+  // against the carros collection, so they need the live stream too.
+  const needsCarros =
+    pathname === '/app' ||
+    pathname.startsWith('/favoritos') ||
+    pathname.startsWith('/mercado') ||
+    pathname.startsWith('/avaliar-veiculo') ||
+    pathname.startsWith('/detalhes');
   const needsPecas = pathname.startsWith('/pecas') || pathname.startsWith('/favoritos');
   const needsOficinas = pathname.startsWith('/oficinas') || pathname.startsWith('/favoritos');
   const carros = useCarros(needsCarros);

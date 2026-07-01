@@ -11,7 +11,7 @@ export default function Mercado() {
           <ChartLineUp className="text-accent" /> Mercado
         </h1>
         <p className="text-sm text-fg-muted mt-1">
-          Estatísticas em tempo real dos anúncios publicados no ReparAuto.
+          Estatísticas em tempo real dos anúncios publicados no RecarGarage.
         </p>
       </div>
 

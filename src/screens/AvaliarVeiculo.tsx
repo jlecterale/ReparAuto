@@ -11,7 +11,7 @@ export default function AvaliarVeiculo() {
           <Calculator className="text-accent" /> Avaliar veículo
         </h1>
         <p className="text-sm text-fg-muted mt-2">
-          Indique a marca, modelo e ano para obter uma estimativa de preço com base nos anúncios reais do ReparAuto.
+          Indique a marca, modelo e ano para obter uma estimativa de preço com base nos anúncios reais do RecarGarage.
         </p>
       </div>
 

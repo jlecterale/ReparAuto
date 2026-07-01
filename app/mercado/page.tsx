@@ -4,10 +4,10 @@ import Mercado from '@/screens/Mercado';
 export const metadata: Metadata = {
   title: 'Mercado de carros usados em Portugal',
   description:
-    'Estatísticas, distribuições e tendências de preços no mercado português de carros usados, com base nos anúncios do ReparAuto.',
+    'Estatísticas, distribuições e tendências de preços no mercado português de carros usados, com base nos anúncios do RecarGarage.',
   alternates: { canonical: '/mercado' },
   openGraph: {
-    title: 'Mercado — ReparAuto',
+    title: 'Mercado — RecarGarage',
     description: 'Estatísticas do mercado de carros usados em Portugal.',
     url: '/mercado',
   },
