@@ -26,8 +26,8 @@ export default function SeletorLocalizacao({
   const concelhos = getConcelhos(distrito);
   const { country } = useCountry();
   // PT: Distrito/Concelho · BR: Estado/Cidade
-  const regiaoLabel = term('districtLabel', country);
-  const cidadeLabel = term('municipalityLabel', country);
+  const regionLabel = term('districtLabel', country);
+  const cityLabel = term('municipalityLabel', country);
 
   // appearance-none removes the cramped native arrow so we can render our own
   // chevron with comfortable padding (pr-10 keeps the text clear of it).
@@ -41,7 +41,7 @@ export default function SeletorLocalizacao({
     <div className={`grid grid-cols-2 gap-3 ${className}`}>
       <div>
         <label className={labelCls}>
-          {regiaoLabel} {obrigatorio && <span className="text-danger-500">*</span>}
+          {regionLabel} {obrigatorio && <span className="text-danger-500">*</span>}
         </label>
         <div className="relative">
           <select
@@ -49,7 +49,7 @@ export default function SeletorLocalizacao({
             onChange={(e) => onChange(e.target.value, '')}
             className={`${baseSelect} ${erro && !distrito ? 'border-danger-500' : 'border-neutral-300'}`}
           >
-            <option value="">Selecionar {regiaoLabel.toLowerCase()}</option>
+            <option value="">Selecionar {regionLabel.toLowerCase()}</option>
             {distritos.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -64,7 +64,7 @@ export default function SeletorLocalizacao({
 
       <div>
         <label className={labelCls}>
-          {cidadeLabel} {obrigatorio && <span className="text-danger-500">*</span>}
+          {cityLabel} {obrigatorio && <span className="text-danger-500">*</span>}
         </label>
         <div className="relative">
           <select
@@ -75,8 +75,8 @@ export default function SeletorLocalizacao({
           >
             <option value="">
               {distrito
-                ? `Selecionar ${cidadeLabel.toLowerCase()}`
-                : `Selecione um ${regiaoLabel.toLowerCase()}`}
+                ? `Selecionar ${cityLabel.toLowerCase()}`
+                : `Selecione um ${regionLabel.toLowerCase()}`}
             </option>
             {concelhos.map((c) => (
               <option key={c.nome} value={c.nome}>{c.nome}</option>

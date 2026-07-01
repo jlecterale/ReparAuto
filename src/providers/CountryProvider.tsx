@@ -61,7 +61,7 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
       stored = null;
     }
     if (stored) {
-      setCountryState(stored);
+      if (!lockedRef.current) setCountryState(stored);
       return;
     }
     // First visit: pre-select the visitor's market. Only a positive BR match

@@ -110,6 +110,11 @@ describe('obterWhatsApp', () => {
     expect(obterWhatsApp(null, '5511987654321', 'BR')).toBe('5511987654321');
   });
 
+  it('accepts numbers written with a leading +', () => {
+    expect(obterWhatsApp(null, '+55 11 98765-4321', 'BR')).toBe('5511987654321');
+    expect(obterWhatsApp(null, '+351 912 345 678')).toBe('351912345678');
+  });
+
   it('returns null for numbers that cannot receive WhatsApp links', () => {
     expect(obterWhatsApp(null, '1133334444', 'BR')).toBeNull();
     expect(obterWhatsApp(null, null, 'BR')).toBeNull();

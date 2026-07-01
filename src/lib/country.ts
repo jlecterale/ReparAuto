@@ -13,7 +13,7 @@ export const COUNTRY_STORAGE_KEY = 'country_reparauto';
 
 export interface CountryInfo {
   code: Country;
-  nome: string;
+  name: string;
   flag: string;
   currency: 'EUR' | 'BRL';
   locale: 'pt-PT' | 'pt-BR';
@@ -22,8 +22,8 @@ export interface CountryInfo {
 }
 
 export const COUNTRY_INFO: Record<Country, CountryInfo> = {
-  PT: { code: 'PT', nome: 'Portugal', flag: '🇵🇹', currency: 'EUR', locale: 'pt-PT', phonePrefix: '351' },
-  BR: { code: 'BR', nome: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
+  PT: { code: 'PT', name: 'Portugal', flag: '🇵🇹', currency: 'EUR', locale: 'pt-PT', phonePrefix: '351' },
+  BR: { code: 'BR', name: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
 };
 
 /**
@@ -33,6 +33,11 @@ export const COUNTRY_INFO: Record<Country, CountryInfo> = {
  */
 export function docCountry(doc: { country?: string | null }): Country {
   return doc.country === 'BR' ? 'BR' : 'PT';
+}
+
+/** Market isolation: keep only the docs that belong to the given market. */
+export function filterByCountry<T extends { country?: string | null }>(items: T[], country: Country): T[] {
+  return items.filter((item) => docCountry(item) === country);
 }
 
 /**

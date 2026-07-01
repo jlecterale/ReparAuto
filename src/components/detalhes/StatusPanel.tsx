@@ -13,7 +13,7 @@ export default function StatusPanel({ carro }: { carro: Carro | null }) {
 
   if (!carro) return null;
 
-  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone);
+  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone, docCountry(carro));
   const email = carro.vendedorEmail || carro.criador;
   const temWhatsApp = !!whatsapp;
   const temTelefone = !!carro.vendedorTelefone;

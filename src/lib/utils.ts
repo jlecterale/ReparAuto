@@ -4,9 +4,9 @@ import { COUNTRY_INFO, type Country } from '@/lib/country';
 // pass the doc's resolved country (docCountry), not the viewer's.
 export function formatarPreco(valor: number | string | null | undefined, country: Country = 'PT'): string {
   const { locale } = COUNTRY_INFO[country];
-  const numero = valor == null || isNaN(Number(valor)) ? 0 : Number(valor);
-  const formatado = numero.toLocaleString(locale);
-  return country === 'BR' ? `R$ ${formatado}` : `${formatado} €`;
+  const value = valor == null || isNaN(Number(valor)) ? 0 : Number(valor);
+  const formatted = value.toLocaleString(locale);
+  return country === 'BR' ? `R$ ${formatted}` : `${formatted} €`;
 }
 
 export function gerarId(): number {
@@ -33,9 +33,9 @@ export function validarCodigoPostal(cp: string, country: Country = 'PT'): boolea
 
 export function formatarCodigoPostal(cp: string, country: Country = 'PT'): string {
   const digits = cp.replace(/\D/g, '');
-  const prefixo = country === 'BR' ? 5 : 4;
-  if (digits.length <= prefixo) return digits;
-  return `${digits.slice(0, prefixo)}-${digits.slice(prefixo, prefixo + 3)}`;
+  const prefixLength = country === 'BR' ? 5 : 4;
+  if (digits.length <= prefixLength) return digits;
+  return `${digits.slice(0, prefixLength)}-${digits.slice(prefixLength, prefixLength + 3)}`;
 }
 
 // Weighted check-digit calculation shared by CPF and CNPJ: multiply each digit
@@ -225,7 +225,7 @@ export function dataAtualISO(): string {
 export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null, country: Country = 'PT'): string | null {
   if (whatsapp && whatsapp.trim()) return whatsapp.trim();
   if (!telefone) return null;
-  const digits = telefone.replace(/[\s().-]/g, '');
+  const digits = telefone.replace(/[\s().+-]/g, '');
   if (country === 'BR') {
     // Only mobiles (DDD + 9xxxxxxxx) receive WhatsApp links.
     if (/^[1-9][0-9]9\d{8}$/.test(digits)) return '55' + digits;
@@ -280,8 +280,8 @@ export function gerarTituloIntencao(dados: {
   }
   const m = dados.criterios?.marca || '';
   const mo = dados.criterios?.modelo || '';
-  const preco = dados.criterios?.precoMaximo;
-  const p = preco ? ` até ${country === 'BR' ? `R$ ${preco}` : `${preco}€`}` : '';
+  const maxPrice = dados.criterios?.precoMaximo;
+  const p = maxPrice ? ` até ${country === 'BR' ? `R$ ${maxPrice}` : `${maxPrice}€`}` : '';
   return `${prefixo}: ${m} ${mo}${p}`;
 }
 

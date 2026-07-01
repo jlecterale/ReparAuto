@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { getCoordenadas } from '@/lib/geo';
+import { getActiveCountry } from '@/lib/country';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
@@ -111,7 +112,7 @@ export default function Anunciar() {
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
-        coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
+        coordenadas: localizacao ? getCoordenadas(localizacao, getActiveCountry()) : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         preco: Number(dados.preco),

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
@@ -12,7 +12,7 @@ import type { Peca, FiltroTipoPeca } from '@/types/peca';
 // route is kept in state so navigating back doesn't flash empty.
 export default function usePecas(active: boolean = true) {
   const { country } = useCountry();
-  const [todasPecas, setPecasState] = useState<Peca[]>([]);
+  const [allPecas, setPecasState] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipoPeca>('todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,10 +36,7 @@ export default function usePecas(active: boolean = true) {
   }, [active]);
 
   // Market isolation (plan 20): legacy docs without a country resolve to PT.
-  const pecas = useMemo(
-    () => todasPecas.filter((p) => docCountry(p) === country),
-    [todasPecas, country],
-  );
+  const pecas = useMemo(() => filterByCountry(allPecas, country), [allPecas, country]);
 
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
@@ -73,10 +70,11 @@ export default function usePecas(active: boolean = true) {
     }
 
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
-      const centro = getCoordenadas(advRaioCentro);
+      // Scoped to the active market: place names collide across markets.
+      const centro = getCoordenadas(advRaioCentro, country);
       if (centro) {
         lista = lista.filter((p) => {
-          const coords = p.coordenadas ?? getCoordenadas(p.local);
+          const coords = p.coordenadas ?? getCoordenadas(p.local, country);
           if (!coords) return false;
           return haversineKm(centro, coords) <= advRaioKm!;
         });
@@ -85,12 +83,12 @@ export default function usePecas(active: boolean = true) {
       lista = lista.filter((p) => p.local?.toLowerCase() === advConcelho.toLowerCase());
     } else if (advDistrito) {
       lista = lista.filter(
-        (p) => (p.distrito ?? getDistritoForConcelho(p.local)) === advDistrito
+        (p) => (p.distrito ?? getDistritoForConcelho(p.local, country)) === advDistrito
       );
     }
 
     return lista;
-  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+  }, [pecas, country, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {

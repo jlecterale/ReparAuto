@@ -8,6 +8,7 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import ImageCropper from '@/components/ui/ImageCropper';
 import { getCoordenadas } from '@/lib/geo';
+import { getActiveCountry } from '@/lib/country';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
@@ -105,7 +106,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
         local: form.localizacao,
         distrito: form.localizacaoDistrito || undefined,
-        coordenadas: form.localizacao ? getCoordenadas(form.localizacao) : undefined,
+        coordenadas: form.localizacao ? getCoordenadas(form.localizacao, getActiveCountry()) : undefined,
         preco: form.preco ? Number(form.preco) : null,
         foto: fotoUrl || undefined,
         criador: user?.email || '',

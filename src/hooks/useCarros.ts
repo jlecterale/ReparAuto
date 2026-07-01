@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
@@ -13,7 +13,7 @@ import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 // route is kept in state so navigating back doesn't flash empty.
 export default function useCarros(active: boolean = true) {
   const { country } = useCountry();
-  const [todosCarros, setCarrosState] = useState<Carro[]>([]);
+  const [allCarros, setCarrosState] = useState<Carro[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroAtivo>('qualquer');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,10 +40,7 @@ export default function useCarros(active: boolean = true) {
   // Market isolation (plan 20): only the active country's listings are ever
   // exposed. The status query stays country-agnostic (no composite index);
   // legacy docs without a country resolve to PT.
-  const carros = useMemo(
-    () => todosCarros.filter((c) => docCountry(c) === country),
-    [todosCarros, country],
-  );
+  const carros = useMemo(() => filterByCountry(allCarros, country), [allCarros, country]);
 
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
@@ -80,10 +77,11 @@ export default function useCarros(active: boolean = true) {
     }
 
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
-      const centro = getCoordenadas(advRaioCentro);
+      // Scoped to the active market: place names collide across markets.
+      const centro = getCoordenadas(advRaioCentro, country);
       if (centro) {
         cs = cs.filter((c) => {
-          const coords = c.coordenadas ?? getCoordenadas(c.local);
+          const coords = c.coordenadas ?? getCoordenadas(c.local, country);
           if (!coords) return false;
           return haversineKm(centro, coords) <= advRaioKm!;
         });
@@ -92,7 +90,7 @@ export default function useCarros(active: boolean = true) {
       cs = cs.filter((c) => c.local?.toLowerCase() === advConcelho.toLowerCase());
     } else if (advDistrito) {
       cs = cs.filter(
-        (c) => (c.distrito ?? getDistritoForConcelho(c.local)) === advDistrito
+        (c) => (c.distrito ?? getDistritoForConcelho(c.local, country)) === advDistrito
       );
     }
 
@@ -103,7 +101,7 @@ export default function useCarros(active: boolean = true) {
     }
 
     return cs;
-  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
+  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {

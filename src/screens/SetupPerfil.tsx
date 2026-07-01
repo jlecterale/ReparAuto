@@ -12,6 +12,7 @@ import { getPendingIntent } from '@/lib/onboarding';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCountry } from '@/providers/CountryProvider';
 import {
   validarTelefone,
   validarCodigoPostal,
@@ -41,6 +42,8 @@ export default function SetupPerfil() {
   const lookupTriggered = useRef(false);
 
   const cpLookup = useCodigoPostal();
+  // Brazilian accounts validate phone/CEP/CPF against BR formats.
+  const { country } = useCountry();
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
@@ -96,10 +99,10 @@ export default function SetupPerfil() {
     if (!touched[campo]) return null;
     switch (campo) {
       case 'nome': return nome.trim().length > 0;
-      case 'telefone': return validarTelefone(telefone);
+      case 'telefone': return validarTelefone(telefone, country);
       case 'localidade': return localidade.trim().length > 0;
-      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal);
-      case 'nif': return !nif.trim() || validarNif(nif);
+      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal, country);
+      case 'nif': return !nif.trim() || validarNif(nif, country);
       default: return null;
     }
   };
@@ -128,7 +131,7 @@ export default function SetupPerfil() {
       setErro('O número de telemóvel é obrigatório.');
       return;
     }
-    if (!validarTelefone(telefone)) {
+    if (!validarTelefone(telefone, country)) {
       setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
       return;
     }
@@ -136,11 +139,11 @@ export default function SetupPerfil() {
       setErro('A localidade é obrigatória.');
       return;
     }
-    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal)) {
+    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
       setErro('Código postal inválido. Formato: XXXX-XXX');
       return;
     }
-    if (nif.trim() && !validarNif(nif)) {
+    if (nif.trim() && !validarNif(nif, country)) {
       setErro('NIF inválido. Verifique o número.');
       return;
     }
@@ -284,7 +287,7 @@ export default function SetupPerfil() {
                   placeholder="XXXX-XXX"
                   value={codigoPostal}
                   onChange={(e) => {
-                    const formatted = formatarCodigoPostal(e.target.value);
+                    const formatted = formatarCodigoPostal(e.target.value, country);
                     setCodigoPostal(formatted);
                     lookupTriggered.current = false;
                     if (formatted.length === 8) {
@@ -293,7 +296,7 @@ export default function SetupPerfil() {
                   }}
                   onBlur={() => {
                     handleBlur('codigoPostal');
-                    if (validarCodigoPostal(codigoPostal)) {
+                    if (country === 'PT' && validarCodigoPostal(codigoPostal, country)) {
                       cpLookup.buscar(codigoPostal);
                     }
                   }}

@@ -212,7 +212,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                     }`}
                   >
                     <span aria-hidden="true">{info.flag}</span>
-                    {info.nome}
+                    {info.name}
                   </button>
                 );
               })}

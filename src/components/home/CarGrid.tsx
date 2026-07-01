@@ -10,7 +10,7 @@ import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
-import { docCountry } from '@/lib/country';
+import { docCountry, filterByCountry } from '@/lib/country';
 import { term } from '@/lib/terms';
 import { useCountry } from '@/providers/CountryProvider';
 import type { IntencaoCompra } from '@/types/intencao';
@@ -100,8 +100,6 @@ export default function CarGrid() {
   useEffect(() => {
     // Market isolation (plan 20): these direct fetches bypass the context
     // hooks, so they filter by the active country themselves.
-    const doMercado = <T extends { country?: string }>(items: T[]) =>
-      items.filter((item) => docCountry(item) === country);
     if (tipo === 'intencoes') {
       setLoadingIntencoes(true);
       if (searchQuery) {
@@ -109,12 +107,12 @@ export default function CarGrid() {
         // active market, not the PT default of a country-less object.
         const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined, country };
         buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-          .then((list) => setIntencoesMatch(doMercado(list)))
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       } else {
         getIntencoesAtivas()
-          .then((list) => setIntencoesMatch(doMercado(list)))
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       }
@@ -122,7 +120,7 @@ export default function CarGrid() {
       setLoadingOficinas(true);
       const unsub = subscribeOficinas(
         (data) => {
-          setOficinas(doMercado(data));
+          setOficinas(filterByCountry(data, country));
           setLoadingOficinas(false);
         },
         (err) => {
@@ -429,7 +427,7 @@ export default function CarGrid() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {intencoesMatch.map((intencao) => {
-                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
                   const email = intencao.vendedorEmail || '';
                   const temWhatsApp = !!whatsapp;
                   const temTelefone = !!intencao.vendedorTelefone && intencao.mostrarTelefone;

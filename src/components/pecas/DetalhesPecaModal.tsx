@@ -69,7 +69,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
   const config = tipoConfig[peca.tipo] || tipoConfig.venda;
   const telefone = peca.vendedorTelefone || peca.contacto;
   const email = peca.vendedorEmail || peca.criador;
-  const whatsapp = obterWhatsApp(peca.vendedorWhatsApp, telefone);
+  const whatsapp = obterWhatsApp(peca.vendedorWhatsApp, telefone, docCountry(peca));
   const temWhatsApp = !!whatsapp;
   const temTelefone = !!telefone;
   const temEmail = !!email;

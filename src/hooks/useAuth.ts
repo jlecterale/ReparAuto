@@ -15,6 +15,7 @@ import {
   createUserProfile,
   updateUserProfile,
 } from '@/lib/db';
+import { getActiveCountry } from '@/lib/country';
 import { auth } from '@/lib/firebase';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
 
@@ -76,7 +77,9 @@ export default function useAuth() {
           let profile = await getUserProfile(firebaseUser.uid);
           if (!profile) {
             await createUserProfile(firebaseUser.uid, base as unknown as Record<string, unknown>);
-            profile = base;
+            // Mirror the country createUserProfile stamps on the new doc so
+            // the account-market lock binds correctly right after signup.
+            profile = { ...base, country: getActiveCountry() };
           }
           setUser({ ...base, ...profile });
         } catch {

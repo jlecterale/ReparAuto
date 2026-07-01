@@ -23,28 +23,30 @@ const DATASETS: Record<Country, DistritoDado[]> = {
   BR: estadosBrDados,
 };
 
-export const DISTRITOS = distritosDados.map((d) => d.distrito).sort((a, b) =>
-  a.localeCompare(b, 'pt')
-);
-
 /** Region names (PT distritos / BR estados) for the given market. */
 export function getDistritos(country: Country = 'PT'): string[] {
   return DATASETS[country].map((d) => d.distrito).sort((a, b) => a.localeCompare(b, 'pt'));
 }
 
-// Region/place names don't collide between the two datasets, so the lookups
-// search both — callers with only a stored name never need to know the market.
-export function getConcelhos(distrito: string): ConcelhoDado[] {
-  for (const dataset of Object.values(DATASETS)) {
+// Place names DO collide between the markets (Santana and Santarém exist in
+// both PT and BR), so pass the market whenever the caller knows it — the
+// listing's docCountry() or the active country. Without it, both datasets are
+// searched with PT first (correct for all legacy data, which is Portuguese).
+function datasetsFor(country?: Country): DistritoDado[][] {
+  return country ? [DATASETS[country]] : [distritosDados, estadosBrDados];
+}
+
+export function getConcelhos(distrito: string, country?: Country): ConcelhoDado[] {
+  for (const dataset of datasetsFor(country)) {
     const match = dataset.find((d) => d.distrito === distrito);
     if (match) return match.concelhos;
   }
   return [];
 }
 
-export function getDistritoForConcelho(nome: string): string | undefined {
+export function getDistritoForConcelho(nome: string, country?: Country): string | undefined {
   const lower = nome.toLowerCase();
-  for (const dataset of Object.values(DATASETS)) {
+  for (const dataset of datasetsFor(country)) {
     for (const d of dataset) {
       if (d.concelhos.some((c) => c.nome.toLowerCase() === lower)) return d.distrito;
     }
@@ -52,9 +54,9 @@ export function getDistritoForConcelho(nome: string): string | undefined {
   return undefined;
 }
 
-export function getCoordenadas(nome: string): { lat: number; lng: number } | undefined {
+export function getCoordenadas(nome: string, country?: Country): { lat: number; lng: number } | undefined {
   const lower = nome.toLowerCase();
-  for (const dataset of Object.values(DATASETS)) {
+  for (const dataset of datasetsFor(country)) {
     for (const d of dataset) {
       const c = d.concelhos.find((c) => c.nome.toLowerCase() === lower);
       if (c) return { lat: c.lat, lng: c.lng };

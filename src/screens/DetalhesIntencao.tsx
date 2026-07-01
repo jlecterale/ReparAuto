@@ -63,7 +63,7 @@ export default function DetalhesIntencao() {
   }
 
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
   const telefone = intencao.vendedorTelefone;
   const email = intencao.vendedorEmail || '';
   const temWhatsApp = !!whatsapp;

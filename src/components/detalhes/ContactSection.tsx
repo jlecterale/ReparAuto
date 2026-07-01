@@ -4,6 +4,7 @@ import { ChatCircleDots, Envelope, IdentificationCard, Phone, SignIn, Star, User
 import { useState, useEffect } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { getUserByEmail } from '@/lib/db';
 import useReviews from '@/hooks/useReviews';
 import useReports from '@/hooks/useReports';
@@ -40,7 +41,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
 
   if (!carro) return null;
 
-  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone);
+  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone, docCountry(carro));
   const telefone = carro.vendedorTelefone;
   const email = carro.vendedorEmail || carro.criador;
   const temWhatsApp = !!whatsapp;

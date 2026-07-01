@@ -170,8 +170,10 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
           setFipeModelos((prev) => ({ ...prev, [marca]: modelos }));
         })
         .catch((err) => {
+          // Keep the marca marked as pending so a failing (possibly
+          // rate-limited) endpoint isn't re-hit on every render; a fresh
+          // mount retries.
           console.warn('[useMarcasModelos] Erro ao buscar modelos FIPE:', err);
-          fipePending.current.delete(marca);
         });
     },
     [fipeBrands, tipo]

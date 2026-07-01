@@ -19,7 +19,7 @@ import {
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
-import { docCountry, getActiveCountry } from './country';
+import { docCountry, getActiveCountry } from '@/lib/country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';

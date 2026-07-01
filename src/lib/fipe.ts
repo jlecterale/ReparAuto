@@ -58,7 +58,7 @@ export function dedupeModelNames(nomes: string[]): string[] {
 
 interface CacheEntry<T> {
   timestamp: number;
-  dados: T;
+  data: T;
 }
 
 function readCache<T>(key: string): T | null {
@@ -67,15 +67,15 @@ function readCache<T>(key: string): T | null {
     if (!raw) return null;
     const entry = JSON.parse(raw) as CacheEntry<T>;
     if (Date.now() - entry.timestamp >= CACHE_TTL_MS) return null;
-    return entry.dados;
+    return entry.data;
   } catch {
     return null;
   }
 }
 
-function writeCache<T>(key: string, dados: T): void {
+function writeCache<T>(key: string, data: T): void {
   try {
-    const entry: CacheEntry<T> = { timestamp: Date.now(), dados };
+    const entry: CacheEntry<T> = { timestamp: Date.now(), data };
     window.localStorage.setItem(key, JSON.stringify(entry));
   } catch {
     // localStorage full or unavailable — caching is best-effort.

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { subscribeOficinas } from '@/lib/db';
-import { docCountry } from '@/lib/country';
+import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
 import type { OficinaMecanico } from '@/types/oficina';
 
@@ -13,7 +13,7 @@ export interface OficinasContextValue {
 
 export default function useOficinas(active: boolean = true): OficinasContextValue {
   const { country } = useCountry();
-  const [todasOficinas, setOficinas] = useState<OficinaMecanico[]>([]);
+  const [allOficinas, setOficinas] = useState<OficinaMecanico[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,10 +32,7 @@ export default function useOficinas(active: boolean = true): OficinasContextValu
   }, [active]);
 
   // Market isolation (plan 20): legacy docs without a country resolve to PT.
-  const oficinas = useMemo(
-    () => todasOficinas.filter((o) => docCountry(o) === country),
-    [todasOficinas, country],
-  );
+  const oficinas = useMemo(() => filterByCountry(allOficinas, country), [allOficinas, country]);
 
   return useMemo(() => ({ oficinas, loading }), [oficinas, loading]);
 }
