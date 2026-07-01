@@ -97,6 +97,40 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Alert subscriptions (plan 3.1). Owner-only, with field-level validation —
+    // the client sanitizes first, but rules are the layer that cannot be
+    // bypassed by a tampered client. Matching/notification fan-out runs in
+    // Cloud Functions (Admin SDK), which is the only writer of
+    // novosResultados > 0 and ultimaNotificacao.
+    match /alertSubscriptions/{alertId} {
+      function validAlertFields() {
+        let d = request.resource.data;
+        return d.tipo in ['filtro_salvo', 'palavra_chave', 'criterio']
+          && d.nome is string && d.nome.size() >= 1 && d.nome.size() <= 80
+          && d.ativo is bool
+          && (d.tipo != 'palavra_chave'
+              || (d.keyword is string && d.keyword.size() >= 2 && d.keyword.size() <= 60))
+          && (d.tipo != 'criterio'
+              || (d.criteria is map
+                  && d.criteria.categoria in ['carros', 'pecas', 'oficinas']))
+          && (d.tipo != 'filtro_salvo'
+              || (d.filters is map && d.filters.size() >= 1 && d.filters.size() <= 20));
+      }
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.novosResultados == 0
+        && validAlertFields();
+      allow update: if isAuthenticated()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && validAlertFields()
+        // Owners may rename, pause/resume or clear the unseen counter — never inflate it.
+        && (request.resource.data.novosResultados == 0
+            || request.resource.data.novosResultados == resource.data.novosResultados);
+      allow delete: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+    }
+
     match /messages/{messageId} {
       allow read: if isAuthenticated() && (
         request.auth.uid in resource.data.participants ||
