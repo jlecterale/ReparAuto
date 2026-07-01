@@ -6,6 +6,7 @@ import {
   loginComEmail,
   criarConta,
   loginComGoogle,
+  loginComApple,
   logoutFirebase,
   onAuthChange,
   enviarVerificacaoEmail,
@@ -16,6 +17,7 @@ import {
   updateUserProfile,
 } from '@/lib/db';
 import { auth } from '@/lib/firebase';
+import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
 
 const DEFAULT_ROLE: Role = 'user';
@@ -109,6 +111,8 @@ export default function useAuth() {
 
   const registar = useCallback(async (nome: string, email: string, password: string): Promise<Usuario> => {
     const fbUser = await criarConta(email, password, nome);
+    // Google Ads: account creation (email/password) conversion.
+    reportConversion(CONVERSION_LABELS.signUp);
     const base = criarUsuarioBase(fbUser);
     base.nome = nome;
     try {
@@ -126,7 +130,26 @@ export default function useAuth() {
   }, []);
 
   const loginGoogle = useCallback(async (): Promise<Usuario> => {
-    const fbUser = await loginComGoogle();
+    const { user: fbUser, isNewUser } = await loginComGoogle();
+    // Google Ads: only a first-time Google sign-in counts as account creation.
+    if (isNewUser) reportConversion(CONVERSION_LABELS.signUp);
+    const base = criarUsuarioBase(fbUser);
+    try {
+      const profile = await getUserProfile(fbUser.uid);
+      if (profile) {
+        const merged = { ...base, ...profile };
+        setUser(merged);
+        return merged;
+      }
+    } catch {
+      // fallback
+    }
+    setUser(base);
+    return base;
+  }, []);
+
+  const loginApple = useCallback(async (): Promise<Usuario> => {
+    const fbUser = await loginComApple();
     const base = criarUsuarioBase(fbUser);
     try {
       const profile = await getUserProfile(fbUser.uid);
@@ -159,6 +182,7 @@ export default function useAuth() {
     login,
     registar,
     loginGoogle,
+    loginApple,
     logout,
     isLoggedIn: !!user,
     isAdmin: user?.role === 'admin',
@@ -166,5 +190,5 @@ export default function useAuth() {
     updateProfile,
     refreshProfile,
     reenviarEmailVerificacao,
-  }), [user, loading, login, registar, loginGoogle, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
+  }), [user, loading, login, registar, loginGoogle, loginApple, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
 }

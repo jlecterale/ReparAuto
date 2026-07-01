@@ -51,6 +51,7 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<Usuario>;
   registar: (nome: string, email: string, password: string) => Promise<Usuario>;
   loginGoogle: () => Promise<Usuario>;
+  loginApple: () => Promise<Usuario>;
   logout: () => Promise<void>;
   isLoggedIn: boolean;
   isAdmin: boolean;
