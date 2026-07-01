@@ -1,6 +1,7 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
 import type { CategoriaIntencao } from '@/types/intencao';
+import type { BodyType, Condition, Traction } from '@/types/carro';
 
 // ============ CONSTANTES REPARAUTO ============
 
@@ -47,8 +48,9 @@ export const TIPOS_CAMBIO = ['Manual', 'Automático', 'CVT'];
 
 // Body type / category (carroçaria). A single Portuguese enum serves both the PT
 // and BR markets — e.g. "Carrinha"/"Perua" and "Pick-up"/"Picape" are the same
-// category. Used in the listing form and as a default filter.
-export const TIPOS_CARROCERIA = [
+// category. Used in the listing form and as a default filter. The element type
+// annotations keep these lists checked against the unions in types/carro.ts.
+export const TIPOS_CARROCERIA: readonly BodyType[] = [
   'Citadino',
   'Utilitário',
   'Sedan',
@@ -58,13 +60,13 @@ export const TIPOS_CARROCERIA = [
   'Coupé',
   'Cabrio',
   'Pick-up',
-] as const;
+];
 
 // Vehicle condition. "Para peças" bridges the car and parts marketplaces.
-export const CONDICOES_VEICULO = ['Novo', 'Usado', 'Para peças'] as const;
+export const CONDICOES_VEICULO: readonly Condition[] = ['Novo', 'Usado', 'Para peças'];
 
 // Drivetrain / traction.
-export const TIPOS_TRACAO = ['Dianteira', 'Traseira', 'Integral (4x4)'] as const;
+export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
 
 // Equipment / extras checklist (multi-select). Covers the most searched options
 // across PT + BR marketplaces.

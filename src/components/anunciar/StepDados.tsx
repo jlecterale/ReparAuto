@@ -10,8 +10,10 @@ import {
   TIPOS_TRACAO,
   EQUIPAMENTOS_CARRO,
 } from '@/lib/constants';
+import { toggleInList } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import ToggleChip from '@/components/ui/ToggleChip';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 
@@ -20,6 +22,15 @@ interface StepDadosProps {
   setDados: React.Dispatch<React.SetStateAction<CarroFormData>>;
   onNext: () => void;
   onBack: () => void;
+}
+
+interface CampoOptions {
+  type?: string;
+  placeholder?: string;
+  options?: readonly string[];
+  required?: boolean;
+  /** Optional selects get an empty "Indiferente" choice unless the value set is exhaustive (e.g. condition). */
+  emptyOption?: boolean;
 }
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
@@ -32,12 +43,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   };
 
   const toggleFeature = (feature: string) => {
-    setDados((prev) => ({
-      ...prev,
-      features: prev.features.includes(feature)
-        ? prev.features.filter((f) => f !== feature)
-        : [...prev.features, feature],
-    }));
+    setDados((prev) => ({ ...prev, features: toggleInList(prev.features, feature) }));
   };
 
   const validar = () => {
@@ -59,17 +65,11 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   const campo = (
     label: string,
     campoId: keyof CarroFormData,
-    type = 'text',
-    placeholder = '',
-    options: readonly string[] | null = null,
-    obrigatorio = true,
-    // Selects with an exhaustive value set and a default (e.g. condition) skip
-    // the empty "Indiferente" option so they always persist a meaningful value.
-    emptyOption = true,
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true }: CampoOptions = {},
   ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
-        {label} {obrigatorio && <span className="text-red-500">*</span>}
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       {options ? (
         <select
@@ -77,7 +77,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           onChange={(e) => atualizar(campoId, e.target.value)}
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         >
-          {!obrigatorio && emptyOption && <option value="">Indiferente</option>}
+          {!required && emptyOption && <option value="">Indiferente</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -114,16 +114,16 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         className="mb-4"
       />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {campo('Ano de Fabricação', 'anoFabricacao', 'number', 'Ex: 2007')}
-        {campo('Ano Modelo', 'anoModelo', 'number', 'Ex: 2008')}
-        {campo('Quilómetros', 'km', 'number', 'Ex: 210000')}
-        {campo('Cor', 'cor', 'text', 'Ex: Cinzento')}
-        {campo('Combustível', 'combustivel', 'text', '', TIPOS_COMBUSTIVEL)}
-        {campo('Câmbio', 'cambio', 'text', '', TIPOS_CAMBIO)}
-        {campo('Nº Portas', 'portas', 'number', 'Ex: 5')}
-        {campo('Lugares', 'seats', 'number', 'Ex: 5', null, false)}
-        {campo('Categoria', 'bodyType', 'text', '', TIPOS_CARROCERIA, false)}
-        {campo('Condição', 'condition', 'text', '', CONDICOES_VEICULO, false, false)}
+        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007' })}
+        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008' })}
+        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000' })}
+        {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento' })}
+        {campo('Combustível', 'combustivel', { options: TIPOS_COMBUSTIVEL })}
+        {campo('Câmbio', 'cambio', { options: TIPOS_CAMBIO })}
+        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5' })}
+        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false })}
+        {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
+        {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
           <SeletorLocalizacao
             distrito={dados.localizacaoDistrito}
@@ -151,31 +151,22 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
       {showMore && (
         <div className="mb-4 space-y-4 border-t border-slate-100 pt-4">
           <div className="grid grid-cols-2 gap-3">
-            {campo('Potência (cv)', 'power', 'number', 'Ex: 90', null, false)}
-            {campo('Cilindrada (cc)', 'displacement', 'number', 'Ex: 1500', null, false)}
-            {campo('Tração', 'traction', 'text', '', TIPOS_TRACAO, false)}
+            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false })}
+            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false })}
+            {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
           </div>
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
             <div className="flex flex-wrap gap-2">
-              {EQUIPAMENTOS_CARRO.map((feature) => {
-                const ativo = dados.features.includes(feature);
-                return (
-                  <button
-                    key={feature}
-                    type="button"
-                    onClick={() => toggleFeature(feature)}
-                    aria-pressed={ativo}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                      ativo
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    {feature}
-                  </button>
-                );
-              })}
+              {EQUIPAMENTOS_CARRO.map((feature) => (
+                <ToggleChip
+                  key={feature}
+                  active={dados.features.includes(feature)}
+                  onClick={() => toggleFeature(feature)}
+                >
+                  {feature}
+                </ToggleChip>
+              ))}
             </div>
           </div>
         </div>

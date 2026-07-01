@@ -13,8 +13,11 @@ import {
   MAX_FOTOS_CARRO,
 } from '@/lib/constants';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
+import { toggleInList, parsePositiveInt } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
+import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import ToggleChip from '@/components/ui/ToggleChip';
 import FotosEditor from '@/components/anunciar/FotosEditor';
 import { uploadFileToStorage } from '@/lib/upload';
 import type { Carro } from '@/types/carro';
@@ -28,6 +31,7 @@ interface EditarCarroModalProps {
 
 export default function EditarCarroModal({ show, onClose, carro, onSave }: EditarCarroModalProps) {
   const { auth } = useApp();
+  const toast = useToast();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
   const [form, setForm] = useState({
@@ -43,7 +47,9 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     portas: String(carro.portas),
     bodyType: carro.bodyType ?? '',
     seats: carro.seats != null ? String(carro.seats) : '',
-    condition: carro.condition ?? '',
+    // Condition is always meaningful (a car is Novo/Usado/Para peças) — legacy
+    // listings without one get backfilled as 'Usado' on save, matching mobile.
+    condition: carro.condition ?? 'Usado',
     power: carro.power != null ? String(carro.power) : '',
     displacement: carro.displacement != null ? String(carro.displacement) : '',
     traction: carro.traction ?? '',
@@ -57,9 +63,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const [fotos, setFotos] = useState<string[]>(carro.fotos || []);
 
   const toggleFeature = (feature: string) => {
-    setFeatures((prev) =>
-      prev.includes(feature) ? prev.filter((f) => f !== feature) : [...prev, feature],
-    );
+    setFeatures((prev) => toggleInList(prev, feature));
   };
   const [saving, setSaving] = useState(false);
 
@@ -100,15 +104,17 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         cor: form.cor,
         portas: Number(form.portas),
         bodyType: form.bodyType || null,
-        seats: form.seats ? Number(form.seats) : null,
+        seats: parsePositiveInt(form.seats),
         condition: form.condition || null,
-        power: form.power ? Number(form.power) : null,
-        displacement: form.displacement ? Number(form.displacement) : null,
+        power: parsePositiveInt(form.power),
+        displacement: parsePositiveInt(form.displacement),
         traction: form.traction || null,
         features: features.length ? features : null,
         local: form.local,
-        distrito: form.distrito || undefined,
-        coordenadas: form.local ? getCoordenadas(form.local) : undefined,
+        // updateDoc rejects undefined (no ignoreUndefinedProperties), so empty
+        // optionals must be null — undefined here throws and aborts the save.
+        distrito: form.distrito || null,
+        coordenadas: (form.local ? getCoordenadas(form.local) : null) ?? null,
         descricao: form.descricao,
         videoUrl: form.videoUrl.trim() || null,
         estadoVeiculo: form.estadoVeiculo,
@@ -117,6 +123,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       onClose();
     } catch (err) {
       console.error('[EditarCarro] Erro:', err);
+      toast?.erro('Erro ao guardar as alterações. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -127,7 +134,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     campoId: string,
     type = 'text',
     options: readonly string[] | null = null,
-    permitirVazio = false,
+    allowEmpty = false,
   ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">{label}</label>
@@ -137,7 +144,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
           onChange={(e) => atualizar(campoId, e.target.value)}
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         >
-          {permitirVazio && <option value="">—</option>}
+          {allowEmpty && <option value="">—</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -167,7 +174,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Cor', 'cor')}
         {campo('Nº Portas', 'portas', 'number')}
         {campo('Categoria', 'bodyType', 'text', TIPOS_CARROCERIA, true)}
-        {campo('Condição', 'condition', 'text', CONDICOES_VEICULO, true)}
+        {campo('Condição', 'condition', 'text', CONDICOES_VEICULO)}
         {campo('Lugares', 'seats', 'number')}
         {campo('Potência (cv)', 'power', 'number')}
         {campo('Cilindrada (cc)', 'displacement', 'number')}
@@ -184,24 +191,15 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       <div className="mb-4">
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
         <div className="flex flex-wrap gap-2">
-          {EQUIPAMENTOS_CARRO.map((feature) => {
-            const ativo = features.includes(feature);
-            return (
-              <button
-                key={feature}
-                type="button"
-                onClick={() => toggleFeature(feature)}
-                aria-pressed={ativo}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-                  ativo
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
-                }`}
-              >
-                {feature}
-              </button>
-            );
-          })}
+          {EQUIPAMENTOS_CARRO.map((feature) => (
+            <ToggleChip
+              key={feature}
+              active={features.includes(feature)}
+              onClick={() => toggleFeature(feature)}
+            >
+              {feature}
+            </ToggleChip>
+          ))}
         </div>
       </div>
 

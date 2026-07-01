@@ -50,11 +50,11 @@ Todos opcionais; `condition` assume `Usado` por defeito.
 - Edição: `EditarCarroModal` (admin + perfil, web) e o modo de edição do
   `app/anunciar/carro.tsx` (mobile) também editam todos os novos campos.
 
-### Filtros (com avançados escondidos por defeito)
+### Filtros (avançados no painel colapsável)
 - Web (`useCarros` + `CarGrid`): **Categoria** e **Condição** sempre visíveis;
-  combustível, câmbio, lugares (mín.), tração e equipamento no painel avançado
-  (escondido em mobile atrás de "Mais filtros"). Lógica pura e testada em
-  `src/lib/carSpecFilters.ts`.
+  combustível, câmbio, lugares (mín.), tração e equipamento no painel avançado —
+  visível na sidebar em desktop (`lg:block`), escondido em ecrãs pequenos atrás
+  de "Mais filtros". Lógica pura e testada em `src/lib/carSpecFilters.ts`.
 - Mobile (`useCarFilters` + `CarFiltersSheet`): Categoria/Condição visíveis;
   lugares, tração e equipamento atrás de um toggle "Mais filtros".
 

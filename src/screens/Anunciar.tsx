@@ -7,6 +7,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
+import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -127,10 +128,10 @@ export default function Anunciar() {
         anoFabricacao: Number(dados.anoFabricacao),
         anoModelo: Number(dados.anoModelo),
         bodyType: dados.bodyType || undefined,
-        seats: dados.seats ? Number(dados.seats) : undefined,
+        seats: parsePositiveInt(dados.seats) ?? undefined,
         condition: dados.condition || undefined,
-        power: dados.power ? Number(dados.power) : undefined,
-        displacement: dados.displacement ? Number(dados.displacement) : undefined,
+        power: parsePositiveInt(dados.power) ?? undefined,
+        displacement: parsePositiveInt(dados.displacement) ?? undefined,
         traction: dados.traction || undefined,
         features: dados.features.length ? dados.features : undefined,
         rodando: dados.rodando === 'sim',

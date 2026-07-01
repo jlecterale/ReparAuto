@@ -76,19 +76,18 @@ export default function useCarros(active: boolean = true) {
       cs = cs.filter((c) => c.preco <= Number(advPriceMax));
     }
 
-    if (advBodyType || advCondition || advCombustivel || advCambio || advSeatsMin !== null || advTraction || advFeatures.length > 0) {
-      cs = cs.filter((c) =>
-        matchesCarSpecFilters(c, {
-          bodyType: advBodyType,
-          condition: advCondition,
-          combustivel: advCombustivel,
-          cambio: advCambio,
-          seatsMin: advSeatsMin,
-          traction: advTraction,
-          features: advFeatures,
-        }),
-      );
-    }
+    // matchesCarSpecFilters is a no-op (returns true) when no criterion is set.
+    cs = cs.filter((c) =>
+      matchesCarSpecFilters(c, {
+        bodyType: advBodyType,
+        condition: advCondition,
+        combustivel: advCombustivel,
+        cambio: advCambio,
+        seatsMin: advSeatsMin,
+        traction: advTraction,
+        features: advFeatures,
+      }),
+    );
 
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
       const centro = getCoordenadas(advRaioCentro);

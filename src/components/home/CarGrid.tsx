@@ -8,8 +8,9 @@ import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
-import { formatarPreco, obterWhatsApp } from '@/lib/utils';
+import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
 import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
+import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
@@ -23,6 +24,36 @@ const quickChips = [
   { label: 'Até 500€', value: '500' },
   { label: 'Até 1.000€', value: '1000' },
 ] as const;
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+  anyLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+  anyLabel: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-fg-subtle mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent"
+      >
+        <option value="">{anyLabel}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export default function CarGrid() {
   const { carros, auth, chat, loginModal } = useApp();
@@ -70,11 +101,7 @@ export default function CarGrid() {
   } = carros;
 
   const toggleFeature = (feature: string) => {
-    setAdvFeatures(
-      advFeatures.includes(feature)
-        ? advFeatures.filter((f) => f !== feature)
-        : [...advFeatures, feature],
-    );
+    setAdvFeatures(toggleInList(advFeatures, feature));
   };
 
   const { distritos, getConcelhos } = useDistritosConcelhos();
@@ -234,22 +261,8 @@ export default function CarGrid() {
           {/* Category & condition — common filters, always visible */}
           {tipo === 'carros' && (
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-fg-subtle mb-1">Categoria</label>
-                <select value={advBodyType} onChange={(e) => setAdvBodyType(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                  <option value="">Todas</option>
-                  {TIPOS_CARROCERIA.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-fg-subtle mb-1">Condição</label>
-                <select value={advCondition} onChange={(e) => setAdvCondition(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                  <option value="">Qualquer</option>
-                  {CONDICOES_VEICULO.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
+              <FilterSelect label="Categoria" value={advBodyType} onChange={setAdvBodyType} options={TIPOS_CARROCERIA} anyLabel="Todas" />
+              <FilterSelect label="Condição" value={advCondition} onChange={setAdvCondition} options={CONDICOES_VEICULO} anyLabel="Qualquer" />
             </div>
           )}
 
@@ -293,22 +306,8 @@ export default function CarGrid() {
             {tipo === 'carros' && (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-fg-subtle mb-1">Combustível</label>
-                    <select value={advCombustivel} onChange={(e) => setAdvCombustivel(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                      <option value="">Todos</option>
-                      {TIPOS_COMBUSTIVEL.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-fg-subtle mb-1">Câmbio</label>
-                    <select value={advCambio} onChange={(e) => setAdvCambio(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                      <option value="">Todos</option>
-                      {TIPOS_CAMBIO.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
+                  <FilterSelect label="Combustível" value={advCombustivel} onChange={setAdvCombustivel} options={TIPOS_COMBUSTIVEL} anyLabel="Todos" />
+                  <FilterSelect label="Câmbio" value={advCambio} onChange={setAdvCambio} options={TIPOS_CAMBIO} anyLabel="Todos" />
                   <div>
                     <label className="block text-xs font-bold text-fg-subtle mb-1">Lugares (mín.)</label>
                     <input type="number" min={1} max={9} placeholder="Ex: 5"
@@ -316,31 +315,22 @@ export default function CarGrid() {
                       onChange={(e) => setAdvSeatsMin(e.target.value ? Number(e.target.value) : null)}
                       className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent" />
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold text-fg-subtle mb-1">Tração</label>
-                    <select value={advTraction} onChange={(e) => setAdvTraction(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                      <option value="">Todas</option>
-                      {TIPOS_TRACAO.map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
+                  <FilterSelect label="Tração" value={advTraction} onChange={setAdvTraction} options={TIPOS_TRACAO} anyLabel="Todas" />
                 </div>
 
                 <div>
                   <span className="block text-xs font-bold text-fg-subtle mb-2">Equipamento</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {EQUIPAMENTOS_CARRO.map((feature) => {
-                      const ativo = advFeatures.includes(feature);
-                      return (
-                        <button key={feature} type="button" onClick={() => toggleFeature(feature)}
-                          aria-pressed={ativo}
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition ${
-                            ativo ? 'bg-accent text-white border-accent' : 'bg-slate-50 text-fg-muted border-slate-200 hover:bg-slate-100'
-                          }`}>
-                          {feature}
-                        </button>
-                      );
-                    })}
+                    {EQUIPAMENTOS_CARRO.map((feature) => (
+                      <ToggleChip
+                        key={feature}
+                        tamanho="sm"
+                        active={advFeatures.includes(feature)}
+                        onClick={() => toggleFeature(feature)}
+                      >
+                        {feature}
+                      </ToggleChip>
+                    ))}
                   </div>
                 </div>
               </>
