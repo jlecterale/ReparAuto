@@ -59,7 +59,7 @@ export const EQUIPAMENTOS_CARRO = [
 ];
 
 /** Hard limits mirrored from the web app. */
-export const MAX_FOTOS_CARRO = 7;
+export const MAX_FOTOS_CARRO = 20;
 
 /**
  * Every listing photo is cropped to this aspect ratio (width / height) so cards
