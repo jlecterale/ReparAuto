@@ -1,5 +1,6 @@
 import type { User } from 'firebase/auth';
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type Role = 'user' | 'admin';
 export type TipoConta = 'particular' | 'profissional';
@@ -23,6 +24,8 @@ export interface Usuario {
   telefone: string;
   localidade: string;
   distrito?: string;
+  /** Market the account was created in (missing on legacy docs = PT). */
+  country?: Country;
   codigoPostal: string;
   morada: string;
   nif: string;

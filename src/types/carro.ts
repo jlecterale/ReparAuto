@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type EstadoVeiculo = 'pronto' | 'manutencao';
 export type Combustivel = 'Gasolina' | 'Etanol' | 'Flex' | 'Diesel' | 'Elétrico' | 'Híbrido';
@@ -23,6 +24,8 @@ export interface Carro {
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
+  /** Market the listing belongs to. Docs created before the Brazil launch have none — resolve with docCountry() (missing = PT). */
+  country?: Country;
   descricao: string;
   videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
