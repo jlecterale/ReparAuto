@@ -15,12 +15,16 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions";
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { getMessaging } from "firebase-admin/messaging";
+import { preferenceAllows } from "./lib/prefs";
+import { sendPushToUserSnap } from "./lib/pushSender";
 
 initializeApp();
 
 // Keep latency low for Portugal/EU and cap concurrency to control cost.
 setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
+
+export { onCarApproved, onPartApproved, onServiceApproved } from "./onListingApproved";
+export { onCarPriceDrop, onPartPriceDrop } from "./onListingPriceDrop";
 
 interface NotificationDoc {
   uid?: string;
@@ -30,12 +34,6 @@ interface NotificationDoc {
   tipo?: string;
 }
 
-const FCM_INVALID_TOKEN_CODES = new Set([
-  "messaging/registration-token-not-registered",
-  "messaging/invalid-registration-token",
-  "messaging/invalid-argument",
-]);
-
 export const pushOnNotification = onDocumentCreated(
   "notifications/{id}",
   async (event) => {
@@ -44,46 +42,21 @@ export const pushOnNotification = onDocumentCreated(
 
     const db = getFirestore();
     const userSnap = await db.doc(`users/${data.uid}`).get();
-    const tokens = (userSnap.get("fcmTokens") as string[] | undefined) ?? [];
-    if (tokens.length === 0) return;
 
-    const response = await getMessaging().sendEachForMulticast({
-      tokens,
-      notification: {
-        title: data.titulo ?? "RecarGarage",
-        body: data.mensagem ?? "",
-      },
-      data: { link: data.link ?? "", tipo: data.tipo ?? "" },
-      // channelId must match the channel the mobile app creates in
-      // src/lib/push.ts (ANDROID_CHANNEL_ID = 'default'); otherwise Android 8+
-      // drops background notifications instead of showing them.
-      android: {
-        priority: "high",
-        notification: { channelId: "default", sound: "default" },
-      },
-      apns: { payload: { aps: { sound: "default" } } },
-    });
-
-    // Remove tokens the FCM backend reports as permanently invalid.
-    const invalid: string[] = [];
-    response.responses.forEach((r, i) => {
-      if (!r.success && r.error && FCM_INVALID_TOKEN_CODES.has(r.error.code)) {
-        invalid.push(tokens[i]);
-      }
-    });
-    if (invalid.length > 0) {
-      await userSnap.ref.update({
-        fcmTokens: FieldValue.arrayRemove(...invalid),
-      });
+    // The user's per-type push preference is enforced here — the one place
+    // every in-app notification funnels through before becoming a push.
+    if (!preferenceAllows(userSnap.get("notifPrefs"), data.tipo, "push")) {
+      return;
     }
 
-    logger.info("push sent", {
-      uid: data.uid,
-      tipo: data.tipo,
-      sent: response.successCount,
-      failed: response.failureCount,
-      pruned: invalid.length,
+    const sent = await sendPushToUserSnap(userSnap, {
+      titulo: data.titulo ?? "RecarGarage",
+      mensagem: data.mensagem ?? "",
+      link: data.link,
+      tipo: data.tipo ?? "",
     });
+
+    logger.info("push sent", { uid: data.uid, tipo: data.tipo, sent });
   },
 );
 
