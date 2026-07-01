@@ -300,3 +300,18 @@ export function validarIntencaoCompra(dados: Record<string, any>): { valido: boo
 
   return { valido: erros.length === 0, erros };
 }
+
+/** Immutable toggle: removes the item if present, appends it otherwise. */
+export function toggleInList<T>(list: readonly T[], item: T): T[] {
+  return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+}
+
+/**
+ * Parses an optional numeric form field (seats, power, cc…) into a positive
+ * integer, or null when empty/invalid — keeps nonsense like "-3" out of
+ * Firestore and the public JSON-LD.
+ */
+export function parsePositiveInt(value: string): number | null {
+  const n = Math.trunc(Number(value.trim()));
+  return value.trim() && Number.isFinite(n) && n > 0 ? n : null;
+}

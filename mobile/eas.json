@@ -12,12 +12,14 @@
     "preview": {
       "distribution": "internal",
       "channel": "preview",
+      "env": { "APS_ENVIRONMENT": "production" },
       "ios": { "simulator": false },
       "android": { "buildType": "apk" }
     },
     "production": {
       "channel": "production",
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": { "APS_ENVIRONMENT": "production" }
     }
   },
   "submit": {

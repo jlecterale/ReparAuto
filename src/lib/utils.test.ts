@@ -1,4 +1,4 @@
-import { getYoutubeId, getYoutubeEmbedUrl, isValidYoutubeUrl, formatMessageTime } from '@/lib/utils';
+import { getYoutubeId, getYoutubeEmbedUrl, isValidYoutubeUrl, toggleInList, parsePositiveInt, formatMessageTime } from '@/lib/utils';
 
 // The car-ad / workshop YouTube feature: accept the link forms a user is likely
 // to paste and turn them into a privacy-friendly nocookie embed. The video id is
@@ -71,6 +71,49 @@ describe('isValidYoutubeUrl', () => {
   it('is false for anything else', () => {
     expect(isValidYoutubeUrl('not a url')).toBe(false);
     expect(isValidYoutubeUrl(undefined)).toBe(false);
+  });
+});
+
+describe('toggleInList', () => {
+  it('adds an item that is not in the list', () => {
+    expect(toggleInList(['a', 'b'], 'c')).toEqual(['a', 'b', 'c']);
+  });
+
+  it('removes an item that is already in the list', () => {
+    expect(toggleInList(['a', 'b', 'c'], 'b')).toEqual(['a', 'c']);
+  });
+
+  it('does not mutate the original list', () => {
+    const original = ['a'];
+    toggleInList(original, 'b');
+    toggleInList(original, 'a');
+    expect(original).toEqual(['a']);
+  });
+
+  it('works on an empty list', () => {
+    expect(toggleInList([], 'x')).toEqual(['x']);
+  });
+});
+
+describe('parsePositiveInt', () => {
+  it('parses a positive integer string', () => {
+    expect(parsePositiveInt('5')).toBe(5);
+    expect(parsePositiveInt(' 120 ')).toBe(120);
+  });
+
+  it('returns null for empty or whitespace input', () => {
+    expect(parsePositiveInt('')).toBeNull();
+    expect(parsePositiveInt('   ')).toBeNull();
+  });
+
+  it('returns null for zero, negatives and non-numbers', () => {
+    expect(parsePositiveInt('0')).toBeNull();
+    expect(parsePositiveInt('-3')).toBeNull();
+    expect(parsePositiveInt('abc')).toBeNull();
+  });
+
+  it('truncates decimals to an integer', () => {
+    expect(parsePositiveInt('4.9')).toBe(4);
   });
 });
 

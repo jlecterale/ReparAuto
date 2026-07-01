@@ -123,6 +123,26 @@ export async function registerForPush(uid: string): Promise<string | null> {
   }
 }
 
+/**
+ * Keeps the stored FCM token current. FCM rotates the device token on its own
+ * (app/OS updates, restore from backup, reinstall, periodic refresh). Because
+ * `registerForPush` only runs at login, a token that rotates while the user
+ * stays signed in is never written back — the backend keeps pushing to the dead
+ * token (which then gets pruned on the send failure), leaving the user silently
+ * without notifications until they happen to log out and back in. This listener
+ * closes that gap so the token self-heals. Call while a user is signed in;
+ * returns an unsubscribe fn.
+ */
+export function watchTokenRefresh(uid: string): () => void {
+  return messaging().onTokenRefresh((token) => {
+    if (!token) return;
+    db.collection('users')
+      .doc(uid)
+      .set({ fcmTokens: firestore.FieldValue.arrayUnion(token) }, { merge: true })
+      .catch(() => {});
+  });
+}
+
 /** Removes this device's token from the user doc (call on logout). */
 export async function unregisterPush(uid: string): Promise<void> {
   try {

@@ -9,15 +9,21 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
   const specs = [
     { label: 'Marca', value: carro.marca },
     { label: 'Modelo', value: carro.modelo },
+    { label: 'Categoria', value: carro.bodyType },
+    { label: 'Condição', value: carro.condition },
     { label: 'Ano de Fabricação', value: carro.anoFabricacao },
     { label: 'Ano Modelo', value: carro.anoModelo || '-' },
     { label: 'Quilómetros', value: carro.km ? `${carro.km.toLocaleString('pt-PT')} km` : '-' },
     { label: 'Combustível', value: carro.combustivel },
     { label: 'Câmbio', value: carro.cambio },
+    { label: 'Tração', value: carro.traction },
     { label: 'Cor', value: carro.cor },
     { label: 'Nº Portas', value: carro.portas },
+    { label: 'Lugares', value: carro.seats },
+    { label: 'Potência', value: carro.power ? `${carro.power} cv` : undefined },
+    { label: 'Cilindrada', value: carro.displacement ? `${carro.displacement} cc` : undefined },
     { label: 'Localização', value: carro.local || 'Portugal' },
-  ];
+  ].filter((s) => s.value !== undefined && s.value !== null && s.value !== '');
 
   return (
     <div className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-200">
@@ -32,6 +38,17 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
           </div>
         ))}
       </div>
+
+      {carro.features && carro.features.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <span className="text-xs font-semibold text-fg-subtle block mb-2">Equipamento & Extras</span>
+          <div className="flex flex-wrap gap-1.5">
+            {carro.features.map((f) => (
+              <Badge key={f} cor="blue">{f}</Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 pt-4 border-t border-slate-200">
         <span className="text-xs font-semibold text-fg-subtle block mb-2">Estado do Veículo</span>

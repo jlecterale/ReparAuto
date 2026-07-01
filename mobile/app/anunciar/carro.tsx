@@ -7,6 +7,7 @@ import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
+import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
@@ -17,11 +18,15 @@ import { isValidYoutubeUrl } from '@/lib/youtube';
 import {
   CAMBIOS,
   COMBUSTIVEIS,
+  CONDICOES_VEICULO,
+  EQUIPAMENTOS_CARRO,
   ESTADOS_VEICULO,
   MAX_FOTOS_CARRO,
+  TIPOS_CARROCERIA,
+  TIPOS_TRACAO,
 } from '@/lib/constants';
 import { colors } from '@/theme/colors';
-import type { Cambio, Combustivel, EstadoVeiculo } from '@/types';
+import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
 
 export default function AnunciarCarroScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -42,6 +47,13 @@ export default function AnunciarCarroScreen() {
   const [portas, setPortas] = useState('5');
   const [combustivel, setCombustivel] = useState<Combustivel | null>(null);
   const [cambio, setCambio] = useState<Cambio | null>(null);
+  const [bodyType, setBodyType] = useState<BodyType | null>(null);
+  const [seats, setSeats] = useState('');
+  const [condition, setCondition] = useState<Condition>('Usado');
+  const [power, setPower] = useState('');
+  const [displacement, setDisplacement] = useState('');
+  const [traction, setTraction] = useState<Traction | null>(null);
+  const [features, setFeatures] = useState<string[]>([]);
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
   const [local, setLocal] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -69,6 +81,13 @@ export default function AnunciarCarroScreen() {
         setPortas(c.portas ? String(c.portas) : '5');
         setCombustivel(c.combustivel ?? null);
         setCambio(c.cambio ?? null);
+        setBodyType(c.bodyType ?? null);
+        setSeats(c.seats != null ? String(c.seats) : '');
+        setCondition(c.condition ?? 'Usado');
+        setPower(c.power != null ? String(c.power) : '');
+        setDisplacement(c.displacement != null ? String(c.displacement) : '');
+        setTraction(c.traction ?? null);
+        setFeatures(c.features ?? []);
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
         setDescricao(c.descricao ?? '');
@@ -126,6 +145,13 @@ export default function AnunciarCarroScreen() {
         cor: cor.trim() || 'Não especificada',
         combustivel,
         cambio,
+        bodyType: bodyType ?? undefined,
+        seats: seats ? Number(seats) : undefined,
+        condition,
+        power: power ? Number(power) : undefined,
+        displacement: displacement ? Number(displacement) : undefined,
+        traction: traction ?? undefined,
+        features: features.length ? features : undefined,
         estadoVeiculo: estado,
         local: local.trim(),
         descricao: descricao.trim(),
@@ -261,7 +287,67 @@ export default function AnunciarCarroScreen() {
           value={cambio}
           onChange={setCambio}
         />
+        <ChipSelect
+          label="Categoria"
+          options={TIPOS_CARROCERIA.map((c) => ({ value: c, label: c }))}
+          value={bodyType}
+          onChange={setBodyType}
+        />
+        <ChipSelect
+          label="Condição"
+          options={CONDICOES_VEICULO.map((c) => ({ value: c, label: c }))}
+          value={condition}
+          onChange={setCondition}
+        />
+        <Input
+          label="Lugares"
+          value={seats}
+          onChangeText={setSeats}
+          placeholder="5"
+          keyboardType="number-pad"
+          maxLength={2}
+        />
         <ChipSelect label="Estado" options={ESTADOS_VEICULO} value={estado} onChange={setEstado} />
+
+        <Text className="mt-2 text-base font-bold text-fg-heading">Mais detalhes (opcional)</Text>
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Input
+              label="Potência (cv)"
+              value={power}
+              onChangeText={setPower}
+              placeholder="90"
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+          <View className="flex-1">
+            <Input
+              label="Cilindrada (cc)"
+              value={displacement}
+              onChangeText={setDisplacement}
+              placeholder="1500"
+              keyboardType="number-pad"
+              maxLength={5}
+            />
+          </View>
+        </View>
+        <ChipSelect
+          label="Tração"
+          options={TIPOS_TRACAO.map((t) => ({ value: t, label: t }))}
+          value={traction}
+          onChange={setTraction}
+        />
+        <MultiChipSelect
+          label="Equipamento / Extras"
+          options={EQUIPAMENTOS_CARRO.map((e) => ({ value: e, label: e }))}
+          values={features}
+          onToggle={(value) =>
+            setFeatures((prev) =>
+              prev.includes(value) ? prev.filter((f) => f !== value) : [...prev, value],
+            )
+          }
+        />
 
         <Input label="Localidade *" value={local} onChangeText={setLocal} placeholder="Lisboa" />
 
