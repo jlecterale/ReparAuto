@@ -1043,8 +1043,8 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03.2" id="tab-03.2" onclick="switchTab('03.2')" tabindex="-1">
       <span class="tab-num">3.2</span> Busca <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04.1" id="tab-04.1" onclick="switchTab('04.1')" tabindex="-1">
-      <span class="tab-num">4.1</span> Anuncios IA <span class="priority-badge priority-media">MEDIA</span>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-04.1" id="tab-04.1" onclick="switchTab('04.1')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Anuncios IA <span class="priority-badge priority-implementado">FEITO</span>
     </button></li>
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04.2" id="tab-04.2" onclick="switchTab('04.2')" tabindex="-1">
       <span class="tab-num">4.2</span> Chatbot <span class="priority-badge priority-media">MEDIA</span>
@@ -1118,7 +1118,7 @@
       <div class="stat-label">Planos de Implementacao</div>
     </div>
     <div class="stat-card">
-      <div class="stat-number" style="color:var(--green)">8</div>
+      <div class="stat-number" style="color:var(--green)">9</div>
       <div class="stat-label">Implementados</div>
     </div>
     <div class="stat-card">
@@ -1171,7 +1171,7 @@
       <div class="matrix-quadrant matrix-q4">
         <span class="matrix-quadrant-title">Projeto Grande</span>
         <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
-          <div class="matrix-dot" data-priority="media" onclick="switchTab('04.1')" title="Anuncios IA"><span class="dot-tooltip">4.1 — Anuncios IA</span>4.1</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('04.1')" title="Anuncios IA (Implementado)" style="outline:2px solid #16a34a;outline-offset:2px;"><span class="dot-tooltip">4.1 — Anuncios IA &#10003;</span>&#10003;</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('04.2')" title="Chatbot"><span class="dot-tooltip">4.2 — Chatbot</span>4.2</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('04.3')" title="Fraude"><span class="dot-tooltip">4.3 — Fraude</span>4.3</div>
           <div class="matrix-dot" data-priority="baixa" onclick="switchTab('10')" title="Comunidade"><span class="dot-tooltip">10 — Comunidade</span>10</div>
@@ -1197,7 +1197,7 @@
       <li onclick="switchTab('06')"><div class="impl-item-content"><span class="impl-item-name">Servicos Financeiros</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">12-18 dias &middot; Calculadora de financiamento, custos totais, IMT &middot; 100% client-side</div></div></li>
       <li onclick="switchTab('07')"><div class="impl-item-content"><span class="impl-item-name">Ferramentas Profissionais</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">15-22 dias &middot; Dashboard, analytics, perfil publico, upload CSV &middot; Atrai stands/revendedores</div></div></li>
       <li onclick="switchTab('08')"><div class="impl-item-content"><span class="impl-item-name">Ecossistema de Pecas</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">14-20 dias &middot; Compatibilidade, cross-referencia, upload lote &middot; Core do negocio</div></div></li>
-      <li onclick="switchTab('04.1')"><div class="impl-item-content"><span class="impl-item-name">4.1 Anuncios com IA</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">14-16 dias &middot; Geracao de descricao, sugestao de preco, visao de danos &middot; Requer Cloud Functions</div></div></li>
+      <li class="implemented" onclick="switchTab('04.1')"><div class="impl-item-content"><span class="impl-item-name">4.1 Anuncios com IA</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; Geracao de descricao, sugestao de preco IA, analise visual de danos &middot; Cloud Functions + Vertex AI (proxy, quota semanal, sanitize, moderacao, App Check pronto)</div></div></li>
       <li onclick="switchTab('04.2')"><div class="impl-item-content"><span class="impl-item-name">4.2 Chatbot de Atendimento</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-9 dias &middot; Widget flutuante para FAQs e orientacao de busca &middot; Requer Cloud Functions</div></div></li>
       <li onclick="switchTab('04.3')"><div class="impl-item-content"><span class="impl-item-name">4.3 Deteccao de Fraude</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">7 dias &middot; Score automatico + fila de moderacao priorizada &middot; Requer Cloud Functions</div></div></li>
       <li onclick="switchTab('11')"><div class="impl-item-content"><span class="impl-item-name">Logistica e Servicos</span> <span class="priority-badge priority-baixa">BAIXA</span><div class="impl-item-meta">12-16 dias &middot; Estimativa de entrega, test drive, oficinas &middot; Fecha o ciclo da transacao</div></div></li>
@@ -1218,7 +1218,7 @@
           <tr><td>02</td><td>Inteligencia de Precos</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Decisao de compra, diferenciacao</td></tr>
           <tr><td>3.1</td><td>Notificacoes e Alertas</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>10-13 dias</td><td>Retencao, reengajamento, conversao</td></tr>
           <tr><td>3.2</td><td>Busca Avancada e Descoberta</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>13-16 dias</td><td>Experiencia, conversao, descoberta</td></tr>
-          <tr><td>4.1</td><td>Anuncios com IA</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>14-16 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
+          <tr class="implemented"><td>4.1</td><td>Anuncios com IA</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>14-16 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
           <tr><td>4.2</td><td>Chatbot de Atendimento</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-9 dias</td><td>Suporte automatizado, retencao</td></tr>
           <tr><td>4.3</td><td>Deteccao de Fraude</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>7 dias</td><td>Confianca, moderacao eficiente</td></tr>
           <tr><td>05</td><td>Midia Aprimorada</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-12 dias</td><td>Confianca do comprador, UX</td></tr>
