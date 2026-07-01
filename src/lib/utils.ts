@@ -195,23 +195,47 @@ export function gerarLinkWhatsApp(numero: string, tituloAnuncio: string): string
   return `https://wa.me/${numero}?text=${msg}`;
 }
 
-export function formatarData(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
-  if (!data) return '—';
-  if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT');
-  if (data instanceof Date) return data.toLocaleDateString('pt-PT');
-  if (typeof data.toDate === 'function') return data.toDate().toLocaleDateString('pt-PT');
-  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT');
-  return '—';
+type DateLike = { toDate?: () => Date; seconds?: number } | string | Date | null | undefined;
+
+function toDateValue(data: DateLike): Date | null {
+  if (!data) return null;
+  if (typeof data === 'string') return new Date(data);
+  if (data instanceof Date) return data;
+  if (typeof data.toDate === 'function') return data.toDate();
+  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000);
+  return null;
 }
 
-export function formatarDataHora(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
-  if (!data) return '—';
+export function formatarData(data: DateLike): string {
+  const date = toDateValue(data);
+  return date ? date.toLocaleDateString('pt-PT') : '—';
+}
+
+export function formatarDataHora(data: DateLike): string {
   const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-  if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT', opts);
-  if (data instanceof Date) return data.toLocaleDateString('pt-PT', opts);
-  if (typeof data.toDate === 'function') return data.toDate().toLocaleDateString('pt-PT', opts);
-  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT', opts);
-  return '—';
+  const date = toDateValue(data);
+  return date ? date.toLocaleDateString('pt-PT', opts) : '—';
+}
+
+/**
+ * Compact chat-style timestamp (pt): time only for today, "Ontem" for
+ * yesterday, full date otherwise. Empty string while a serverTimestamp
+ * write is still pending (null snapshot value). Days are compared as
+ * calendar dates (not ms math) so DST transitions don't break "Ontem".
+ */
+export function formatMessageTime(data: DateLike): string {
+  const date = toDateValue(data);
+  if (!date || Number.isNaN(date.getTime())) return '';
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const now = new Date();
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(date, now)) return time;
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `Ontem, ${time}`;
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}, ${time}`;
 }
 
 export function gerarTituloIntencao(dados: {

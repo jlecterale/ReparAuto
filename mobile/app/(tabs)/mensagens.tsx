@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { formatMessageTime } from '@/lib/format';
 import type { Conversa } from '@/types';
 import { colors } from '@/theme/colors';
 
@@ -64,9 +65,14 @@ export default function MensagensScreen() {
               <Ionicons name="person" size={22} color={colors.primary[600]} />
             </View>
             <View className="ml-3 flex-1">
-              <Text className="text-base font-bold text-fg-heading" numberOfLines={1}>
-                {item.outroNome || 'Utilizador'}
-              </Text>
+              <View className="flex-row items-center justify-between gap-2">
+                <Text className="flex-1 text-base font-bold text-fg-heading" numberOfLines={1}>
+                  {item.outroNome || 'Utilizador'}
+                </Text>
+                <Text className="text-xs text-fg-muted">
+                  {formatMessageTime(item.ultimaData)}
+                </Text>
+              </View>
               <Text className="text-xs text-fg-subtle" numberOfLines={1}>
                 {item.listingTitle}
               </Text>
