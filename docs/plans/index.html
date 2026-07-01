@@ -1967,45 +1967,226 @@ for (let i = 2; i <= 12; i++) {
 }
 
 // ============================================================
+// Sub-plans 03.1/03.2/04.1/04.2/04.3 — rich inline content
+// (rendered in-dashboard like plans 02-12, not as external links)
+// ============================================================
+const subPlans = [
+  {
+    id: '3.1', panelId: '03.1', title: 'Notificacoes e Alertas', priority: 'ALTA',
+    effort: '~10-13 dias', value: 'Muito Alto', quadrant: 'Estrategico',
+    impact: 'Retencao (mecanismo #1 de regresso), reengajamento, conversao',
+    overview: `<h3>O Que Resolve</h3><p>Hoje o utilizador so recebe notificacoes reativas (aprovacao/rejeicao do proprio anuncio e mensagens de chat). Nao ha forma de ser avisado <strong>proativamente</strong> quando algo do seu interesse aparece ou muda. Num marketplace de veiculos, os alertas sao o mecanismo #1 de retencao: transformam visitantes unicos em utilizadores recorrentes.</p><h3>Parte do split do Plano 3</h3><p>Antigo Plano 3 dividido em <strong>3.1 Notificacoes e Alertas</strong> (esta parte) e <strong>3.2 Busca Avancada e Descoberta</strong>. Reutiliza a colecao <code>notifications</code> + <code>criarNotificacao()</code> ja existentes e o FCM do Plano 09 (enviado). O tipo <code>SearchFilters</code> que suporta os alertas por filtro salvo e partilhado com o Plano 3.2.</p>`,
+    features: `<h3>Quatro Gatilhos de Alerta</h3><ul><li><strong>Queda de preco de um favorito</strong> — o utilizador e avisado quando um anuncio que favoritou baixa de preco. Sem subscricao: deriva de <code>users.favoritos</code>.</li><li><strong>Alerta por palavra-chave</strong> — subscreve um termo (ex.: "Golf GTI"); avisado quando surge um novo anuncio correspondente.</li><li><strong>Novos anuncios por criterios</strong> — tipo (venda / procura), oficinas na regiao (concelho), categoria (carros, motos, pecas, servicos).</li><li><strong>Alerta por filtro salvo</strong> — guarda um conjunto de filtros avancados do Plano 3.2 como alerta nomeado.</li></ul><p>Entrega nos canais existentes: <strong>in-app</strong> (colecao <code>notifications</code>) e <strong>push</strong> (FCM), com preferencias por tipo e por canal.</p><h3>Benchmark</h3><p>Queda de preco em favoritos e alertas de busca salva sao padrao consolidado (Mercado Livre e OLX BR notificam quedas de preco; Standvirtual/AutoScout24 tem alertas de busca salva). RecarGarage atual: apenas notificacoes de aprovacao/rejeicao/mensagem.</p>`,
+    technical: `<h3>Dependencia: Cloud Functions + FCM</h3><p>Os gatilhos de background exigem <strong>Firebase Cloud Functions (2a geracao)</strong> — o mesmo setup dos Planos 4.x. A entrega push reutiliza o <strong>FCM do Plano 09</strong> (garantir <code>fcmToken</code> no doc <code>users/{uid}</code>). O canal in-app ja existe.</p><h3>Infra reutilizada</h3><p>Colecao <code>notifications</code> + <code>criarNotificacao(uid, tipo, titulo, mensagem, link)</code>; favoritos em <code>users/{uid}.favoritos: string[]</code> (IDs com prefixo, ex. car_id) que permitem a consulta reversa <code>where('favoritos','array-contains','prefixo_id')</code> para o fan-out de queda de preco; <code>requestNotificationPermission()</code> para consentimento push.</p><h3>Novos arquivos</h3><div class="table-wrapper"><table><tr><th>Caminho</th><th>Finalidade</th></tr><tr><td>src/types/alertas.ts</td><td>AlertSubscription (discriminado por tipo), AlertCriteria, NotificationPreferences</td></tr><tr><td>src/hooks/useAlertSubscriptions.ts</td><td>CRUD das subscricoes de alerta</td></tr><tr><td>src/hooks/useNotificationPreferences.ts</td><td>Ler/atualizar preferencias no doc do utilizador</td></tr><tr><td>src/components/alertas/SaveAlertButton.tsx</td><td>Botao + modal "Guardar como alerta" (usado nos filtros do 3.2)</td></tr><tr><td>src/components/alertas/KeywordAlertInput.tsx</td><td>Criar alerta por palavra-chave a partir da pesquisa</td></tr><tr><td>src/components/alertas/CriteriaAlertBuilder.tsx</td><td>Construtor de alerta por criterios (tipo/categoria/concelho)</td></tr><tr><td>src/components/alertas/AlertSubscriptionsList.tsx</td><td>Gestao de alertas no perfil ("Meus Alertas")</td></tr><tr><td>src/components/alertas/NotificationPreferencesPanel.tsx</td><td>Preferencias por tipo/canal</td></tr><tr><td>functions/src/lib/matching.ts</td><td>Logica pura de match (palavra-chave, criterio, filtros) — testavel</td></tr><tr><td>functions/src/onListingApproved.ts</td><td>Trigger: novo anuncio aprovado, notifica subscricoes correspondentes</td></tr><tr><td>functions/src/onListingPriceDrop.ts</td><td>Trigger: preco baixou, notifica quem favoritou</td></tr><tr><td>functions/src/lib/pushSender.ts</td><td>Envio de push via Admin SDK (FCM) respeitando preferencias</td></tr></table></div><h3>Colecao alertSubscriptions (nova) + regras</h3><div class="code-block">tipo: 'filtro_salvo' | 'palavra_chave' | 'criterio'
+// queda de preco de favorito deriva de users.favoritos (sem subscricao)
+match /alertSubscriptions/{id} {
+  allow read, create, update, delete:
+    if isAuthenticated() && resource.data.uid == request.auth.uid;
+}
+// notificacoes criadas apenas pelas Cloud Functions (Admin SDK)</div><h3>Arquitetura dos gatilhos (fan-out)</h3><p><strong>onListingPriceDrop</strong> (onDocumentUpdated cars/parts): se o preco novo baixou, consulta users com esse favorito (array-contains) e notifica cada um. <strong>onListingApproved</strong> (status passa a 'aprovado' em cars/parts/services): avalia o item contra as subscricoes ativas via matching.ts. Na v1 itera as subscricoes na funcao; se crescer, pre-filtra por categoria/concelho/marca com queries indexadas.</p>`,
+    effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Setup Cloud Functions (se nao existir) — partilhado com 4.x</td><td>1</td></tr><tr><td>Tipos (alertas.ts, extensao de notificacao.ts)</td><td>0.5</td></tr><tr><td>Colecao + CRUD alertSubscriptions + regras</td><td>1</td></tr><tr><td>Logica pura de match (matching.ts) + testes</td><td>1.5</td></tr><tr><td>Trigger onListingPriceDrop (fan-out por favoritos)</td><td>1.5</td></tr><tr><td>Trigger onListingApproved (match de subscricoes)</td><td>2</td></tr><tr><td>Helper de push + fcmToken no user</td><td>1</td></tr><tr><td>Hooks (useAlertSubscriptions, useNotificationPreferences)</td><td>1</td></tr><tr><td>Componentes (5) + integracao (perfil, busca, centro de notif.) + testes</td><td>4.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~10-13 dias</strong></td></tr></table></div>`,
+    decisions: [
+      { title: 'Onde correr o matching', context: 'Cliente vs Cloud Function.', options: [
+        { name: 'Cloud Function (trigger)', pros: ['Ve todos os anuncios e subscricoes','Seguro','Push com app fechada'], contras: ['Requer Cloud Functions','Custo por evento','Fan-out a gerir'] },
+        { name: 'Cliente (onSnapshot)', pros: ['Sem backend'], contras: ['Nao pode ler subscricoes de outros utilizadores','Sem push com app fechada','Inseguro'] } ],
+        recommendation: '<strong>Cloud Functions (triggers)</strong>. E o unico sitio que pode cruzar um novo anuncio com as subscricoes de todos os utilizadores e enviar push. Alinha com a infra dos Planos 4.x.' },
+      { title: 'Modelo de dados dos alertas', context: 'Colecao unificada vs colecoes por tipo.', options: [
+        { name: 'alertSubscriptions unificada', pros: ['Um CRUD, um trigger, uma UI','Facil adicionar novos tipos'], contras: ['Campos opcionais por tipo'] },
+        { name: 'Colecoes separadas', pros: ['Esquema estrito por tipo'], contras: ['Triplica CRUD/regras/UI','Match le varias colecoes'] } ],
+        recommendation: '<strong>Colecao unificada</strong> com discriminador tipo. Simplifica CRUD, regras, gestao e o trigger. Queda de preco de favorito fica de fora (deriva de users.favoritos).' }
+    ],
+    prompt: `You are implementing "Notificacoes e Alertas" (part 3.1 of the search feature set) for RecarGarage, a Portuguese/Brazilian used-car and parts marketplace built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All USER-FACING text is Portuguese (PT-PT). Code, comments, identifiers in English.
+- The public brand is "RecarGarage" (one word) — never surface "ReparAuto" to users.
+- Import alias @/ maps to src/. NEVER use relative imports. Tailwind only; reuse src/components/ui/.
+- Requires Firebase Cloud Functions (2nd gen) — same setup as plans 4.x. Push reuses FCM (plan 09).
+- REUSE existing infra: 'notifications' collection + criarNotificacao(uid, tipo, titulo, mensagem, link) in src/lib/db.ts; favorites on users/{uid}.favoritos: string[] with prefixed ids (car_id), enabling where('favoritos','array-contains','prefix_id'); requestNotificationPermission() in src/lib/fcm.ts.
+
+TASKS:
+1. TYPES — src/types/alertas.ts (AlertSubscription discriminated by tipo filtro_salvo|palavra_chave|criterio; AlertCriteria; NotificationPreferences). Extend TipoNotificacao in src/types/notificacao.ts with 'alerta' and 'preco'. SearchFilters is shared from src/types/busca.ts (plan 3.2).
+2. DB — src/lib/db.ts: CRUD for 'alertSubscriptions' (owner-scoped) + read/write notificationPreferences on users/{uid}.
+3. MATCHING — functions/src/lib/matching.ts: pure matchKeyword/matchCriteria/matchFilters, unit-tested (TDD).
+4. TRIGGERS — onListingPriceDrop (query favoriters, notify, respect prefs); onListingApproved (evaluate active subscriptions via matching.ts, notify, increment novosResultados); pushSender.ts (FCM via Admin SDK).
+5. HOOKS — useAlertSubscriptions(uid) CRUD; useNotificationPreferences(uid).
+6. UI — SaveAlertButton (embedded in plan 3.2 AdvancedFilters), KeywordAlertInput, CriteriaAlertBuilder, AlertSubscriptionsList (profile), NotificationPreferencesPanel. Enhance the notification center for the new 'alerta'/'preco' types.
+7. INTEGRATION — profile sections; "Criar alerta" entry points in search; ensure fcmToken stored on users/{uid}; add alertSubscriptions rules to firestore.rules (owner-only).
+
+DESIGN: never spam — respect preferences; clear per-type copy ("Baixou de preco", "Novo anuncio para o alerta 'X'"); push only after explicit consent; distinct icons per type; never expose raw errors.`
+  },
+  {
+    id: '3.2', panelId: '03.2', title: 'Busca Avancada e Descoberta', priority: 'ALTA',
+    effort: '~13-16 dias', value: 'Muito Alto', quadrant: 'Estrategico',
+    impact: 'Experiencia de utilizador, conversao, descoberta',
+    overview: `<h3>O Que Resolve</h3><p>O sistema de busca atual e limitado: pesquisa por texto livre, filtros basicos e ordenacao simples. Nao existe busca por mapa, comparacao entre veiculos, filtros avancados nem sugestoes personalizadas. Encontrar rapidamente o carro certo e o fator critico entre uma visita e uma transacao.</p><h3>Parte do split do Plano 3</h3><p>Esta parte implementa a camada de <strong>descoberta em tempo real</strong>. A retencao via alertas vive no Plano 3.1. Os filtros avancados aqui definidos alimentam os alertas por filtro salvo do 3.1 (o tipo <code>SearchFilters</code> e partilhado).</p>`,
+    features: `<ul><li><strong>Busca por Mapa</strong> — Leaflet + OpenStreetMap (gratuito); pins por concelho com popup; cor por faixa de preco</li><li><strong>Comparacao Lado a Lado</strong> — ate 3 veiculos, tabela comparativa, melhor valor por linha destacado</li><li><strong>Filtros Avancados</strong> — cor, cambio, portas, combustivel, ano/km min-max, estado, manutencoes, rodando, inspecao, minFotos; botao "Guardar como alerta" (3.1)</li><li><strong>Ordenacao Multipla</strong> — preco, data, km, ano, relevancia</li><li><strong>Sugestoes "Voce Pode Gostar" + Veiculos Similares</strong> — content-based por favoritos e historico</li></ul>`,
+    technical: `<h3>Abordagem</h3><p>Mapa com Leaflet + OSM (sem API key); coordenadas pre-definidas dos concelhos. Comparacao e sugestoes em estado local (React state / sessionStorage). <strong>Nenhuma colecao nova</strong> nesta parte — a colecao de alertas e do Plano 3.1.</p><h3>Novos arquivos</h3><div class="table-wrapper"><table><tr><th>Caminho</th><th>Finalidade</th></tr><tr><td>src/types/busca.ts</td><td>SearchFilters (partilhado com 3.1), MapMarker, CompareItem</td></tr><tr><td>src/hooks/useCompare.ts / useMapMarkers.ts / useSugestoes.ts / useAdvancedFilters.ts</td><td>Estado de comparacao, markers, sugestoes, filtros</td></tr><tr><td>src/components/busca/MapView.tsx / MapPopup.tsx</td><td>Mapa Leaflet + popup</td></tr><tr><td>src/components/busca/CompareBar.tsx / CompareModal.tsx</td><td>Barra flutuante + tabela comparativa</td></tr><tr><td>src/components/busca/AdvancedFilters.tsx / SortDropdown.tsx</td><td>Filtros colapsaveis (inclui "Guardar como alerta") + ordenacao</td></tr><tr><td>src/components/home/SugestoesSection.tsx / src/components/detalhes/VeiculosSimilares.tsx</td><td>Sugestoes na home e nos detalhes</td></tr><tr><td>src/lib/geocoding.ts / src/lib/suggestions.ts</td><td>Lookup concelho, logica de sugestoes</td></tr></table></div><h3>Modificacoes</h3><p>useCarros (filtros avancados + ordenacao), CarCard (checkbox comparar), CarGrid (toggle mapa/grelha), FilterChips, Home, pagina de detalhes, constants.ts (CORES_CARRO, CONCELHO_COORDS), types/carro.ts (SortOrdem), types/app.ts. Instalar: leaflet, react-leaflet, @types/leaflet.</p>`,
+    effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Tipos + geocoding + logica de sugestoes</td><td>2</td></tr><tr><td>Expansao do useCarros (filtros + ordenacao)</td><td>2</td></tr><tr><td>Hooks (useAdvancedFilters, useCompare, useMapMarkers, useSugestoes)</td><td>3</td></tr><tr><td>MapView + MapPopup (Leaflet)</td><td>3</td></tr><tr><td>CompareBar + CompareModal</td><td>2</td></tr><tr><td>AdvancedFilters + SortDropdown</td><td>2</td></tr><tr><td>SugestoesSection + VeiculosSimilares + integracao</td><td>3.5</td></tr><tr><td>Testes</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~13-16 dias</strong></td></tr></table></div>`,
+    decisions: [
+      { title: 'Biblioteca de Mapas', context: 'Leaflet vs Google Maps vs Mapbox.', options: [
+        { name: 'Leaflet + OSM', pros: ['Gratuito','Open-source','Leve (~40KB)','Sem API key'], contras: ['Design menos polido','Sem Street View'] },
+        { name: 'Google Maps', pros: ['Design premium','Features extensas'], contras: ['Custo apos tier','API key','Vendor lock-in'] },
+        { name: 'Mapbox', pros: ['Customizavel','Tier gratuito generoso'], contras: ['Custo apos tier','SDK mais pesado'] } ],
+        recommendation: '<strong>Leaflet + OpenStreetMap</strong>. Custo zero e determinante; tiles adequados para localizacao por concelho. Migracao futura para Mapbox e simples.' },
+      { title: 'Motor de Recomendacoes', context: 'Regras content-based vs collaborative filtering.', options: [
+        { name: 'Regras content-based', pros: ['Simples','Explicavel','Funciona com poucos dados'], contras: ['Menor diversidade','Risco de bolha'] },
+        { name: 'Collaborative filtering', pros: ['Padroes nao obvios'], contras: ['Requer volume','Complexidade','Cold-start severo'] } ],
+        recommendation: '<strong>Regras content-based</strong> nesta fase (+3 mesma marca, +2 mesmo combustivel, +1 preco +/-30%, +1 mesmo concelho). Collaborative filtering so com >1000 utilizadores ativos.' }
+    ],
+    prompt: `You are implementing "Busca Avancada e Descoberta" (part 3.2 of the search feature set) for RecarGarage, a Portuguese/Brazilian used-car and parts marketplace built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All USER-FACING text is Portuguese (PT-PT). Code, comments, identifiers in English.
+- The public brand is "RecarGarage" (one word) — never surface "ReparAuto" to users.
+- Import alias @/ maps to src/. NEVER use relative imports. Tailwind only; reuse src/components/ui/.
+- The SearchFilters type in src/types/busca.ts is SHARED with part 3.1 (saved-filter alerts).
+
+INSTALL: npm install leaflet react-leaflet @types/leaflet
+
+TASKS:
+1. TYPES — src/types/busca.ts (SearchFilters, MapMarker, CompareItem); expand SortOrdem in src/types/carro.ts (preco_asc|preco_desc|data_desc|data_asc|km_asc|km_desc|ano_desc|ano_asc|null).
+2. GEOCODING — src/lib/geocoding.ts (CONCELHO_COORDS, getCoordenadasPorLocal, PORTUGAL_CENTER, PORTUGAL_ZOOM).
+3. SUGGESTIONS — src/lib/suggestions.ts (content-based scoring).
+4. HOOKS — useAdvancedFilters, useCompare (max 3, sessionStorage), useMapMarkers, useSugestoes. Update useCarros for the expanded SortOrdem.
+5. MAP — MapView (react-leaflet, fix default marker icon, OSM tiles + attribution) + MapPopup.
+6. COMPARE — CompareBar (fixed bottom, slide-up) + CompareModal (table, highlight best per row, mobile sticky first column).
+7. FILTERS/SORT — AdvancedFilters (collapsible; includes "Guardar como alerta" opening part 3.1 save-alert modal) + SortDropdown.
+8. SUGGESTIONS UI — SugestoesSection (home) + VeiculosSimilares (detail page).
+9. INTEGRATION — Home (grid/map toggle, CompareBar, SugestoesSection), CarCard (compare checkbox), CarGrid, detail page (track visit in sessionStorage).
+
+DESIGN: pin colors green<=1000 / blue 1000-5000 / orange>5000; compare bar dark bg z-50 slide-up; advanced filters bordered card with smooth collapse; suggestions horizontal snap-scroll; fully functional at 375px; import Leaflet CSS.`
+  },
+  {
+    id: '4.1', panelId: '04.1', title: 'Anuncios com IA', priority: 'MEDIA',
+    effort: '~14-16 dias', value: 'Alto', quadrant: 'Complementar/Estrategico',
+    impact: 'Qualidade dos anuncios, reducao de esforco do vendedor, diferenciacao',
+    overview: `<h3>O Que Resolve</h3><p>Vendedores nao sabem escrever descricoes atrativas nem que preco pedir, e fotos com danos sao dificeis de interpretar. Esta parte usa IA para elevar a qualidade do proprio anuncio: geracao de descricao, sugestao de preco explicada e classificacao visual de danos.</p><h3>Parte do split do Plano 4</h3><p>Antigo Plano 4 dividido em <strong>4.1 Anuncios com IA</strong>, <strong>4.2 Chatbot</strong> e <strong>4.3 Deteccao de Fraude</strong>. As tres partes partilham o provider (Gemini via Vertex AI) e o setup de Cloud Functions.</p>`,
+    features: `<ul><li><strong>Geracao de Descricao</strong> — LLM gera texto profissional em PT a partir dos dados do veiculo; editavel; marca descricaoGeradaIA</li><li><strong>Sugestao de Preco IA</strong> — analisa dados + mediana de mercado (Plano 02) e explica o raciocinio; badge "Assistido por IA"</li><li><strong>Classificacao Visual de Danos</strong> — Gemini Vision identifica danos nas fotos; overlay com bounding boxes; resultado cacheado</li></ul>`,
+    technical: `<h3>Dependencia partilhada: Cloud Functions</h3><p>Requer <strong>Firebase Cloud Functions (2a geracao)</strong> — inicializar functions/ uma vez (partilhado com 4.2/4.3) e instalar @google-cloud/vertexai. Funcoes HTTPS Callable.</p><h3>Novos arquivos</h3><div class="table-wrapper"><table><tr><th>Caminho</th><th>Finalidade</th></tr><tr><td>src/types/ia.ts</td><td>AIDescriptionRequest/Response, AIPriceSuggestion*, DamageArea, DamageDetectionResult</td></tr><tr><td>src/hooks/useAIDescription.ts / useAIPriceSuggestion.ts / useDamageDetection.ts</td><td>Chamadas as Cloud Functions</td></tr><tr><td>src/components/anunciar/AIDescriptionButton.tsx / AIPriceSuggestion.tsx</td><td>Botao de geracao + widget de preco</td></tr><tr><td>src/components/detalhes/DamageOverlay.tsx / DamageAnalysisButton.tsx</td><td>Overlay e acionamento da analise de danos</td></tr><tr><td>functions/src/lib/prompts.ts</td><td>Templates de prompts (partilhado com 4.2/4.3)</td></tr><tr><td>functions/src/generateDescription.ts / suggestPrice.ts / analyzeDamage.ts</td><td>Cloud Functions (callable)</td></tr></table></div><h3>Modificacoes</h3><p>types/carro.ts (descricaoGeradaIA, damageAnalysis cache), StepDados, StepPreco, pagina de detalhes + GalleryModal. Provider: <strong>Gemini 1.5 Flash</strong> (texto ~0,001-0,005 USD/descricao) e <strong>Gemini Vision</strong> (danos, sem modelo separado). Rate limit: geracao 10/utilizador/hora; danos cacheados no documento.</p>`,
+    effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Setup Cloud Functions + tipos base — partilhado</td><td>2</td></tr><tr><td>generateDescription + prompt</td><td>2</td></tr><tr><td>suggestPrice + prompt</td><td>1.5</td></tr><tr><td>analyzeDamage + prompt (Vision)</td><td>2.5</td></tr><tr><td>Hooks (3)</td><td>1.5</td></tr><tr><td>AIDescriptionButton + AIPriceSuggestion + integracao</td><td>2.5</td></tr><tr><td>DamageOverlay + DamageAnalysisButton + integracao</td><td>2.5</td></tr><tr><td>Prompt engineering + testes</td><td>3</td></tr><tr><td><strong>Total</strong></td><td><strong>~14-16 dias</strong></td></tr></table></div>`,
+    decisions: [
+      { title: 'Provider de IA (partilhada com 4.2/4.3)', context: 'Google Gemini vs OpenAI GPT-4o vs Anthropic Claude.', options: [
+        { name: 'Google Gemini (Vertex AI)', pros: ['Integracao nativa Firebase','Economico','Multimodal (texto+visao)','PT nativo'], contras: ['Menos potente que GPT-4o em raciocinio complexo'] },
+        { name: 'OpenAI GPT-4o', pros: ['Muito capaz','Visao avancada'], contras: ['Sem integracao Firebase','Custo 2-3x','API key externa'] },
+        { name: 'Anthropic Claude', pros: ['Excelente PT','Contexto longo'], contras: ['Sem integracao Firebase','Visao menos robusta'] } ],
+        recommendation: '<strong>Google Gemini via Vertex AI</strong>. Integracao nativa elimina gestao de API keys e o billing e integrado; Gemini Vision cobre a analise de danos sem modelo separado.' },
+      { title: 'Classificacao de Danos', context: 'API generica vs modelo proprio.', options: [
+        { name: 'Gemini Vision (prompt)', pros: ['Sem treino','Flexivel','Custo baixo por imagem'], contras: ['Bboxes aproximadas','Depende do prompt'] },
+        { name: 'Modelo proprio (YOLOv8)', pros: ['Muito preciso','Bboxes precisas'], contras: ['Requer dataset anotado','Infra de ML','Custo inicial alto'] } ],
+        recommendation: '<strong>Gemini Vision com prompt engineering</strong> para a v1; resultados cacheados no documento do carro. Modelo fine-tuned so se o volume e a qualidade o justificarem.' }
+    ],
+    prompt: `You are implementing "Anuncios com IA" (part 4.1 of the AI Features set) for RecarGarage, a Portuguese/Brazilian used-car and parts marketplace built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All USER-FACING text is Portuguese (PT-PT). Code, comments, identifiers in English.
+- The public brand is "RecarGarage" (one word) — never surface "ReparAuto" to users.
+- Import alias @/ maps to src/. NEVER use relative imports. Tailwind only; reuse src/components/ui/.
+- Requires Firebase Cloud Functions (2nd gen). AI provider: Google Gemini via Vertex AI (HTTPS Callable).
+
+SETUP (shared with 4.2/4.3, run once): initialize functions/ if missing; cd functions && npm install @google-cloud/vertexai.
+
+TASKS:
+1. TYPES — src/types/ia.ts (AIDescriptionRequest/Response, AIPriceSuggestionRequest/Response, DamageArea, DamageDetectionResult). Modify src/types/carro.ts (descricaoGeradaIA?, damageAnalysis?).
+2. PROMPTS — functions/src/lib/prompts.ts (DESCRIPTION_PROMPT, PRICE_SUGGESTION_PROMPT, DAMAGE_ANALYSIS_PROMPT; PT-PT output; do NOT invent features; price/damage return strict JSON).
+3. CLOUD FUNCTIONS — generateDescription (rate limit 10/user/hour), suggestPrice (parse JSON), analyzeDamage (Gemini Vision per image, cache result in the car document).
+4. HOOKS — useAIDescription, useAIPriceSuggestion, useDamageDetection (httpsCallable, loading/error).
+5. UI — AIDescriptionButton (sparkle icon, gradient, disabled until marca/modelo/ano), AIPriceSuggestion (result card + "Usar este preco"), DamageAnalysisButton (only when estadoVeiculo === 'manutencao'), DamageOverlay (colored bboxes, toggle).
+6. INTEGRATION — StepDados (button + "Gerada com IA" badge), StepPreco (suggestion widget), car detail page + GalleryModal (damage overlay).
+
+DESIGN: AI buttons sparkle + gradient; loading shimmer/dots; damage overlay semi-transparent rounded rectangles with label outside; always show "Resultado gerado por IA — verifique antes de utilizar."; never expose raw API errors.`
+  },
+  {
+    id: '4.2', panelId: '04.2', title: 'Chatbot de Atendimento', priority: 'MEDIA',
+    effort: '~8-9 dias', value: 'Medio-Alto', quadrant: 'Complementar',
+    impact: 'Reducao da carga de suporte, experiencia do utilizador, retencao',
+    overview: `<h3>O Que Resolve</h3><p>Perguntas frequentes ("como publico?", "como contacto o vendedor?", "e seguro?") consomem suporte e geram frustracao sem resposta imediata. Um chatbot disponivel em todas as paginas responde a FAQs e orienta a busca, aliviando o suporte humano.</p><h3>Parte do split do Plano 4</h3><p>Reutiliza o setup de Cloud Functions + Gemini do Plano 4.1. Funcao HTTPS Callable.</p>`,
+    features: `<ul><li><strong>Widget flutuante</strong> — bubble em todas as paginas; painel slide-up (mobile) ou lateral (desktop)</li><li><strong>Responde a FAQs</strong> — como publicar, pesquisar, politicas, seguranca, contactos (PT-PT, tom amigavel)</li><li><strong>Orienta a busca</strong> — sugere usar a pesquisa para carros especificos</li><li><strong>Limites claros</strong> — nunca da aconselhamento legal ou financeiro</li></ul><p>Saudacao inicial: "Ola! Sou o assistente do RecarGarage. Como posso ajudar?"</p><h3>Benchmark</h3><p>AutoScout24, Webmotors e Mercado Livre tem assistente/bot de ajuda; Standvirtual e OLX nao.</p>`,
+    technical: `<h3>Novos arquivos</h3><div class="table-wrapper"><table><tr><th>Caminho</th><th>Finalidade</th></tr><tr><td>src/hooks/useChatbot.ts</td><td>Estado da conversa + chamada a Cloud Function; persiste em sessionStorage</td></tr><tr><td>src/components/chat/Chatbot.tsx</td><td>Painel (lista de mensagens + input)</td></tr><tr><td>src/components/chat/ChatbotBubble.tsx</td><td>Botao flutuante</td></tr><tr><td>src/components/chat/ChatbotMessage.tsx</td><td>Bolha de mensagem (markdown-lite)</td></tr><tr><td>functions/src/chatbotResponse.ts</td><td>Cloud Function (callable)</td></tr></table></div><h3>Reutiliza / modifica</h3><p>functions/src/lib/prompts.ts (adiciona CHATBOT_SYSTEM_PROMPT); src/types/ia.ts (ChatbotMessage). Montar &lt;ChatbotBubble&gt; no layout/providers cliente (global). Colecao opcional <code>chatbotSessions</code> (sessoes anonimas permitidas) para continuidade/insights. Envia so as ultimas ~10 mensagens; rate limiting recomendado.</p>`,
+    effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Cloud Function chatbotResponse + system prompt + contexto</td><td>3</td></tr><tr><td>Hook useChatbot (estado, historico, sessionStorage)</td><td>1</td></tr><tr><td>Componentes Chatbot + ChatbotBubble + ChatbotMessage</td><td>2.5</td></tr><tr><td>Regras chatbotSessions</td><td>0.5</td></tr><tr><td>Prompt engineering + testes</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~8-9 dias</strong></td></tr></table></div><p><em>Assume o setup de Cloud Functions ja feito no Plano 4.1.</em></p>`,
+    decisions: [
+      { title: 'Provider de IA', context: 'Ver Plano 4.1 (decisao partilhada).', options: [
+        { name: 'Google Gemini via Vertex AI', pros: ['Partilhado com 4.1','Economico','PT nativo'], contras: ['Migravel isoladamente se a qualidade nao bastar'] } ],
+        recommendation: '<strong>Google Gemini via Vertex AI</strong> (partilhado). Se a qualidade conversacional nao bastar, este componente migra sozinho para GPT-4o/Claude sem afetar 4.1/4.3.' },
+      { title: 'Persistencia da sessao', context: 'So cliente vs Firestore.', options: [
+        { name: 'sessionStorage apenas', pros: ['Simples','Zero custo','Privado'], contras: ['Perde historico entre dispositivos','Sem analise'] },
+        { name: 'sessionStorage + chatbotSessions', pros: ['Continuidade (autenticados)','Insights de suporte'], contras: ['Escritas Firestore','Regras extra'] } ],
+        recommendation: '<strong>sessionStorage como fonte primaria</strong> na v1, com escrita opcional em chatbotSessions para autenticados. O caminho critico nao depende da colecao.' }
+    ],
+    prompt: `You are implementing "Chatbot de Atendimento" (part 4.2 of the AI Features set) for RecarGarage, a Portuguese/Brazilian used-car and parts marketplace built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All USER-FACING text is Portuguese (PT-PT). Code, comments, identifiers in English.
+- The public brand is "RecarGarage" (one word) — never surface "ReparAuto" to users.
+- Import alias @/ maps to src/. NEVER use relative imports. Tailwind only; reuse src/components/ui/ and src/components/chat/ patterns.
+- Requires Firebase Cloud Functions (2nd gen). AI provider: Google Gemini via Vertex AI (HTTPS Callable).
+- The Cloud Functions setup and functions/src/lib/prompts.ts already exist from part 4.1; here you ADD CHATBOT_SYSTEM_PROMPT and the ChatbotMessage type to src/types/ia.ts.
+
+TASKS:
+1. TYPES — Add ChatbotMessage to src/types/ia.ts.
+2. PROMPT — Add CHATBOT_SYSTEM_PROMPT to functions/src/lib/prompts.ts (helpful RecarGarage assistant, PT-PT, concise, helps with listing/searching/policies/contact, suggests search for specific cars, never legal/financial advice, clear about limitations).
+3. CLOUD FUNCTION — functions/src/chatbotResponse.ts: accept message + last ~10 messages, build prompt with system prompt + history, call Vertex AI, return assistant text. Add rate limiting.
+4. HOOK — src/hooks/useChatbot.ts: messages, sendMessage(text), loading, clearHistory; httpsCallable; persist in sessionStorage; optional write to chatbotSessions for authenticated users.
+5. UI — ChatbotBubble (round 56px, bottom-right, z-50, pulse when greeting unseen), Chatbot (slide-up mobile / side desktop; scrollable list; input + send; initial greeting; typing-dots), ChatbotMessage (user vs assistant styling, markdown-lite).
+6. INTEGRATION — mount ChatbotBubble globally in the client layout/providers.
+7. RULES — chatbotSessions in firestore.rules (read own; create/update true; delete false).
+
+DESIGN: friendly tone; typing dots not spinner; disclaimer "Assistente automatico — respostas geradas por IA."; never expose raw API errors.`
+  },
+  {
+    id: '4.3', panelId: '04.3', title: 'Deteccao de Fraude', priority: 'MEDIA',
+    effort: '~7 dias', value: 'Alto', quadrant: 'Complementar/Estrategico',
+    impact: 'Confianca, protecao do comprador, eficiencia de moderacao',
+    overview: `<h3>O Que Resolve</h3><p>A moderacao manual nao escala e a fraude erode a confianca. Um sistema automatico pontua novos anuncios a procura de sinais de fraude e <strong>prioriza a fila de moderacao</strong>, com explicacao do motivo. Invisivel para o utilizador final (so no painel admin).</p><h3>Parte do split do Plano 4</h3><p>Ao contrario de 4.1/4.2, a funcao aqui e um <strong>trigger</strong> onDocumentCreated. Reutiliza o setup de Cloud Functions do Plano 4.1. Melhor relacao esforco/valor do split.</p>`,
+    features: `<ul><li><strong>Deteccao automatica (background)</strong> — score 0-100 a partir de: preco vs mercado (Plano 02), fotos duplicadas (hash percetual), texto copiado (similaridade), alta frequencia do mesmo criador</li><li><strong>Painel de alertas no admin</strong> — aba "Fraude" com tabela ordenada por score, motivos legiveis, acoes "Confirmar Fraude" / "Falso Positivo", estatisticas</li><li><strong>Indicador na ListingsTable</strong> — icone de aviso ambar nas linhas sinalizadas</li></ul>`,
+    technical: `<h3>Novos arquivos</h3><div class="table-wrapper"><table><tr><th>Caminho</th><th>Finalidade</th></tr><tr><td>src/hooks/useFraudDetection.ts</td><td>Consultar e resolver alertas (admin)</td></tr><tr><td>src/components/admin/FraudAlerts.tsx</td><td>Painel de alertas no admin</td></tr><tr><td>functions/src/detectFraud.ts</td><td>Trigger onDocumentCreated de deteccao</td></tr></table></div><h3>Colecao fraudAlerts (nova) + campos no anuncio</h3><div class="code-block">fraudAlerts: { anuncioId, anuncioType, criadorEmail, score 0-100,
+  motivos[], status pendente|confirmado|falso_positivo }
+// no anuncio: fraudeSuspect?, fraudeScore?, fraudeMotivos?[]
+match /fraudAlerts/{id} {
+  allow read, update, delete: if isAdmin();
+  allow create: if false;   // apenas Cloud Functions
+}</div><h3>Algoritmo (v1)</h3><p>Preco &lt; 50% da mediana de semelhantes; pHash das fotos vs anuncios recentes (distancia de Hamming); sobreposicao de palavras-chave; &gt;5 anuncios do mesmo criador em 7 dias. Score = soma ponderada, limiar default 50. Escrita dos campos no anuncio via Admin SDK.</p>`,
+    effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Cloud Function detectFraud (trigger, hashing, logica)</td><td>3</td></tr><tr><td>Hook useFraudDetection (admin)</td><td>0.5</td></tr><tr><td>FraudAlerts + integracao no admin</td><td>1.5</td></tr><tr><td>Indicador em ListingsTable</td><td>0.5</td></tr><tr><td>Regras Firestore</td><td>0.5</td></tr><tr><td>Tuning de limiares + testes</td><td>1</td></tr><tr><td><strong>Total</strong></td><td><strong>~7 dias</strong></td></tr></table></div><p><em>Assume o setup de Cloud Functions ja feito no Plano 4.1.</em></p>`,
+    decisions: [
+      { title: 'Trigger vs analise periodica', context: 'Quando correr a deteccao.', options: [
+        { name: 'Trigger onDocumentCreated', pros: ['Analise imediata','Sinaliza antes da aprovacao'], contras: ['Custo por escrita','Picos com muitos anuncios'] },
+        { name: 'Job periodico', pros: ['Amortiza carga','Facil rate-limit'], contras: ['Latencia (pendente sem analise)'] } ],
+        recommendation: '<strong>Trigger onDocumentCreated</strong> para v1 — a analise chega antes da revisao. Se o volume crescer, mover sinais caros (hashing) para um job assincrono.' },
+      { title: 'Hashing de fotos', context: 'pHash local vs servico externo.', options: [
+        { name: 'pHash na Cloud Function', pros: ['Sem dependencias','Barato','Suficiente para duplicados obvios'], contras: ['Menos robusto a crop/watermark'] },
+        { name: 'Reverse-image externo', pros: ['Deteta reutilizacao fora da plataforma'], contras: ['Custo','Latencia','API key'] } ],
+        recommendation: '<strong>pHash local</strong> na v1 (deteta a mesma foto reutilizada na plataforma). Reverse-image externo fica para fase futura.' }
+    ],
+    prompt: `You are implementing "Deteccao de Fraude" (part 4.3 of the AI Features set) for RecarGarage, a Portuguese/Brazilian used-car and parts marketplace built with Next.js 15 (App Router) + React 19 + TypeScript + Tailwind CSS v4 + Firebase.
+
+IMPORTANT CONTEXT:
+- All USER-FACING text is Portuguese (PT-PT). Code, comments, identifiers in English.
+- The public brand is "RecarGarage" (one word) — never surface "ReparAuto" to users.
+- Import alias @/ maps to src/. NEVER use relative imports. Tailwind only; reuse src/components/ui/ and admin patterns.
+- Requires Firebase Cloud Functions (2nd gen). The setup already exists from part 4.1.
+- This function is a TRIGGER (onDocumentCreated), not HTTPS Callable.
+
+TASKS:
+1. TYPES — Add FraudMotivo (union) and FraudAlert to src/types/ia.ts. Modify src/types/carro.ts (fraudeSuspect?, fraudeScore?, fraudeMotivos?).
+2. CLOUD FUNCTION — functions/src/detectFraud.ts: onDocumentCreated('cars/{carId}'): price vs market median (flag if < 50%); perceptual photo hash vs recent listings; text similarity; creator frequency (>5 in 7 days). Compute score 0-100; if >50 create fraudAlerts doc AND set fraudeSuspect/fraudeScore/fraudeMotivos on the car.
+3. HOOK — src/hooks/useFraudDetection.ts (admin): alerts ordered by score desc, resolveAlert(id, status), stats.
+4. UI — src/components/admin/FraudAlerts.tsx: table sorted by score, color-coded (0-30 green, 30-60 yellow, 60-100 red); actions "Confirmar Fraude" (remove + notify) and "Falso Positivo"; stats summary.
+5. INTEGRATION — "Fraude" tab in the admin panel with a pending-count badge; amber warning icon + tooltip on ListingsTable rows where fraudeSuspect.
+6. RULES — fraudAlerts in firestore.rules (read/update/delete admin-only; create false).
+
+DESIGN: invisible to end users; readable reasons (e.g. "Preco 55% abaixo da media"); destructive actions confirmed; color-coded scores.`
+  }
+];
+for (const plan of subPlans) {
+  const el = document.getElementById('panel-' + plan.panelId);
+  if (el) el.innerHTML = buildPlanPanel(plan);
+}
+
+// ============================================================
 // Plans 13-20 — registered as roadmap entries that link to the
 // full plan files (kept out-of-line to avoid duplicating content)
 // ============================================================
 const extraPlans = [
-  {
-    id: '03.1', title: 'Notificacoes e Alertas', priority: 'ALTA', effort: '~10-13 dias',
-    implemented: false, file: '03.1-notificacoes-alertas.md',
-    impact: 'Retencao (mecanismo #1 de regresso), reengajamento, conversao',
-    summary: 'Alertas proativos em quatro gatilhos: queda de preco de um favorito, alerta por palavra-chave, novos anuncios por criterios (tipo venda/procura, oficinas na regiao, categoria carros/motos/pecas) e alerta por filtro salvo. Reutiliza a colecao notifications + criarNotificacao() e o FCM do plano 09; matching via Cloud Functions.',
-    evidence: 'Em fila — parte 3.1 do split do antigo Plano 3 (Busca Avancada e Descoberta).'
-  },
-  {
-    id: '03.2', title: 'Busca Avancada e Descoberta', priority: 'ALTA', effort: '~13-16 dias',
-    implemented: false, file: '03.2-busca-descoberta.md',
-    impact: 'Experiencia de utilizador, conversao, descoberta',
-    summary: 'Mapa (Leaflet + OSM), comparacao lado a lado (ate 3), filtros avancados, ordenacao multipla e sugestoes personalizadas. Os filtros avancados alimentam os alertas por filtro salvo do plano 3.1 (SearchFilters partilhado).',
-    evidence: 'Em fila — parte 3.2 do split do antigo Plano 3 (Busca Avancada e Descoberta).'
-  },
-  {
-    id: '04.1', title: 'Anuncios com IA', priority: 'MEDIA', effort: '~14-16 dias',
-    implemented: false, file: '04.1-anuncios-ia.md',
-    impact: 'Qualidade dos anuncios, reducao de esforco do vendedor, diferenciacao',
-    summary: 'IA aplicada ao proprio anuncio: geracao automatica de descricao, sugestao inteligente de preco (com explicacao) e classificacao visual de danos nas fotos (Gemini Vision). Requer Firebase Cloud Functions + Gemini via Vertex AI.',
-    evidence: 'Em fila — parte 4.1 do split do antigo Plano 4 (Funcionalidades com IA).'
-  },
-  {
-    id: '04.2', title: 'Chatbot de Atendimento', priority: 'MEDIA', effort: '~8-9 dias',
-    implemented: false, file: '04.2-chatbot-atendimento.md',
-    impact: 'Reducao da carga de suporte, experiencia do utilizador, retencao',
-    summary: 'Widget de chatbot flutuante em todas as paginas que responde a FAQs da plataforma e orienta a busca, usando o contexto da plataforma. Reutiliza o setup de Cloud Functions + Gemini do plano 4.1.',
-    evidence: 'Em fila — parte 4.2 do split do antigo Plano 4 (Funcionalidades com IA).'
-  },
-  {
-    id: '04.3', title: 'Deteccao de Fraude', priority: 'MEDIA', effort: '~7 dias',
-    implemented: false, file: '04.3-deteccao-fraude.md',
-    impact: 'Confianca, protecao do comprador, eficiencia de moderacao',
-    summary: 'Trigger automatico que pontua novos anuncios (preco fora do mercado, fotos duplicadas, texto copiado, alta frequencia) e prioriza a fila de moderacao no painel admin. Melhor relacao esforco/valor do split.',
-    evidence: 'Em fila — parte 4.3 do split do antigo Plano 4 (Funcionalidades com IA).'
-  },
   {
     id: '13', title: 'Evolucao do Painel de Administracao', priority: 'ALTA', effort: '~22-30 dias',
     implemented: true, file: '13-painel-admin.md',
