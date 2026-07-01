@@ -1,6 +1,12 @@
-export function formatarPreco(valor: number | string | null | undefined): string {
-  if (valor == null || isNaN(Number(valor))) return '0 €';
-  return Number(valor).toLocaleString('pt-PT') + ' €';
+import { COUNTRY_INFO, type Country } from '@/lib/country';
+
+// Formats a listing price in the currency of the listing's own market —
+// pass the doc's resolved country (docCountry), not the viewer's.
+export function formatarPreco(valor: number | string | null | undefined, country: Country = 'PT'): string {
+  const { locale } = COUNTRY_INFO[country];
+  const numero = valor == null || isNaN(Number(valor)) ? 0 : Number(valor);
+  const formatado = numero.toLocaleString(locale);
+  return country === 'BR' ? `R$ ${formatado}` : `${formatado} €`;
 }
 
 export function gerarId(): number {
@@ -11,22 +17,57 @@ export function validarEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export function validarTelefone(tel: string): boolean {
-  const digits = tel.replace(/\s/g, '');
+export function validarTelefone(tel: string, country: Country = 'PT'): boolean {
+  const digits = tel.replace(/[\s().-]/g, '');
+  if (country === 'BR') {
+    // DDD (two digits, no leading zero) + mobile (9xxxxxxxx) or landline (2-5 + 7 digits).
+    return /^[1-9][0-9](9\d{8}|[2-5]\d{7})$/.test(digits);
+  }
   return /^(9|2)\d{8}$/.test(digits);
 }
 
-export function validarCodigoPostal(cp: string): boolean {
+export function validarCodigoPostal(cp: string, country: Country = 'PT'): boolean {
+  if (country === 'BR') return /^\d{5}-?\d{3}$/.test(cp.trim());
   return /^\d{4}-\d{3}$/.test(cp.trim());
 }
 
-export function formatarCodigoPostal(cp: string): string {
+export function formatarCodigoPostal(cp: string, country: Country = 'PT'): string {
   const digits = cp.replace(/\D/g, '');
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4, 7)}`;
+  const prefixo = country === 'BR' ? 5 : 4;
+  if (digits.length <= prefixo) return digits;
+  return `${digits.slice(0, prefixo)}-${digits.slice(prefixo, prefixo + 3)}`;
 }
 
-export function validarNif(nif: string): boolean {
+// Weighted check-digit calculation shared by CPF and CNPJ: multiply each digit
+// by its weight, and the check digit is 0 when the remainder mod 11 is < 2,
+// otherwise 11 - remainder.
+function checkDigitMod11(digits: string, weights: number[]): number {
+  const sum = weights.reduce((acc, weight, i) => acc + parseInt(digits[i], 10) * weight, 0);
+  const remainder = sum % 11;
+  return remainder < 2 ? 0 : 11 - remainder;
+}
+
+function validarCpf(digits: string): boolean {
+  if (!/^\d{11}$/.test(digits) || /^(\d)\1{10}$/.test(digits)) return false;
+  const d1 = checkDigitMod11(digits, [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const d2 = checkDigitMod11(digits, [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d1 === parseInt(digits[9], 10) && d2 === parseInt(digits[10], 10);
+}
+
+function validarCnpj(digits: string): boolean {
+  if (!/^\d{14}$/.test(digits) || /^(\d)\1{13}$/.test(digits)) return false;
+  const d1 = checkDigitMod11(digits, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const d2 = checkDigitMod11(digits, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d1 === parseInt(digits[12], 10) && d2 === parseInt(digits[13], 10);
+}
+
+// PT: 9-digit NIF. BR: accepts CPF (11 digits) or CNPJ (14 digits), with or
+// without the usual punctuation.
+export function validarNif(nif: string, country: Country = 'PT'): boolean {
+  if (country === 'BR') {
+    const digits = nif.replace(/[\s./-]/g, '');
+    return digits.length === 14 ? validarCnpj(digits) : validarCpf(digits);
+  }
   const digits = nif.replace(/\s/g, '');
   if (!/^\d{9}$/.test(digits)) return false;
   const first = parseInt(digits[0], 10);
@@ -181,10 +222,16 @@ export function dataAtualISO(): string {
   return new Date().toISOString();
 }
 
-export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null): string | null {
+export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null, country: Country = 'PT'): string | null {
   if (whatsapp && whatsapp.trim()) return whatsapp.trim();
   if (!telefone) return null;
-  const digits = telefone.replace(/\s/g, '');
+  const digits = telefone.replace(/[\s().-]/g, '');
+  if (country === 'BR') {
+    // Only mobiles (DDD + 9xxxxxxxx) receive WhatsApp links.
+    if (/^[1-9][0-9]9\d{8}$/.test(digits)) return '55' + digits;
+    if (/^55[1-9][0-9]9\d{8}$/.test(digits)) return digits;
+    return null;
+  }
   if (/^9\d{8}$/.test(digits)) return '351' + digits;
   if (/^3519\d{8}$/.test(digits)) return digits;
   return null;
