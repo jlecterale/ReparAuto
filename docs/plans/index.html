@@ -1037,11 +1037,20 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-02" id="tab-02" onclick="switchTab('02')" tabindex="-1">
       <span class="tab-num">02</span> Precos <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03" id="tab-03" onclick="switchTab('03')" tabindex="-1">
-      <span class="tab-num">03</span> Busca <span class="priority-badge priority-alta">ALTA</span>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03.1" id="tab-03.1" onclick="switchTab('03.1')" tabindex="-1">
+      <span class="tab-num">3.1</span> Alertas <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04" id="tab-04" onclick="switchTab('04')" tabindex="-1">
-      <span class="tab-num">04</span> IA <span class="priority-badge priority-media">MEDIA</span>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03.2" id="tab-03.2" onclick="switchTab('03.2')" tabindex="-1">
+      <span class="tab-num">3.2</span> Busca <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04.1" id="tab-04.1" onclick="switchTab('04.1')" tabindex="-1">
+      <span class="tab-num">4.1</span> Anuncios IA <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04.2" id="tab-04.2" onclick="switchTab('04.2')" tabindex="-1">
+      <span class="tab-num">4.2</span> Chatbot <span class="priority-badge priority-media">MEDIA</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-04.3" id="tab-04.3" onclick="switchTab('04.3')" tabindex="-1">
+      <span class="tab-num">4.3</span> Fraude <span class="priority-badge priority-media">MEDIA</span>
     </button></li>
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-05" id="tab-05" onclick="switchTab('05')" tabindex="-1">
       <span class="tab-num">05</span> Midia <span class="priority-badge priority-media">MEDIA</span>
@@ -1145,7 +1154,8 @@
         <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
           <div class="matrix-dot" data-priority="alta" onclick="switchTab('01')" title="Confianca (Implementado)" style="outline:2px solid #16a34a;outline-offset:2px;"><span class="dot-tooltip">01 — Confianca &#10003;</span>&#10003;</div>
           <div class="matrix-dot" data-priority="alta" onclick="switchTab('02')" title="Precos"><span class="dot-tooltip">02 — Precos</span>02</div>
-          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03')" title="Busca"><span class="dot-tooltip">03 — Busca</span>03</div>
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03.1')" title="Notificacoes e Alertas"><span class="dot-tooltip">3.1 — Alertas</span>3.1</div>
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03.2')" title="Busca e Descoberta"><span class="dot-tooltip">3.2 — Busca</span>3.2</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('07')" title="Profissional"><span class="dot-tooltip">07 — Profissional</span>07</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('08')" title="Pecas"><span class="dot-tooltip">08 — Pecas</span>08</div>
         </div>
@@ -1161,7 +1171,9 @@
       <div class="matrix-quadrant matrix-q4">
         <span class="matrix-quadrant-title">Projeto Grande</span>
         <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
-          <div class="matrix-dot" data-priority="media" onclick="switchTab('04')" title="IA"><span class="dot-tooltip">04 — IA</span>04</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('04.1')" title="Anuncios IA"><span class="dot-tooltip">4.1 — Anuncios IA</span>4.1</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('04.2')" title="Chatbot"><span class="dot-tooltip">4.2 — Chatbot</span>4.2</div>
+          <div class="matrix-dot" data-priority="media" onclick="switchTab('04.3')" title="Fraude"><span class="dot-tooltip">4.3 — Fraude</span>4.3</div>
           <div class="matrix-dot" data-priority="baixa" onclick="switchTab('10')" title="Comunidade"><span class="dot-tooltip">10 — Comunidade</span>10</div>
           <div class="matrix-dot" data-priority="baixa" onclick="switchTab('11')" title="Logistica"><span class="dot-tooltip">11 — Logistica</span>11</div>
         </div>
@@ -1179,12 +1191,15 @@
       <li onclick="switchTab('12')"><div class="impl-item-content"><span class="impl-item-name">Internacionalizacao e SEO</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-11 dias &middot; Meta tags e Open Graph para compartilhamento social &middot; Essencial para trafego organico</div></div></li>
       <li class="implemented" onclick="switchTab('01')"><div class="impl-item-content"><span class="impl-item-name">Confianca e Seguranca</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; Verificacao de vendedores, avaliacoes, denuncias, badges, VIN check</div></div></li>
       <li onclick="switchTab('02')"><div class="impl-item-content"><span class="impl-item-name">Inteligencia de Precos</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">15-20 dias &middot; Indicador de preco justo, estimativa de valor &middot; Diferenciador unico em PT</div></div></li>
-      <li onclick="switchTab('03')"><div class="impl-item-content"><span class="impl-item-name">Busca Avancada e Descoberta</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">16-22 dias &middot; Buscas salvas, mapa, comparacao, filtros avancados &middot; Funcionalidade critica</div></div></li>
+      <li onclick="switchTab('03.1')"><div class="impl-item-content"><span class="impl-item-name">3.1 Notificacoes e Alertas</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">10-13 dias &middot; Queda de preco de favorito, palavra-chave, novos anuncios por criterios, filtros salvos &middot; Mecanismo #1 de retencao</div></div></li>
+      <li onclick="switchTab('03.2')"><div class="impl-item-content"><span class="impl-item-name">3.2 Busca Avancada e Descoberta</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">13-16 dias &middot; Mapa, comparacao, filtros avancados, ordenacao, sugestoes &middot; Funcionalidade critica</div></div></li>
       <li onclick="switchTab('05')"><div class="impl-item-content"><span class="impl-item-name">Midia Aprimorada</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-12 dias &middot; Galeria com zoom/swipe, video, 360 graus &middot; Alto impacto na decisao de compra</div></div></li>
       <li onclick="switchTab('06')"><div class="impl-item-content"><span class="impl-item-name">Servicos Financeiros</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">12-18 dias &middot; Calculadora de financiamento, custos totais, IMT &middot; 100% client-side</div></div></li>
       <li onclick="switchTab('07')"><div class="impl-item-content"><span class="impl-item-name">Ferramentas Profissionais</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">15-22 dias &middot; Dashboard, analytics, perfil publico, upload CSV &middot; Atrai stands/revendedores</div></div></li>
       <li onclick="switchTab('08')"><div class="impl-item-content"><span class="impl-item-name">Ecossistema de Pecas</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">14-20 dias &middot; Compatibilidade, cross-referencia, upload lote &middot; Core do negocio</div></div></li>
-      <li onclick="switchTab('04')"><div class="impl-item-content"><span class="impl-item-name">Funcionalidades com IA</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">22-30 dias &middot; Geracao de descricao, chatbot, deteccao fraude &middot; Requer Cloud Functions</div></div></li>
+      <li onclick="switchTab('04.1')"><div class="impl-item-content"><span class="impl-item-name">4.1 Anuncios com IA</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">14-16 dias &middot; Geracao de descricao, sugestao de preco, visao de danos &middot; Requer Cloud Functions</div></div></li>
+      <li onclick="switchTab('04.2')"><div class="impl-item-content"><span class="impl-item-name">4.2 Chatbot de Atendimento</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-9 dias &middot; Widget flutuante para FAQs e orientacao de busca &middot; Requer Cloud Functions</div></div></li>
+      <li onclick="switchTab('04.3')"><div class="impl-item-content"><span class="impl-item-name">4.3 Deteccao de Fraude</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">7 dias &middot; Score automatico + fila de moderacao priorizada &middot; Requer Cloud Functions</div></div></li>
       <li onclick="switchTab('11')"><div class="impl-item-content"><span class="impl-item-name">Logistica e Servicos</span> <span class="priority-badge priority-baixa">BAIXA</span><div class="impl-item-meta">12-16 dias &middot; Estimativa de entrega, test drive, oficinas &middot; Fecha o ciclo da transacao</div></div></li>
       <li onclick="switchTab('10')"><div class="impl-item-content"><span class="impl-item-name">Comunidade e Conteudo</span> <span class="priority-badge priority-baixa">BAIXA</span><div class="impl-item-meta">10-14 dias &middot; Blog, forum, reviews, glossario &middot; Valor de longo prazo (SEO)</div></div></li>
     </ol>
@@ -1201,8 +1216,11 @@
         <tbody>
           <tr class="implemented"><td>01</td><td>Confianca e Seguranca</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>18-24 dias</td><td>Confianca, retencao, reducao de fraude</td></tr>
           <tr><td>02</td><td>Inteligencia de Precos</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Decisao de compra, diferenciacao</td></tr>
-          <tr><td>03</td><td>Busca Avancada</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>16-22 dias</td><td>Experiencia, conversao, retencao</td></tr>
-          <tr><td>04</td><td>Funcionalidades IA</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>22-30 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
+          <tr><td>3.1</td><td>Notificacoes e Alertas</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>10-13 dias</td><td>Retencao, reengajamento, conversao</td></tr>
+          <tr><td>3.2</td><td>Busca Avancada e Descoberta</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>13-16 dias</td><td>Experiencia, conversao, descoberta</td></tr>
+          <tr><td>4.1</td><td>Anuncios com IA</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>14-16 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
+          <tr><td>4.2</td><td>Chatbot de Atendimento</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-9 dias</td><td>Suporte automatizado, retencao</td></tr>
+          <tr><td>4.3</td><td>Deteccao de Fraude</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>7 dias</td><td>Confianca, moderacao eficiente</td></tr>
           <tr><td>05</td><td>Midia Aprimorada</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-12 dias</td><td>Confianca do comprador, UX</td></tr>
           <tr><td>06</td><td>Servicos Financeiros</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>12-18 dias</td><td>Transparencia financeira, conversao</td></tr>
           <tr><td>07</td><td>Ferramentas Profissionais</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>15-22 dias</td><td>Atracao de profissionais, monetizacao</td></tr>
@@ -1228,8 +1246,11 @@
 <!-- ==================== PLAN TABS - Generated via JS ==================== -->
 <div class="tab-panel" id="panel-01" role="tabpanel" aria-labelledby="tab-01"></div>
 <div class="tab-panel" id="panel-02" role="tabpanel" aria-labelledby="tab-02"></div>
-<div class="tab-panel" id="panel-03" role="tabpanel" aria-labelledby="tab-03"></div>
-<div class="tab-panel" id="panel-04" role="tabpanel" aria-labelledby="tab-04"></div>
+<div class="tab-panel" id="panel-03.1" role="tabpanel" aria-labelledby="tab-03.1"></div>
+<div class="tab-panel" id="panel-03.2" role="tabpanel" aria-labelledby="tab-03.2"></div>
+<div class="tab-panel" id="panel-04.1" role="tabpanel" aria-labelledby="tab-04.1"></div>
+<div class="tab-panel" id="panel-04.2" role="tabpanel" aria-labelledby="tab-04.2"></div>
+<div class="tab-panel" id="panel-04.3" role="tabpanel" aria-labelledby="tab-04.3"></div>
 <div class="tab-panel" id="panel-05" role="tabpanel" aria-labelledby="tab-05"></div>
 <div class="tab-panel" id="panel-06" role="tabpanel" aria-labelledby="tab-06"></div>
 <div class="tab-panel" id="panel-07" role="tabpanel" aria-labelledby="tab-07"></div>
@@ -1464,8 +1485,8 @@ const planMeta = [
   null, // index 0 unused
   null, // 01 is defined above
   { id:'02', title:'Inteligencia de Precos', shortName:'Precos', priority:'ALTA', effort:'15-20 dias', value:'Muito Alto', quadrant:'Estrategico', impact:'Decisao de compra informada, diferenciacao competitiva' },
-  { id:'03', title:'Busca Avancada e Descoberta', shortName:'Busca', priority:'ALTA', effort:'16-22 dias', value:'Muito Alto', quadrant:'Estrategico', impact:'Experiencia de utilizador, conversao, retencao' },
-  { id:'04', title:'Funcionalidades com IA', shortName:'IA', priority:'MEDIA', effort:'22-30 dias', value:'Alto', quadrant:'Complementar/Estrategico', impact:'Diferenciacao, qualidade dos anuncios' },
+  null, // 03 dividido em 3.1/3.2 — renderizados via extraPlans (linkam para os .md)
+  null, // 04 dividido em 4.1/4.2/4.3 — renderizados via extraPlans (linkam para os .md)
   { id:'05', title:'Midia Aprimorada', shortName:'Midia', priority:'MEDIA', effort:'8-12 dias', value:'Alto', quadrant:'Alto Valor / Esforco Medio', impact:'Confianca do comprador, experiencia visual' },
   { id:'06', title:'Servicos Financeiros', shortName:'Financeiro', priority:'MEDIA', effort:'12-18 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Medio-Alto', impact:'Transparencia financeira, conversao de vendas' },
   { id:'07', title:'Ferramentas Profissionais', shortName:'Profissional', priority:'MEDIA', effort:'15-22 dias', value:'Muito Alto', quadrant:'Alto Valor / Esforco Alto', impact:'Atracao de profissionais, monetizacao' },
@@ -1757,12 +1778,6 @@ interface SavedSearch {
   ]
 };
 
-planContents['03'] = { overview: `<h3>O Que Resolve</h3><p>O sistema de busca atual e limitado: pesquisa por texto livre, filtros basicos. Este plano implementa buscas salvas com alertas, busca por mapa (Leaflet + OpenStreetMap), comparacao lado a lado (ate 3 veiculos), filtros avancados, ordenacao multipla e sugestoes personalizadas.</p><h3>Dependencias</h3><p><strong>leaflet + react-leaflet</strong> — Mapas interativos gratuitos.</p>`, features: `<h3>6 Funcionalidades</h3><ul><li>Buscas Salvas com Alertas</li><li>Busca por Mapa (Leaflet + OSM)</li><li>Comparacao Lado a Lado (ate 3 veiculos)</li><li>Filtros Avancados (cor, cambio, portas, estado, etc.)</li><li>Ordenacao Multipla (preco, data, km, ano, relevancia)</li><li>Sugestoes "Voce Pode Gostar" (content-based)</li></ul>`, technical: `<h3>Abordagem Tecnica</h3><p>Mapa com Leaflet + OSM (gratuito). Coordenadas pre-definidas dos 6 concelhos. Comparacao em state local (sessionStorage). Sugestoes via regras simples baseadas em favoritos.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Tipos + geocoding + sugestoes</td><td>2</td></tr><tr><td>Hooks (6 hooks)</td><td>6</td></tr><tr><td>Mapa + popup</td><td>3</td></tr><tr><td>Comparacao (bar + modal)</td><td>2</td></tr><tr><td>Filtros + ordenacao</td><td>2</td></tr><tr><td>Buscas salvas</td><td>1.5</td></tr><tr><td>Sugestoes + integracao + testes</td><td>5.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~22 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Biblioteca de Mapas', context: 'Leaflet vs Google Maps vs Mapbox.', options: [{ name: 'Leaflet + OSM', pros: ['Gratuito','Open-source','Leve (~40KB)'], contras: ['Design menos polido'] },{ name: 'Google Maps', pros: ['Design premium','Street View'], contras: ['Custo significativo','API key','Vendor lock-in'] },{ name: 'Mapbox', pros: ['Design customizavel','Tier gratuito generoso'], contras: ['Custo apos tier','SDK mais pesado'] }], recommendation: '<strong>Leaflet + OpenStreetMap</strong>. Custo zero e determinante para marketplace em crescimento.' }] };
-
-planContents['04'] = { overview: `<h3>O Que Resolve</h3><p>Qualidade de anuncios e moderacao nao escalam manualmente. Este plano introduz IA em 5 frentes: geracao automatica de descricoes, sugestao inteligente de preco, classificacao visual de danos, chatbot de atendimento e deteccao automatica de fraude.</p><h3>Provider de IA</h3><p><strong>Google Gemini via Firebase/Vertex AI</strong> — Integracao nativa Firebase, custo baixo, multimodal.</p>`, features: `<ul><li><strong>Geracao de Descricao</strong> — LLM gera texto profissional em portugues a partir dos dados do veiculo</li><li><strong>Sugestao de Preco IA</strong> — Analise que explica o raciocinio</li><li><strong>Classificacao Visual de Danos</strong> — Gemini Vision identifica danos em fotos</li><li><strong>Chatbot</strong> — Widget flutuante para FAQs</li><li><strong>Deteccao de Fraude</strong> — Background check automatico (preco, fotos, texto, frequencia)</li></ul>`, technical: `<h3>Requer Firebase Cloud Functions</h3><p>5 Cloud Functions (2nd gen): generateDescription, suggestPrice, analyzeDamage, chatbotResponse, detectFraud (trigger).</p><div class="code-block">// Novas colecoes:
-// fraudAlerts — alertas de fraude (admin-only)
-// chatbotSessions — sessoes de chatbot</div>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Tarefa</th><th>Dias</th></tr><tr><td>Setup Cloud Functions + tipos</td><td>2</td></tr><tr><td>5 Cloud Functions + prompts</td><td>12</td></tr><tr><td>5 Hooks client-side</td><td>3</td></tr><tr><td>Componentes UI (7)</td><td>9</td></tr><tr><td>Prompt engineering + tuning</td><td>3</td></tr><tr><td>Testes</td><td>2</td></tr><tr><td><strong>Total</strong></td><td><strong>~30 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Provider de IA', context: 'Google Gemini vs OpenAI GPT-4o vs Anthropic Claude.', options: [{ name: 'Google Gemini', pros: ['Integracao nativa Firebase','Economico','Multimodal'], contras: ['Menos potente que GPT-4o'] },{ name: 'OpenAI GPT-4o', pros: ['Mais capaz','Excelente PT'], contras: ['Sem integracao Firebase','Custo 2-3x maior'] },{ name: 'Claude API', pros: ['Excelente PT','Thinking mode'], contras: ['Sem integracao Firebase','Custo maior'] }], recommendation: '<strong>Google Gemini via Firebase</strong>. Integracao nativa e fator determinante. Custo significativamente inferior.' }] };
-
 planContents['05'] = { overview: `<h3>O Que Resolve</h3><p>Experiencia de midia limitada: fotos estaticas sem zoom, sem video, galeria basica. Para veiculos com danos, a qualidade visual e decisiva. Este plano adiciona galeria com zoom/swipe, upload de video curto (30s), visualizacao 360 graus (Pannellum.js), guia de fotos e marca d'agua automatica.</p>`, features: `<ul><li><strong>F1 Galeria Aprimorada</strong> — Zoom pinch/scroll, swipe, fullscreen, teclado (Alta)</li><li><strong>F2 Upload Video</strong> — Ate 30s/50MB, player HTML5 inline (Alta)</li><li><strong>F3 Vista 360</strong> — Pannellum.js para fotos panoramicas (Media)</li><li><strong>F4 Guia de Fotos</strong> — 8 dicas ilustradas de fotografia (Media)</li><li><strong>F5 Marca d'Agua</strong> — Canvas overlay automatico (Baixa)</li></ul>`, technical: `<p>Galeria refatorada com CSS transforms para zoom, touch events para swipe, Fullscreen API. Videos via Firebase Storage direto (limite 50MB). 360 graus com Pannellum.js (30KB, MIT). Marca d'agua via Canvas API nativa.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Galeria aprimorada</td><td>3</td></tr><tr><td>Upload de video</td><td>2.5</td></tr><tr><td>Visualizacao 360</td><td>2</td></tr><tr><td>Guia de fotos</td><td>1</td></tr><tr><td>Marca d'agua</td><td>1.5</td></tr><tr><td><strong>Total</strong></td><td><strong>~10 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Biblioteca 360', context: 'Pannellum vs Photo Sphere Viewer vs A-Frame.', options: [{ name: 'Pannellum.js', pros: ['Leve (~30KB)','Maduro','MIT'], contras: ['Sem React wrapper oficial'] },{ name: 'Photo Sphere Viewer', pros: ['API moderna','React nativo'], contras: ['Mais pesado (~80KB)'] },{ name: 'A-Frame', pros: ['WebVR completo'], contras: ['Muito pesado (200KB+)','Overkill'] }], recommendation: '<strong>Pannellum.js</strong>. Mais leve e madura. Wrapper React simples (20-30 linhas).' }] };
 
 planContents['06'] = { overview: `<h3>O Que Resolve</h3><p>Custos ocultos de compra (IMT, seguro, transferencia) e falta de simulacao financeira. Este plano adiciona calculadora de financiamento, simulador de custo total de aquisicao, widget de seguro, valor de referencia de mercado e (futuro) pagamento seguro/escrow.</p>`, features: `<ul><li><strong>Calculadora de Financiamento</strong> — Sliders interativos, formula Price (Alta)</li><li><strong>Simulador de Custos Totais</strong> — Preco + IMT + transferencia + seguro + reparos (Alta)</li><li><strong>Tabela de Referencia</strong> — Valor de mercado baseado em dados internos (Media)</li><li><strong>Widget de Seguro</strong> — Estimativa por faixa + link afiliado (Media)</li><li><strong>Pagamento Escrow</strong> — Stripe Connect, fase futura (Baixa)</li></ul>`, technical: `<p>F1-F4 sao 100% client-side. Tabelas IMT oficiais de Portugal. src/lib/finance.ts, src/lib/imt-tables.ts, src/lib/insurance.ts. Componentes em src/components/detalhes/.</p>`, effortDetail: `<div class="table-wrapper"><table><tr><th>Funcionalidade</th><th>Dias</th></tr><tr><td>Calculadora financiamento</td><td>2</td></tr><tr><td>Simulador custos totais</td><td>3.5</td></tr><tr><td>Tabela de referencia</td><td>3</td></tr><tr><td>Widget de seguro</td><td>2</td></tr><tr><td>Escrow (futuro)</td><td>7</td></tr><tr><td><strong>Total</strong></td><td><strong>~17.5 dias</strong></td></tr></table></div>`, decisions: [{ title: 'Gateway de Pagamento (Escrow)', context: 'Stripe Connect vs MBWay vs PayPal.', options: [{ name: 'Stripe Connect', pros: ['API madura','Escrow nativo','PSD2'], contras: ['KYC vendedor','Precisa backend'] },{ name: 'MBWay/Multibanco', pros: ['Preferido em PT','Taxas baixas'], contras: ['Sem escrow nativo'] },{ name: 'PayPal', pros: ['Familiar'], contras: ['Taxas altas (3.4%)','API complexa'] }], recommendation: '<strong>Stripe Connect</strong> com capture manual para verdadeiro escrow.' }] };
@@ -1802,37 +1817,6 @@ TASKS — Implement in this order:
 7. PAGES — Create AvaliarVeiculo.tsx (/avaliar-veiculo) and Mercado.tsx (/mercado).
 8. INTEGRATION — Update App.tsx, Header.tsx, BottomNav.tsx, CarCard.tsx, DetalhesCarro.tsx.
 9. FIRESTORE RULES — Add rules for priceSnapshots and savedSearches.`;
-
-planPrompts['03'] = `You are implementing the "Advanced Search & Discovery" feature set for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
-
-INSTALL: npm install leaflet react-leaflet @types/leaflet
-
-TASKS:
-1. TYPE DEFINITIONS — Create src/types/busca.ts. Expand SortOrdem.
-2. GEOCODING — Create src/lib/geocoding.ts with concelho coordinates.
-3. SUGGESTIONS — Create src/lib/suggestions.ts with content-based scoring.
-4. DATABASE — Add savedSearches CRUD to db.ts.
-5. HOOKS — useAdvancedFilters, useCompare, useSavedSearches, useMapMarkers, useSugestoes.
-6. MAP — MapView.tsx + MapPopup.tsx (Leaflet + OpenStreetMap).
-7. COMPARE — CompareBar.tsx + CompareModal.tsx.
-8. FILTERS — AdvancedFilters.tsx + SortDropdown.tsx.
-9. SAVED SEARCH — SaveSearchButton.tsx + SavedSearchesList.tsx.
-10. SUGGESTIONS — SugestoesSection.tsx + VeiculosSimilares.tsx.
-11. INTEGRATION — Home.tsx, CarCard.tsx, DetalhesCarro.tsx, ProfileLoggedIn.tsx.`;
-
-planPrompts['04'] = `You are implementing the "AI Features" set for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
-
-Requires Firebase Cloud Functions (2nd gen, Node.js 18+). AI provider: Google Gemini via Vertex AI.
-
-SETUP: Initialize Firebase Cloud Functions. Install @google-cloud/vertexai in functions/.
-
-TASKS:
-1. TYPE DEFINITIONS — Create src/types/ia.ts. Modify src/types/carro.ts.
-2. CLOUD FUNCTIONS PROMPTS — Create functions/src/lib/prompts.ts.
-3. CLOUD FUNCTIONS — generateDescription, suggestPrice, analyzeDamage, chatbotResponse, detectFraud.
-4. CLIENT HOOKS — useAIDescription, useAIPriceSuggestion, useDamageDetection, useChatbot, useFraudDetection.
-5. UI COMPONENTS — AIDescriptionButton, AIPriceSuggestion, DamageOverlay, DamageAnalysisButton, Chatbot, ChatbotBubble, FraudAlerts.
-6. INTEGRATION — StepDados, StepPreco, DetalhesCarro, GalleryModal, Admin, App.tsx.`;
 
 planPrompts['05'] = `You are implementing "Enhanced Media" for ReparAuto. React 19 + TypeScript + Tailwind CSS v4 + Firebase.
 
@@ -1987,6 +1971,41 @@ for (let i = 2; i <= 12; i++) {
 // full plan files (kept out-of-line to avoid duplicating content)
 // ============================================================
 const extraPlans = [
+  {
+    id: '03.1', title: 'Notificacoes e Alertas', priority: 'ALTA', effort: '~10-13 dias',
+    implemented: false, file: '03.1-notificacoes-alertas.md',
+    impact: 'Retencao (mecanismo #1 de regresso), reengajamento, conversao',
+    summary: 'Alertas proativos em quatro gatilhos: queda de preco de um favorito, alerta por palavra-chave, novos anuncios por criterios (tipo venda/procura, oficinas na regiao, categoria carros/motos/pecas) e alerta por filtro salvo. Reutiliza a colecao notifications + criarNotificacao() e o FCM do plano 09; matching via Cloud Functions.',
+    evidence: 'Em fila — parte 3.1 do split do antigo Plano 3 (Busca Avancada e Descoberta).'
+  },
+  {
+    id: '03.2', title: 'Busca Avancada e Descoberta', priority: 'ALTA', effort: '~13-16 dias',
+    implemented: false, file: '03.2-busca-descoberta.md',
+    impact: 'Experiencia de utilizador, conversao, descoberta',
+    summary: 'Mapa (Leaflet + OSM), comparacao lado a lado (ate 3), filtros avancados, ordenacao multipla e sugestoes personalizadas. Os filtros avancados alimentam os alertas por filtro salvo do plano 3.1 (SearchFilters partilhado).',
+    evidence: 'Em fila — parte 3.2 do split do antigo Plano 3 (Busca Avancada e Descoberta).'
+  },
+  {
+    id: '04.1', title: 'Anuncios com IA', priority: 'MEDIA', effort: '~14-16 dias',
+    implemented: false, file: '04.1-anuncios-ia.md',
+    impact: 'Qualidade dos anuncios, reducao de esforco do vendedor, diferenciacao',
+    summary: 'IA aplicada ao proprio anuncio: geracao automatica de descricao, sugestao inteligente de preco (com explicacao) e classificacao visual de danos nas fotos (Gemini Vision). Requer Firebase Cloud Functions + Gemini via Vertex AI.',
+    evidence: 'Em fila — parte 4.1 do split do antigo Plano 4 (Funcionalidades com IA).'
+  },
+  {
+    id: '04.2', title: 'Chatbot de Atendimento', priority: 'MEDIA', effort: '~8-9 dias',
+    implemented: false, file: '04.2-chatbot-atendimento.md',
+    impact: 'Reducao da carga de suporte, experiencia do utilizador, retencao',
+    summary: 'Widget de chatbot flutuante em todas as paginas que responde a FAQs da plataforma e orienta a busca, usando o contexto da plataforma. Reutiliza o setup de Cloud Functions + Gemini do plano 4.1.',
+    evidence: 'Em fila — parte 4.2 do split do antigo Plano 4 (Funcionalidades com IA).'
+  },
+  {
+    id: '04.3', title: 'Deteccao de Fraude', priority: 'MEDIA', effort: '~7 dias',
+    implemented: false, file: '04.3-deteccao-fraude.md',
+    impact: 'Confianca, protecao do comprador, eficiencia de moderacao',
+    summary: 'Trigger automatico que pontua novos anuncios (preco fora do mercado, fotos duplicadas, texto copiado, alta frequencia) e prioriza a fila de moderacao no painel admin. Melhor relacao esforco/valor do split.',
+    evidence: 'Em fila — parte 4.3 do split do antigo Plano 4 (Funcionalidades com IA).'
+  },
   {
     id: '13', title: 'Evolucao do Painel de Administracao', priority: 'ALTA', effort: '~22-30 dias',
     implemented: true, file: '13-painel-admin.md',
