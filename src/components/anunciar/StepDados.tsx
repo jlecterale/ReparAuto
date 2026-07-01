@@ -1,9 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
+import { CaretDown } from '@phosphor-icons/react';
+import {
+  TIPOS_COMBUSTIVEL,
+  TIPOS_CAMBIO,
+  TIPOS_CARROCERIA,
+  CONDICOES_VEICULO,
+  TIPOS_TRACAO,
+  EQUIPAMENTOS_CARRO,
+} from '@/lib/constants';
+import { toggleInList } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import ToggleChip from '@/components/ui/ToggleChip';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 
@@ -14,12 +24,26 @@ interface StepDadosProps {
   onBack: () => void;
 }
 
+interface CampoOptions {
+  type?: string;
+  placeholder?: string;
+  options?: readonly string[];
+  required?: boolean;
+  /** Optional selects get an empty "Indiferente" choice unless the value set is exhaustive (e.g. condition). */
+  emptyOption?: boolean;
+}
+
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
+  const [showMore, setShowMore] = useState(false);
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
     setErros((prev) => ({ ...prev, [campo]: false }));
+  };
+
+  const toggleFeature = (feature: string) => {
+    setDados((prev) => ({ ...prev, features: toggleInList(prev.features, feature) }));
   };
 
   const validar = () => {
@@ -38,17 +62,22 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
     }
   };
 
-  const campo = (label: string, campoId: keyof CarroFormData, type = 'text', placeholder = '', options: string[] | null = null) => (
+  const campo = (
+    label: string,
+    campoId: keyof CarroFormData,
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true }: CampoOptions = {},
+  ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
-        {label} <span className="text-red-500">*</span>
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       {options ? (
         <select
-          value={dados[campoId] as string || ''}
+          value={(dados[campoId] as string) || ''}
           onChange={(e) => atualizar(campoId, e.target.value)}
           className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
         >
+          {!required && emptyOption && <option value="">Indiferente</option>}
           {options.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -57,7 +86,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         <input
           type={type}
           placeholder={placeholder}
-          value={dados[campoId] as string || ''}
+          value={(dados[campoId] as string) || ''}
           onChange={(e) => atualizar(campoId, e.target.value)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
             erros[campoId] ? 'border-red-400' : 'border-gray-300'
@@ -85,13 +114,16 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         className="mb-4"
       />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {campo('Ano de Fabricação', 'anoFabricacao', 'number', 'Ex: 2007')}
-        {campo('Ano Modelo', 'anoModelo', 'number', 'Ex: 2008')}
-        {campo('Quilómetros', 'km', 'number', 'Ex: 210000')}
-        {campo('Cor', 'cor', 'text', 'Ex: Cinzento')}
-        {campo('Combustível', 'combustivel', 'text', '', TIPOS_COMBUSTIVEL)}
-        {campo('Câmbio', 'cambio', 'text', '', TIPOS_CAMBIO)}
-        {campo('Nº Portas', 'portas', 'number', 'Ex: 5')}
+        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007' })}
+        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008' })}
+        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000' })}
+        {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento' })}
+        {campo('Combustível', 'combustivel', { options: TIPOS_COMBUSTIVEL })}
+        {campo('Câmbio', 'cambio', { options: TIPOS_CAMBIO })}
+        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5' })}
+        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false })}
+        {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
+        {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
           <SeletorLocalizacao
             distrito={dados.localizacaoDistrito}
@@ -104,6 +136,42 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           />
         </div>
       </div>
+
+      {/* Advanced specs — collapsed by default to keep the core form short */}
+      <button
+        type="button"
+        onClick={() => setShowMore((v) => !v)}
+        className="flex items-center gap-1.5 text-sm font-semibold text-accent mb-3"
+        aria-expanded={showMore}
+      >
+        <CaretDown className={`transition-transform ${showMore ? 'rotate-180' : ''}`} />
+        {showMore ? 'Ocultar detalhes adicionais' : 'Adicionar mais detalhes (opcional)'}
+      </button>
+
+      {showMore && (
+        <div className="mb-4 space-y-4 border-t border-slate-100 pt-4">
+          <div className="grid grid-cols-2 gap-3">
+            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false })}
+            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false })}
+            {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
+            <div className="flex flex-wrap gap-2">
+              {EQUIPAMENTOS_CARRO.map((feature) => (
+                <ToggleChip
+                  key={feature}
+                  active={dados.features.includes(feature)}
+                  onClick={() => toggleFeature(feature)}
+                >
+                  {feature}
+                </ToggleChip>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-3">
         <Button
           tipo="secundario"

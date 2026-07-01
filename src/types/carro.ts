@@ -3,6 +3,18 @@ import type { Timestamp } from 'firebase/firestore';
 export type EstadoVeiculo = 'pronto' | 'manutencao';
 export type Combustivel = 'Gasolina' | 'Etanol' | 'Flex' | 'Diesel' | 'Elétrico' | 'Híbrido';
 export type Cambio = 'Manual' | 'Automático' | 'CVT';
+export type BodyType =
+  | 'Citadino'
+  | 'Utilitário'
+  | 'Sedan'
+  | 'Carrinha'
+  | 'SUV'
+  | 'Monovolume'
+  | 'Coupé'
+  | 'Cabrio'
+  | 'Pick-up';
+export type Condition = 'Novo' | 'Usado' | 'Para peças';
+export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
 export type FiltroAtivo = 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer' | null;
 export type SortOrdem = 'crescente' | 'decrescente' | null;
 export type FiltroChip = { label: string; value: string };
@@ -20,6 +32,13 @@ export interface Carro {
   cambio: Cambio;
   cor: string;
   portas: number;
+  bodyType?: BodyType;
+  seats?: number;
+  condition?: Condition;
+  power?: number;
+  displacement?: number;
+  traction?: Traction;
+  features?: string[];
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
@@ -68,6 +87,13 @@ export interface CarroFormData {
   combustivel: Combustivel;
   cambio: Cambio;
   portas: string;
+  bodyType: string;
+  seats: string;
+  condition: string;
+  power: string;
+  displacement: string;
+  traction: string;
+  features: string[];
   localizacao: string;
   localizacaoDistrito: string;
   preco: string;

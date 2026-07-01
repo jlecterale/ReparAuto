@@ -1,4 +1,4 @@
-import type { Cambio, Combustivel, EstadoVeiculo } from '@/types';
+import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
 
 export const COMBUSTIVEIS: Combustivel[] = [
   'Gasolina',
@@ -14,6 +14,48 @@ export const CAMBIOS: Cambio[] = ['Manual', 'Automático', 'CVT'];
 export const ESTADOS_VEICULO: { value: EstadoVeiculo; label: string }[] = [
   { value: 'pronto', label: 'Pronto a andar' },
   { value: 'manutencao', label: 'Para reparar' },
+];
+
+// Body type / category (carroçaria) — mirrors the web `TIPOS_CARROCERIA`. A
+// single Portuguese enum serves both the PT and BR markets.
+export const TIPOS_CARROCERIA: BodyType[] = [
+  'Citadino',
+  'Utilitário',
+  'Sedan',
+  'Carrinha',
+  'SUV',
+  'Monovolume',
+  'Coupé',
+  'Cabrio',
+  'Pick-up',
+];
+
+// Vehicle condition — "Para peças" bridges the car and parts marketplaces.
+export const CONDICOES_VEICULO: Condition[] = ['Novo', 'Usado', 'Para peças'];
+
+// Drivetrain / traction.
+export const TIPOS_TRACAO: Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
+
+// Equipment / extras checklist (multi-select) — mirrors web `EQUIPAMENTOS_CARRO`.
+export const EQUIPAMENTOS_CARRO = [
+  'Ar condicionado',
+  'Climatização automática',
+  'Direção assistida',
+  'Vidros elétricos',
+  'Fecho centralizado',
+  'Sensores de estacionamento',
+  'Câmara de marcha-atrás',
+  'GPS / Navegação',
+  'Bluetooth',
+  'Cruise control',
+  'Bancos em pele',
+  'Bancos aquecidos',
+  'Teto de abrir',
+  'Jantes de liga leve',
+  'Faróis LED/Xénon',
+  'Isofix',
+  'Apple CarPlay / Android Auto',
+  'Start/Stop',
 ];
 
 /** Hard limits mirrored from the web app. */
