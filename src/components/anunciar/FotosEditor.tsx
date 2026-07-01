@@ -1,12 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
+import { Camera, CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
 import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { parseExternalImageUrl } from '@/lib/utils';
-import { REQUIRED_SPIN_ANGLES, SPIN_ANGLE_LABELS, SPIN_ANGLE_ORDER, type SpinAngle } from '@/lib/spin360';
+import {
+  getCaptureSequence,
+  REQUIRED_SPIN_ANGLES,
+  SPIN_ANGLE_LABELS,
+  SPIN_ANGLE_ORDER,
+  type SpinAngle,
+} from '@/lib/spin360';
 import Button from '@/components/ui/Button';
 import ImageCropper from '@/components/ui/ImageCropper';
+import GuidedSpinCapture from '@/components/anunciar/GuidedSpinCapture';
 
 interface FotosEditorProps {
   fotos: string[];
@@ -58,6 +65,8 @@ export default function FotosEditor({
   const [batchTotal, setBatchTotal] = useState(0);
   // Index of an already-added photo being re-cropped, or null.
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  // Guided 360 capture (camera with angle frame overlay).
+  const [guidedOpen, setGuidedOpen] = useState(false);
   // "Add photo by URL" row.
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlValue, setUrlValue] = useState('');
@@ -95,6 +104,15 @@ export default function FotosEditor({
     delete next[from];
     next[to] = angle;
     onAngleByPhotoChange(next);
+  };
+
+  const handleGuidedCapture = (file: File, angle: SpinAngle) => {
+    if (fotos.length >= max) return;
+    const { url } = blobToFile(file);
+    setFotos([...fotos, url]);
+    if (angleByPhoto && onAngleByPhotoChange) {
+      onAngleByPhotoChange({ ...angleByPhoto, [url]: angle });
+    }
   };
 
   // Revoke transient crop-source URLs if the flow is abandoned (component unmounts
@@ -351,7 +369,7 @@ export default function FotosEditor({
         </p>
       )}
 
-      {tagAngles && fotos.length > 0 && (
+      {tagAngles && (
         <div
           className={`mb-3 rounded-xl border px-3 py-2 text-[11px] ${
             missingRequired.length === 0
@@ -371,6 +389,15 @@ export default function FotosEditor({
               — indique o ângulo de cada foto. Falta marcar:{' '}
               {missingRequired.map((a) => SPIN_ANGLE_LABELS[a]).join(', ')}.
             </>
+          )}
+          {podeAdicionar && getCaptureSequence(angleByPhoto ?? {}).length > 0 && (
+            <button
+              type="button"
+              onClick={() => setGuidedOpen(true)}
+              className="mt-1.5 flex items-center gap-1.5 font-bold text-accent hover:text-accent-hover transition"
+            >
+              <Camera size={14} weight="bold" /> Captura guiada 360° — fotografe cada ângulo com moldura
+            </button>
           )}
         </div>
       )}
@@ -489,6 +516,15 @@ export default function FotosEditor({
           </button>
         ))}
       </div>
+
+      {guidedOpen && angleByPhoto && (
+        <GuidedSpinCapture
+          angleByPhoto={angleByPhoto}
+          remainingSlots={Math.max(0, max - fotos.length)}
+          onCapture={handleGuidedCapture}
+          onClose={() => setGuidedOpen(false)}
+        />
+      )}
 
       {editIndex !== null && (
         <ImageCropper

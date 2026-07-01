@@ -1,4 +1,5 @@
 import {
+  getCaptureSequence,
   getSpinAngles,
   getSpinFrames,
   isSpinEnabled,
@@ -66,6 +67,34 @@ describe('getSpinAngles', () => {
     const photoAngles = { front: 0, right: 1, rear: 2, left: 3, rearLeft: 99 };
     expect(getSpinAngles(fotos, photoAngles)).toEqual(['front', 'right', 'rear', 'left']);
     expect(getSpinAngles(fotos, { front: 0 })).toEqual([]);
+  });
+});
+
+// Guided capture walks the seller around the vehicle, offering each angle
+// still missing a photo, in physical walk-around order.
+describe('getCaptureSequence', () => {
+  it('offers all angles in walk-around order when nothing is tagged yet', () => {
+    expect(getCaptureSequence({})).toEqual([
+      'front',
+      'frontRight',
+      'right',
+      'rearRight',
+      'rear',
+      'rearLeft',
+      'left',
+      'frontLeft',
+    ]);
+  });
+
+  it('skips angles that already have a photo', () => {
+    expect(getCaptureSequence({ 'a.jpg': 'front', 'b.jpg': 'rear' })).toEqual([
+      'frontRight',
+      'right',
+      'rearRight',
+      'rearLeft',
+      'left',
+      'frontLeft',
+    ]);
   });
 });
 

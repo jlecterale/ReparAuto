@@ -7,6 +7,7 @@ import DraggableFlatList, {
   ScaleDecorator,
   type RenderItemParams,
 } from 'react-native-draggable-flatlist';
+import { GuidedSpinCapture } from '@/components/anunciar/GuidedSpinCapture';
 import { ImageCropper } from '@/components/anunciar/ImageCropper';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/Button';
@@ -14,6 +15,7 @@ import { Input } from '@/components/ui/Input';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { parseExternalImageUrl } from '@/lib/images';
 import {
+  getCaptureSequence,
   REQUIRED_SPIN_ANGLES,
   SPIN_ANGLE_LABELS,
   SPIN_ANGLE_ORDER,
@@ -49,6 +51,8 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
   const missingRequired = REQUIRED_SPIN_ANGLES.filter((a) => !taggedAngles.has(a));
   // Photo whose angle is being picked in the bottom sheet, or null.
   const [anglePickerUri, setAnglePickerUri] = useState<string | null>(null);
+  // Guided 360 capture (camera with angle frame overlay).
+  const [guidedOpen, setGuidedOpen] = useState(false);
 
   function setPhotoAngle(foto: string, angle: SpinAngle | null) {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
@@ -76,6 +80,12 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
     delete next[from];
     next[to] = angle;
     onAngleByPhotoChange(next);
+  }
+
+  function handleGuidedCapture(uri: string, angle: SpinAngle) {
+    if (fotos.length >= max || !angleByPhoto || !onAngleByPhotoChange) return;
+    onChange([...fotos, uri].slice(0, max));
+    onAngleByPhotoChange({ ...angleByPhoto, [uri]: angle });
   }
 
   // Freshly-picked images awaiting crop, processed one at a time.
@@ -302,7 +312,7 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
         {reordenavel ? ' Mantenha premida uma foto para reordenar; a primeira é a capa.' : ''}
       </Text>
 
-      {tagAngles && fotos.length > 0 && (
+      {tagAngles && (
         <View
           className={`mt-2 rounded-xl border px-3 py-2 ${
             missingRequired.length === 0
@@ -322,6 +332,18 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
               {' — indique o ângulo de cada foto. Falta marcar: '}
               {missingRequired.map((a) => SPIN_ANGLE_LABELS[a]).join(', ')}.
             </Text>
+          )}
+          {restantes > 0 && getCaptureSequence(angleByPhoto ?? {}).length > 0 && (
+            <Pressable
+              onPress={() => setGuidedOpen(true)}
+              accessibilityRole="button"
+              className="mt-1.5 flex-row items-center gap-1.5 active:opacity-70"
+            >
+              <Ionicons name="camera-outline" size={14} color={colors.secondary[600]} />
+              <Text className="text-[11px] font-bold text-secondary-600">
+                Captura guiada 360° — fotografe cada ângulo com moldura
+              </Text>
+            </Pressable>
           )}
         </View>
       )}
@@ -448,6 +470,16 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
           )}
         </View>
       </BottomSheet>
+
+      {tagAngles && (
+        <GuidedSpinCapture
+          visible={guidedOpen}
+          angleByPhoto={angleByPhoto ?? {}}
+          remainingSlots={restantes}
+          onCapture={handleGuidedCapture}
+          onClose={() => setGuidedOpen(false)}
+        />
+      )}
 
       {editIndex !== null && (
         <ImageCropper

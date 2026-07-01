@@ -9,9 +9,23 @@ interface Props {
   onClose: () => void;
   facingMode?: 'user' | 'environment';
   label?: string;
+  /** Replaces the default "Alinhar no centro" guide (e.g. the 360 angle frame). */
+  overlay?: React.ReactNode;
+  /** Center-crop the captured photo to this aspect ratio (width / height). */
+  cropAspect?: number;
+  /** Keep the camera open after onCapture (multi-shot flows like guided 360). */
+  keepOpenAfterCapture?: boolean;
 }
 
-export default function CameraCapture({ onCapture, onClose, facingMode = 'environment', label }: Props) {
+export default function CameraCapture({
+  onCapture,
+  onClose,
+  facingMode = 'environment',
+  label,
+  overlay,
+  cropAspect,
+  keepOpenAfterCapture = false,
+}: Props) {
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
@@ -58,20 +72,35 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
+        // Center-crop the source frame to cropAspect (when set) so the saved
+        // photo matches the on-screen guide frame.
+        let sx = 0;
+        let sy = 0;
+        let sw = video.videoWidth;
+        let sh = video.videoHeight;
+        if (cropAspect && sw > 0 && sh > 0) {
+          if (sw / sh > cropAspect) {
+            sw = Math.round(sh * cropAspect);
+            sx = Math.round((video.videoWidth - sw) / 2);
+          } else {
+            sh = Math.round(sw / cropAspect);
+            sy = Math.round((video.videoHeight - sh) / 2);
+          }
+        }
+        canvas.width = sw;
+        canvas.height = sh;
+
         // If front camera is active, flip horizontally to match preview mirror effect
         if (currentFacingMode === 'user') {
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
         }
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
+        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+
         // Reset scale/translate just in case
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
+
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         setCapturedDataUrl(dataUrl);
       }
@@ -86,6 +115,7 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
         .then((blob) => {
           const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
           onCapture(file);
+          if (keepOpenAfterCapture) setCapturedDataUrl(null);
         });
     }
   };
@@ -128,28 +158,38 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
             </div>
           )}
 
+          {/* With cropAspect the preview box keeps that exact aspect so the
+              guide overlay outlines precisely what gets saved. */}
           {permissionState === 'granted' && !capturedDataUrl && (
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`w-full h-full object-cover ${currentFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+              style={cropAspect ? { aspectRatio: cropAspect } : undefined}
+              className={`w-full object-cover ${cropAspect ? 'max-h-full' : 'h-full'} ${currentFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
             />
           )}
 
           {capturedDataUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={capturedDataUrl} alt="Captura" className="w-full h-full object-cover" />
+            <img
+              src={capturedDataUrl}
+              alt="Captura"
+              style={cropAspect ? { aspectRatio: cropAspect } : undefined}
+              className={`w-full object-cover ${cropAspect ? 'max-h-full' : 'h-full'}`}
+            />
           )}
 
           {/* Guide Overlay */}
           {permissionState === 'granted' && !capturedDataUrl && (
-            <div className="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none m-8 rounded-xl flex items-center justify-center">
-              <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider bg-black/40 px-2.5 py-1 rounded">
-                Alinhar no centro
+            overlay ?? (
+              <div className="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none m-8 rounded-xl flex items-center justify-center">
+                <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider bg-black/40 px-2.5 py-1 rounded">
+                  Alinhar no centro
+                </div>
               </div>
-            </div>
+            )
           )}
         </div>
 

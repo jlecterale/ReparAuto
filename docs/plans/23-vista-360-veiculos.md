@@ -56,6 +56,22 @@ Zero fotos extra, zero dependências, funciona com as fotos que o vendedor já t
   formulário (keyed pela string da foto, sobrevive a reordenação) e o mapa persistido.
 - Testes em `src/lib/spin360.test.ts` (TDD, 18 testes).
 
+### Captura guiada com moldura (web + mobile)
+
+- Fluxo "Captura guiada 360°" acessível a partir do banner 360 no passo de fotos:
+  percorre os ângulos ainda por marcar na ordem física de andar à volta do carro
+  (`getCaptureSequence`), com **moldura** 4:3 tracejada sobre a câmara ao vivo,
+  rótulo do ângulo, indicador necessário/opcional, progresso (N/8), diagrama
+  vista-de-cima com a posição onde o vendedor deve estar, e botão "Saltar".
+- Cada foto é recortada ao centro para o aspecto do anúncio (4:3) e **marcada
+  automaticamente** com o ângulo — sem passar pelo cropper manual.
+- Web: `GuidedSpinCapture` compõe o `CameraCapture` existente (que ganhou props
+  `overlay`, `cropAspect` e `keepOpenAfterCapture`).
+- Mobile: `GuidedSpinCapture` com `CameraView` do **expo-camera** (dependência
+  nova — a câmara do sistema via expo-image-picker não permite overlay). Exige
+  rebuild nativo do dev-client/EAS; o `runtimeVersion: fingerprint` impede que
+  um OTA chegue a binários sem o módulo.
+
 ### Web
 
 - `FotosEditor` (criação + modal de edição): seletor de ângulo por foto + banner de
@@ -99,5 +115,4 @@ Zero fotos extra, zero dependências, funciona com as fotos que o vendedor já t
 
 - 360 para peças (têm 1 foto) e oficinas.
 - Foto panorâmica equiretangular / Pannellum (abordagem antiga do plano 05).
-- Interpolação/morphing entre frames e captura guiada com moldura na câmara
-  (candidatos a iteração futura).
+- Interpolação/morphing entre frames (candidato a iteração futura).

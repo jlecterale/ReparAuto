@@ -30,6 +30,21 @@ export const SPIN_ANGLE_ORDER: SpinAngle[] = [
 /** The minimum set of angles a seller must tag to enable the 360 mode. */
 export const REQUIRED_SPIN_ANGLES: SpinAngle[] = ['front', 'right', 'rear', 'left'];
 
+/**
+ * Camera bearing per angle in degrees, clockwise from the vehicle's nose
+ * (0 = standing in front of the car). Drives the capture-position diagram.
+ */
+export const SPIN_ANGLE_DEGREES: Record<SpinAngle, number> = {
+  front: 0,
+  frontRight: 45,
+  right: 90,
+  rearRight: 135,
+  rear: 180,
+  rearLeft: 225,
+  left: 270,
+  frontLeft: 315,
+};
+
 /** User-facing labels (UI copy is Portuguese by convention). */
 export const SPIN_ANGLE_LABELS: Record<SpinAngle, string> = {
   front: 'Frente',
@@ -98,6 +113,15 @@ export function toPhotoAngles(fotos: string[], angleByPhoto: Record<string, Spin
     if (index >= 0) photoAngles[angle] = index;
   }
   return photoAngles;
+}
+
+/**
+ * The angles guided capture should still photograph (those without a tag),
+ * in physical walk-around order.
+ */
+export function getCaptureSequence(angleByPhoto: Record<string, SpinAngle>): SpinAngle[] {
+  const tagged = new Set(Object.values(angleByPhoto));
+  return SPIN_ANGLE_ORDER.filter((angle) => !tagged.has(angle));
 }
 
 /** Inverse of toPhotoAngles — hydrates form tags from a stored listing. */

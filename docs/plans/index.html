@@ -2278,7 +2278,7 @@ const extraPlans = [
     implemented: true, file: '23-vista-360-veiculos.md',
     impact: 'Rotacao interativa do veiculo, mais confianca na compra a distancia',
     summary: 'O vendedor marca o angulo de cada foto (frente, tras, laterais, diagonais); com os 4 angulos cardeais marcados, o anuncio ganha um viewer de arrastar-para-rodar (pointer events na web, gesture-handler no mobile), sem fotos extra nem dependencias novas.',
-    evidence: 'Entregue — src/lib/spin360.ts (+18 testes TDD), campo photoAngles em cars, seletor de angulo no FotosEditor/PhotoPicker, Spin360Viewer em ambas as plataformas.'
+    evidence: 'Entregue — src/lib/spin360.ts (+20 testes TDD), campo photoAngles em cars, seletor de angulo no FotosEditor/PhotoPicker, captura guiada com moldura (GuidedSpinCapture; expo-camera no mobile) e Spin360Viewer em ambas as plataformas.'
   }
 ];
 
