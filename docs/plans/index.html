@@ -1100,6 +1100,12 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-20" id="tab-20" onclick="switchTab('20')" tabindex="-1">
       <span class="tab-num">20</span> Brasil <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-21" id="tab-21" onclick="switchTab('21')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Recorte de Fotos <span class="priority-badge priority-implementado">FEITO</span>
+    </button></li>
+    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-22" id="tab-22" onclick="switchTab('22')" tabindex="-1">
+      <span class="tab-num">22</span> Metodos de Login <span class="priority-badge priority-alta">ALTA</span>
+    </button></li>
   </ul>
 </nav>
 
@@ -1267,6 +1273,8 @@
 <div class="tab-panel" id="panel-18" role="tabpanel" aria-labelledby="tab-18"></div>
 <div class="tab-panel" id="panel-19" role="tabpanel" aria-labelledby="tab-19"></div>
 <div class="tab-panel" id="panel-20" role="tabpanel" aria-labelledby="tab-20"></div>
+<div class="tab-panel" id="panel-21" role="tabpanel" aria-labelledby="tab-21"></div>
+<div class="tab-panel" id="panel-22" role="tabpanel" aria-labelledby="tab-22"></div>
 
 </main>
 
@@ -2249,6 +2257,13 @@ const extraPlans = [
     impact: 'Fotos uniformes (4:3) em cards e galerias, com girar/zoom/recortar no upload',
     summary: 'Editor de imagem (girar 90, zoom, arrastar e recortar para 4:3) acionado ao carregar ou editar fotos, tanto no site (canvas) como na app mobile (gesture-handler + reanimated + expo-image-manipulator).',
     evidence: 'Entregue — ImageCropper partilhado no FotosEditor/PecaForm (web) e no PhotoPicker (mobile).'
+  },
+  {
+    id: '22', title: 'Vincular Metodos de Login (Account Linking)', priority: 'ALTA', effort: '~4-6 dias',
+    implemented: false, file: '22-account-linking.md',
+    impact: 'Utilizador liga varios metodos (Google/Apple/password) a uma conta e nunca fica trancado ao mudar de plataforma',
+    summary: 'Ecra "Metodos de login" (web + app) que lista os providers ligados via providerData e permite adicionar/remover com linkWithCredential/linkWithPopup/unlink. Resolve o lock-out de contas Apple com private relay ao trocar de iPhone para Android — o Sign in with Apple no browser vira o paraquedas de recuperacao.',
+    evidence: 'Em fila — sem mudancas de schema/regras; salvaguarda que impede remover o ultimo metodo e trata credential-already-in-use.'
   }
 ];
 
