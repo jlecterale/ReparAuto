@@ -2041,7 +2041,7 @@ const extraPlans = [
     implemented: true, file: '20-expansao-brasil.html',
     impact: 'Novo mercado de lancamento (maior da America Latina)',
     summary: 'Localizacao PT-BR, moeda BRL e PIX, base de veiculos FIPE e arquitetura multi-pais (chave country) que isola Brasil e Portugal numa unica base.',
-    evidence: 'Entregue (web + mobile): chave country nos docs e queries, seletor de mercado com GeoIP, precos em BRL por anuncio, validadores BR (DDD, CEP, CPF/CNPJ), catalogo FIPE no anunciar, estados/cidades BR, script de backfill e rules. Deferido: gateway PIX para planos premium (exige conta de pagamento e webhooks).'
+    evidence: 'Entregue (web + mobile): chave country nos docs e queries, seletor de mercado com GeoIP, contas vinculadas a um unico mercado (seletor bloqueia ao autenticar; rules impedem anuncios fora do mercado da conta), precos em BRL por anuncio, validadores BR (DDD, CEP, CPF/CNPJ), catalogo FIPE no anunciar, estados/cidades BR, script de backfill e rules. Deferido: gateway PIX para planos premium (exige conta de pagamento e webhooks).'
   },
   {
     id: '21', title: 'Recorte de Fotos nos Anuncios (Web + Mobile)', priority: 'MEDIA', effort: '~3-4 dias',
