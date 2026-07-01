@@ -19,6 +19,7 @@ import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Carro } from '@/types';
@@ -144,7 +145,7 @@ export default function DetalhesCarroScreen() {
             {carro.marca} {carro.modelo}
           </Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPreco(carro.preco)}
+            {formatPreco(carro.preco, docCountry(carro))}
           </Text>
 
           {ehDono && (

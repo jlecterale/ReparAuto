@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Carro } from '@/types';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { colors } from '@/theme/colors';
 
@@ -31,7 +32,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
         />
         <View className="absolute bottom-2 right-2 rounded-lg bg-primary-900/90 px-3 py-1.5">
           <Text className="text-base font-extrabold text-white">
-            {formatPreco(carro.preco)}
+            {formatPreco(carro.preco, docCountry(carro))}
           </Text>
         </View>
         {carro.estadoVeiculo === 'manutencao' && (

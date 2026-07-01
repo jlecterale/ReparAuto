@@ -10,6 +10,7 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
@@ -27,10 +28,13 @@ export default function AnunciarCarroScreen() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
+  // Listings are priced in the active market's currency.
+  const currencySymbol = country === 'BR' ? 'R$' : '€';
 
   const [fotos, setFotos] = useState<string[]>([]);
   const [marca, setMarca] = useState('');
@@ -228,7 +232,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Preço (€) *"
+              label={`Preço (${currencySymbol}) *`}
               value={preco}
               onChangeText={setPreco}
               placeholder="15000"

@@ -17,6 +17,7 @@ import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { TIPO_PECA_LABELS, type Peca } from '@/types';
@@ -126,7 +127,7 @@ export default function DetalhesPecaScreen() {
           </View>
           <Text className="mt-2 text-2xl font-extrabold text-fg-heading">{peca.titulo}</Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPrecoOpcional(peca.preco)}
+            {formatPrecoOpcional(peca.preco, docCountry(peca))}
           </Text>
 
           {ehDono && (

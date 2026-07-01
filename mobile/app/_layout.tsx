@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CountryProvider } from '@/context/CountryContext';
 import { FavoritosProvider } from '@/context/FavoritosContext';
 import { ChatProvider } from '@/context/ChatContext';
 import { NotificacoesProvider } from '@/context/NotificacoesContext';
@@ -106,24 +107,26 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <FavoritosProvider>
-            <ChatProvider>
-              <NotificacoesProvider>
-                <ToastProvider>
-                  <OnboardingProvider>
-                    <StatusBar style="dark" />
-                    <UpdateBanner />
-                    <OfflineBanner />
-                    <EmailVerificationBanner />
-                    <RootNavigator />
-                    <OnboardingGate />
-                  </OnboardingProvider>
-                </ToastProvider>
-              </NotificacoesProvider>
-            </ChatProvider>
-          </FavoritosProvider>
-        </AuthProvider>
+        <CountryProvider>
+          <AuthProvider>
+            <FavoritosProvider>
+              <ChatProvider>
+                <NotificacoesProvider>
+                  <ToastProvider>
+                    <OnboardingProvider>
+                      <StatusBar style="dark" />
+                      <UpdateBanner />
+                      <OfflineBanner />
+                      <EmailVerificationBanner />
+                      <RootNavigator />
+                      <OnboardingGate />
+                    </OnboardingProvider>
+                  </ToastProvider>
+                </NotificacoesProvider>
+              </ChatProvider>
+            </FavoritosProvider>
+          </AuthProvider>
+        </CountryProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

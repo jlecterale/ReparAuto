@@ -29,29 +29,8 @@ export const LISTING_PHOTO_ASPECT = 4 / 3;
 /** Firestore collection that is the source of truth for brands/models. */
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
 
-/** Portuguese districts (matches the web `DISTRITOS`). */
-export const DISTRITOS = [
-  'Aveiro',
-  'Beja',
-  'Braga',
-  'Bragança',
-  'Castelo Branco',
-  'Coimbra',
-  'Évora',
-  'Faro',
-  'Guarda',
-  'Leiria',
-  'Lisboa',
-  'Portalegre',
-  'Porto',
-  'Santarém',
-  'Setúbal',
-  'Viana do Castelo',
-  'Vila Real',
-  'Viseu',
-  'Açores',
-  'Madeira',
-];
+// Regions (PT distritos / BR estados) are country-aware — use
+// `getDistritos(country)` from `@/lib/geo` instead of a static list.
 
 /** Part categories / conditions (match the web constants for filter parity). */
 export const CATEGORIAS_PECAS = [

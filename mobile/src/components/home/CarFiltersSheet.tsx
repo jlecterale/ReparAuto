@@ -6,14 +6,14 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
-import { COMBUSTIVEIS, DISTRITOS } from '@/lib/constants';
-import { getConcelhos } from '@/lib/geo';
+import { COMBUSTIVEIS } from '@/lib/constants';
+import { getConcelhos, getDistritos } from '@/lib/geo';
+import { useCountry } from '@/context/CountryContext';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
 import { colors } from '@/theme/colors';
 
 const TODOS = { value: '', label: 'Todos' };
-const DISTRITO_OPTS = [TODOS, ...DISTRITOS.map((d) => ({ value: d, label: d }))];
 const ESTADO_OPTS = [
   TODOS,
   { value: 'pronto', label: 'Pronto a andar' },
@@ -48,6 +48,11 @@ export function CarFiltersSheet({
   marcaOpts,
   modeloOpts,
 }: CarFiltersSheetProps) {
+  const { country } = useCountry();
+  // Market vocabulary: PT says distrito/concelho, BR says estado/cidade.
+  const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
+  const placeLabel = country === 'BR' ? 'Cidade' : 'Concelho';
+  const distritoOpts = [TODOS, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
   const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
   const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
@@ -129,7 +134,7 @@ export function CarFiltersSheet({
         {/* Mode toggle */}
         <View className="mb-3 flex-row self-start rounded-full bg-neutral-100 p-1">
           <ModeTab
-            label="Distrito"
+            label={regionLabel}
             active={!f.raioMode}
             onPress={() => update({ raioMode: false, raioDist: '', raioCentro: '', raioKm: '' })}
           />
@@ -142,24 +147,24 @@ export function CarFiltersSheet({
 
         {!f.raioMode ? (
           <View className="gap-3">
-            <Sub label="Distrito">
+            <Sub label={regionLabel}>
               <ChipSelect
-                options={DISTRITO_OPTS}
+                options={distritoOpts}
                 value={f.distrito}
                 onChange={(v) => update({ distrito: v, concelho: '' })}
               />
             </Sub>
             {!!f.distrito && (
-              <Sub label="Concelho">
+              <Sub label={placeLabel}>
                 <ChipSelect options={concelhoOpts} value={f.concelho} onChange={(v) => update({ concelho: v })} />
               </Sub>
             )}
           </View>
         ) : (
           <View className="gap-3">
-            <Sub label="1. Distrito do centro">
+            <Sub label={`1. ${regionLabel} do centro`}>
               <ChipSelect
-                options={DISTRITO_OPTS}
+                options={distritoOpts}
                 value={f.raioDist}
                 onChange={(v) => update({ raioDist: v, raioCentro: '' })}
               />

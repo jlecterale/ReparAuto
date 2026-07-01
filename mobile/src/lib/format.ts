@@ -1,9 +1,15 @@
-/** Formatters aligned with the web app (pt-PT, EUR). */
+/** Formatters aligned with the web app (pt-PT/EUR, pt-BR/BRL). */
+import { COUNTRY_INFO, type Country } from './country';
 
-export function formatPreco(preco: number): string {
-  return new Intl.NumberFormat('pt-PT', {
+/**
+ * Prices are formatted in the listing's market currency — pass the doc's
+ * `docCountry(...)`, not the viewer's preference. Defaults to PT (EUR).
+ */
+export function formatPreco(preco: number, country: Country = 'PT'): string {
+  const { locale, currency } = COUNTRY_INFO[country];
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'EUR',
+    currency,
     maximumFractionDigits: 0,
   }).format(preco);
 }
@@ -17,6 +23,9 @@ export function formatNumero(n: number): string {
 }
 
 /** Parts may have no price (e.g. "procura" listings) → "Sob consulta". */
-export function formatPrecoOpcional(preco: number | null | undefined): string {
-  return preco != null && preco > 0 ? formatPreco(preco) : 'Sob consulta';
+export function formatPrecoOpcional(
+  preco: number | null | undefined,
+  country: Country = 'PT',
+): string {
+  return preco != null && preco > 0 ? formatPreco(preco, country) : 'Sob consulta';
 }

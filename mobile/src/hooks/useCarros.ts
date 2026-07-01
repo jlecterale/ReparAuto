@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { subscribeCarros } from '@/lib/db';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/context/CountryContext';
 import type { Carro } from '@/types';
 
 /** Live subscription to approved cars (mirrors the web `useCarros`). */
 export function useCarros() {
+  const { country } = useCountry();
   const [carros, setCarros] = useState<Carro[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -22,5 +25,12 @@ export function useCarros() {
     return unsub;
   }, []);
 
-  return { carros, loading, error };
+  // The subscription is market-agnostic (rules only allow the status filter);
+  // the active market is applied in memory, like the web.
+  const filtered = useMemo(
+    () => carros.filter((c) => docCountry(c) === country),
+    [carros, country],
+  );
+
+  return { carros: filtered, loading, error };
 }
