@@ -6,6 +6,7 @@ import {
   loginComEmail,
   criarConta,
   loginComGoogle,
+  loginComApple,
   logoutFirebase,
   onAuthChange,
   enviarVerificacaoEmail,
@@ -147,6 +148,23 @@ export default function useAuth() {
     return base;
   }, []);
 
+  const loginApple = useCallback(async (): Promise<Usuario> => {
+    const fbUser = await loginComApple();
+    const base = criarUsuarioBase(fbUser);
+    try {
+      const profile = await getUserProfile(fbUser.uid);
+      if (profile) {
+        const merged = { ...base, ...profile };
+        setUser(merged);
+        return merged;
+      }
+    } catch {
+      // fallback
+    }
+    setUser(base);
+    return base;
+  }, []);
+
   const logout = useCallback(async (): Promise<void> => {
     await logoutFirebase();
     setUser(null);
@@ -164,6 +182,7 @@ export default function useAuth() {
     login,
     registar,
     loginGoogle,
+    loginApple,
     logout,
     isLoggedIn: !!user,
     isAdmin: user?.role === 'admin',
@@ -171,5 +190,5 @@ export default function useAuth() {
     updateProfile,
     refreshProfile,
     reenviarEmailVerificacao,
-  }), [user, loading, login, registar, loginGoogle, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
+  }), [user, loading, login, registar, loginGoogle, loginApple, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
 }
