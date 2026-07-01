@@ -50,6 +50,16 @@ if (!GOOGLE_IOS_URL_SCHEME) {
 // EAS project id — set after `eas init` (e.g. in `.env` or EAS env). It powers
 // both `extra.eas.projectId` and the EAS Update endpoint below.
 const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? undefined;
+
+// iOS APNs environment baked into the `aps-environment` entitlement. TestFlight
+// and App Store builds run against PRODUCTION APNs, so they must ship the
+// `production` entitlement — otherwise the device registers a sandbox token and
+// FCM delivery is silently dropped (BadDeviceToken). `expo-notifications`
+// defaults this to `development`, which only suits dev-client/sandbox builds.
+// The `preview`/`production` EAS profiles set APS_ENVIRONMENT=production; local
+// dev builds fall back to `development`.
+const APS_ENVIRONMENT =
+  process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
 const VERSION = '1.5.1';
 const BUILD_NUMBER = 52;
 
@@ -141,6 +151,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         icon: './assets/notification-icon.png',
         color: '#0b4f9e',
+        // Match the APNs environment to the build (see APS_ENVIRONMENT above).
+        // Without `production`, TestFlight/App Store pushes never arrive.
+        mode: APS_ENVIRONMENT,
+        // Add `UIBackgroundModes: [remote-notification]` so pushes are handled
+        // with the app backgrounded/quit — not added by the plugin otherwise.
+        enableBackgroundRemoteNotifications: true,
       },
     ],
     [
