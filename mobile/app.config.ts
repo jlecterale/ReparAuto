@@ -50,13 +50,15 @@ if (!GOOGLE_IOS_URL_SCHEME) {
 // EAS project id — set after `eas init` (e.g. in `.env` or EAS env). It powers
 // both `extra.eas.projectId` and the EAS Update endpoint below.
 const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? undefined;
+const VERSION = '1.5.1';
+const BUILD_NUMBER = 52;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'RecarGarage',
   slug: 'recargarage',
   scheme: 'recargarage',
-  version: '1.5.1',
+  version: VERSION,
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
@@ -85,7 +87,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   assetBundlePatterns: ['**/*'],
   ios: {
-    buildNumber: '45',
+    buildNumber: BUILD_NUMBER.toString(),
     bundleIdentifier: BUNDLE_ID,
     supportsTablet: true,
     googleServicesFile: firebaseFile('GoogleService-Info.plist'),
@@ -97,7 +99,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     package: BUNDLE_ID,
-    versionCode: 45,
+    versionCode: BUILD_NUMBER,
     googleServicesFile: firebaseFile('google-services.json'),
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
