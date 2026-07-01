@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { User } from 'firebase/auth';
 import {
   loginComEmail,
@@ -8,12 +8,14 @@ import {
   loginComGoogle,
   logoutFirebase,
   onAuthChange,
+  enviarVerificacaoEmail,
 } from '@/lib/auth';
 import {
   getUserProfile,
   createUserProfile,
   updateUserProfile,
 } from '@/lib/db';
+import { auth } from '@/lib/firebase';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
 
 const DEFAULT_ROLE: Role = 'user';
@@ -35,6 +37,7 @@ function criarUsuarioBase(firebaseUser: User): Usuario {
     notificacoes: true,
     foto: firebaseUser.photoURL || null,
     profileCompleted: false,
+    emailVerified: firebaseUser.emailVerified,
   };
 }
 
@@ -45,14 +48,25 @@ export default function useAuth() {
   const refreshProfile = useCallback(async () => {
     if (!user?.uid) return;
     try {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+      }
       const profile = await getUserProfile(user.uid);
       if (profile) {
-        setUser((prev) => prev ? { ...prev, ...profile } : null);
+        setUser((prev) => prev ? { 
+          ...prev, 
+          ...profile, 
+          emailVerified: auth.currentUser?.emailVerified 
+        } : null);
       }
     } catch {
       // fallback: keep current user
     }
   }, [user?.uid]);
+
+  const reenviarEmailVerificacao = useCallback(async (): Promise<void> => {
+    await enviarVerificacaoEmail();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthChange(async (firebaseUser: User | null) => {
@@ -139,7 +153,7 @@ export default function useAuth() {
     setUser((prev) => prev ? { ...prev, ...data } : null);
   }, [user?.uid]);
 
-  return {
+  return useMemo(() => ({
     user,
     loading,
     login,
@@ -151,5 +165,6 @@ export default function useAuth() {
     profileCompleted: user?.profileCompleted ?? false,
     updateProfile,
     refreshProfile,
-  };
+    reenviarEmailVerificacao,
+  }), [user, loading, login, registar, loginGoogle, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
 }

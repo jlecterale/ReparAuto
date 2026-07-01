@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { TIPOS_COMBUSTIVEL, TIPOS_CAMBIO } from '@/lib/constants';
-import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
@@ -16,8 +16,6 @@ interface StepDadosProps {
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
-  const { marcas, getModelos } = useMarcasModelos();
-  const modelosDisponiveis = useMemo(() => getModelos(dados.marca), [dados.marca, getModelos]);
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -75,51 +73,18 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   return (
     <div>
       <h3 className="font-bold text-lg mb-3">📋 Dados do Veículo</h3>
+      <SeletorMarcaModelo
+        marca={dados.marca}
+        modelo={dados.modelo}
+        onChangeMarca={(m) => {
+          atualizar('marca', m);
+          atualizar('modelo', '');
+        }}
+        onChangeModelo={(m) => atualizar('modelo', m)}
+        errors={{ marca: erros.marca, modelo: erros.modelo }}
+        className="mb-4"
+      />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">
-            Marca <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={dados.marca}
-            onChange={(e) => {
-              atualizar('marca', e.target.value);
-              atualizar('modelo', '');
-            }}
-            className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
-              erros.marca ? 'border-red-400' : 'border-gray-300'
-            }`}
-          >
-            <option value="">Selecionar marca</option>
-            {marcas.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-          {erros.marca && (
-            <span className="text-xs text-red-500 mt-1 block">Este campo é obrigatório.</span>
-          )}
-        </div>
-        <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">
-            Modelo <span className="text-red-500">*</span>
-          </label>
-          <select
-            value={dados.modelo}
-            onChange={(e) => atualizar('modelo', e.target.value)}
-            disabled={!dados.marca}
-            className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
-              erros.modelo ? 'border-red-400' : 'border-gray-300'
-            }`}
-          >
-            <option value="">{dados.marca ? 'Selecionar modelo' : 'Selecione uma marca primeiro'}</option>
-            {modelosDisponiveis.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-          {erros.modelo && (
-            <span className="text-xs text-red-500 mt-1 block">Este campo é obrigatório.</span>
-          )}
-        </div>
         {campo('Ano de Fabricação', 'anoFabricacao', 'number', 'Ex: 2007')}
         {campo('Ano Modelo', 'anoModelo', 'number', 'Ex: 2008')}
         {campo('Quilómetros', 'km', 'number', 'Ex: 210000')}

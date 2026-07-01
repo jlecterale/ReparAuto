@@ -40,6 +40,9 @@
   ],
   "exclude": [
     "node_modules",
-    ".next"
+    ".next",
+    "functions",
+    "mobile",
+    "video"
   ]
 }

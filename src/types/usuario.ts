@@ -3,6 +3,18 @@ import type { Timestamp } from 'firebase/firestore';
 
 export type Role = 'user' | 'admin';
 export type TipoConta = 'particular' | 'profissional';
+export type CategoriaPlano = 'anuncios' | 'oficinas' | 'leads';
+
+export interface PlanoAtivo {
+  planoId: string;
+  nome: string;
+  categoria: CategoriaPlano;
+  dataAtribuicao: Timestamp;
+  dataExpiracao: Timestamp;
+  atribuidoPor: 'admin' | 'stripe';
+  adminUid?: string;
+  adminNome?: string;
+}
 
 export interface Usuario {
   uid: string;
@@ -20,10 +32,13 @@ export interface Usuario {
   notificacoes: boolean;
   foto: string | null;
   profileCompleted: boolean;
+  emailVerified?: boolean;
   verificado?: boolean;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];
+  planoAtivo?: PlanoAtivo;
+  impulsosDisponiveis?: number;
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }
@@ -42,6 +57,19 @@ export interface AuthContextValue {
   profileCompleted: boolean;
   updateProfile: (data: Partial<Usuario>) => Promise<void>;
   refreshProfile: () => Promise<void>;
+  reenviarEmailVerificacao: () => Promise<void>;
 }
 
 export type UsuarioInput = Omit<Usuario, 'uid' | 'dataCriacao' | 'dataAtualizacao'>;
+
+export interface PremiumConfig {
+  masterActive: boolean;
+  impulsionamento: boolean;
+  oficinas: boolean;
+  leads: boolean;
+  parceriasActive?: boolean;
+  financiamento?: boolean;
+  seguro?: boolean;
+  atualizadoEm?: Timestamp;
+  atualizadoPor?: string;
+}

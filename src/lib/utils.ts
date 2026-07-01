@@ -44,10 +44,10 @@ export function renderDescricao(texto: string): string {
   if (!texto) return '';
 
   let escaped = texto
-    .replace(/&/g, '&')
-    .replace(/</g, '<')
-    .replace(/>/g, '>')
-    .replace(/"/g, '"')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
   escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -105,6 +105,76 @@ export function renderFoto(foto: string, classes = 'w-full h-full object-cover')
   }
   const emoji = foto || '🚗';
   return { type: 'emoji', emoji };
+}
+
+// Extracts the YouTube video id from the common URL forms (watch, youtu.be,
+// embed, shorts, live) and returns a privacy-friendly nocookie embed URL.
+// Returns null when the input is empty or not a recognizable YouTube link.
+export function getYoutubeEmbedUrl(url: string | null | undefined): string | null {
+  const id = getYoutubeId(url);
+  return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+}
+
+export function getYoutubeId(url: string | null | undefined): string | null {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const patterns = [
+    /(?:youtube\.com\/watch\?(?:.*&)?v=)([\w-]{11})/,
+    /(?:youtu\.be\/)([\w-]{11})/,
+    /(?:youtube\.com\/embed\/)([\w-]{11})/,
+    /(?:youtube\.com\/shorts\/)([\w-]{11})/,
+    /(?:youtube\.com\/live\/)([\w-]{11})/,
+  ];
+  for (const pattern of patterns) {
+    const match = trimmed.match(pattern);
+    if (match) return match[1];
+  }
+  return null;
+}
+
+export function isValidYoutubeUrl(url: string | null | undefined): boolean {
+  return getYoutubeId(url) !== null;
+}
+
+// Registration password policy: at least 8 chars, one uppercase letter, one
+// digit and one symbol. The single source of truth for the rules so the submit
+// check, the live requirements checklist and the disabled-button state never
+// drift apart. `label` feeds the checklist; `message` is the submit error.
+export interface PasswordRule {
+  label: string;
+  message: string;
+  test: (password: string) => boolean;
+}
+
+export const PASSWORD_RULES: PasswordRule[] = [
+  {
+    label: 'Mínimo 8 caracteres',
+    message: 'A palavra-passe deve ter pelo menos 8 caracteres.',
+    test: (p) => p.length >= 8,
+  },
+  {
+    label: 'Uma letra maiúscula',
+    message: 'A palavra-passe deve conter pelo menos uma letra maiúscula.',
+    test: (p) => /[A-Z]/.test(p),
+  },
+  {
+    label: 'Um número',
+    message: 'A palavra-passe deve conter pelo menos um número.',
+    test: (p) => /\d/.test(p),
+  },
+  {
+    label: 'Um símbolo (!@#$...)',
+    message: 'A palavra-passe deve conter pelo menos um símbolo.',
+    test: (p) => /[^A-Za-z0-9]/.test(p),
+  },
+];
+
+// Returns the first failing rule's user-facing message, or null when the
+// password satisfies every rule. Order is fixed so the message is deterministic.
+export function validatePassword(password: string): string | null {
+  const failing = PASSWORD_RULES.find((rule) => !rule.test(password));
+  return failing ? failing.message : null;
 }
 
 export function dataAtualISO(): string {

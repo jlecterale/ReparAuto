@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -9,7 +9,9 @@ import { formatarPreco, renderDescricao } from '@/lib/utils';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
+import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
+import FinanciamentoSeguroWidget from '@/components/detalhes/FinanciamentoSeguroWidget';
 import PriceIndicatorBadge from '@/components/preco/PriceIndicatorBadge';
 import MarketWidget from '@/components/preco/MarketWidget';
 import usePriceIndicator from '@/hooks/usePriceIndicator';
@@ -20,6 +22,7 @@ import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import EditarCarroModal from '@/components/admin/EditarCarroModal';
 import type { Carro } from '@/types/carro';
 
@@ -76,7 +79,7 @@ export default function DetalhesCarro() {
     setDeleting(true);
     try {
       await deleteCarro(carro.id);
-      router.push('/');
+      router.push('/app');
     } catch (err) {
       console.error('[Detalhes] Erro ao eliminar:', err);
     } finally {
@@ -102,7 +105,7 @@ export default function DetalhesCarro() {
           tipo="terciario"
           tamanho="sm"
           icone={<ArrowLeft />}
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="mt-4"
         >
           Voltar à página inicial
@@ -120,7 +123,7 @@ export default function DetalhesCarro() {
           tipo="terciario"
           tamanho="sm"
           icone={<ArrowLeft />}
-          onClick={() => router.push('/')}
+          onClick={() => router.push('/app')}
           className="mt-4"
         >
           Voltar à página inicial
@@ -175,7 +178,7 @@ export default function DetalhesCarro() {
               {isFavorito(carro.id) ? 'Favorito' : 'Favoritar'}
             </button>
             <ShareButton
-              title={`${carro.marca} ${carro.modelo} - ReparAuto`}
+              title={`${carro.marca} ${carro.modelo} - RecarGarage`}
               text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco)}`}
             />
             {(carro.criador === user?.email || isAdmin) && (
@@ -200,10 +203,13 @@ export default function DetalhesCarro() {
         {carro.fotos && carro.fotos.length > 0 && (
           <div className="mb-6">
             <div
-              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-200 cursor-pointer relative group"
+              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
               onClick={() => { setIndiceGaleria(0); setGaleriaAberta(true); }}
             >
-              <FotoRender foto={carro.fotos[0]} classes="w-full h-full object-cover" />
+              {/* Blurred backdrop fills the letterbox area so the contained photo never shows bare gray bars */}
+              <FotoRender foto={carro.fotos[0]} classes="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-60" />
+              {/* Full photo, fit to height without cropping */}
+              <FotoRender foto={carro.fotos[0]} classes="relative w-full h-full object-contain" />
               {carro.fotos.length > 1 && (
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
                   <span className="text-white bg-black/50 px-3 py-1.5 rounded-full text-xs font-semibold opacity-0 group-hover:opacity-100 transition">
@@ -214,7 +220,7 @@ export default function DetalhesCarro() {
             </div>
             {carro.fotos.length > 1 && (
               <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide">
-                {carro.fotos.slice(1, 5).map((foto, i) => (
+                {carro.fotos.slice(1).map((foto, i) => (
                   <div
                     key={i}
                     className="w-20 h-16 rounded-lg overflow-hidden bg-slate-200 cursor-pointer flex-shrink-0 hover:opacity-80 transition"
@@ -257,7 +263,7 @@ export default function DetalhesCarro() {
                 </h3>
                 <p className="text-xs text-fg-muted">
                   Comparado com {priceInfo.sampleSize}{' '}
-                  {priceInfo.sampleSize === 1 ? 'anúncio similar' : 'anúncios similares'} no ReparAuto.
+                  {priceInfo.sampleSize === 1 ? 'anúncio similar' : 'anúncios similares'} no RecarGarage.
                 </p>
               </div>
               <PriceIndicatorBadge
@@ -294,14 +300,36 @@ export default function DetalhesCarro() {
           <MarketWidget marca={carro.marca} modelo={carro.modelo} title="Ver mercado deste modelo" />
         </div>
 
+        {carro.videoUrl && (
+          <div className="mb-6">
+            <h3 className="font-extrabold text-fg-heading mb-2 flex items-center gap-2">
+              <YoutubeLogo weight="fill" className="text-red-600" /> Vídeo
+            </h3>
+            <YoutubeEmbed url={carro.videoUrl} title={`Vídeo do ${carro.marca} ${carro.modelo}`} />
+          </div>
+        )}
+
         <TechnicalSheet carro={carro} />
 
         <div className="mt-6">
           <ContactSection carro={carro} />
         </div>
 
+        <FinanciamentoSeguroWidget
+          carroPreco={carro.preco}
+          carroId={carro.id}
+          carroTitulo={`${carro.marca} ${carro.modelo}`}
+          defaultNome={user?.nome}
+          defaultEmail={user?.email}
+          defaultTelefone={user?.telefone}
+        />
+
         <div className="mt-6">
           <VinCheckPanel />
+        </div>
+
+        <div className="mt-6">
+          <CompatibleParts carro={carro} />
         </div>
       </div>
 

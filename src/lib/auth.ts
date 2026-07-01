@@ -7,6 +7,7 @@ import {
   signInWithPopup,
   updateProfile,
   sendPasswordResetEmail,
+  sendEmailVerification,
   type User,
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -21,7 +22,14 @@ export async function criarConta(email: string, password: string, nome: string):
   if (nome) {
     await updateProfile(result.user, { displayName: nome });
   }
+  await sendEmailVerification(result.user);
   return result.user;
+}
+
+export async function enviarVerificacaoEmail(): Promise<void> {
+  if (auth.currentUser) {
+    await sendEmailVerification(auth.currentUser);
+  }
 }
 
 export async function loginComGoogle(): Promise<User> {

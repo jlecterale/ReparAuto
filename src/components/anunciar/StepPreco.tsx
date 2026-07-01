@@ -1,10 +1,12 @@
 'use client';
 
-import { IdentificationCard, Invoice, RoadHorizon } from '@phosphor-icons/react';
+import { IdentificationCard, Invoice, RoadHorizon, YoutubeLogo } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
+import { isValidYoutubeUrl } from '@/lib/utils';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 
 interface StepPrecoProps {
   dados: CarroFormData;
@@ -41,6 +43,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
     const novosErros: Record<string, boolean> = {};
     if (!dados.preco || Number(dados.preco) <= 0) novosErros.preco = true;
     if (!dados.descricao?.trim()) novosErros.descricao = true;
+    if (dados.videoUrl?.trim() && !isValidYoutubeUrl(dados.videoUrl)) novosErros.videoUrl = true;
     if (dados.estadoVeiculo === 'manutencao' && (!dados.tiposManutencao || dados.tiposManutencao.length === 0)) {
       novosErros.tiposManutencao = true;
     }
@@ -99,6 +102,30 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
           }`}
         />
         {erros.descricao && <span className="text-xs text-red-500 mt-1 block">A descrição do carro é obrigatória.</span>}
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-semibold text-fg-heading mb-1 flex items-center gap-1.5">
+          <YoutubeLogo weight="fill" className="text-red-600" /> Vídeo do YouTube <span className="text-fg-subtle font-normal">(opcional)</span>
+        </label>
+        <input
+          type="url"
+          inputMode="url"
+          placeholder="Ex: https://www.youtube.com/watch?v=..."
+          value={dados.videoUrl || ''}
+          onChange={(e) => atualizar('videoUrl', e.target.value)}
+          className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-accent ${
+            erros.videoUrl ? 'border-red-400' : 'border-gray-300'
+          }`}
+        />
+        {erros.videoUrl ? (
+          <span className="text-xs text-red-500 mt-1 block">Link do YouTube inválido. Cole o endereço completo do vídeo.</span>
+        ) : (
+          <p className="text-xs text-fg-subtle mt-1">Adicione um vídeo do carro (ex: arranque a frio, passeio) para gerar mais confiança.</p>
+        )}
+        {dados.videoUrl?.trim() && isValidYoutubeUrl(dados.videoUrl) && (
+          <YoutubeEmbed url={dados.videoUrl} title="Pré-visualização do vídeo" className="mt-3" />
+        )}
       </div>
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">

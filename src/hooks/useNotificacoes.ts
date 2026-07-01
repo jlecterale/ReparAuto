@@ -1,30 +1,30 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { getNotificacoes, marcarNotificacaoLida, marcarTodasNotificacoesLidas } from '@/lib/db';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { subscribeNotificacoes, marcarNotificacaoLida, marcarTodasNotificacoesLidas } from '@/lib/db';
 import type { Notificacao } from '@/types/notificacao';
 
 export default function useNotificacoes(uid: string | undefined) {
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const carregar = useCallback(async () => {
+  useEffect(() => {
     if (!uid) {
       setNotificacoes([]);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const data = await getNotificacoes(uid);
-    setNotificacoes(data);
-    setLoading(false);
+    const unsub = subscribeNotificacoes(
+      uid,
+      (data) => {
+        setNotificacoes(data);
+        setLoading(false);
+      },
+      () => setLoading(false),
+    );
+    return unsub;
   }, [uid]);
-
-  useEffect(() => {
-    carregar();
-    const interval = setInterval(() => { carregar(); }, 30000);
-    return () => clearInterval(interval);
-  }, [carregar]);
 
   const marcarLida = useCallback(async (id: string) => {
     await marcarNotificacaoLida(id);
@@ -37,14 +37,13 @@ export default function useNotificacoes(uid: string | undefined) {
     setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })));
   }, [uid]);
 
-  const naoLidas = notificacoes.filter((n) => !n.lida).length;
+  const naoLidas = useMemo(() => notificacoes.filter((n) => !n.lida).length, [notificacoes]);
 
-  return {
+  return useMemo(() => ({
     notificacoes,
     naoLidas,
     loading,
     marcarLida,
     marcarTodasLidas,
-    recarregar: carregar,
-  };
+  }), [notificacoes, naoLidas, loading, marcarLida, marcarTodasLidas]);
 }

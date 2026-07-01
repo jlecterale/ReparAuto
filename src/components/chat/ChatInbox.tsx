@@ -33,14 +33,13 @@ export default function ChatInbox({ show, onClose }: ChatInboxProps) {
     setLoading(true);
     const q = query(
       collection(db, 'messages'),
-      where('participants', 'array-contains', uid),
+      where('toUid', '==', uid),
     );
     const unsub = onSnapshot(
       q,
       (snap) => {
         const todas = snap.docs
           .map((d) => ({ id: d.id, ...d.data() }) as Mensagem)
-          .filter((m) => m.toUid === uid)
           .sort((a, b) => b.dataCriacao.toMillis() - a.dataCriacao.toMillis())
           .slice(0, 50);
         const latest = new Map<string, Mensagem>();

@@ -49,7 +49,7 @@ export default function ReportsQueue({ reports, loading, onUpdateStatus }: Repor
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
-          <Flag className="text-red-500" /> Denúncias
+          <Flag className="text-red-700" /> Denúncias
           {pendentes > 0 && <Badge cor="red" variante="solid">{pendentes}</Badge>}
         </h3>
       </div>

@@ -8,8 +8,10 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
+import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
+import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 
 // Dynamically import MapSelector to prevent SSR/window errors
 const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
@@ -43,6 +45,7 @@ export default function RegistarOficina() {
   });
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
 
   const handleToggleEspecialidade = (esp: EspecialidadeOficina) => {
     if (especialidades.includes(esp)) {
@@ -71,6 +74,11 @@ export default function RegistarOficina() {
       return;
     }
 
+    if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl)) {
+      toast?.erro('O link do vídeo do YouTube é inválido. Cole o endereço completo do vídeo.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -89,6 +97,7 @@ export default function RegistarOficina() {
         coordenadas,
         especialidades,
         logoUrl: logoUrl || null,
+        videoUrl: videoUrl.trim() || null,
         mediaAvaliacoes: 5.0,
         totalAvaliacoes: 0,
       });
@@ -117,7 +126,7 @@ export default function RegistarOficina() {
 
   if (publicado) {
     return (
-      <div className="max-w-2xl mx-auto bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-xl p-6 sm:p-10 page-enter text-center">
+      <div className="max-w-2xl mx-auto bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10 page-enter text-center">
         <CheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
         <h3 className="text-2xl font-black text-fg-strong">Oficina Registada!</h3>
         <p className="text-fg-subtle text-sm mt-3 leading-relaxed max-w-md mx-auto">
@@ -148,6 +157,7 @@ export default function RegistarOficina() {
               setMorada('');
               setEspecialidades([]);
               setLogoUrl('');
+              setVideoUrl('');
             }}
           >
             Registar outra
@@ -167,14 +177,14 @@ export default function RegistarOficina() {
         <ArrowLeft size={16} /> Voltar para o Diretório
       </button>
 
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-xl p-6 sm:p-10">
+      <div className="bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10">
         <h2 className="text-2xl font-black text-fg-strong tracking-tight">Registar Oficina / Mecânico</h2>
         <p className="text-fg-subtle text-sm mt-1">Crie o seu perfil profissional focado no mundo automóvel.</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {/* General Information */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800 pb-2">
+            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
               Informação Geral
             </h3>
             <div>
@@ -187,7 +197,7 @@ export default function RegistarOficina() {
                 placeholder="Ex: Recar Garage, J. Silva Mecânica..."
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
             </div>
 
@@ -201,7 +211,7 @@ export default function RegistarOficina() {
                 placeholder="Fale um pouco sobre a sua experiência, especialidades, equipamentos e serviços que presta..."
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
             </div>
 
@@ -215,7 +225,7 @@ export default function RegistarOficina() {
                 placeholder="Ex: Filipe Antunes"
                 value={responsavel}
                 onChange={(e) => setResponsavel(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
             </div>
 
@@ -228,14 +238,32 @@ export default function RegistarOficina() {
                 placeholder="Ex: https://exemplo.com/logo.png"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-fg mb-1.5">
+                Vídeo do YouTube (Opcional)
+              </label>
+              <input
+                type="url"
+                inputMode="url"
+                placeholder="Ex: https://www.youtube.com/watch?v=..."
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+              />
+              <p className="text-xs text-fg-subtle mt-1.5">Apresente a sua oficina, instalações ou trabalhos num vídeo para gerar mais confiança.</p>
+              {videoUrl.trim() && isValidYoutubeUrl(videoUrl) && (
+                <YoutubeEmbed url={videoUrl} title="Pré-visualização do vídeo" className="mt-3" />
+              )}
             </div>
           </div>
 
           {/* Specialties */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800 pb-2">
+            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
               Especialidades Automóveis <span className="text-danger-500">*</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -249,8 +277,8 @@ export default function RegistarOficina() {
                     onClick={() => handleToggleEspecialidade(esp)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left font-medium transition cursor-pointer ${
                       isSelected
-                        ? 'border-accent bg-accent/5 text-accent dark:bg-accent/10'
-                        : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 text-fg-strong'
+                        ? 'border-accent bg-accent/5 text-accent'
+                        : 'border-neutral-200 hover:border-neutral-400 text-fg-strong'
                     }`}
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-accent bg-accent' : 'border-neutral-300'}`}>
@@ -265,7 +293,7 @@ export default function RegistarOficina() {
 
           {/* Contact Details */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800 pb-2">
+            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
               Contactos
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -279,7 +307,7 @@ export default function RegistarOficina() {
                   placeholder="Ex: 912345678"
                   value={telefone}
                   onChange={(e) => setTelefone(e.target.value)}
-                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                 />
               </div>
 
@@ -292,7 +320,7 @@ export default function RegistarOficina() {
                   placeholder="Ex: 351912345678"
                   value={whatsapp}
                   onChange={(e) => setWhatsapp(e.target.value)}
-                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                 />
               </div>
 
@@ -306,7 +334,7 @@ export default function RegistarOficina() {
                   placeholder="Ex: oficina@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                 />
               </div>
 
@@ -319,7 +347,7 @@ export default function RegistarOficina() {
                   placeholder="Ex: https://facebook.com/minhaoficina"
                   value={website}
                   onChange={(e) => setWebsite(e.target.value)}
-                  className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
                 />
               </div>
             </div>
@@ -327,7 +355,7 @@ export default function RegistarOficina() {
 
           {/* Localization */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800 pb-2">
+            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
               Localização & Mapa
             </h3>
             
@@ -351,7 +379,7 @@ export default function RegistarOficina() {
                 placeholder="Ex: Rua do Comércio, nº 12"
                 value={morada}
                 onChange={(e) => setMorada(e.target.value)}
-                className="w-full bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
             </div>
 

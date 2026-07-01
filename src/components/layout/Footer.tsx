@@ -8,16 +8,22 @@ export default function Footer() {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="ReparAuto" className="h-9 w-auto" />
+          <img src="/logo.svg" alt="RecarGarage" className="h-9 w-auto" />
           <span className="text-xs">© 2026</span>
         </div>
         <div className="flex flex-wrap justify-center gap-6 text-xs font-semibold">
           <Link href="/termos" className="hover:text-white transition">Termos de Utilização</Link>
           <Link href="/privacidade" className="hover:text-white transition">Política de Privacidade</Link>
           <Link href="/cookies" className="hover:text-white transition">Política de Cookies</Link>
+          <button
+            onClick={() => window.dispatchEvent(new Event('reparauto_open_cookie_settings'))}
+            className="hover:text-white transition cursor-pointer font-semibold"
+          >
+            Definições de Cookies
+          </button>
           <Link href="/seguranca" className="hover:text-white transition">Segurança</Link>
           <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
-          <a href="mailto:garagerecar@gmail.com" className="hover:text-white transition">Fale Conosco (garagerecar@gmail.com)</a>
+          <a href="mailto:suporte@recargarage.com" className="hover:text-white transition">Fale Conosco (suporte@recargarage.com)</a>
         </div>
       </div>
     </footer>

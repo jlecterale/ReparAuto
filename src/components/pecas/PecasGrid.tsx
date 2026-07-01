@@ -1,14 +1,21 @@
 'use client';
 
-import { Package } from '@phosphor-icons/react';
+import { Package, PlusCircle } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 import PecasCard from './PecasCard';
 import { PecaCardSkeleton } from '@/components/ui/Skeleton';
+import Button from '@/components/ui/Button';
 import type { Peca } from '@/types/peca';
 
-export default function PecasGrid({ onDetalhes }: { onDetalhes: (peca: Peca) => void }) {
+export default function PecasGrid({
+  onDetalhes,
+  onPublicar,
+}: {
+  onDetalhes: (peca: Peca) => void;
+  onPublicar: () => void;
+}) {
   const { pecas } = useApp();
-  const { pecasFiltradas, loading } = pecas;
+  const { pecasFiltradas, pecas: allPecas, loading } = pecas;
 
   const filtered = pecasFiltradas;
 
@@ -23,11 +30,28 @@ export default function PecasGrid({ onDetalhes }: { onDetalhes: (peca: Peca) => 
   }
 
   if (filtered.length === 0) {
+    if (allPecas.length === 0) {
+      return (
+        <div className="text-center py-12 text-fg-subtle">
+          <Package className="text-4xl mb-3 mx-auto text-slate-300" />
+          <p className="font-semibold text-fg-strong">Anuncie sua peça gratuitamente</p>
+          <p className="text-sm">Seja o primeiro a anunciar uma peça aqui.</p>
+          <Button
+            tipo="primario"
+            icone={<PlusCircle />}
+            onClick={onPublicar}
+            className="rounded-full mt-5"
+          >
+            Anunciar peça
+          </Button>
+        </div>
+      );
+    }
     return (
       <div className="text-center py-12 text-fg-subtle">
-        <Package className="text-4xl mb-3 text-slate-300" />
+        <Package className="text-4xl mb-3 mx-auto text-slate-300" />
         <p className="font-semibold">Nenhum anúncio encontrado</p>
-        <p className="text-sm">Experimente alterar o filtro ou publique o seu primeiro anúncio!</p>
+        <p className="text-sm">Experimente alterar o filtro de pesquisa.</p>
       </div>
     );
   }

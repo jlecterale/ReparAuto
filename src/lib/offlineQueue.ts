@@ -9,6 +9,7 @@ export interface QueuedAction {
 }
 
 function getQueue(): QueuedAction[] {
+  if (typeof window === 'undefined') return [];
   try {
     return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
   } catch {

@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, Spinner, UploadSimple, X, type Icon } from '@phosphor-icons/react';
-import { CATEGORIAS_PECAS, ESTADOS_PECA, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
+import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, PencilSimple, UploadSimple, X, type Icon } from '@phosphor-icons/react';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
-import { comprimirImagem } from '@/lib/compressImage';
+import ImageCropper from '@/components/ui/ImageCropper';
 import { getCoordenadas } from '@/lib/geo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
+import { pickDefined } from '@/lib/compatibility';
+import type { CompatibilityEntry } from '@/types/peca';
 
 interface PecaFormProps {
   onSuccess?: () => void;
@@ -28,8 +31,9 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     titulo: '',
     categoria: 'Motor e Transmissão',
     estado: 'Usado',
-    marcaCarro: '',
     preco: '',
+    precoNovoReferencia: '',
+    numeroOEM: '',
     descricao: '',
     localizacao: '',
     localizacaoDistrito: '',
@@ -38,13 +42,15 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     vendedorEmail: user?.email || '',
   });
 
+  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>([]);
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [fotoUploading, setFotoUploading] = useState(false);
-  const [comprimindoFoto, setComprimindoFoto] = useState(false);
+  // Source image awaiting crop (object URL of the raw pick, or the current preview when re-editing).
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -69,8 +75,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       setErro('O título é obrigatório.');
       return;
     }
-    if (!form.marcaCarro.trim()) {
-      setErro('A marca do carro compatível é obrigatória.');
+    if (compatibilidades.length === 0) {
+      setErro('Adicione pelo menos uma compatibilidade (marca/modelo).');
       return;
     }
 
@@ -86,13 +92,20 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         fotoUrl = await uploadFileToStorage(fotoFile, folder, fileName);
       }
 
-      await publicarPeca({
-        ...form,
+      const primaria = compatibilidades[0];
+      const precoNovoNum = form.precoNovoReferencia ? Number(form.precoNovoReferencia) : null;
+      const { precoNovoReferencia: _precoRef, localizacao: _loc, localizacaoDistrito: _locDist, numeroOEM: _oem, ...formBase } = form;
+      void _precoRef; void _loc; void _locDist; void _oem;
+      await publicarPeca(pickDefined({
+        ...formBase,
+        marcaCarro: primaria.marca,
+        modeloCarro: primaria.modelo || undefined,
+        compatibilidades,
+        numeroOEM: form.numeroOEM.trim() || undefined,
+        precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
         local: form.localizacao,
         distrito: form.localizacaoDistrito || undefined,
         coordenadas: form.localizacao ? getCoordenadas(form.localizacao) : undefined,
-        localizacao: undefined,
-        localizacaoDistrito: undefined,
         preco: form.preco ? Number(form.preco) : null,
         foto: fotoUrl || undefined,
         criador: user?.email || '',
@@ -101,7 +114,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorTelefone: form.vendedorTelefone || null,
         vendedorWhatsApp: form.vendedorWhatsApp || null,
         vendedorEmail: form.vendedorEmail || user?.email || null,
-      });
+      }));
 
       getAdminUsers()
         .then((admins) => {
@@ -118,8 +131,9 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         titulo: '',
         categoria: 'Motor e Transmissão',
         estado: 'Usado',
-        marcaCarro: '',
         preco: '',
+        precoNovoReferencia: '',
+        numeroOEM: '',
         descricao: '',
         localizacao: '',
         localizacaoDistrito: '',
@@ -127,6 +141,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         vendedorWhatsApp: '',
         vendedorEmail: '',
       });
+      setCompatibilidades([]);
       setFotoFile(null);
       setFotoPreview(null);
 
@@ -227,19 +242,13 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         </div>
       </div>
 
+      <CompatibilitySelector
+        value={compatibilidades}
+        onChange={setCompatibilidades}
+        required
+      />
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-xs font-bold text-fg-subtle mb-1">
-            Marca do Carro Compatível <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            placeholder="Ex: Seat, Peugeot, BMW"
-            value={form.marcaCarro}
-            onChange={(e) => atualizar('marcaCarro', e.target.value)}
-            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
         <div>
           <label className="block text-xs font-bold text-fg-subtle mb-1">
             Preço (€) {form.tipo !== 'procura' ? <span className="text-red-500">*</span> : '(opcional)'}
@@ -252,6 +261,34 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
             className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
           />
         </div>
+        <div>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">
+            Preço de Referência Novo (€) <span className="text-slate-400 font-normal">opcional</span>
+          </label>
+          <input
+            type="number"
+            placeholder="Preço novo em catálogo"
+            value={form.precoNovoReferencia}
+            onChange={(e) => atualizar('precoNovoReferencia', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">
+          Referência OEM / Nº Original <span className="text-fg-subtle font-normal">opcional</span>
+        </label>
+        <input
+          type="text"
+          placeholder="Ex: 06A115561B"
+          value={form.numeroOEM}
+          onChange={(e) => atualizar('numeroOEM', e.target.value)}
+          className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+        />
+        <p className="text-[11px] text-slate-400 mt-1">
+          O número OEM ajuda compradores a confirmar compatibilidade exata.
+        </p>
       </div>
 
       <div>
@@ -282,12 +319,20 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         <label className="block text-xs font-bold text-fg-subtle mb-2">Foto do anúncio (opcional)</label>
         <div className="flex items-start gap-3">
           {fotoPreview ? (
-            <div className="relative w-24 h-24 flex-shrink-0">
+            <div className="relative w-24 h-24 flex-shrink-0 group">
               <img
                 src={fotoPreview}
                 alt="Preview"
                 className="w-24 h-24 object-cover rounded-xl border border-neutral-200"
               />
+              <button
+                type="button"
+                onClick={() => setCropSrc(fotoPreview)}
+                aria-label="Editar foto"
+                className="absolute top-1 left-1 w-6 h-6 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 transition hover:bg-white"
+              >
+                <PencilSimple size={12} weight="bold" />
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -296,49 +341,57 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
                   setFotoFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
                 }}
+                aria-label="Remover foto"
                 className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-danger-600 text-white rounded-full flex items-center justify-center shadow"
               >
                 <X size={10} weight="bold" />
               </button>
             </div>
           ) : (
-            <label className={`flex-1 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 border-dashed text-fg font-semibold px-4 py-6 rounded-xl text-xs transition flex items-center justify-center gap-2 ${comprimindoFoto ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-              {comprimindoFoto ? <Spinner className="animate-spin" /> : <UploadSimple />}
-              {comprimindoFoto ? 'A comprimir…' : 'Carregar Foto'}
+            <label className="flex-1 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 border-dashed text-fg font-semibold px-4 py-6 rounded-xl text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+              <UploadSimple />
+              Carregar Foto
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 className="hidden"
-                disabled={comprimindoFoto}
-                onChange={async (e) => {
+                onChange={(e) => {
                   const file = e.target.files?.[0];
+                  if (fileInputRef.current) fileInputRef.current.value = '';
                   if (!file) return;
                   if (file.size > MAX_FOTO_SIZE_BYTES) {
                     setErro(`A imagem excede o limite de ${MAX_FOTO_SIZE_MB} MB.`);
                     return;
                   }
                   setErro('');
-                  setComprimindoFoto(true);
-                  try {
-                    const blob = await comprimirImagem(file);
-                    const compressedFile = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                    setFotoFile(compressedFile);
-                    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
-                    setFotoPreview(URL.createObjectURL(compressedFile));
-                  } catch {
-                    setErro('Erro ao comprimir imagem. A original será usada.');
-                    setFotoFile(file);
-                    if (fotoPreview) URL.revokeObjectURL(fotoPreview);
-                    setFotoPreview(URL.createObjectURL(file));
-                  } finally {
-                    setComprimindoFoto(false);
-                  }
+                  setCropSrc(URL.createObjectURL(file));
                 }}
               />
             </label>
           )}
         </div>
+
+        {cropSrc && (
+          <ImageCropper
+            src={cropSrc}
+            aspect={LISTING_PHOTO_ASPECT}
+            titulo={fotoPreview ? 'Editar foto' : 'Ajustar foto'}
+            onCancel={() => {
+              // Only revoke a freshly-picked source; never the live preview we're re-editing.
+              if (cropSrc !== fotoPreview) URL.revokeObjectURL(cropSrc);
+              setCropSrc(null);
+            }}
+            onConfirm={(blob) => {
+              const cropped = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+              if (cropSrc !== fotoPreview) URL.revokeObjectURL(cropSrc);
+              if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+              setFotoFile(cropped);
+              setFotoPreview(URL.createObjectURL(cropped));
+              setCropSrc(null);
+            }}
+          />
+        )}
         <p className="text-[11px] text-fg-muted mt-1">Formatos JPG, PNG · até {MAX_FOTO_SIZE_MB} MB.</p>
       </div>
 

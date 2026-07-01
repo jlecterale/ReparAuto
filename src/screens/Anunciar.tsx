@@ -2,7 +2,7 @@
 
 import { CheckCircle } from '@phosphor-icons/react';
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
@@ -32,6 +32,7 @@ const initialDados: CarroFormData = {
   localizacaoDistrito: '',
   preco: '',
   descricao: '',
+  videoUrl: '',
   estadoVeiculo: 'pronto',
   rodando: 'sim',
   inspecao: 'sim',
@@ -48,13 +49,19 @@ const initialDados: CarroFormData = {
 
 export default function Anunciar() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { carros, auth } = useApp();
   const { publicarCarro } = carros;
   const { user } = auth;
   const toast = useToast();
 
-  const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(null);
-  const [passo, setPasso] = useState(0);
+  // Onboarding deep-links here with ?tipo=carro|peca to skip the category step.
+  const tipoParam = searchParams.get('tipo');
+  const categoriaInicial: CategoriaAnuncio | null =
+    tipoParam === 'carro' || tipoParam === 'peca' ? tipoParam : null;
+
+  const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(categoriaInicial);
+  const [passo, setPasso] = useState(categoriaInicial ? 1 : 0);
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
@@ -105,6 +112,7 @@ export default function Anunciar() {
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
+        videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         preco: Number(dados.preco),
         km: Number(dados.km),
@@ -154,7 +162,7 @@ export default function Anunciar() {
     setCategoria(null);
     setPasso(0);
     setFotos([]);
-    setDados((prev) => ({ ...prev, preco: '', descricao: '', tiposManutencao: [] }));
+    setDados((prev) => ({ ...prev, preco: '', descricao: '', videoUrl: '', tiposManutencao: [] }));
   };
 
   if (publicado) {

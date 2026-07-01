@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
-import type { AuthContextValue } from './usuario';
+import type { AuthContextValue, PremiumConfig } from './usuario';
 import type { FavoritosContextValue } from './favoritos';
 import type { Carro, FiltroAtivo, SortOrdem } from './carro';
 import type { Peca, FiltroTipoPeca } from './peca';
 import type { ChatContextValue } from './chat';
 import type { IntencaoContextValue } from './intencao';
+import type { OficinaMecanico } from './oficina';
 
 export interface CarrosContextValue {
   carros: Carro[];
@@ -31,7 +32,6 @@ export interface CarrosContextValue {
   publicarCarro: (dados: any) => Promise<any>;
   eliminarCarro: (id: string) => Promise<void>;
   getCarroPorId: (id: string) => Carro | null;
-  recarregar: () => Promise<void>;
 }
 
 export interface PecasContextValue {
@@ -57,24 +57,38 @@ export interface PecasContextValue {
   publicarPeca: (dados: any) => Promise<any>;
   eliminarPeca: (id: string) => Promise<void>;
   getPecaPorId: (id: string) => Peca | null;
-  recarregar: () => Promise<void>;
+}
+
+export interface OficinasContextValue {
+  oficinas: OficinaMecanico[];
+  loading: boolean;
+}
+
+export interface OpenLoginOptions {
+  /** Which tab the modal opens on. Onboarding drives signups → 'registar'. */
+  modoInicial?: 'login' | 'registar';
+  /** Optional line explaining why the account is needed (shown atop the modal). */
+  contexto?: string;
+  /** Onboarding creation flow to resume once the account is ready. */
+  intent?: string;
 }
 
 export interface LoginModalContextValue {
   isOpen: boolean;
-  openLoginModal: (redirectTo?: string) => void;
+  openLoginModal: (redirectTo?: string, options?: OpenLoginOptions) => void;
   closeLoginModal: () => void;
 }
 
 export interface AppContextValue {
-  dbReady: boolean;
   auth: AuthContextValue;
   carros: CarrosContextValue;
   pecas: PecasContextValue;
   favoritos: FavoritosContextValue;
+  oficinas: OficinasContextValue;
   chat: ChatContextValue;
   intencoes: IntencaoContextValue;
   loginModal: LoginModalContextValue;
+  premiumConfig: PremiumConfig;
 }
 
 export interface AppProviderProps {

@@ -3,7 +3,7 @@
 import { Bell, ChatCircle, CheckCircle, Tag } from '@phosphor-icons/react';
 import { useState, useCallback } from 'react';
 import { requestNotificationPermission } from '@/lib/fcm';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import Button from '@/components/ui/Button';
 
@@ -21,7 +21,7 @@ export default function NotificationPrePrompt({ uid, onDismiss, onToken }: Props
     const token = await requestNotificationPermission();
     if (token) {
       try {
-        await setDoc(doc(db, 'users', uid), { fcmToken: token }, { merge: true });
+        await setDoc(doc(db, 'users', uid), { fcmTokens: arrayUnion(token) }, { merge: true });
       } catch {}
       onToken(token);
     }

@@ -30,7 +30,7 @@ export default function ProfileLoggedOut({ onLogin }: { onLogin: () => void }) {
         </p>
 
         <p className="text-[11px] text-fg-subtle mt-4">
-          Ao entrar, concorda com os Termos da ReparAuto.
+          Ao entrar, concorda com os Termos da RecarGarage.
         </p>
       </div>
     </div>

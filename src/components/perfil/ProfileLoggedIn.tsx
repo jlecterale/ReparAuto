@@ -1,14 +1,14 @@
 'use client';
 
-import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash } from '@phosphor-icons/react';
+import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
-import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario } from '@/lib/db';
+import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
+import { storage, auth as firebaseAuth } from '@/lib/firebase';
 import EditarPerfilModal from './EditarPerfilModal';
 import EditarCarroModal from '@/components/admin/EditarCarroModal';
 import EditarPecaModal from '@/components/admin/EditarPecaModal';
@@ -39,6 +39,94 @@ export default function ProfileLoggedIn() {
   const [deleting, setDeleting] = useState(false);
   const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
   const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
+  
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteAccountError, setDeleteAccountError] = useState('');
+
+  const handleDownloadData = () => {
+    if (!user) return;
+    const dataExport = {
+      perfil: {
+        uid: user.uid,
+        nome: user.nome,
+        email: user.email,
+        telefone: user.telefone,
+        localidade: user.localidade,
+        codigoPostal: user.codigoPostal,
+        morada: user.morada,
+        nif: user.nif,
+        bio: user.bio,
+        tipoConta: user.tipoConta,
+        badges: user.badges || [],
+        verificado: !!user.verificado,
+      },
+      carrosAnunciados: meusCarros.map(c => ({
+        marca: c.marca,
+        modelo: c.modelo,
+        ano: c.anoFabricacao,
+        preco: c.preco,
+        km: c.km,
+        combustivel: c.combustivel,
+        cambio: c.cambio,
+        descricao: c.descricao,
+        local: c.local,
+        status: c.status,
+      })),
+      pecasAnunciadas: minhasPecas.map(p => ({
+        titulo: p.titulo,
+        preco: p.preco,
+        categoria: p.categoria,
+        descricao: p.descricao,
+        status: p.status,
+      })),
+        intencoesCompra: minhasIntencoes.map(i => ({
+          titulo: i.titulo,
+          categoria: i.categoria,
+          descricao: i.descricao,
+          precoMaximo: i.criterios?.precoMaximo,
+        })),
+      avaliacoesRecebidas: reviews.map(r => ({
+        autorNome: r.autorNome,
+        nota: r.nota,
+        comentario: r.comentario,
+      }))
+    };
+
+    const blob = new Blob([JSON.stringify(dataExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dados_reparauto_${user.uid}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteAccountConfirm = async () => {
+    if (!user) return;
+    setDeletingAccount(true);
+    setDeleteAccountError('');
+    try {
+      await eliminarDadosDoUtilizador(user.uid);
+      const currentUser = firebaseAuth.currentUser;
+      if (currentUser) {
+        await currentUser.delete();
+      }
+      logout();
+      router.push('/app');
+    } catch (err: any) {
+      console.error('[GDPR] Erro ao eliminar conta:', err);
+      if (err?.code === 'auth/requires-recent-login') {
+        setDeleteAccountError('Para sua segurança, esta operação requer autenticação recente. Por favor, termine a sessão, inicie-a novamente e repita o processo.');
+      } else {
+        setDeleteAccountError('Ocorreu um erro ao eliminar a sua conta. Por favor, tente novamente mais tarde.');
+      }
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
 
   const carregar = useCallback(async () => {
     if (!user?.email) return;
@@ -177,7 +265,7 @@ export default function ProfileLoggedIn() {
 
         <div className="mt-5 pt-4 border-t border-neutral-100 flex flex-wrap gap-2">
           <button
-            onClick={() => { logout(); router.push('/'); }}
+            onClick={() => { logout(); router.push('/app'); }}
             className="inline-flex items-center gap-1.5 text-xs text-danger-600 hover:text-white hover:bg-danger-600 font-bold border border-danger-200 px-4 py-2 rounded-full transition"
           >
             <SignOut /> Sair
@@ -452,7 +540,77 @@ export default function ProfileLoggedIn() {
         />
       </div>
 
+      {/* Privacidade e Gestão de Dados (RGPD) */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 border border-slate-200">
+        <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2 text-slate-800">
+          <ShieldCheck className="text-accent" /> Privacidade e Gestão de Dados (RGPD)
+        </h4>
+        <p className="text-xs text-fg-muted leading-relaxed mb-5">
+          Nos termos do Regulamento Geral sobre a Proteção de Dados (RGPD) da União Europeia, garantimos-lhe
+          o controlo total sobre os seus dados pessoais. Pode descarregar uma cópia completa dos seus dados
+          ou apagar permanentemente a sua conta e todos os registos associados do nosso sistema.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            tipo="secundario"
+            onClick={handleDownloadData}
+            className="flex-1 text-xs"
+          >
+            Descarregar Meus Dados (JSON)
+          </Button>
+          <button
+            onClick={() => setShowDeleteAccountModal(true)}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs text-red-600 hover:text-white hover:bg-red-600 font-bold border border-red-200 px-4 py-2.5 rounded-xl transition cursor-pointer"
+          >
+            <Trash /> Eliminar Minha Conta e Dados
+          </button>
+        </div>
+      </div>
+
       <EditarPerfilModal show={editModalOpen} onClose={() => setEditModalOpen(false)} />
+
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black/50 z-[110] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl page-enter border border-slate-100">
+            <h4 className="font-extrabold text-fg-heading text-lg mb-2 flex items-center gap-2 text-red-600">
+              <WarningCircle className="text-xl" /> Eliminar Conta Permanentemente
+            </h4>
+            <p className="text-xs text-fg-muted mb-4 leading-relaxed">
+              Tem a certeza de que deseja eliminar a sua conta e todos os dados associados? 
+              <span className="block mt-2 font-bold text-red-600">
+                Esta ação é irreversível e removerá permanentemente os seus anúncios, propostas, chats e perfil do nosso sistema (Direito ao Esquecimento - RGPD).
+              </span>
+            </p>
+
+            {deleteAccountError && (
+              <p className="text-xs text-red-600 bg-red-50 border border-red-100 rounded-lg p-2.5 mb-4 leading-relaxed font-semibold">
+                {deleteAccountError}
+              </p>
+            )}
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                tipo="secundario"
+                onClick={() => { setShowDeleteAccountModal(false); setDeleteAccountError(''); }}
+                disabled={deletingAccount}
+                className="text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button
+                tipo="perigo"
+                icone={<Trash />}
+                onClick={handleDeleteAccountConfirm}
+                disabled={deletingAccount}
+                carregando={deletingAccount}
+                className="text-xs"
+              >
+                Sim, Eliminar Tudo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editCarro && (
         <EditarCarroModal

@@ -20,7 +20,7 @@ function StarRating({ nota }: { nota: number }) {
           key={star}
           size={11}
           weight={star <= nota ? 'fill' : 'regular'}
-          className={star <= nota ? 'text-yellow-500' : 'text-slate-300'}
+          className={star <= nota ? 'text-yellow-700' : 'text-fg'}
         />
       ))}
     </span>
@@ -56,7 +56,7 @@ export default function ReviewsQueue({ reviews, loading, onApprove, onReject, on
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-extrabold text-fg-heading flex items-center gap-2">
-          <StarHalf className="text-yellow-400" /> Avaliações
+          <StarHalf className="text-yellow-700" /> Avaliações
           {pendentes.length > 0 && <Badge cor="yellow" variante="solid">{pendentes.length}</Badge>}
         </h3>
       </div>

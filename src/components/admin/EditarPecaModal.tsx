@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { CATEGORIAS_PECAS } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
+import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import FotosEditor from '@/components/anunciar/FotosEditor';
 import { uploadFileToStorage } from '@/lib/upload';
 import type { Peca, TipoPeca } from '@/types/peca';
@@ -146,19 +147,24 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-fg-subtle mb-1">Marca Carro</label>
-            <input
-              type="text"
-              value={form.marcaCarro}
-              onChange={(e) => atualizar('marcaCarro', e.target.value)}
-              className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+            <SeletorMarcaModelo
+              marca={form.marcaCarro}
+              modelo={form.modeloCarro}
+              onChangeMarca={(m) => { atualizar('marcaCarro', m); atualizar('modeloCarro', ''); }}
+              onChangeModelo={(m) => atualizar('modeloCarro', m)}
+              labelMarca="Marca"
+              labelModelo="Modelo"
+              placeholderMarca="Selecionar marca"
+              placeholderModelo="Selecionar modelo (opcional)"
+              modeloObrigatorio={false}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-fg-subtle mb-1">Modelo (opcional)</label>
+            <label className="block text-xs font-bold text-fg-subtle mb-1">Preço (€)</label>
             <input
-              type="text"
-              value={form.modeloCarro}
-              onChange={(e) => atualizar('modeloCarro', e.target.value)}
+              type="number"
+              value={form.preco}
+              onChange={(e) => atualizar('preco', e.target.value)}
               className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
             />
           </div>

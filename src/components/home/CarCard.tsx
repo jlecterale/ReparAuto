@@ -1,6 +1,7 @@
 'use client';
 
 import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
+import { memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
@@ -11,7 +12,9 @@ import PriceIndicatorBadge from '@/components/preco/PriceIndicatorBadge';
 import usePriceIndicator from '@/hooks/usePriceIndicator';
 import type { Carro } from '@/types/carro';
 
-export default function CarCard({ carro }: { carro: Carro }) {
+// memo: grids re-render on every filter/search keystroke; favourites still
+// update because the heart state comes from context, not props.
+function CarCard({ carro }: { carro: Carro }) {
   const router = useRouter();
   const { favoritos } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
@@ -104,3 +107,5 @@ export default function CarCard({ carro }: { carro: Carro }) {
     </div>
   );
 }
+
+export default memo(CarCard);

@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { CaretLeft, CaretRight, UploadSimple, Spinner, X } from '@phosphor-icons/react';
-import { EMOJIS_CARRO, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
-import { comprimirImagem } from '@/lib/compressImage';
+import { useEffect, useRef, useState } from 'react';
+import { CaretLeft, CaretRight, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
+import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
+import ImageCropper from '@/components/ui/ImageCropper';
 
 interface FotosEditorProps {
   fotos: string[];
@@ -12,6 +12,8 @@ interface FotosEditorProps {
   mostrarEmoji?: boolean;
   /** Show a "Capa" badge on the first photo. Defaults to true when max > 1. */
   mostrarCapa?: boolean;
+  /** Crop aspect ratio (width / height). Defaults to the listing standard 4:3. */
+  aspect?: number;
   /** Ref to collect pending File objects keyed by blob URL (for deferred upload). */
   filesRef?: React.MutableRefObject<Map<string, File>>;
 }
@@ -32,18 +34,33 @@ export default function FotosEditor({
   max = 6,
   mostrarEmoji = true,
   mostrarCapa,
+  aspect = LISTING_PHOTO_ASPECT,
   filesRef,
 }: FotosEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [comprimindo, setComprimindo] = useState(false);
+  // Raw files awaiting crop (each gets a temporary preview URL), processed one at a time.
+  const [queue, setQueue] = useState<{ file: File; url: string }[]>([]);
+  const [batchTotal, setBatchTotal] = useState(0);
+  // Index of an already-added photo being re-cropped, or null.
+  const [editIndex, setEditIndex] = useState<number | null>(null);
 
   const exibirCapa = mostrarCapa ?? max > 1;
   const podeReordenar = max > 1 && fotos.length > 1;
 
-  const processarFotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Revoke transient crop-source URLs if the flow is abandoned (component unmounts
+  // mid-queue). Cropped photo blobs live in `filesRef` and intentionally outlive
+  // this component — later wizard steps upload them — so they are NOT revoked here.
+  const pendingUrlsRef = useRef<string[]>([]);
+  pendingUrlsRef.current = queue.map((q) => q.url);
+  useEffect(
+    () => () => pendingUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)),
+    [],
+  );
+
+  const selecionarFicheiros = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (fileInputRef.current) fileInputRef.current.value = '';
     if (files.length === 0) return;
@@ -64,30 +81,53 @@ export default function FotosEditor({
       return;
     }
 
-    setComprimindo(true);
-    setErro(null);
+    setErro(
+      oversize.length > 0
+        ? `${oversize.length === 1 ? 'Uma imagem excedeu' : `${oversize.length} imagens excederam`} o limite de ${MAX_FOTO_SIZE_MB} MB e ${oversize.length === 1 ? 'foi ignorada' : 'foram ignoradas'}.`
+        : null,
+    );
+    setBatchTotal(validos.length);
+    setQueue(validos.map((file) => ({ file, url: URL.createObjectURL(file) })));
+  };
 
-    try {
-      const compressed = await Promise.all(validos.map(comprimirImagem));
+  const blobToFile = (blob: Blob): { file: File; url: string } => {
+    const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
+    const url = URL.createObjectURL(file);
+    filesRef?.current.set(url, file);
+    return { file, url };
+  };
 
-      const newPhotos: string[] = [];
-      for (const blob of compressed) {
-        const compressedFile = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        const url = URL.createObjectURL(compressedFile);
-        newPhotos.push(url);
-        filesRef?.current.set(url, compressedFile);
-      }
+  const avancarFila = () => {
+    setQueue((q) => {
+      const [atual, ...resto] = q;
+      if (atual) URL.revokeObjectURL(atual.url);
+      if (resto.length === 0) setBatchTotal(0);
+      return resto;
+    });
+  };
 
-      setFotos([...fotos, ...newPhotos].slice(0, max));
-
-      if (oversize.length > 0) {
-        setErro(`${oversize.length === 1 ? 'Uma imagem' : `${oversize.length} imagens`} excedeu o limite original de ${MAX_FOTO_SIZE_MB} MB mas foi comprimida.`);
-      }
-    } catch {
-      setErro('Erro ao comprimir imagem. Tente novamente.');
-    } finally {
-      setComprimindo(false);
+  const confirmarNova = (blob: Blob) => {
+    // Guard against a full list so we never create a blob/filesRef entry that
+    // slice() would then drop (leaking the object URL).
+    if (fotos.length >= max) {
+      avancarFila();
+      return;
     }
+    const { url } = blobToFile(blob);
+    setFotos([...fotos, url]);
+    avancarFila();
+  };
+
+  const confirmarEdicao = (blob: Blob) => {
+    if (editIndex === null) return;
+    const antiga = fotos[editIndex];
+    if (antiga?.startsWith('blob:')) {
+      URL.revokeObjectURL(antiga);
+      filesRef?.current.delete(antiga);
+    }
+    const { url } = blobToFile(blob);
+    setFotos(fotos.map((f, i) => (i === editIndex ? url : f)));
+    setEditIndex(null);
   };
 
   const adicionarEmoji = () => {
@@ -145,19 +185,19 @@ export default function FotosEditor({
       <div className="flex flex-col sm:flex-row gap-3 mb-3">
         <label
           className={`flex-1 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 text-fg font-semibold px-4 py-3 rounded-xl text-xs transition flex items-center justify-center gap-2 border-dashed ${
-            podeAdicionar && !comprimindo ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
+            podeAdicionar ? 'cursor-pointer' : 'opacity-50 cursor-not-allowed'
           }`}
         >
-          {comprimindo ? <Spinner className="animate-spin" /> : <UploadSimple />}
-          {comprimindo ? 'A comprimir…' : 'Carregar Imagens Reais'}
+          <UploadSimple />
+          Carregar Imagens Reais
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             className="hidden"
             multiple={max > 1}
-            disabled={!podeAdicionar || comprimindo}
-            onChange={processarFotos}
+            disabled={!podeAdicionar}
+            onChange={selecionarFicheiros}
           />
         </label>
         {mostrarEmoji && (
@@ -173,7 +213,7 @@ export default function FotosEditor({
       </div>
 
       <p className="text-[11px] text-fg-muted mb-3">
-        Máximo {max} {max === 1 ? 'foto' : 'fotos'} · até {MAX_FOTO_SIZE_MB} MB cada.
+        Máximo {max} {max === 1 ? 'foto' : 'fotos'} · até {MAX_FOTO_SIZE_MB} MB cada. As fotos são recortadas para a mesma proporção.
         {exibirCapa && ' A primeira foto será a capa do anúncio.'}
         {podeReordenar && ' Arraste para reordenar.'}
       </p>
@@ -222,6 +262,17 @@ export default function FotosEditor({
                 </span>
               )}
 
+              {isImg && (
+                <button
+                  type="button"
+                  onClick={() => setEditIndex(i)}
+                  aria-label={`Editar foto ${i + 1}`}
+                  className="absolute top-1 left-1 w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
+                >
+                  <PencilSimple size={12} weight="bold" />
+                </button>
+              )}
+
               {podeReordenar && (
                 <div className="absolute bottom-1 right-1 flex gap-0.5">
                   <button
@@ -267,6 +318,26 @@ export default function FotosEditor({
           </button>
         ))}
       </div>
+
+      {editIndex !== null && (
+        <ImageCropper
+          src={fotos[editIndex]}
+          aspect={aspect}
+          titulo="Editar foto"
+          onCancel={() => setEditIndex(null)}
+          onConfirm={confirmarEdicao}
+        />
+      )}
+      {editIndex === null && queue.length > 0 && (
+        <ImageCropper
+          key={queue[0].url}
+          src={queue[0].url}
+          aspect={aspect}
+          titulo={batchTotal > 1 ? `Foto ${batchTotal - queue.length + 1} de ${batchTotal}` : 'Ajustar foto'}
+          onCancel={avancarFila}
+          onConfirm={confirmarNova}
+        />
+      )}
     </div>
   );
 }

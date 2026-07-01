@@ -1,6 +1,7 @@
 'use client';
 
 import { Image } from '@phosphor-icons/react';
+import NextImage from 'next/image';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getCachedLqip, cacheLqip, generateLqipFromImage } from '@/lib/lqip';
 
@@ -9,9 +10,33 @@ interface LazyImageProps {
   alt: string;
   className?: string;
   lqip?: string;
+  /** Responsive hint forwarded to next/image (defaults to a card-grid layout). */
+  sizes?: string;
 }
 
-export default function LazyImage({ src, alt, className = '', lqip }: LazyImageProps) {
+// Hosts whitelisted in next.config.ts images.remotePatterns. Anything else
+// (data:/blob: previews, legacy hosts) falls back to a plain <img> so the
+// optimizer never throws on unconfigured domains.
+const OPTIMIZABLE_HOSTS = ['firebasestorage.googleapis.com', 'googleusercontent.com'];
+
+function canOptimize(src: string): boolean {
+  if (src.startsWith('/')) return true;
+  if (!src.startsWith('https://')) return false;
+  try {
+    const host = new URL(src).hostname;
+    return OPTIMIZABLE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
+export default function LazyImage({
+  src,
+  alt,
+  className = '',
+  lqip,
+  sizes = '(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw',
+}: LazyImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [inView, setInView] = useState(false);
@@ -48,6 +73,8 @@ export default function LazyImage({ src, alt, className = '', lqip }: LazyImageP
     }
   }, [src]);
 
+  const imgClassName = `w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`;
+
   return (
     <div ref={imgRef} className={`relative overflow-hidden ${className}`}>
       {!loaded && !error && blurSrc && (
@@ -63,19 +90,31 @@ export default function LazyImage({ src, alt, className = '', lqip }: LazyImageP
         <div className="absolute inset-0 skeleton-shimmer" aria-hidden="true" />
       )}
       {error && (
-        <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-slate-400 text-3xl">
+        <div className="absolute inset-0 bg-slate-100 flex items-center justify-center text-fg-subtle text-3xl">
           <Image />
         </div>
       )}
       {inView && !error && (
-        <img
-          src={src}
-          alt={alt}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-          decoding="async"
-          onLoad={handleLoad}
-          onError={() => setError(true)}
-        />
+        canOptimize(src) ? (
+          <NextImage
+            src={src}
+            alt={alt}
+            fill
+            sizes={sizes}
+            className={imgClassName}
+            onLoad={handleLoad}
+            onError={() => setError(true)}
+          />
+        ) : (
+          <img
+            src={src}
+            alt={alt}
+            className={imgClassName}
+            decoding="async"
+            onLoad={handleLoad}
+            onError={() => setError(true)}
+          />
+        )
       )}
     </div>
   );

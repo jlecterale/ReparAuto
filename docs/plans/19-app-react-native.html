@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano de App Mobile React Native — ReparAuto</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind for quick premium styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              900: '#7c2d12',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 40%);
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+    .pill { @apply text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-brand relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-brand-500/10 border border-brand-500/30 text-brand-500 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          Plano Técnico — App Mobile Nativa
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-orange-400 via-amber-200 to-indigo-400 bg-clip-text text-transparent">
+          App React Native do ReparAuto
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Levar todas as funções principais do site (carros, peças, oficinas, intenções de compra, chat e notificações) para iOS e Android, reaproveitando ao máximo o backend Firebase e a lógica de dados existente.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Backend já 100% compatível</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">Firebase</span>
+        <span class="text-xs text-slate-400">Auth · Firestore · Storage · FCM já cross-platform</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">~70%</span>
+        <span class="text-xs text-slate-400">Lógica (tipos, db, hooks, utils) reaproveitável</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">2 lojas</span>
+        <span class="text-xs text-slate-400">App Store + Google Play via EAS</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-amber-300">~12 sem.</span>
+        <span class="text-xs text-slate-400">Estimativa até MVP publicável</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 - Estratégia -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">01.</span> Estratégia &amp; Porquê Nativo
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            O ReparAuto é um marketplace transacional onde os utilizadores voltam várias vezes (acompanhar mensagens, propostas, favoritos, novos anúncios). Estes padrões beneficiam enormemente de uma app instalada: <strong>notificações push fiáveis</strong>, acesso à <strong>câmara</strong> para anunciar, <strong>localização</strong> para procurar perto, e presença permanente no ecrã inicial do telemóvel.
+          </p>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            A grande vantagem é que o backend não muda: o site já assenta inteiramente em <strong>Firebase (Auth, Firestore, Storage, Cloud Messaging)</strong>, todos com SDKs nativos para React Native. Não é preciso construir uma API nova — a app fala diretamente com o Firestore, exatamente como o cliente web faz em <code class="text-brand-500">src/lib/db.ts</code>.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🔔</span>
+              <h3 class="font-bold text-orange-400 text-base">Push fiável</h3>
+              <p class="text-xs text-slate-400 mt-1">FCM nativo entrega notificações de mensagens/propostas mesmo com a app fechada — muito superior ao push web.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">📷</span>
+              <h3 class="font-bold text-indigo-400 text-base">Câmara &amp; GPS</h3>
+              <p class="text-xs text-slate-400 mt-1">Anunciar um carro tirando fotos na hora e preencher localização por GPS reduz fricção no fluxo «Anunciar».</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">⚡</span>
+              <h3 class="font-bold text-emerald-400 text-base">Retenção</h3>
+              <p class="text-xs text-slate-400 mt-1">Ícone no ecrã inicial + sessão persistente aumentam o regresso e o engagement face ao browser.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 - Stack recomendada -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">02.</span> Stack Tecnológica Recomendada
+          </h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2">Camada</th>
+                  <th class="py-2">Escolha</th>
+                  <th class="py-2">Porquê (alinhado com a web)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Framework</td>
+                  <td class="py-3 text-emerald-400">Expo (Dev Client) + React Native</td>
+                  <td class="py-3">Build/submit gerido por EAS, OTA updates, mesma linguagem React 19 + TS strict do site.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Navegação</td>
+                  <td class="py-3 text-emerald-400">Expo Router</td>
+                  <td class="py-3">Routing por ficheiros que espelha o <code>app/</code> do Next — mapeamento mental direto das rotas.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Estilos</td>
+                  <td class="py-3 text-emerald-400">NativeWind (Tailwind RN)</td>
+                  <td class="py-3">Reaproveita os tokens do design system (<code>@theme</code> em <code>src/index.css</code>) e a skill <code>frontend-design</code>.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Firebase</td>
+                  <td class="py-3 text-emerald-400">@react-native-firebase/*</td>
+                  <td class="py-3">Auth, Firestore (com persistência offline), Storage e Messaging nativos. Mesmas <code>firestore.rules</code>.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Estado</td>
+                  <td class="py-3 text-emerald-400">Context API + hooks</td>
+                  <td class="py-3">Mesma filosofia do <code>AppProvider</code>; sem Redux/Zustand, mantém consistência.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Imagens</td>
+                  <td class="py-3 text-emerald-400">expo-image</td>
+                  <td class="py-3">Placeholder blurhash substitui o LQIP; cache em disco nativo.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Mapas</td>
+                  <td class="py-3 text-amber-400">react-native-maps</td>
+                  <td class="py-3">Substitui leaflet/react-leaflet (que é web-only) para o mapa de oficinas.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Armazenamento local</td>
+                  <td class="py-3 text-emerald-400">AsyncStorage / MMKV</td>
+                  <td class="py-3">Substitui o <code>localStorage</code> (favoritos anónimos, fila offline).</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 03 - Matriz de compatibilidade -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">03.</span> O que funciona, o que muda, o que não se aplica
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Análise função-a-função das funcionalidades atuais do site e a sua viabilidade na app.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2">Função do site</th>
+                  <th class="py-2">Implementação web</th>
+                  <th class="py-2">Abordagem na app</th>
+                  <th class="py-2">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Login email + Google</td>
+                  <td class="py-2">Firebase Auth Web</td>
+                  <td class="py-2">RN Firebase Auth + Google Sign-In nativo</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Listar carros/peças/oficinas</td>
+                  <td class="py-2">Firestore client + ISR servidor</td>
+                  <td class="py-2">Firestore client (<code>onSnapshot</code>)</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Detalhe + galeria (zoom/swipe)</td>
+                  <td class="py-2">usePinchZoom/useSwipe + next/image</td>
+                  <td class="py-2">gesture-handler + reanimated + expo-image</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Melhor nativo</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Favoritos (anón. + conta)</td>
+                  <td class="py-2">localStorage + Firestore</td>
+                  <td class="py-2">AsyncStorage + Firestore</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Anunciar (wizard + fotos)</td>
+                  <td class="py-2">input file + Storage</td>
+                  <td class="py-2">expo-image-picker / câmara + Storage</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Melhor nativo</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Chat tempo real</td>
+                  <td class="py-2"><code>onSnapshot</code> messages</td>
+                  <td class="py-2"><code>onSnapshot</code> (idêntico)</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Notificações push</td>
+                  <td class="py-2">FCM web + service worker</td>
+                  <td class="py-2">FCM nativo + expo-notifications</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Muito melhor</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Intenções de compra</td>
+                  <td class="py-2">Firestore (intencoes_compra)</td>
+                  <td class="py-2">Firestore (igual)</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Reviews / reports / verificação</td>
+                  <td class="py-2">Firestore</td>
+                  <td class="py-2">Firestore</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Offline (cache)</td>
+                  <td class="py-2">persistentLocalCache (IndexedDB)</td>
+                  <td class="py-2">Persistência Firestore nativa</td>
+                  <td class="py-2"><span class="text-emerald-400">✅ Funciona</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Mapa de oficinas</td>
+                  <td class="py-2">leaflet / react-leaflet</td>
+                  <td class="py-2">react-native-maps (reescrever)</td>
+                  <td class="py-2"><span class="text-amber-400">⚠️ Reescrever</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Descrições markdown</td>
+                  <td class="py-2">renderDescricao + dangerouslySetInnerHTML</td>
+                  <td class="py-2">react-native-markdown / parser p/ &lt;Text&gt;</td>
+                  <td class="py-2"><span class="text-amber-400">⚠️ Reescrever</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Painel admin</td>
+                  <td class="py-2">screen client (noindex)</td>
+                  <td class="py-2">Opcional — manter na web, ou versão reduzida</td>
+                  <td class="py-2"><span class="text-amber-400">⚠️ Avaliar</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">SEO / SSR / sitemap / metadata</td>
+                  <td class="py-2">Next ISR + generateMetadata + JSON-LD</td>
+                  <td class="py-2">Não aplicável — substituir por deep links</td>
+                  <td class="py-2"><span class="text-rose-400">❌ N/A</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">db.server.ts (Admin/REST)</td>
+                  <td class="py-2">Fetch servidor p/ SSR/ISR</td>
+                  <td class="py-2">Não necessário — app usa SDK client direto</td>
+                  <td class="py-2"><span class="text-rose-400">❌ N/A</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 font-semibold text-white">Headers CSP/HSTS</td>
+                  <td class="py-2">next.config.ts</td>
+                  <td class="py-2">Não aplicável (não é browser)</td>
+                  <td class="py-2"><span class="text-rose-400">❌ N/A</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 04 - Reaproveitamento de código -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">04.</span> Reaproveitamento de Código (Monorepo)
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Recomenda-se migrar para um <strong>monorepo</strong> (pnpm/Turborepo) com um pacote partilhado <code class="text-brand-500">@reparauto/core</code>, consumido tanto pelo site Next.js como pela app. A lógica de dados e os tipos não são específicos de plataforma e podem ser partilhados quase na íntegra.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-dark-900/50 border border-emerald-800/40 rounded-xl p-4">
+              <h3 class="font-bold text-emerald-400 text-sm mb-2">♻️ Partilhável (mover para core)</h3>
+              <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li><code>src/types/</code> — 100% partilhado</li>
+                <li><code>lib/constants.ts</code>, <code>utils.ts</code>, <code>geo.ts</code>, <code>profanity.ts</code></li>
+                <li><code>lib/db.ts</code> — CRUD + subscriptions (abstrair init do Firebase)</li>
+                <li>Lógica dos hooks: <code>useCarros</code>, <code>usePecas</code>, <code>useChat</code>, <code>useIntencoes</code>, <code>useFavoritos</code>…</li>
+                <li><code>data/marcas-modelos.json</code></li>
+              </ul>
+            </div>
+            <div class="bg-dark-900/50 border border-amber-800/40 rounded-xl p-4">
+              <h3 class="font-bold text-amber-400 text-sm mb-2">✍️ Reescrever para RN</h3>
+              <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li>Toda a camada <code>src/screens/</code> e <code>src/components/</code> (primitivas RN: View/Text/Pressable)</li>
+                <li>Inicialização Firebase (Web SDK → RN Firebase)</li>
+                <li>Adaptadores: localStorage→AsyncStorage, next/image→expo-image, next/navigation→Expo Router, leaflet→react-native-maps</li>
+                <li>FCM: <code>fcm.ts</code> e service worker → messaging nativo</li>
+              </ul>
+            </div>
+          </div>
+          <div class="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-indigo-300">Padrão de abstração:</strong> em vez de <code>lib/db.ts</code> importar diretamente o cliente Firebase Web, recebe a instância do Firestore por injeção. Cada plataforma fornece a sua (Web SDK no site, RN Firebase na app), e as queries/regras permanecem idênticas — sem duplicar a lógica de negócio nem as <code>firestore.rules</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 05 - Roadmap -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-brand-500 font-extrabold">05.</span> Roadmap por Fases
+          </h2>
+          <div class="space-y-4 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">1</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Fundação <span class="text-xs font-normal text-slate-500">(~2 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Projeto Expo + Dev Client, Expo Router, NativeWind com os tokens do design system, RN Firebase ligado ao projeto <code>reparauto-site</code>, autenticação (email + Google) e sessão persistente. Extrair o pacote <code>@reparauto/core</code>.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">2</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Descoberta &amp; Detalhe <span class="text-xs font-normal text-slate-500">(~3 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Listagens de carros, peças e oficinas com filtros e pesquisa; ecrãs de detalhe com galeria (zoom/swipe); favoritos (anónimos + conta). Núcleo de leitura do marketplace pronto.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">3</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Anunciar &amp; Perfil <span class="text-xs font-normal text-slate-500">(~2 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Wizard «Anunciar» com câmara/galeria e upload para Storage, registo de oficina, e ecrã de perfil (meus anúncios, minhas intenções, definições).</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">4</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Chat &amp; Push <span class="text-xs font-normal text-slate-500">(~2 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Chat em tempo real, notificações in-app e push nativo (mensagens, propostas, aprovações). Deep links para abrir o anúncio/conversa certos a partir da notificação.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-brand-500/10 border border-brand-500 text-brand-500 font-bold flex items-center justify-center shrink-0">5</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Intenções, Confiança &amp; Mapa <span class="text-xs font-normal text-slate-500">(~2 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Fluxo de intenções de compra e propostas, reviews/verificação/denúncias, e mapa de oficinas com react-native-maps.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500 text-emerald-400 font-bold flex items-center justify-center shrink-0">6</div>
+              <div>
+                <h4 class="font-bold text-white text-base">Polimento &amp; Lojas <span class="text-xs font-normal text-slate-500">(~1 sem.)</span></h4>
+                <p class="text-xs text-slate-400 mt-1">Estados de erro/offline, acessibilidade, ícones/splash, política de privacidade nas fichas das lojas, builds EAS e submissão à App Store e Google Play.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Interactive scope estimator -->
+        <section class="glass rounded-2xl p-6 glow-indigo relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">🧭 Estimador de Âmbito</h2>
+          <p class="text-xs text-slate-400 mb-5">Seleciona os módulos do MVP para estimar o esforço.</p>
+
+          <div class="space-y-2" id="scopeList">
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Fundação + Auth <span class="text-slate-600">(obrigatório)</span></span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="2" checked disabled>
+            </label>
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Listagens + Detalhe + Favoritos</span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="3" checked>
+            </label>
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Anunciar + Perfil</span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="2" checked>
+            </label>
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Chat + Push</span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="2" checked>
+            </label>
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Intenções + Confiança + Mapa</span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="2" checked>
+            </label>
+            <label class="flex items-center justify-between bg-dark-900/50 border border-slate-800 rounded-lg px-3 py-2 cursor-pointer">
+              <span class="text-xs text-slate-300">Polimento + Submissão lojas</span>
+              <input type="checkbox" class="scope accent-indigo-500" data-w="1" checked>
+            </label>
+          </div>
+
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 mt-5 text-center">
+            <span class="text-xs text-slate-400 block uppercase tracking-wider font-bold">Esforço Estimado</span>
+            <span id="weeksOut" class="text-4xl font-black text-emerald-400 block mt-1">12 sem.</span>
+            <span class="text-[11px] text-slate-500">1 dev full-time · ajustar p/ equipa</span>
+          </div>
+        </section>
+
+        <!-- Compatibility summary -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📊 Resumo de Compatibilidade</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Funciona / melhora</span><span class="text-slate-400">10 funções</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:65%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Reescrever / avaliar</span><span class="text-slate-400">3 funções</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:20%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-rose-400 font-bold">Não aplicável</span><span class="text-slate-400">3 funções</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-rose-500" style="width:15%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Risks -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Atenções</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Sign in with Apple obrigatório</strong> na App Store se houver login Google/social.</li>
+            <li><strong>Políticas de moderação:</strong> Apple exige bloquear/denunciar conteúdo de utilizadores — já existe (reports/denúncias), garantir UX visível.</li>
+            <li><strong>Custos de mapa:</strong> Google Maps SDK pode ter custos; avaliar tiles gratuitos/Apple Maps.</li>
+            <li><strong>Conta de programador:</strong> Apple (99€/ano) + Google Play (25€ único).</li>
+            <li><strong>RN Firebase exige Dev Client</strong> (não corre no Expo Go padrão).</li>
+          </ul>
+        </section>
+
+        <!-- Next steps -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Primeiros Passos</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li>Criar monorepo e extrair <code>@reparauto/core</code>.</li>
+            <li>Iniciar app Expo + Dev Client + EAS.</li>
+            <li>Registar apps iOS/Android no Firebase Console (mesmo projeto).</li>
+            <li>Implementar Fase 1 e validar com build interno (TestFlight / Internal Testing).</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      ReparAuto © 2026 • Plano Técnico — App Mobile React Native (iOS &amp; Android)
+    </footer>
+  </div>
+
+  <script>
+    const boxes = Array.from(document.querySelectorAll('.scope'));
+    const weeksOut = document.getElementById('weeksOut');
+    function recalc() {
+      const total = boxes.reduce((sum, b) => sum + (b.checked ? parseInt(b.dataset.w) : 0), 0);
+      weeksOut.textContent = total + ' sem.';
+    }
+    boxes.forEach(b => b.addEventListener('change', recalc));
+    recalc();
+  </script>
+</body>
+</html>

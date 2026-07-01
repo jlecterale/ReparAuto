@@ -18,7 +18,7 @@ export default function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void })
 
         <Link href="/" className="flex items-center no-underline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="ReparAuto" className="h-10 w-auto" />
+          <img src="/logo.svg" alt="RecarGarage" className="h-10 w-auto" />
         </Link>
 
         <div className="flex items-center gap-4">

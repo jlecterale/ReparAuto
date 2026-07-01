@@ -5,9 +5,13 @@ import { GearSix, Car, MagnifyingGlass, User, WhatsappLogo, Phone, Envelope, Cha
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import ShareButton from '@/components/ui/ShareButton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
-import { getUserByEmail, incrementCampo } from '@/lib/db';
+import { getUserByEmail, incrementCampo, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
+import { formatCompatibilityEntry } from '@/lib/compatibility';
+import CompatibleVehicles from '@/components/pecas/CompatibleVehicles';
+import PriceReferenceBadge from '@/components/pecas/PriceReferenceBadge';
 import type { Peca, TipoPeca } from '@/types/peca';
 
 const tipoConfig: Record<TipoPeca, { cor: 'blue' | 'yellow' | 'gray'; Icon: Icon; label: string }> = {
@@ -25,6 +29,7 @@ interface DetalhesPecaModalProps {
 export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaModalProps) {
   const [mostrarTelefone, setMostrarTelefone] = useState(false);
   const [vendedorUid, setVendedorUid] = useState<string | null>(null);
+  const [procurasCount, setProcurasCount] = useState<number>(0);
   const { auth, chat, loginModal } = useApp();
   const { user } = auth;
   const { abrirChat } = chat;
@@ -44,6 +49,18 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
       sessionStorage.setItem(key, '1');
       incrementCampo('parts', peca.id, 'visualizacoes');
     }
+  }, [peca?.id]);
+
+  useEffect(() => {
+    if (!peca || peca.tipo === 'procura') {
+      setProcurasCount(0);
+      return;
+    }
+    let cancelled = false;
+    countProcurasForPeca(peca).then((n) => {
+      if (!cancelled) setProcurasCount(n);
+    });
+    return () => { cancelled = true; };
   }, [peca?.id]);
 
   if (!peca) return null;
@@ -71,7 +88,26 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           )}
         </div>
 
-        <h3 className="text-xl font-extrabold text-fg-heading">{peca.titulo}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-xl font-extrabold text-fg-heading">{peca.titulo}</h3>
+          <ShareButton
+            title={`${peca.titulo} - RecarGarage`}
+            text={peca.preco ? `${peca.titulo} - ${formatarPreco(peca.preco)}` : peca.titulo}
+            url={typeof window !== 'undefined' ? `${window.location.origin}/pecas/${peca.id}` : `/pecas/${peca.id}`}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <PriceReferenceBadge peca={peca} />
+          {procurasCount > 0 && (
+            <div className="inline-flex items-center gap-1.5 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg px-3 py-1.5 text-xs font-bold">
+              <i className="fa-solid fa-fire"></i>
+              {procurasCount === 1
+                ? '1 pessoa procura esta peça'
+                : `${procurasCount} pessoas procuram esta peça`}
+            </div>
+          )}
+        </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm bg-slate-50 rounded-xl p-4">
           <div>
@@ -90,7 +126,34 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
             <span className="text-xs font-semibold text-fg-subtle">Localização</span>
             <p className="font-semibold text-fg-heading">{peca.local || 'Portugal'}</p>
           </div>
+          {peca.numeroOEM && (
+            <div className="col-span-2">
+              <span className="text-xs font-semibold text-slate-500">Referência OEM</span>
+              <p className="font-mono font-semibold text-brand-800 text-sm">{peca.numeroOEM}</p>
+            </div>
+          )}
         </div>
+
+        {peca.compatibilidades && peca.compatibilidades.length > 0 && (
+          <div>
+            <span className="text-xs font-semibold text-slate-500 block mb-2">
+              <i className="fa-solid fa-car-side text-accent mr-1"></i>
+              Compatível com
+            </span>
+            <ul className="flex flex-wrap gap-1.5">
+              {peca.compatibilidades.map((entry, i) => (
+                <li
+                  key={i}
+                  className="text-[11px] font-semibold bg-orange-50 border border-orange-200 text-brand-800 rounded-full px-2.5 py-1"
+                >
+                  {formatCompatibilityEntry(entry)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <CompatibleVehicles peca={peca} />
 
         {peca.descricao && (
           <div>

@@ -49,9 +49,34 @@ export function useCodigoPostal(): CodigoPostalResult {
     setLoading(true);
     setErro('');
 
+    const fallback = async () => {
+      try {
+        const fallbackRes = await fetch(`https://api.zippopotam.us/pt/${trimmed}`);
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          if (fallbackData.places && fallbackData.places.length > 0) {
+            const place = fallbackData.places[0];
+            setLocalidade(place['place name'] || '');
+            setDistrito(place['state'] || '');
+            setConcelho(place['place name'] || '');
+            setRuas([]);
+            setErro('');
+            return true;
+          }
+        }
+      } catch {
+        // ignora erro do fallback e deixa seguir para o erro original
+      }
+      return false;
+    };
+
     try {
       const res = await fetch(`https://json.geoapi.pt/codigo_postal/${trimmed}`);
       if (!res.ok) {
+        // Tenta fallback se o geoapi falhar (ex: erro 429 limite de requests)
+        const ok = await fallback();
+        if (ok) return;
+
         if (res.status === 404) {
           setErro('Código postal não encontrado.');
         } else {
@@ -70,6 +95,10 @@ export function useCodigoPostal(): CodigoPostalResult {
       setRuas(data.ruas || []);
       setErro('');
     } catch {
+      // Tenta fallback se houver erro de rede/CORS ou offline
+      const ok = await fallback();
+      if (ok) return;
+
       setErro('Erro de rede ao consultar código postal.');
       setLocalidade('');
       setDistrito('');

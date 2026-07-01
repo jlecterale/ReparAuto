@@ -9,6 +9,10 @@ const FIREBASE_HOSTS = [
   'https://identitytoolkit.googleapis.com',
   'https://securetoken.googleapis.com',
   'https://firebasestorage.googleapis.com',
+  // Google Analytics & Google Tag Manager
+  'https://www.googletagmanager.com',
+  'https://www.google-analytics.com',
+  'https://*.google-analytics.com',
 ];
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -26,10 +30,10 @@ const cspDirectives = [
   "default-src 'self'",
   `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org https://www.google-analytics.com https://*.google-analytics.com",
   "font-src 'self' https://fonts.gstatic.com",
   `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org`,
-  "frame-src 'self' https://*.firebaseapp.com https://apis.google.com",
+  "frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://www.youtube-nocookie.com https://www.youtube.com",
   "frame-ancestors 'none'",
   "form-action 'self'",
   "base-uri 'self'",
@@ -41,7 +45,7 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'no-referrer' },
-  { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=()' },
+  { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=(self)' },
   { key: 'Content-Security-Policy', value: cspDirectives.join('; ') },
 ];
 

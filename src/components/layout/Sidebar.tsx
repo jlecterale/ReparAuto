@@ -19,13 +19,18 @@ import {
   X,
   Wrench,
   ListChecks,
+  Crown,
+  Bell,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
-import NotificationBell from './NotificationBell';
+import NotificationInbox from './NotificationInbox';
 import ChatInbox from '@/components/chat/ChatInbox';
+import PlanosPremiumModal from '@/components/premium/PlanosPremiumModal';
 import UserAvatar from '@/components/ui/UserAvatar';
 import Badge from '@/components/ui/Badge';
+import usePremiumConfig from '@/hooks/usePremiumConfig';
+import useNotificacoes from '@/hooks/useNotificacoes';
 
 interface SidebarProps {
   /** Mobile drawer open state (ignored on desktop, where the rail is always visible). */
@@ -35,20 +40,25 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { auth, chat } = useApp();
+  const premiumConfig = usePremiumConfig();
+  const isPremiumActive = premiumConfig.impulsionamento || premiumConfig.oficinas || premiumConfig.leads;
   const pathname = usePathname();
   const { user, isLoggedIn, isAdmin, logout } = auth;
   const { mensagensNaoLidas } = chat;
+  const { naoLidas } = useNotificacoes(user?.uid);
 
   const [showChatInbox, setShowChatInbox] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showPlanos, setShowPlanos] = useState(false);
 
   const isActive = (path: string) => {
     if (!pathname) return false;
-    if (path === '/') return pathname === '/' || pathname === '';
+    if (path === '/app') return pathname === '/app' || pathname === '';
     return pathname.startsWith(path);
   };
 
   const navItems: { href: string; Icon: Icon; label: string }[] = [
-    { href: '/', Icon: Car, label: 'Anúncios' },
+    { href: '/app', Icon: Car, label: 'Anúncios' },
     { href: '/anunciar', Icon: PlusCircle, label: 'Vender' },
     { href: '/comprar', Icon: MagnifyingGlass, label: 'Comprar' },
     { href: '/pecas', Icon: GearSix, label: 'Peças & Desmonte' },
@@ -109,7 +119,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
         <div className="relative flex items-center justify-center px-5 py-5 border-b border-white/5">
           <Link href="/" onClick={onClose} className="flex items-center justify-center no-underline">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="ReparAuto" className="h-14 w-auto" />
+            <img src="/logo.svg" alt="RecarGarage" className="h-14 w-auto" />
           </Link>
           <button
             onClick={onClose}
@@ -160,16 +170,43 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               )}
 
               {isLoggedIn && (
-                <div className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200">
-                  <span className="w-5 flex items-center justify-center text-white/55 group-hover:text-accent-bright transition-colors [&_button]:!text-current">
-                    <NotificationBell />
-                  </span>
+                <button
+                  onClick={() => { setShowNotifications(true); onClose(); }}
+                  className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  <Bell size={20} className="shrink-0 text-white/55 group-hover:text-accent-bright transition-colors" />
                   Notificações
-                </div>
+                  {naoLidas > 0 && (
+                    <Badge cor="accent" variante="solid" className="ml-auto justify-center min-w-[20px] !text-[10px]">
+                      {naoLidas > 99 ? '99+' : naoLidas}
+                    </Badge>
+                  )}
+                </button>
               )}
             </div>
           </div>
         </nav>
+
+        {/* Premium CTA */}
+        {isPremiumActive && (
+          <div className="px-3 pb-3">
+            <button
+              onClick={() => { setShowPlanos(true); onClose(); }}
+              className="group w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-extrabold no-underline transition-all duration-300
+                bg-gradient-to-r from-warning-400/20 via-warning-300/15 to-secondary-500/20
+                border border-warning-400/30 hover:border-warning-400/60
+                text-warning-300 hover:text-warning-200
+                hover:from-warning-400/30 hover:via-warning-300/25 hover:to-secondary-500/30
+                hover:shadow-lg hover:shadow-warning-500/10"
+            >
+              <Crown size={22} weight="fill" className="shrink-0 text-warning-400 group-hover:text-warning-300 transition-colors" />
+              <span>Planos Premium</span>
+              <Badge cor="yellow" variante="solid" className="ml-auto !text-[9px] !px-1.5 !py-0">
+                PRO
+              </Badge>
+            </button>
+          </div>
+        )}
 
         {/* Account */}
         <div className="border-t border-white/5 p-3">
@@ -204,6 +241,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       </aside>
 
       <ChatInbox show={showChatInbox} onClose={() => setShowChatInbox(false)} />
+      <NotificationInbox show={showNotifications} onClose={() => setShowNotifications(false)} />
+      <PlanosPremiumModal show={showPlanos} onClose={() => setShowPlanos(false)} />
     </>
   );
 }

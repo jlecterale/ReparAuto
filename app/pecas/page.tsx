@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import Pecas from '@/screens/Pecas';
 
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
     'Mercado de peças automóveis e veículos completos para desmantelamento em Portugal. Compre, venda ou procure peças usadas.',
   alternates: { canonical: '/pecas' },
   openGraph: {
-    title: 'Peças & Desmonte · ReparAuto',
+    title: 'Peças & Desmonte · RecarGarage',
     description:
       'Mercado de peças automóveis e veículos completos para desmantelamento em Portugal.',
     url: '/pecas',
@@ -17,5 +18,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <Pecas />;
+  return (
+    <Suspense fallback={null}>
+      <Pecas />
+    </Suspense>
+  );
 }

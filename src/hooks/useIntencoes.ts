@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import type { IntencaoCompra, IntencaoCompraInput, IntencaoContextValue, ContatoIntencao } from '@/types/intencao';
 import {
   criarIntencaoCompra,
@@ -91,7 +91,7 @@ export function useIntencoes(userId: string | null): IntencaoContextValue {
     return getContatosPorIntencao(intencaoId);
   }, []);
 
-  return {
+  return useMemo(() => ({
     intencoes,
     loading,
     criarIntencao: criar,
@@ -104,5 +104,18 @@ export function useIntencoes(userId: string | null): IntencaoContextValue {
     buscarIntencoesMatch: buscarMatch,
     iniciarContato,
     getContatosPorIntencao: listarContatos,
-  };
+  }), [
+    intencoes,
+    loading,
+    criar,
+    getPorUsuario,
+    getPorId,
+    atualizar,
+    pausar,
+    reativar,
+    deletar,
+    buscarMatch,
+    iniciarContato,
+    listarContatos,
+  ]);
 }

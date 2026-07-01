@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="pt-PT" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReparAuto — Dashboard do Projeto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-base: #0b0f19;
+      --bg-surface: #151c2c;
+      --bg-surface-hover: #1e283b;
+      --border-color: #243049;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-heading: #ffffff;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --accent-glow: rgba(99, 102, 241, 0.15);
+      --green: #10b981;
+      --green-light: rgba(16, 185, 129, 0.1);
+      --red: #ef4444;
+      --red-light: rgba(239, 68, 68, 0.1);
+      --blue: #3b82f6;
+      --blue-light: rgba(59, 130, 246, 0.1);
+      --yellow: #f59e0b;
+      --yellow-light: rgba(245, 158, 11, 0.1);
+      --font-family: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    [data-theme="light"] {
+      --bg-base: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --text-main: #334155;
+      --text-muted: #64748b;
+      --text-heading: #0f172a;
+      --accent: #4f46e5;
+      --accent-hover: #4338ca;
+      --accent-glow: rgba(79, 70, 229, 0.08);
+      --green: #059669;
+      --green-light: #ecfdf5;
+      --red: #dc2626;
+      --red-light: #fef2f2;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --yellow: #d97706;
+      --yellow-light: #fffbeb;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.05);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .app-header {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 0.8rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .brand-logo {
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      color: white;
+      font-weight: 800;
+      font-size: 1.2rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .brand-info h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      letter-spacing: -0.02em;
+    }
+
+    .brand-info p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .badge-branch {
+      background-color: var(--blue-light);
+      color: var(--blue);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .theme-btn {
+      background-color: var(--bg-surface-hover);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-btn:hover {
+      background-color: var(--border-color);
+    }
+
+    .container {
+      display: flex;
+      flex: 1;
+      max-width: 1440px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+      gap: 1.5rem;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 260px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .nav-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 0.8rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .nav-item button {
+      width: 100%;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      text-align: left;
+      font-family: var(--font-family);
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      transition: all 0.2s;
+    }
+
+    .nav-item button:hover {
+      background-color: var(--bg-surface-hover);
+      color: var(--text-heading);
+    }
+
+    .nav-item.active button {
+      background-color: var(--accent-glow);
+      color: var(--accent);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 10px 10px 0;
+      padding-left: calc(1rem - 3px);
+    }
+
+    /* Main Area */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .tab-pane {
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .tab-pane.active {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Dashboard Widgets */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card h3 {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .stat-card .value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--text-heading);
+      letter-spacing: -0.03em;
+    }
+
+    .stat-card .desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-2col {
+        grid-template-columns: 1fr;
+      }
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .nav-list {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .nav-item {
+        flex: 1;
+      }
+    }
+
+    .card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* List group */
+    .list-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .list-item {
+      background-color: var(--bg-surface-hover);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .list-item:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+
+    .list-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      min-width: 0;
+    }
+
+    .list-item-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .list-item-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-open { background-color: var(--green-light); color: var(--green); }
+    .badge-closed { background-color: var(--red-light); color: var(--red); }
+    .badge-draft { background-color: var(--yellow-light); color: var(--yellow); }
+
+    /* Interactive Split View for Documents */
+    .split-view {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      height: 70vh;
+      background-color: var(--bg-surface);
+    }
+
+    .split-sidebar {
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      background-color: rgba(0,0,0,0.05);
+    }
+
+    .split-sidebar-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-input {
+      width: 100%;
+      background-color: var(--bg-base);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-main);
+      padding: 0.6rem 0.8rem;
+      font-family: var(--font-family);
+      font-size: 0.85rem;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .split-list {
+      flex: 1;
+      overflow-y: auto;
+      list-style: none;
+    }
+
+    .split-item {
+      padding: 0.9rem 1.2rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .split-item:hover {
+      background-color: var(--bg-surface-hover);
+    }
+
+    .split-item.active {
+      background-color: var(--accent-glow);
+      border-left: 4px solid var(--accent);
+      padding-left: calc(1.2rem - 4px);
+    }
+
+    .split-item-title {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-bottom: 0.15rem;
+    }
+
+    .split-item-meta {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    .split-detail {
+      padding: 2rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      background-color: var(--bg-surface);
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: var(--text-muted);
+      gap: 1rem;
+      padding: 3rem;
+      text-align: center;
+    }
+
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      opacity: 0.3;
+    }
+
+    /* Markdown styling */
+    .md-view h1 { font-size: 1.8rem; font-weight: 800; color: var(--text-heading); margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    .md-view h2 { font-size: 1.3rem; font-weight: 700; color: var(--text-heading); margin-top: 1.5rem; margin-bottom: 0.8rem; }
+    .md-view h3 { font-size: 1.1rem; font-weight: 600; color: var(--text-heading); margin-top: 1.2rem; margin-bottom: 0.6rem; }
+    .md-view h4 { font-size: 0.95rem; font-weight: 600; color: var(--text-heading); margin-top: 1rem; margin-bottom: 0.4rem; }
+    .md-view p { font-size: 0.92rem; color: var(--text-main); margin-bottom: 1rem; line-height: 1.7; }
+    .md-view ul, .md-view ol { margin-bottom: 1rem; padding-left: 1.5rem; font-size: 0.92rem; }
+    .md-view li { margin-bottom: 0.4rem; }
+    .md-view hr { border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0; }
+    .md-view strong { color: var(--text-heading); font-weight: 700; }
+    .md-view .inline-code { background-color: var(--bg-base); font-family: var(--font-mono); font-size: 0.85rem; padding: 0.15rem 0.35rem; border-radius: 4px; color: var(--accent); border: 1px solid var(--border-color); }
+    
+    .code-block {
+      background-color: #0d1117;
+      color: #c9d1d9;
+      padding: 1.2rem;
+      border-radius: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border: 1px solid var(--border-color);
+      white-space: pre;
+    }
+    
+    /* Table inside Markdown */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    
+    .table-wrapper table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+    
+    .table-wrapper th {
+      background-color: rgba(0,0,0,0.15);
+      color: var(--text-heading);
+      padding: 0.75rem 1rem;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .table-wrapper td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    
+    .table-wrapper tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Commits Logs */
+    .commit-row {
+      display: flex;
+      gap: 1.2rem;
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      align-items: flex-start;
+      font-size: 0.88rem;
+    }
+
+    .commit-row:last-child {
+      border-bottom: none;
+    }
+
+    .commit-hash {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background-color: var(--bg-base);
+      border: 1px solid var(--border-color);
+      padding: 0.15rem 0.4rem;
+      border-radius: 6px;
+      color: var(--accent);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .commit-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .commit-msg {
+      font-weight: 500;
+      color: var(--text-heading);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .commit-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .commit-author {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    /* Project File Tree */
+    .tree-node {
+      display: flex;
+      flex-direction: column;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    .tree-row {
+      display: flex;
+      align-items: center;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      gap: 0.5rem;
+      user-select: none;
+    }
+
+    .tree-row:hover {
+      background-color: var(--bg-surface-hover);
+    }
+
+    .tree-row.directory {
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    .tree-row.file {
+      color: var(--text-main);
+    }
+
+    .tree-children {
+      padding-left: 1.5rem;
+      border-left: 1px dashed var(--border-color);
+      margin-left: 0.7rem;
+      display: none;
+    }
+
+    .tree-children.open {
+      display: block;
+    }
+
+    .tree-arrow {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .tree-node.open > .tree-row > .tree-arrow {
+      transform: rotate(90deg);
+    }
+
+    .file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* Tech Stack Badge grid */
+    .stack-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+
+    .stack-badge {
+      background-color: var(--bg-surface-hover);
+      border: 1px solid var(--border-color);
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Automation instruction sections */
+    .copy-block {
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.75rem;
+      font-family: var(--font-family);
+      font-weight: 600;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background-color: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">RA</div>
+      <div class="brand-info">
+        <h1>ReparAuto</h1>
+        <p>Dashboard do Projeto & Automatização</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="badge-branch">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 12a6 6 0 0 0 6 6h3"/></svg>
+        <span id="branch-name">main</span>
+      </div>
+      <button class="theme-btn" id="theme-toggle-btn" title="Alternar tema">
+        <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="container">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="nav-card">
+        <ul class="nav-list">
+          <li class="nav-item active" data-tab="overview">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+              Visão Geral
+            </button>
+          </li>
+          <li class="nav-item" data-tab="roadmap">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+              Planos do Projeto
+            </button>
+          </li>
+          <li class="nav-item" data-tab="pending-prs">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              PRs para Implementar
+            </button>
+          </li>
+          <li class="nav-item" data-tab="history">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Histórico & Contribuidores
+            </button>
+          </li>
+          <li class="nav-item" data-tab="explorer">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+              Ficheiros do Projeto
+            </button>
+          </li>
+          <li class="nav-item" data-tab="automation">
+            <button>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="4"/></svg>
+              Automatização
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="nav-card" style="padding: 1.2rem; font-size: 0.8rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.5rem;">
+        <div style="font-weight: 700; color: var(--text-heading);">Informações de Atualização</div>
+        <div>Atualizado: <span id="last-updated-time">---</span></div>
+        <div>Gerador: <code style="font-family: var(--font-mono);">scripts/generate-dashboard.mjs</code></div>
+      </div>
+    </aside>
+
+    <!-- Main Content Panel -->
+    <main class="main-content">
+      
+      <!-- Tab 1: Overview -->
+      <section class="tab-pane active" id="overview-pane">
+        <div style="margin-bottom: 0.5rem; font-weight: 700; font-size: 0.95rem; color: var(--text-heading); text-transform: uppercase; letter-spacing: 0.05em;">
+          Código & Repositório (Git & GitHub)
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <h3>Ficheiros Monitorizados</h3>
+            <div class="value" id="stat-files">0</div>
+            <div class="desc">Ficheiros de código e documentação</div>
+          </div>
+          <div class="stat-card">
+            <h3>Tamanho do Código</h3>
+            <div class="value" id="stat-size">0 MB</div>
+            <div class="desc">Tamanho total da codebase</div>
+          </div>
+          <div class="stat-card">
+            <h3>Commits Realizados</h3>
+            <div class="value" id="stat-commits">0</div>
+            <div class="desc">No repositório local</div>
+          </div>
+          <div class="stat-card">
+            <h3>Contribuidores</h3>
+            <div class="value" id="stat-contributors">0</div>
+            <div class="desc">Autores registados no git</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-weight: 700; font-size: 0.95rem; color: var(--text-heading); text-transform: uppercase; letter-spacing: 0.05em;">
+          Bases de Dados em Tempo Real (Firebase Firestore)
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card" style="border-left: 4px solid var(--accent);">
+            <h3>Anúncios de Carros</h3>
+            <div class="value" id="fb-cars">0</div>
+            <div class="desc">Coleção 'cars' (Carros ativos)</div>
+          </div>
+          <div class="stat-card" style="border-left: 4px solid var(--green);">
+            <h3>Peças em Catálogo</h3>
+            <div class="value" id="fb-parts">0</div>
+            <div class="desc">Coleção 'parts' (Peças ativas)</div>
+          </div>
+          <div class="stat-card" style="border-left: 4px solid var(--blue);">
+            <h3>Oficinas & Serviços</h3>
+            <div class="value" id="fb-services">0</div>
+            <div class="desc">Coleção 'services' (Oficinas)</div>
+          </div>
+          <div class="stat-card" style="border-left: 4px solid var(--yellow);">
+            <h3>Intenções de Compra</h3>
+            <div class="value" id="fb-intentions">0</div>
+            <div class="desc">Coleção 'intencoes_compra'</div>
+          </div>
+          <div class="stat-card" style="border-left: 4px solid #a855f7;">
+            <h3>Utilizadores Registados</h3>
+            <div class="value" id="fb-users">0</div>
+            <div class="desc">Coleção 'users' no Firestore</div>
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <!-- Tech Stack -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Tecnologias do Projeto</h2>
+            </div>
+            <div class="stack-grid">
+              <div class="stack-badge"><span style="color:var(--accent);">●</span> Next.js 15+ (App Router)</div>
+              <div class="stack-badge"><span style="color:var(--green);">●</span> React 19</div>
+              <div class="stack-badge"><span style="color:var(--blue);">●</span> Tailwind CSS v4</div>
+              <div class="stack-badge"><span style="color:var(--yellow);">●</span> Firebase SDK v12</div>
+              <div class="stack-badge"><span style="color:#3178c6;">●</span> TypeScript</div>
+              <div class="stack-badge"><span style="color:#ff5722;">●</span> Firestore Rules</div>
+              <div class="stack-badge"><span style="color:#00c4b6;">●</span> Leaflet (Mapas)</div>
+              <div class="stack-badge"><span style="color:var(--accent);">●</span> Vite SPA (Legacy)</div>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+              O projeto foi recentemente migrado de uma estrutura estática de SPA com Vite para a arquitetura moderna de <strong>Next.js 15 (App Router)</strong>, com o backend suportado por Firebase Auth, Firestore e Storage em Portugal.
+            </div>
+          </div>
+
+          <!-- Git Authors List -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Lista de Autores (Git)</h2>
+            </div>
+            <div class="list-group" id="overview-authors-list">
+              <!-- Inserted dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 2: Roadmap -->
+      <section class="tab-pane" id="roadmap-pane">
+        <div class="split-view">
+          <div class="split-sidebar">
+            <div class="split-sidebar-header">
+              <input type="text" class="search-input" id="roadmap-search" placeholder="Procurar planos...">
+            </div>
+            <ul class="split-list" id="roadmap-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+          <div class="split-detail md-view" id="roadmap-detail">
+            <div class="empty-state">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <h3>Selecione um Plano</h3>
+              <p>Selecione um plano na barra lateral para ver o seu conteúdo detalhado.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 3: Pending PRs -->
+      <section class="tab-pane" id="pending-prs-pane">
+        <div class="split-view">
+          <div class="split-sidebar">
+            <div class="split-sidebar-header">
+              <input type="text" class="search-input" id="pending-search" placeholder="Procurar PRs...">
+            </div>
+            <ul class="split-list" id="pending-list">
+              <!-- Dynamically populated -->
+            </ul>
+          </div>
+          <div class="split-detail md-view" id="pending-detail">
+            <div class="empty-state">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+              <h3>Selecione uma PR</h3>
+              <p>Selecione um plano de Pull Request na barra lateral para examinar as alterações prontas para implementação.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 4: History -->
+      <section class="tab-pane" id="history-pane">
+        <div class="grid-2col">
+          <!-- Pull Requests on GitHub -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">GitHub Pull Requests</h2>
+            </div>
+            <div class="list-group" id="github-prs-list" style="max-height: 500px; overflow-y: auto; padding-right: 0.5rem;">
+              <!-- Inserted dynamically -->
+            </div>
+          </div>
+
+          <!-- Git Local Commit Log -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Histórico de Commits Recentes</h2>
+              <input type="text" class="search-input" id="commit-search" placeholder="Procurar commits..." style="max-width: 200px;">
+            </div>
+            <div id="local-commits-list" style="max-height: 500px; overflow-y: auto; display: flex; flex-direction: column;">
+              <!-- Inserted dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 5: Explorer -->
+      <section class="tab-pane" id="explorer-pane">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Estrutura de Ficheiros do Projeto</h2>
+          </div>
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            Explore a árvore do projeto (excluindo ficheiros de build e bibliotecas). Clique nas pastas para expandir/recolher.
+          </div>
+          <div id="file-tree-container" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; background-color: rgba(0,0,0,0.15); max-height: 60vh; overflow-y: auto;">
+            <!-- Tree populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab 6: Automation -->
+      <section class="tab-pane" id="automation-pane">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Automatização do Dashboard</h2>
+          </div>
+          <p style="font-size: 0.9rem; color: var(--text-muted);">
+            Este dashboard é um <strong>snapshot técnico do projeto</strong> (git, ficheiros, PRs, roadmap), gerado <strong>localmente sob demanda</strong>. As métricas operacionais ao vivo (carros, peças, oficinas, intenções, utilizadores, moderação) vivem agora no <strong>Painel Admin → Visão Geral</strong> do site.
+          </p>
+
+          <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+
+            <!-- Local npm command -->
+            <div style="border-left: 4px solid var(--accent); padding-left: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="color: var(--text-heading); font-size: 1rem;">Gerar localmente</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Corra o comando abaixo na raiz do projeto sempre que quiser atualizar este ficheiro. O resultado (<code>docs/dashboard.html</code>) é ignorado pelo Git — é um artefacto local, não versionado.
+              </p>
+              <div class="copy-block">
+                <button class="copy-btn" onclick="copyText('npm-cmd-code', this)">Copiar</button>
+                <pre class="code-block" id="npm-cmd-code">npm run generate:dashboard</pre>
+              </div>
+            </div>
+
+            <!-- Optional git hook -->
+            <div style="border-left: 4px solid var(--green); padding-left: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+              <h3 style="color: var(--text-heading); font-size: 1rem;">Opcional: regenerar a cada commit (Git Hook local)</h3>
+              <p style="font-size: 0.85rem; color: var(--text-muted);">
+                Se quiser regenerar automaticamente em cada <code>git commit</code>, crie <code>.git/hooks/post-commit</code> (e <code>chmod +x</code> em Linux/macOS):
+              </p>
+              <div class="copy-block">
+                <button class="copy-btn" onclick="copyText('post-commit-code', this)">Copiar</button>
+                <pre class="code-block" id="post-commit-code">#!/bin/sh
+echo "Atualizando o Dashboard do Projeto..."
+npm run generate:dashboard
+</pre>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Raw Data Payload from Node Generator -->
+  <script id="project-data-payload" type="application/json">
+    __DATA_PLACEHOLDER__
+  </script>
+
+  <script>
+    // Safe parse data
+    let projectData = {};
+    try {
+      projectData = JSON.parse(document.getElementById('project-data-payload').textContent);
+    } catch (e) {
+      console.error('Failed to parse project data:', e);
+    }
+
+    // Set page parameters
+    document.getElementById('branch-name').innerText = projectData.branch || 'main';
+    document.getElementById('last-updated-time').innerText = projectData.lastUpdated || '---';
+    document.getElementById('stat-files').innerText = projectData.stats?.totalFiles || 0;
+    document.getElementById('stat-size').innerText = projectData.stats?.totalSize || '0 MB';
+    document.getElementById('stat-commits').innerText = projectData.stats?.commitsCount || 0;
+    document.getElementById('stat-contributors').innerText = projectData.stats?.contributorsCount || 0;
+
+    // Set Firebase parameters
+    document.getElementById('fb-cars').innerText = projectData.stats?.firebase?.cars || 0;
+    document.getElementById('fb-parts').innerText = projectData.stats?.firebase?.parts || 0;
+    document.getElementById('fb-services').innerText = projectData.stats?.firebase?.oficinas || 0;
+    document.getElementById('fb-intentions').innerText = projectData.stats?.firebase?.intentions || 0;
+    document.getElementById('fb-users').innerText = projectData.stats?.firebase?.users || 0;
+
+    // Theme Toggle
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const themeIcon = document.getElementById('theme-icon');
+    
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      
+      // Update icon
+      if (newTheme === 'light') {
+        themeIcon.innerHTML = '<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 110 8 4 4 0 010-8z"/>';
+      } else {
+        themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>';
+      }
+    });
+
+    // Sidebar navigation logic
+    const navItems = document.querySelectorAll('.nav-item');
+    const tabPanes = document.querySelectorAll('.tab-pane');
+
+    navItems.forEach(item => {
+      item.addEventListener('click', () => {
+        navItems.forEach(nav => nav.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.remove('active'));
+        
+        item.classList.add('active');
+        const tabId = item.getAttribute('data-tab');
+        document.getElementById(tabId + '-pane').classList.add('active');
+      });
+    });
+
+    // Populate Contributors on Overview
+    const authorsContainer = document.getElementById('overview-authors-list');
+    if (projectData.contributors && projectData.contributors.length > 0) {
+      projectData.contributors.forEach(c => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.innerHTML = `
+          <div class="list-item-info">
+            <span class="list-item-title">${c.name}</span>
+            <span class="list-item-sub">Autor</span>
+          </div>
+          <span class="badge badge-open">${c.commits} commits</span>
+        `;
+        authorsContainer.appendChild(item);
+      });
+    } else {
+      authorsContainer.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Nenhum autor encontrado.</div>';
+    }
+
+    // Populate GitHub PRs
+    const githubPrsContainer = document.getElementById('github-prs-list');
+    if (projectData.githubPrs && projectData.githubPrs.length > 0) {
+      projectData.githubPrs.forEach(pr => {
+        const item = document.createElement('div');
+        item.className = 'list-item';
+        item.onclick = () => window.open(pr.html_url, '_blank');
+        
+        const stateClass = pr.state === 'open' ? 'badge-open' : 'badge-closed';
+        const dateStr = new Date(pr.created_at).toLocaleDateString('pt-PT');
+        
+        item.innerHTML = `
+          <div class="list-item-info">
+            <span class="list-item-title">PR #${pr.number}: ${pr.title}</span>
+            <span class="list-item-sub">Aberta por @${pr.user} em ${dateStr}</span>
+          </div>
+          <span class="badge ${stateClass}">${pr.state}</span>
+        `;
+        githubPrsContainer.appendChild(item);
+      });
+    } else {
+      githubPrsContainer.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;">Nenhuma Pull Request listada.</div>';
+    }
+
+    // Populate Git Commit Log
+    const commitsContainer = document.getElementById('local-commits-list');
+    function renderCommits(filterText = '') {
+      commitsContainer.innerHTML = '';
+      const list = projectData.commits || [];
+      const filtered = list.filter(c => 
+        c.subject.toLowerCase().includes(filterText.toLowerCase()) || 
+        c.author.toLowerCase().includes(filterText.toLowerCase()) ||
+        c.hash.toLowerCase().includes(filterText.toLowerCase())
+      );
+      
+      if (filtered.length > 0) {
+        filtered.forEach(c => {
+          const row = document.createElement('div');
+          row.className = 'commit-row';
+          row.innerHTML = `
+            <span class="commit-hash">${c.hash}</span>
+            <div class="commit-body">
+              <span class="commit-msg">${c.subject}</span>
+              <div class="commit-meta">
+                por <span class="commit-author">${c.author}</span> em <span>${c.date}</span>
+              </div>
+            </div>
+          `;
+          commitsContainer.appendChild(row);
+        });
+      } else {
+        commitsContainer.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;padding:1rem;">Nenhum commit corresponde à pesquisa.</div>';
+      }
+    }
+    renderCommits();
+    
+    document.getElementById('commit-search').addEventListener('input', (e) => {
+      renderCommits(e.target.value);
+    });
+
+    // Populate Roadmaps (Plans) List
+    const plansContainer = document.getElementById('roadmap-list');
+    const plansDetail = document.getElementById('roadmap-detail');
+    
+    function renderPlansList(filter = '') {
+      plansContainer.innerHTML = '';
+      const list = projectData.plans || [];
+      const filtered = list.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.filename.toLowerCase().includes(filter.toLowerCase()));
+      
+      filtered.forEach(p => {
+        const item = document.createElement('li');
+        item.className = 'split-item';
+        item.innerHTML = `
+          <div class="split-item-title">${p.title}</div>
+          <div class="split-item-meta">${p.filename}</div>
+        `;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('#roadmap-list .split-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          showPlanDetail(p);
+        });
+        plansContainer.appendChild(item);
+      });
+    }
+    
+    function showPlanDetail(plan) {
+      plansDetail.innerHTML = `
+        <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Ficheiro: docs/plans/${plan.filename}</div>
+        <div class="md-content">${renderMarkdown(plan.content)}</div>
+      `;
+    }
+    
+    renderPlansList();
+    document.getElementById('roadmap-search').addEventListener('input', (e) => {
+      renderPlansList(e.target.value);
+    });
+
+    // Populate Pending PRs List
+    const pendingContainer = document.getElementById('pending-list');
+    const pendingDetail = document.getElementById('pending-detail');
+    
+    function renderPendingList(filter = '') {
+      pendingContainer.innerHTML = '';
+      const list = projectData.pendingPrs || [];
+      const filtered = list.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()) || p.filename.toLowerCase().includes(filter.toLowerCase()));
+      
+      filtered.forEach(p => {
+        const item = document.createElement('li');
+        item.className = 'split-item';
+        item.innerHTML = `
+          <div class="split-item-title">${p.title}</div>
+          <div class="split-item-meta">${p.filename}</div>
+        `;
+        item.addEventListener('click', () => {
+          document.querySelectorAll('#pending-list .split-item').forEach(el => el.classList.remove('active'));
+          item.classList.add('active');
+          showPendingDetail(p);
+        });
+        pendingContainer.appendChild(item);
+      });
+    }
+    
+    function showPendingDetail(prPlan) {
+      pendingDetail.innerHTML = `
+        <div style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Ficheiro: .opencode/plans/${prPlan.filename}</div>
+        <div class="md-content">${renderMarkdown(prPlan.content)}</div>
+      `;
+    }
+    
+    renderPendingList();
+    document.getElementById('pending-search').addEventListener('input', (e) => {
+      renderPendingList(e.target.value);
+    });
+
+    // File tree rendering logic
+    const treeContainer = document.getElementById('file-tree-container');
+    function renderFileTreeNode(node) {
+      if (!node) return null;
+      
+      const nodeEl = document.createElement('div');
+      nodeEl.className = 'tree-node';
+      
+      const row = document.createElement('div');
+      row.className = 'tree-row ' + (node.isDirectory ? 'directory' : 'file');
+      
+      const icon = node.isDirectory ? '📁' : '📄';
+      const arrow = node.isDirectory ? '<span class="tree-arrow">▸</span>' : '<span style="width:16px;display:inline-block;"></span>';
+      
+      row.innerHTML = `
+        ${arrow}
+        <span>${icon}</span>
+        <span>${node.name}</span>
+        ${!node.isDirectory ? `<span class="file-size">${(node.size / 1024).toFixed(1)} KB</span>` : ''}
+      `;
+      
+      nodeEl.appendChild(row);
+      
+      if (node.isDirectory && node.children && node.children.length > 0) {
+        const childrenEl = document.createElement('div');
+        childrenEl.className = 'tree-children';
+        node.children.forEach(child => {
+          const childNode = renderFileTreeNode(child);
+          if (childNode) childrenEl.appendChild(childNode);
+        });
+        nodeEl.appendChild(childrenEl);
+        
+        row.addEventListener('click', () => {
+          nodeEl.classList.toggle('open');
+          childrenEl.classList.toggle('open');
+        });
+      }
+      
+      return nodeEl;
+    }
+    
+    if (projectData.fileTree) {
+      const rootNode = renderFileTreeNode(projectData.fileTree);
+      if (rootNode) treeContainer.appendChild(rootNode);
+    } else {
+      treeContainer.innerText = 'Nenhum ficheiro para listar.';
+    }
+
+    // Markdown Parser
+    function renderMarkdown(md) {
+      if (!md) return '';
+      const lines = md.split('\n');
+      let html = '';
+      let inCode = false;
+      let inList = false;
+      let inTable = false;
+      let listType = ''; 
+      let codeContent = [];
+      let codeLang = '';
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (line.trim().startsWith('```')) {
+          if (inCode) {
+            inCode = false;
+            html += `<pre class="code-block language-${codeLang}"><code>${codeContent.join('\n')}</code></pre>`;
+            codeContent = [];
+          } else {
+            inCode = true;
+            codeLang = line.trim().substring(3).trim();
+          }
+          continue;
+        }
+
+        if (inCode) {
+          codeContent.push(line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+          continue;
+        }
+
+        if (line.startsWith('# ')) {
+          html += `<h1>${parseInline(line.substring(2))}</h1>`;
+          continue;
+        }
+        if (line.startsWith('## ')) {
+          html += `<h2>${parseInline(line.substring(3))}</h2>`;
+          continue;
+        }
+        if (line.startsWith('### ')) {
+          html += `<h3>${parseInline(line.substring(4))}</h3>`;
+          continue;
+        }
+        if (line.startsWith('#### ')) {
+          html += `<h4>${parseInline(line.substring(5))}</h4>`;
+          continue;
+        }
+
+        if (line.trim() === '---' || line.trim() === '***') {
+          html += '<hr>';
+          continue;
+        }
+
+        if (line.trim().startsWith('|')) {
+          if (!inTable) {
+            inTable = true;
+            html += '<div class="table-wrapper"><table>';
+          }
+          const cells = line.split('|').slice(1, -1).map(c => c.trim());
+          if (cells.every(c => c.startsWith('-'))) {
+            continue;
+          }
+          
+          const isHeader = (i > 0 && lines[i-1].trim().startsWith('|') && lines[i+1]?.trim()?.startsWith('|') && lines[i+1]?.trim()?.includes('-'));
+          const tag = isHeader ? 'th' : 'td';
+          html += `<tr>${cells.map(c => `<${tag}>${parseInline(c)}</${tag}>`).join('')}</tr>`;
+          continue;
+        } else if (inTable) {
+          inTable = false;
+          html += '</table></div>';
+        }
+
+        const ulMatch = line.match(/^(\s*)[-*+]\s+(.*)/);
+        const olMatch = line.match(/^(\s*)\d+\.\s+(.*)/);
+
+        if (ulMatch) {
+          if (!inList || listType !== 'ul') {
+            if (inList) html += `</${listType}>`;
+            inList = true;
+            listType = 'ul';
+            html += '<ul>';
+          }
+          html += `<li>${parseInline(ulMatch[2])}</li>`;
+          continue;
+        }
+
+        if (olMatch) {
+          if (!inList || listType !== 'ol') {
+            if (inList) html += `</${listType}>`;
+            inList = true;
+            listType = 'ol';
+            html += '<ol>';
+          }
+          html += `<li>${parseInline(olMatch[2])}</li>`;
+          continue;
+        }
+
+        if (line.trim() === '') {
+          if (inList) {
+            inList = false;
+            html += `</${listType}>`;
+          }
+          continue;
+        }
+
+        if (!inList && !inTable && !inCode) {
+          html += `<p>${parseInline(line)}</p>`;
+        }
+      }
+
+      if (inList) html += `</${listType}>`;
+      if (inTable) html += '</table></div>';
+      
+      return html;
+    }
+
+    function parseInline(text) {
+      let res = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+        
+      res = res.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      res = res.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      res = res.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+      res = res.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="md-link">$1</a>');
+      
+      return res;
+    }
+
+    // Utility functions
+    window.copyText = function(elementId, btnEl) {
+      const code = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const oldText = btnEl.innerText;
+        btnEl.innerText = 'Copiado!';
+        btnEl.style.backgroundColor = 'var(--green)';
+        btnEl.style.color = 'white';
+        setTimeout(() => {
+          btnEl.innerText = oldText;
+          btnEl.style.backgroundColor = '';
+          btnEl.style.color = '';
+        }, 1500);
+      });
+    }
+  </script>
+</body>
+</html>

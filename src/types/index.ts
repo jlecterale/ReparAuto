@@ -4,7 +4,7 @@ export type {
 } from './carro';
 
 export type {
-  TipoPeca, FiltroTipoPeca,
+  TipoPeca, FiltroTipoPeca, PartCategory, CompatibilityEntry,
   Peca, PecaInput, PecaFormData,
 } from './peca';
 

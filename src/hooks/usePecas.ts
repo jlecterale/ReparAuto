@@ -1,11 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
-export default function usePecas() {
+// `active` controls the realtime subscription: routes that never render the
+// public parts list skip streaming the whole collection. Data from a previous
+// route is kept in state so navigating back doesn't flash empty.
+export default function usePecas(active: boolean = true) {
   const [pecas, setPecasState] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipoPeca>('todos');
@@ -18,6 +21,7 @@ export default function usePecas() {
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
 
   useEffect(() => {
+    if (!active) return;
     const unsub = subscribePecas(
       (data) => {
         setPecasState(data);
@@ -26,17 +30,21 @@ export default function usePecas() {
       () => setLoading(false),
     );
     return unsub;
-  }, []);
+  }, [active]);
 
-  const pecasFiltradas = useCallback(() => {
+  // Deferred so typing in the search box stays responsive while the
+  // filter pass runs at lower priority.
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  const pecasFiltradas = useMemo(() => {
     let lista = [...pecas];
 
     if (filtroTipo !== 'todos') {
       lista = lista.filter((p) => p.tipo === filtroTipo);
     }
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
+    if (deferredSearchTerm.trim()) {
+      const term = deferredSearchTerm.toLowerCase().trim();
       lista = lista.filter(
         (p) =>
           p.titulo.toLowerCase().includes(term) ||
@@ -73,7 +81,7 @@ export default function usePecas() {
     }
 
     return lista;
-  }, [pecas, filtroTipo, searchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -95,9 +103,10 @@ export default function usePecas() {
     [pecas]
   );
 
-  return {
+  // Stable object so context consumers only re-render when data changes.
+  return useMemo(() => ({
     pecas,
-    pecasFiltradas: pecasFiltradas(),
+    pecasFiltradas,
     loading,
     filtroTipo,
     setFiltroTipo,
@@ -118,6 +127,20 @@ export default function usePecas() {
     publicarPeca,
     eliminarPeca,
     getPecaPorId,
-    recarregar: async () => {},
-  };
+  }), [
+    pecas,
+    pecasFiltradas,
+    loading,
+    filtroTipo,
+    searchTerm,
+    filtroCategoria,
+    filtroEstado,
+    advDistrito,
+    advConcelho,
+    advRaioCentro,
+    advRaioKm,
+    publicarPeca,
+    eliminarPeca,
+    getPecaPorId,
+  ]);
 }

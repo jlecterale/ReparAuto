@@ -1,6 +1,8 @@
 'use client';
 
-import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
+import type { CategoriaIntencao } from '@/types/intencao';
+import type { TipoVeiculo } from '@/types/marcas-modelos';
 
 interface StepBasicoProps {
   criterios: {
@@ -10,39 +12,33 @@ interface StepBasicoProps {
     anoMaximo?: number;
   };
   onChange: (field: string, value: any) => void;
+  /** Categoria da intenção para filtrar marcas */
+  categoria?: CategoriaIntencao | null;
 }
 
-export default function StepBasico({ criterios, onChange }: StepBasicoProps) {
-  const { marcas, getModelos } = useMarcasModelos();
-  const modelos = criterios.marca ? getModelos(criterios.marca) : [];
+const CATEGORIA_PARA_TIPO: Record<string, TipoVeiculo> = {
+  carro: 'carro',
+  moto: 'moto',
+  viatura_comercial: 'caminhao',
+};
+
+export default function StepBasico({ criterios, onChange, categoria }: StepBasicoProps) {
+  const tipo = categoria ? CATEGORIA_PARA_TIPO[categoria] : undefined;
   const anoAtual = new Date().getFullYear();
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-xs font-bold text-fg mb-1.5">Marca <span className="text-accent">*</span></label>
-        <select
-          value={criterios.marca}
-          onChange={(e) => { onChange('criterios.marca', e.target.value); onChange('criterios.modelo', ''); }}
-          className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition cursor-pointer"
-        >
-          <option value="">Selecione a marca</option>
-          {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
-      </div>
-
-      <div>
-        <label className="block text-xs font-bold text-fg mb-1.5">Modelo <span className="text-accent">*</span></label>
-        <select
-          value={criterios.modelo}
-          onChange={(e) => onChange('criterios.modelo', e.target.value)}
-          disabled={!criterios.marca}
-          className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition cursor-pointer ${!criterios.marca ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : ''}`}
-        >
-          <option value="">{criterios.marca ? 'Selecione o modelo' : 'Selecione primeiro a marca'}</option>
-          {modelos.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
-      </div>
+      <SeletorMarcaModelo
+        tipo={tipo}
+        marca={criterios.marca}
+        modelo={criterios.modelo}
+        onChangeMarca={(m) => { onChange('criterios.marca', m); onChange('criterios.modelo', ''); }}
+        onChangeModelo={(m) => onChange('criterios.modelo', m)}
+        labelMarca="Marca"
+        labelModelo="Modelo"
+        placeholderMarca="Selecione a marca"
+        placeholderModelo="Selecione o modelo"
+      />
 
       <div className="grid grid-cols-2 gap-4">
         <div>

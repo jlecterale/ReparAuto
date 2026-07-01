@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 
-export default function useCarros() {
+// `active` controls the realtime subscription: routes that never render the
+// public car list skip streaming the whole collection. Data from a previous
+// route is kept in state so navigating back doesn't flash empty.
+export default function useCarros(active: boolean = true) {
   const [carros, setCarrosState] = useState<Carro[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroAtivo>('qualquer');
@@ -20,6 +23,7 @@ export default function useCarros() {
   const [sortOrdem, setSortOrdem] = useState<SortOrdem>(null);
 
   useEffect(() => {
+    if (!active) return;
     const unsub = subscribeCarros(
       (data) => {
         setCarrosState(data);
@@ -28,9 +32,13 @@ export default function useCarros() {
       () => setLoading(false),
     );
     return unsub;
-  }, []);
+  }, [active]);
 
-  const carrosFiltrados = useCallback(() => {
+  // Deferred so typing in the search box stays responsive while the
+  // filter pass runs at lower priority.
+  const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  const carrosFiltrados = useMemo(() => {
     let cs = [...carros];
 
     if (filtroAtivo === 'lowcost') {
@@ -43,8 +51,8 @@ export default function useCarros() {
       cs = cs.filter((c) => c.estadoVeiculo === 'manutencao');
     }
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase().trim();
       cs = cs.filter(
         (c) =>
           c.marca?.toLowerCase().includes(q) ||
@@ -84,7 +92,7 @@ export default function useCarros() {
     }
 
     return cs;
-  }, [carros, filtroAtivo, searchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
+  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -106,9 +114,10 @@ export default function useCarros() {
     [carros]
   );
 
-  return {
+  // Stable object so context consumers only re-render when data changes.
+  return useMemo(() => ({
     carros,
-    carrosFiltrados: carrosFiltrados(),
+    carrosFiltrados,
     loading,
     filtroAtivo,
     setFiltroAtivo,
@@ -131,6 +140,21 @@ export default function useCarros() {
     publicarCarro,
     eliminarCarro,
     getCarroPorId,
-    recarregar: async () => {},
-  };
+  }), [
+    carros,
+    carrosFiltrados,
+    loading,
+    filtroAtivo,
+    searchQuery,
+    advPriceMin,
+    advPriceMax,
+    advDistrito,
+    advConcelho,
+    advRaioCentro,
+    advRaioKm,
+    sortOrdem,
+    publicarCarro,
+    eliminarCarro,
+    getCarroPorId,
+  ]);
 }

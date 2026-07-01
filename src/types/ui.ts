@@ -40,7 +40,8 @@ export type ButtonTipo =
   | 'azul'
   | 'aviso'
   | 'escuro'
-  | 'ghost';
+  | 'ghost'
+  | 'premium';
 export type ButtonTamanho = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps

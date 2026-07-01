@@ -1,0 +1,44 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+/ios
+/android
+
+# iOS build artifacts (xcarchive, .ipa, generated ExportOptions.plist)
+/build
+
+# Metro
+.metro-health-check*
+
+# Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env
+.env
+.env.local
+# Keep the committed template (the root .gitignore ignores .env*)
+!.env.example
+
+# Firebase native credentials — NEVER commit real keys.
+# Keep the *.example templates; ignore the real files.
+firebase/google-services.json
+firebase/GoogleService-Info.plist
+
+# EAS
+.easignore
+
+# Release keystores live outside the repo (~/keystores). Never commit real upload keys.
+*.jks

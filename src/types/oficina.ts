@@ -28,6 +28,7 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
 export interface OficinaMecanico {
   id: string;
   criador: string; // Email do criador da oficina
+  criadorUid?: string;
   nome: string;
   descricao: string;
   responsavel: string;
@@ -44,10 +45,12 @@ export interface OficinaMecanico {
   };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
+  videoUrl?: string;
   fotos?: string[];
   status: 'pendente' | 'aprovado' | 'rejeitado';
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
+  contagemFavoritos?: number;
   dataCriacao?: Timestamp;
 }
 
