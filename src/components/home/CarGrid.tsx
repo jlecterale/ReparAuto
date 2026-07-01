@@ -1,7 +1,10 @@
 'use client';
 
-import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
+import { BellRinging, Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import KeywordAlertInput from '@/components/alertas/KeywordAlertInput';
+import SaveAlertButton from '@/components/alertas/SaveAlertButton';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
@@ -56,6 +59,7 @@ export default function CarGrid() {
 
   const { distritos, getConcelhos } = useDistritosConcelhos();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showKeywordAlert, setShowKeywordAlert] = useState(false);
   const [raioMode, setRaioMode] = useState(false);
   const [raioDist, setRaioDist] = useState('');
 
@@ -156,6 +160,17 @@ export default function CarGrid() {
               className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
             />
           </div>
+
+          {/* Keyword alert entry point (plan 3.1) */}
+          {tipo === 'carros' && searchQuery.trim().length >= 2 && (
+            <button
+              onClick={() => (user ? setShowKeywordAlert(true) : loginModal.openLoginModal('/'))}
+              className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
+            >
+              <BellRinging size={14} weight="bold" />
+              Criar alerta para &quot;{searchQuery.trim()}&quot;
+            </button>
+          )}
 
           {/* Search type select dropdown */}
           <div className="space-y-1">
@@ -312,8 +327,39 @@ export default function CarGrid() {
             >
               Limpar filtros
             </Button>
+
+            {/* Saved-filter alert (plan 3.1) */}
+            {tipo === 'carros' && (
+              <SaveAlertButton
+                uid={user?.uid}
+                filters={{
+                  texto: searchQuery || undefined,
+                  precoMin: advPriceMin ?? undefined,
+                  precoMax: advPriceMax ?? undefined,
+                  distrito: advDistrito || undefined,
+                  concelho: advConcelho || undefined,
+                }}
+                onRequireLogin={() => loginModal.openLoginModal('/')}
+              />
+            )}
           </div>
         </div>
+
+        <Modal
+          show={showKeywordAlert}
+          onClose={() => setShowKeywordAlert(false)}
+          titulo="Criar alerta de pesquisa"
+          tamanho="sm"
+        >
+          {user && (
+            <KeywordAlertInput
+              uid={user.uid}
+              initialKeyword={searchQuery.trim()}
+              categoria="carros"
+              onCreated={() => setShowKeywordAlert(false)}
+            />
+          )}
+        </Modal>
       </aside>
 
       {/* ============ RESULTS (right column) ============ */}

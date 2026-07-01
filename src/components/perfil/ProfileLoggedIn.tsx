@@ -18,7 +18,8 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import SellerBadges from '@/components/trust/SellerBadges';
 import VerificationRequest from '@/components/trust/VerificationRequest';
 import ReviewsList from '@/components/trust/ReviewsList';
-import NotificationPreferences from '@/components/perfil/NotificationPreferences';
+import NotificationPreferencesPanel from '@/components/alertas/NotificationPreferencesPanel';
+import AlertSubscriptionsList from '@/components/alertas/AlertSubscriptionsList';
 import useReviews from '@/hooks/useReviews';
 import useVerification from '@/hooks/useVerification';
 import type { Carro } from '@/types/carro';
@@ -322,7 +323,7 @@ export default function ProfileLoggedIn() {
         {user?.uid && (
           <div className="mt-4">
             <h4 className="text-xs font-bold text-fg-subtle uppercase tracking-wider mb-3">Preferências de Notificação</h4>
-            <NotificationPreferences uid={user.uid} />
+            <NotificationPreferencesPanel uid={user.uid} />
           </div>
         )}
       </div>
@@ -509,6 +510,16 @@ export default function ProfileLoggedIn() {
           </div>
         )}
       </div>
+
+      {/* My Alerts (plan 3.1) */}
+      {user && (
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+            <Bell className="text-accent" /> Meus Alertas
+          </h4>
+          <AlertSubscriptionsList uid={user.uid} />
+        </div>
+      )}
 
       {/* Verification */}
       {user && (
