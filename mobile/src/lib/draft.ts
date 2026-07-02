@@ -2,8 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type {
   BodyType,
   Cambio,
+  CategoriaIntencao,
   Combustivel,
   Condition,
+  ContatoPreferido,
+  EspecialidadeOficina,
   EstadoVeiculo,
   TipoPeca,
   Traction,
@@ -17,7 +20,7 @@ import type {
  * visible to the same uid, an anonymous draft is visible to anyone.
  */
 
-export type AdDraftKind = 'carro' | 'peca';
+export type AdDraftKind = 'carro' | 'peca' | 'oficina' | 'intencao';
 
 export interface AdDraft<T> {
   uid: string | null;
@@ -66,6 +69,39 @@ export interface PartDraftData {
   descricao: string;
   telefone: string;
   whatsapp: string;
+}
+
+/** Snapshot of the workshop registration form's raw state. */
+export interface WorkshopDraftData {
+  logo: string[];
+  nome: string;
+  responsavel: string;
+  telefone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  videoUrl: string;
+  distrito: string;
+  localidade: string;
+  morada: string;
+  descricao: string;
+  especialidades: EspecialidadeOficina[];
+}
+
+/** Snapshot of the purchase-intent form's raw state. */
+export interface IntentDraftData {
+  categoria: CategoriaIntencao;
+  titulo: string;
+  descricao: string;
+  marca: string;
+  modelo: string;
+  anoMin: string;
+  precoMax: string;
+  kmMax: string;
+  distrito: string;
+  combustivel: Combustivel[];
+  contato: ContatoPreferido;
+  telefone: string;
 }
 
 const keyFor = (kind: AdDraftKind) => `reparauto_ad_draft_${kind}`;

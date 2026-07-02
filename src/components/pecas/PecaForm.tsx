@@ -13,6 +13,7 @@ import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
 import { saveAdDraft, clearAdDraft, hasPartDraftContent } from '@/lib/adDraft';
+import pendingUploadFiles, { isRestorableFoto } from '@/lib/pendingUploadFiles';
 import type { CompatibilityEntry } from '@/types/peca';
 
 type PecaFormState = {
@@ -31,10 +32,12 @@ type PecaFormState = {
   vendedorEmail: string;
 };
 
-/** Serializable snapshot persisted as the part draft (photo excluded). */
+/** Serializable snapshot persisted as the part draft. */
 export interface PecaFormDraft {
   form: PecaFormState;
   compatibilidades: CompatibilityEntry[];
+  /** Photo URL; a blob: entry is only restorable within the same session. */
+  foto?: string | null;
 }
 
 interface PecaFormProps {
@@ -74,28 +77,29 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  // A drafted blob photo is only restorable while its backing File is still
+  // in the in-session registry (i.e. not after a page reload).
+  const draftFoto = draft?.foto && isRestorableFoto(draft.foto) ? draft.foto : null;
+  const [fotoFile, setFotoFile] = useState<File | null>(
+    () => (draftFoto ? pendingUploadFiles.get(draftFoto) ?? null : null),
+  );
+  const [fotoPreview, setFotoPreview] = useState<string | null>(draftFoto);
   const [fotoUploading, setFotoUploading] = useState(false);
   // Source image awaiting crop (object URL of the raw pick, or the current preview when re-editing).
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    return () => {
-      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
-    };
-  }, [fotoPreview]);
+  // The preview URL is deliberately NOT revoked on unmount: the draft keeps it
+  // alive in pendingUploadFiles so the photo survives leaving the page.
 
   // Autosave the draft (debounced) whenever the form holds real progress, so
   // leaving the page never loses what was typed. Cleared on publish.
   useEffect(() => {
     if (fotoUploading || !hasPartDraftContent(form, compatibilidades)) return;
     const timer = setTimeout(() => {
-      saveAdDraft('peca', { form, compatibilidades }, { uid: user?.uid ?? null });
+      saveAdDraft<PecaFormDraft>('peca', { form, compatibilidades, foto: fotoPreview }, { uid: user?.uid ?? null });
     }, 500);
     return () => clearTimeout(timer);
-  }, [form, compatibilidades, fotoUploading, user?.uid]);
+  }, [form, compatibilidades, fotoPreview, fotoUploading, user?.uid]);
 
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
@@ -162,7 +166,10 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         })
         .catch(() => {});
 
-      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+      if (fotoPreview) {
+        URL.revokeObjectURL(fotoPreview);
+        pendingUploadFiles.delete(fotoPreview);
+      }
 
       clearAdDraft('peca');
       setForm({
@@ -375,7 +382,10 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
               <button
                 type="button"
                 onClick={() => {
-                  if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+                  if (fotoPreview) {
+                    URL.revokeObjectURL(fotoPreview);
+                    pendingUploadFiles.delete(fotoPreview);
+                  }
                   setFotoPreview(null);
                   setFotoFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
@@ -424,9 +434,15 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
             onConfirm={(blob) => {
               const cropped = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
               if (cropSrc !== fotoPreview) URL.revokeObjectURL(cropSrc);
-              if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+              if (fotoPreview) {
+                URL.revokeObjectURL(fotoPreview);
+                pendingUploadFiles.delete(fotoPreview);
+              }
+              const previewUrl = URL.createObjectURL(cropped);
+              // Registered so the photo survives leaving the page (draft resume).
+              pendingUploadFiles.set(previewUrl, cropped);
               setFotoFile(cropped);
-              setFotoPreview(URL.createObjectURL(cropped));
+              setFotoPreview(previewUrl);
               setCropSrc(null);
             }}
           />
@@ -491,6 +507,10 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
       {erro && (
         <p className="text-xs text-red-500 font-semibold">{erro}</p>
       )}
+
+      <p className="text-[11px] text-fg-muted">
+        💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
+      </p>
 
       <div className="flex gap-3">
         {onCancel && (

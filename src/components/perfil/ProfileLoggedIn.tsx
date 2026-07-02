@@ -4,10 +4,11 @@ import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Hea
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
-import { loadAdDraft, clearAdDraft, type AdDraft } from '@/lib/adDraft';
+import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
 import type { PecaFormDraft } from '@/components/pecas/PecaForm';
+import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompra';
 import type { IntencaoCompra } from '@/types/intencao';
-import { formatarPreco } from '@/lib/utils';
+import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth as firebaseAuth } from '@/lib/firebase';
@@ -23,8 +24,44 @@ import ReviewsList from '@/components/trust/ReviewsList';
 import NotificationPreferences from '@/components/perfil/NotificationPreferences';
 import useReviews from '@/hooks/useReviews';
 import useVerification from '@/hooks/useVerification';
-import type { Carro, CarroFormData } from '@/types/carro';
+import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
+
+/** Card for a locally saved listing draft, with resume and discard actions. */
+function DraftCard({ titulo, savedAt, onContinue, onDiscard }: {
+  titulo: string;
+  savedAt: number;
+  onContinue: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-fg-heading text-sm">{titulo}</p>
+            <Badge cor="gray">Rascunho</Badge>
+          </div>
+          <p className="text-xs text-fg-subtle">
+            Por terminar · guardado apenas neste dispositivo em {new Date(savedAt).toLocaleDateString('pt-PT')}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button tipo="primario" tamanho="sm" onClick={onContinue}>
+            Continuar
+          </Button>
+          <button
+            onClick={onDiscard}
+            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+            title="Descartar rascunho"
+          >
+            <Trash className="text-xs" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function ProfileLoggedIn() {
   const { auth } = useApp();
@@ -39,8 +76,9 @@ export default function ProfileLoggedIn() {
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ tipo: 'carro' | 'peca'; id: string; titulo: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const [carDraft, setCarDraft] = useState<AdDraft<CarroFormData> | null>(null);
+  const [carDraft, setCarDraft] = useState<AdDraft<CarAdDraftData> | null>(null);
   const [partDraft, setPartDraft] = useState<AdDraft<PecaFormDraft> | null>(null);
+  const [intentDraft, setIntentDraft] = useState<AdDraft<IntencaoFormDraft> | null>(null);
   const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
   const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
   
@@ -148,13 +186,21 @@ export default function ProfileLoggedIn() {
 
   useEffect(() => { carregar(); }, [carregar]);
 
-  // Local listing drafts (saved by the anunciar flow) surface alongside the
+  // Local listing drafts (saved by the creation flows) surface alongside the
   // published listings so an unfinished ad is never forgotten.
   useEffect(() => {
     if (!user?.uid) return;
-    setCarDraft(loadAdDraft<CarroFormData>('carro', user.uid));
+    setCarDraft(loadAdDraft<CarAdDraftData>('carro', user.uid));
     setPartDraft(loadAdDraft<PecaFormDraft>('peca', user.uid));
+    setIntentDraft(loadAdDraft<IntencaoFormDraft>('intencao', user.uid));
   }, [user?.uid]);
+
+  const discardDraft = (kind: AdDraftKind) => {
+    clearAdDraft(kind);
+    if (kind === 'carro') setCarDraft(null);
+    else if (kind === 'peca') setPartDraft(null);
+    else if (kind === 'intencao') setIntentDraft(null);
+  };
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
     await updateCarro(id, { ...dados, status: 'pendente' });
@@ -352,37 +398,12 @@ export default function ProfileLoggedIn() {
         </h4>
 
         {carDraft && (
-          <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-bold text-fg-heading text-sm">
-                    {`${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro'}
-                  </p>
-                  <Badge cor="gray">Rascunho</Badge>
-                </div>
-                <p className="text-xs text-fg-subtle">
-                  Por terminar · guardado em {new Date(carDraft.savedAt).toLocaleDateString('pt-PT')}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  tipo="primario"
-                  tamanho="sm"
-                  onClick={() => router.push('/anunciar?tipo=carro&retomar=1')}
-                >
-                  Continuar
-                </Button>
-                <button
-                  onClick={() => { clearAdDraft('carro'); setCarDraft(null); }}
-                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                  title="Descartar rascunho"
-                >
-                  <Trash className="text-xs" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <DraftCard
+            titulo={`${carDraft.data.dados?.marca ?? ''} ${carDraft.data.dados?.modelo ?? ''}`.trim() || 'Anúncio de carro'}
+            savedAt={carDraft.savedAt}
+            onContinue={() => router.push('/anunciar?tipo=carro&retomar=1')}
+            onDiscard={() => discardDraft('carro')}
+          />
         )}
 
         {meusCarros.length === 0 ? (
@@ -455,37 +476,12 @@ export default function ProfileLoggedIn() {
         </h4>
 
         {partDraft && (
-          <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="font-bold text-fg-heading text-sm">
-                    {partDraft.data.form?.titulo || 'Anúncio de peça'}
-                  </p>
-                  <Badge cor="gray">Rascunho</Badge>
-                </div>
-                <p className="text-xs text-fg-subtle">
-                  Por terminar · guardado em {new Date(partDraft.savedAt).toLocaleDateString('pt-PT')}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button
-                  tipo="primario"
-                  tamanho="sm"
-                  onClick={() => router.push('/anunciar?tipo=peca&retomar=1')}
-                >
-                  Continuar
-                </Button>
-                <button
-                  onClick={() => { clearAdDraft('peca'); setPartDraft(null); }}
-                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                  title="Descartar rascunho"
-                >
-                  <Trash className="text-xs" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <DraftCard
+            titulo={partDraft.data.form?.titulo || 'Anúncio de peça'}
+            savedAt={partDraft.savedAt}
+            onContinue={() => router.push('/anunciar?tipo=peca&retomar=1')}
+            onDiscard={() => discardDraft('peca')}
+          />
         )}
 
         {minhasPecas.length === 0 ? (
@@ -544,6 +540,22 @@ export default function ProfileLoggedIn() {
         <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
           <MagnifyingGlass className="text-accent" /> Minhas Intenções de Compra
         </h4>
+        {intentDraft && (
+          <DraftCard
+            titulo={
+              intentDraft.data.form
+                ? gerarTituloIntencao({
+                    categoria: intentDraft.data.form.categoria || undefined,
+                    criterios: intentDraft.data.form.criterios,
+                    descricao: intentDraft.data.form.descricao,
+                  })
+                : 'Intenção de compra'
+            }
+            savedAt={intentDraft.savedAt}
+            onContinue={() => router.push('/comprar?retomar=1')}
+            onDiscard={() => discardDraft('intencao')}
+          />
+        )}
         {minhasIntencoes.length === 0 ? (
           <div className="flex flex-col items-center text-center py-6 text-fg-subtle text-sm bg-slate-50 rounded-xl">
             <p>Nenhuma intenção de compra ativa.</p>

@@ -1,10 +1,12 @@
 /**
  * Client-side persistence for in-progress listing forms ("rascunhos").
  *
- * A visitor who abandons the anunciar wizard mid-way keeps their typed data in
+ * A visitor who abandons a creation flow mid-way keeps their typed data in
  * localStorage (one draft per listing kind) and is offered to resume it the
- * next time they start an ad. Photos are NOT persisted — they live as blob
- * URLs backed by in-memory File objects and would blow the storage quota.
+ * next time they start that flow. Photo entries are persisted as their URL
+ * strings only — blob: URLs are backed by in-memory Files (see
+ * pendingUploadFiles.ts), so they survive route changes within a session but
+ * not a reload; loaders must filter dead entries on restore.
  *
  * Drafts are stamped with the author's uid so a shared browser never leaks a
  * draft across accounts: an owned draft is only visible to the same uid, an
@@ -16,7 +18,13 @@
 
 import type { CarroFormData } from '@/types/carro';
 
-export type AdDraftKind = 'carro' | 'peca';
+export type AdDraftKind = 'carro' | 'peca' | 'oficina' | 'intencao';
+
+/** Draft payload of the car wizard: form data plus the photo URL list. */
+export interface CarAdDraftData {
+  dados: CarroFormData;
+  fotos: string[];
+}
 
 export interface AdDraft<T = unknown> {
   uid: string | null;
@@ -85,4 +93,21 @@ export function hasPartDraftContent(
   compatibilidades: unknown[],
 ): boolean {
   return !!(form.titulo || form.preco || form.descricao || form.numeroOEM || compatibilidades.length);
+}
+
+/** Same idea for the workshop registration form (prefilled email excluded). */
+export function hasWorkshopDraftContent(
+  form: { nome: string; descricao: string; responsavel: string; morada: string },
+  especialidades: unknown[],
+): boolean {
+  return !!(form.nome || form.descricao || form.responsavel || form.morada || especialidades.length);
+}
+
+/** Same idea for the purchase-intent wizard. */
+export function hasIntentDraftContent(form: {
+  categoria: unknown;
+  descricao: string;
+  criterios: { marca: string };
+}): boolean {
+  return !!(form.categoria || form.criterios.marca || form.descricao);
 }

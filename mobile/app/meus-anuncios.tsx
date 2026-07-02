@@ -21,7 +21,15 @@ import {
   getPecasByCreator,
 } from '@/lib/db';
 import { deleteIntencao, getIntencoesByUser } from '@/lib/trust';
-import { clearAdDraft, loadAdDraft, type CarDraftData, type PartDraftData } from '@/lib/draft';
+import {
+  clearAdDraft,
+  loadAdDraft,
+  type AdDraftKind,
+  type CarDraftData,
+  type IntentDraftData,
+  type PartDraftData,
+  type WorkshopDraftData,
+} from '@/lib/draft';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 
@@ -76,35 +84,32 @@ export default function MeusAnunciosScreen() {
 
   const carregar = useCallback(async () => {
     if (!user?.email || !user?.uid) return;
-    const [carros, pecas, oficinas, intencoes, carDraft, partDraft] = await Promise.all([
-      getCarrosByCreator(user.email),
-      getPecasByCreator(user.email),
-      getOficinasByCreator(user.email),
-      getIntencoesByUser(user.uid),
-      loadAdDraft<CarDraftData>('carro', user.uid),
-      loadAdDraft<PartDraftData>('peca', user.uid),
-    ]);
+    const [carros, pecas, oficinas, intencoes, carDraft, partDraft, workshopDraft, intentDraft] =
+      await Promise.all([
+        getCarrosByCreator(user.email),
+        getPecasByCreator(user.email),
+        getOficinasByCreator(user.email),
+        getIntencoesByUser(user.uid),
+        loadAdDraft<CarDraftData>('carro', user.uid),
+        loadAdDraft<PartDraftData>('peca', user.uid),
+        loadAdDraft<WorkshopDraftData>('oficina', user.uid),
+        loadAdDraft<IntentDraftData>('intencao', user.uid),
+      ]);
+    const draftItem = (kind: Kind, titulo: string): Item => ({
+      kind,
+      id: 'draft',
+      draft: true,
+      titulo,
+      subtitulo: 'Guardado neste dispositivo — toque para continuar',
+      status: 'rascunho',
+    });
     const lista: Item[] = [
       ...(carDraft
-        ? [{
-            kind: 'carro' as const,
-            id: 'draft',
-            draft: true,
-            titulo: `${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro',
-            subtitulo: 'Por terminar — toque para continuar',
-            status: 'rascunho' as const,
-          }]
+        ? [draftItem('carro', `${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro')]
         : []),
-      ...(partDraft
-        ? [{
-            kind: 'peca' as const,
-            id: 'draft',
-            draft: true,
-            titulo: partDraft.data.titulo || 'Anúncio de peça',
-            subtitulo: 'Por terminar — toque para continuar',
-            status: 'rascunho' as const,
-          }]
-        : []),
+      ...(partDraft ? [draftItem('peca', partDraft.data.titulo || 'Anúncio de peça')] : []),
+      ...(workshopDraft ? [draftItem('oficina', workshopDraft.data.nome || 'Registo de oficina')] : []),
+      ...(intentDraft ? [draftItem('intencao', intentDraft.data.titulo || 'Procura')] : []),
       ...carros.map((c) => ({
         kind: 'carro' as const,
         id: c.id,
@@ -161,8 +166,11 @@ export default function MeusAnunciosScreen() {
 
   /** A draft has no detail page — opening it resumes the creation form. */
   function retomarRascunho(item: Item) {
-    const pathname = item.kind === 'carro' ? '/anunciar/carro' : '/anunciar/peca';
-    router.push({ pathname, params: { retomar: '1' } });
+    const retomar = { retomar: '1' };
+    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: retomar });
+    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: retomar });
+    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: retomar });
+    else router.push({ pathname: '/anunciar/intencao', params: retomar });
   }
 
   function abrir(item: Item) {
@@ -189,7 +197,7 @@ export default function MeusAnunciosScreen() {
           text: 'Descartar',
           style: 'destructive',
           onPress: async () => {
-            await clearAdDraft(item.kind as 'carro' | 'peca');
+            await clearAdDraft(item.kind as AdDraftKind);
             setItens((atual) => atual.filter((x) => !(x.draft && x.kind === item.kind)));
           },
         },
@@ -260,7 +268,7 @@ export default function MeusAnunciosScreen() {
               </View>
             )}
           </View>
-          {item.kind !== 'intencao' && (
+          {(item.kind !== 'intencao' || item.draft) && (
             <Pressable
               onPress={() => editar(item)}
               hitSlop={8}

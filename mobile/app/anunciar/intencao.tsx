@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +11,8 @@ import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { criarIntencao } from '@/lib/trust';
+import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { COMBUSTIVEIS } from '@/lib/constants';
 import {
   CATEGORIA_INTENCAO_LABELS,
@@ -31,6 +33,7 @@ const CONTACTO: { value: ContatoPreferido; label: string }[] = [
 ];
 
 export default function CriarIntencaoScreen() {
+  const { retomar } = useLocalSearchParams<{ retomar?: string }>();
   const { user } = useAuth();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
@@ -49,6 +52,42 @@ export default function CriarIntencaoScreen() {
   const [contato, setContato] = useState<ContatoPreferido>('chat');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [enviando, setEnviando] = useState(false);
+  // Set once the intent is submitted, so the leave guard steps aside.
+  const [finalizado, setFinalizado] = useState(false);
+
+  const draftData = useMemo<IntentDraftData>(
+    () => ({ categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone }),
+    [categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone],
+  );
+  // The prefilled phone doesn't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(titulo || descricao || marca || precoMax);
+
+  function restaurarRascunho(d: IntentDraftData) {
+    setCategoria(d.categoria ?? 'carro');
+    setTitulo(d.titulo ?? '');
+    setDescricao(d.descricao ?? '');
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setAnoMin(d.anoMin ?? '');
+    setPrecoMax(d.precoMax ?? '');
+    setKmMax(d.kmMax ?? '');
+    setDistrito(d.distrito ?? '');
+    setCombustivel(d.combustivel ?? []);
+    setContato(d.contato ?? 'chat');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+  }
+
+  useAdDraft<IntentDraftData>({
+    kind: 'intencao',
+    enabled: true,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted: finalizado,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'uma procura',
+    onRestore: restaurarRascunho,
+  });
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título (ex.: Procuro Golf diesel).';
@@ -91,6 +130,8 @@ export default function CriarIntencaoScreen() {
         vendedorWhatsApp: telefone.trim() || undefined,
         vendedorEmail: user.email,
       });
+      clearAdDraft('intencao');
+      setFinalizado(true);
       Alert.alert(
         'Procura enviada',
         'A sua procura foi submetida e ficará visível após aprovação.',
@@ -174,6 +215,9 @@ export default function CriarIntencaoScreen() {
         />
         <Text className="text-center text-xs text-fg-subtle">
           A procura fica visível após aprovação da equipa.
+        </Text>
+        <Text className="text-center text-xs text-fg-subtle">
+          💾 O progresso é guardado como rascunho apenas neste dispositivo.
         </Text>
       </ScrollView>
     </KeyboardAvoider>

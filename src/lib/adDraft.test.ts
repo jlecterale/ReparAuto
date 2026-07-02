@@ -4,6 +4,8 @@ import {
   clearAdDraft,
   hasCarDraftContent,
   hasPartDraftContent,
+  hasWorkshopDraftContent,
+  hasIntentDraftContent,
 } from '@/lib/adDraft';
 import type { CarroFormData } from '@/types/carro';
 
@@ -42,6 +44,13 @@ describe('ad draft persistence', () => {
     clearAdDraft('carro');
     expect(loadAdDraft('carro', 'uid1')).toBeNull();
     expect(loadAdDraft<{ titulo: string }>('peca', 'uid1')?.data.titulo).toBe('Farol');
+  });
+
+  it('round-trips workshop and purchase-intent drafts', () => {
+    saveAdDraft('oficina', { nome: 'Auto Silva' }, { uid: 'uid1' });
+    saveAdDraft('intencao', { form: { descricao: 'Golf' } }, { uid: 'uid1' });
+    expect(loadAdDraft<{ nome: string }>('oficina', 'uid1')?.data.nome).toBe('Auto Silva');
+    expect(loadAdDraft<{ form: { descricao: string } }>('intencao', 'uid1')?.data.form.descricao).toBe('Golf');
   });
 
   it('is cleared explicitly', () => {
@@ -104,5 +113,32 @@ describe('hasPartDraftContent', () => {
   it('is true once a meaningful field or compatibility is added', () => {
     expect(hasPartDraftContent({ ...empty, titulo: 'Farol' }, [])).toBe(true);
     expect(hasPartDraftContent(empty, [{ marca: 'BMW' }])).toBe(true);
+  });
+});
+
+describe('hasWorkshopDraftContent', () => {
+  const empty = { nome: '', descricao: '', responsavel: '', morada: '' };
+
+  it('is false for an untouched form', () => {
+    expect(hasWorkshopDraftContent(empty, [])).toBe(false);
+  });
+
+  it('is true once a meaningful field or specialty is added', () => {
+    expect(hasWorkshopDraftContent({ ...empty, nome: 'Auto Silva' }, [])).toBe(true);
+    expect(hasWorkshopDraftContent(empty, ['mecanica_geral'])).toBe(true);
+  });
+});
+
+describe('hasIntentDraftContent', () => {
+  const empty = { categoria: null, descricao: '', criterios: { marca: '' } };
+
+  it('is false for an untouched form', () => {
+    expect(hasIntentDraftContent(empty)).toBe(false);
+  });
+
+  it('is true once a category, brand or description is set', () => {
+    expect(hasIntentDraftContent({ ...empty, categoria: 'carro' })).toBe(true);
+    expect(hasIntentDraftContent({ ...empty, criterios: { marca: 'VW' } })).toBe(true);
+    expect(hasIntentDraftContent({ ...empty, descricao: 'Farol Clio' })).toBe(true);
   });
 });

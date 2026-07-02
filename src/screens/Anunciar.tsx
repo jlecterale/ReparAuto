@@ -9,14 +9,15 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
-import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft } from '@/lib/adDraft';
+import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
+import pendingUploadFiles, { isRestorableFoto } from '@/lib/pendingUploadFiles';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
 import PecaForm, { type PecaFormDraft } from '@/components/pecas/PecaForm';
-import Button from '@/components/ui/Button';
+import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
 import type { CarroFormData } from '@/types/carro';
 
 type CategoriaAnuncio = 'carro' | 'peca';
@@ -78,7 +79,9 @@ export default function Anunciar() {
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
-  const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  // Module-scope registry so picked files survive route changes in-session
+  // and a resumed draft can still upload them.
+  const pendingFilesRef = useRef(pendingUploadFiles);
   const [uploading, setUploading] = useState(false);
   const [dados, setDados] = useState<CarroFormData>(() => ({
     ...initialDados,
@@ -95,10 +98,19 @@ export default function Anunciar() {
 
   const applyDraft = (kind: CategoriaAnuncio, draft: AdDraft) => {
     if (kind === 'carro') {
-      setDados({ ...initialDados, ...(draft.data as Partial<CarroFormData>) });
-      // Photos aren't persisted (blob URLs), so resume at the photos step.
-      setPasso(1);
-      toast?.info('Rascunho recuperado. Adicione novamente as fotos.');
+      const data = draft.data as Partial<CarAdDraftData>;
+      setDados({ ...initialDados, ...data.dados });
+      // Blob photo URLs only survive within the same page session; drop the
+      // ones whose backing file is gone (e.g. after a reload).
+      const savedFotos = data.fotos ?? [];
+      const restoredFotos = savedFotos.filter(isRestorableFoto);
+      setFotos(restoredFotos);
+      if (restoredFotos.length < savedFotos.length) {
+        setPasso(1);
+        toast?.info('Rascunho recuperado. Algumas fotos expiraram — adicione-as novamente.');
+      } else {
+        setPasso(Math.min(Math.max(draft.step ?? 1, 1), restoredFotos.length ? 3 : 1));
+      }
     } else {
       setPecaDraft(draft.data as PecaFormDraft);
     }
@@ -111,7 +123,7 @@ export default function Anunciar() {
     const draft = loadAdDraft(categoria, user?.uid ?? null);
     if (!draft) return;
     // Never clobber progress the user already made in this visit.
-    if (categoria === 'carro' && hasCarDraftContent(dados)) return;
+    if (categoria === 'carro' && (hasCarDraftContent(dados) || fotos.length)) return;
     draftsHandledRef.current.add(categoria);
     if (retomarParam) {
       applyDraft(categoria, draft);
@@ -124,12 +136,12 @@ export default function Anunciar() {
   // Autosave the car wizard (debounced) whenever it holds real progress.
   useEffect(() => {
     if (categoria !== 'carro' || passo < 1 || publicado || draftPrompt) return;
-    if (!hasCarDraftContent(dados)) return;
+    if (!hasCarDraftContent(dados) && !fotos.length) return;
     const timer = setTimeout(() => {
-      saveAdDraft('carro', dados, { uid: user?.uid ?? null, step: passo });
+      saveAdDraft<CarAdDraftData>('carro', { dados, fotos }, { uid: user?.uid ?? null, step: passo });
     }, 500);
     return () => clearTimeout(timer);
-  }, [dados, passo, categoria, publicado, draftPrompt, user?.uid]);
+  }, [dados, fotos, passo, categoria, publicado, draftPrompt, user?.uid]);
 
   const handlePublicar = async () => {
     if (!user) {
@@ -281,7 +293,12 @@ export default function Anunciar() {
     <div className="max-w-2xl mx-auto page-enter">
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
         <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
-        <p className="text-fg-subtle text-sm mb-5">{subtitulo}</p>
+        <p className={`text-fg-subtle text-sm ${categoria === 'carro' && passo >= 1 ? 'mb-1' : 'mb-5'}`}>{subtitulo}</p>
+        {categoria === 'carro' && passo >= 1 && (
+          <p className="text-[11px] text-fg-muted mb-5">
+            💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
+          </p>
+        )}
 
         {passo === 0 && (
           <StepCategoria onSelect={(cat) => { setCategoria(cat); setPasso(1); }} />
@@ -332,36 +349,18 @@ export default function Anunciar() {
       </div>
 
       {draftPrompt && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl page-enter">
-            <h4 className="font-bold text-fg-heading mb-2">Continuar rascunho?</h4>
-            <p className="text-sm text-fg-muted mb-4">
-              Tem um anúncio de {draftPrompt.kind === 'carro' ? 'carro' : 'peça'} por terminar,
-              guardado em {new Date(draftPrompt.draft.savedAt).toLocaleDateString('pt-PT')}.
-              Quer continuar onde parou?
-            </p>
-            <div className="flex gap-2 justify-end">
-              <Button
-                tipo="secundario"
-                onClick={() => {
-                  clearAdDraft(draftPrompt.kind);
-                  setDraftPrompt(null);
-                }}
-              >
-                Descartar
-              </Button>
-              <Button
-                tipo="primario"
-                onClick={() => {
-                  applyDraft(draftPrompt.kind, draftPrompt.draft);
-                  setDraftPrompt(null);
-                }}
-              >
-                Continuar
-              </Button>
-            </div>
-          </div>
-        </div>
+        <DraftResumePrompt
+          itemLabel={draftPrompt.kind === 'carro' ? 'um anúncio de carro' : 'um anúncio de peça'}
+          savedAt={draftPrompt.draft.savedAt}
+          onDiscard={() => {
+            clearAdDraft(draftPrompt.kind);
+            setDraftPrompt(null);
+          }}
+          onResume={() => {
+            applyDraft(draftPrompt.kind, draftPrompt.draft);
+            setDraftPrompt(null);
+          }}
+        />
       )}
     </div>
   );

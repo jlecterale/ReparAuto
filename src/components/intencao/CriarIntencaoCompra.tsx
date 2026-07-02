@@ -1,14 +1,16 @@
 'use client';
 
 import { Check, CheckCircle } from '@phosphor-icons/react';
-import { Fragment, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Fragment, useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
+import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
 import { gerarTituloIntencao, validarIntencaoCompra } from '@/lib/utils';
 import { CATEGORIAS_INTENCAO } from '@/lib/constants';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { saveAdDraft, loadAdDraft, clearAdDraft, hasIntentDraftContent, type AdDraft } from '@/lib/adDraft';
 import type { CategoriaIntencao } from '@/types/intencao';
 import StepCategoria from './StepCategoria';
 import StepBasico from './StepBasico';
@@ -20,7 +22,7 @@ import StepResumo from './StepResumo';
 
 const STEPS = ['Categoria', 'Básico', 'Orçamento', 'Localização', 'Preferências', 'Contacto', 'Resumo'];
 
-interface FormState {
+export interface FormState {
   categoria: CategoriaIntencao | null;
   criterios: {
     marca: string;
@@ -47,6 +49,12 @@ interface FormState {
   contatoPreferido: 'chat' | 'whatsapp' | 'ambos';
   mostrarTelefone: boolean;
   descricao: string;
+}
+
+/** Serializable snapshot persisted as the purchase-intent draft. */
+export interface IntencaoFormDraft {
+  form: FormState;
+  passo: number;
 }
 
 const formInicial: FormState = {
@@ -77,7 +85,53 @@ export default function CriarIntencaoCompra() {
   const [sucesso, setSucesso] = useState(false);
   const { intencoes, auth } = useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1 to
+  // resume the saved draft directly, without re-asking.
+  const retomarParam = searchParams.get('retomar') === '1';
+
+  const [draftPrompt, setDraftPrompt] = useState<AdDraft<IntencaoFormDraft> | null>(null);
+  const draftHandledRef = useRef(false);
+
+  const applyDraft = (d: IntencaoFormDraft) => {
+    setForm({
+      ...formInicial,
+      ...d.form,
+      criterios: {
+        ...formInicial.criterios,
+        ...d.form?.criterios,
+        localizacao: { ...formInicial.criterios.localizacao, ...d.form?.criterios?.localizacao },
+      },
+    });
+    setPasso(Math.min(Math.max(d.passo ?? 0, 0), STEPS.length - 1));
+  };
+
+  // Offer to resume a saved draft. Re-runs when auth resolves, because an
+  // owned draft is invisible until the uid is known.
+  useEffect(() => {
+    if (sucesso || draftHandledRef.current) return;
+    const draft = loadAdDraft<IntencaoFormDraft>('intencao', auth.user?.uid ?? null);
+    if (!draft) return;
+    // Never clobber progress the user already made in this visit.
+    if (hasIntentDraftContent(form)) return;
+    draftHandledRef.current = true;
+    if (retomarParam) {
+      applyDraft(draft.data);
+    } else {
+      setDraftPrompt(draft);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.user?.uid, sucesso]);
+
+  // Autosave the draft (debounced) whenever the wizard holds real progress.
+  useEffect(() => {
+    if (sucesso || publicando || draftPrompt || !hasIntentDraftContent(form)) return;
+    const timer = setTimeout(() => {
+      saveAdDraft<IntencaoFormDraft>('intencao', { form, passo }, { uid: auth.user?.uid ?? null });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form, passo, sucesso, publicando, draftPrompt, auth.user?.uid]);
 
   const updateForm = (field: string, value: any) => {
     const keys = field.split('.');
@@ -161,6 +215,7 @@ export default function CriarIntencaoCompra() {
           `Uma nova intenção de compra foi publicada: ${titulo}.`,
           `/admin`);
       });
+      clearAdDraft('intencao');
       setSucesso(true);
       toast?.sucesso('Intenção de compra publicada com sucesso!');
     } catch (err: any) {
@@ -371,7 +426,12 @@ export default function CriarIntencaoCompra() {
           </>
         )}
 
-        <div className="flex justify-between mt-6 pt-4 border-t border-slate-200">
+        {passo > 0 && (
+          <p className="text-[11px] text-fg-muted mt-6">
+            💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
+          </p>
+        )}
+        <div className={`flex justify-between pt-4 border-t border-slate-200 ${passo > 0 ? 'mt-2' : 'mt-6'}`}>
           <Button
             tipo="terciario"
             onClick={() => setPasso(Math.max(0, passo - 1))}
@@ -400,6 +460,21 @@ export default function CriarIntencaoCompra() {
           )}
         </div>
       </div>
+
+      {draftPrompt && (
+        <DraftResumePrompt
+          itemLabel="uma intenção de compra"
+          savedAt={draftPrompt.savedAt}
+          onDiscard={() => {
+            clearAdDraft('intencao');
+            setDraftPrompt(null);
+          }}
+          onResume={() => {
+            applyDraft(draftPrompt.data);
+            setDraftPrompt(null);
+          }}
+        />
+      )}
     </div>
   );
 }
