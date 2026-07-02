@@ -80,6 +80,7 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
           Vista 360°
         </span>
         <button
+          type="button"
           onClick={onClose}
           aria-label="Fechar vista 360"
           className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition"
@@ -113,6 +114,7 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
 
         {/* Manual stepping for pointer devices / accessibility */}
         <button
+          type="button"
           onClick={() => stepFrame(-1)}
           aria-label="Rodar para a esquerda"
           className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
@@ -120,6 +122,7 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
           <CaretLeft className="text-2xl" />
         </button>
         <button
+          type="button"
           onClick={() => stepFrame(1)}
           aria-label="Rodar para a direita"
           className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"

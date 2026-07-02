@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Camera, CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
+import { ArrowsClockwise, Camera, CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
 import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { parseExternalImageUrl } from '@/lib/utils';
 import {
   getCaptureSequence,
+  getSpinAngles,
+  getSpinFrames,
   REQUIRED_SPIN_ANGLES,
   SPIN_ANGLE_LABELS,
   SPIN_ANGLE_ORDER,
+  toPhotoAngles,
   withoutPhoto,
   withPhotoAngle,
   withPhotoRenamed,
@@ -18,6 +21,7 @@ import { savePhotoFile, deletePhotoFiles } from '@/lib/draftPhotoStore';
 import Button from '@/components/ui/Button';
 import ImageCropper from '@/components/ui/ImageCropper';
 import GuidedSpinCapture from '@/components/anunciar/GuidedSpinCapture';
+import Spin360Viewer from '@/components/detalhes/Spin360Viewer';
 
 interface FotosEditorProps {
   fotos: string[];
@@ -78,6 +82,8 @@ export default function FotosEditor({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   // Guided 360 capture (camera with angle frame overlay).
   const [guidedOpen, setGuidedOpen] = useState(false);
+  // Drag-to-rotate preview of the tagged angles (same viewer as the detail page).
+  const [spinPreviewOpen, setSpinPreviewOpen] = useState(false);
   // "Add photo by URL" row.
   const [showUrlInput, setShowUrlInput] = useState(false);
   const [urlValue, setUrlValue] = useState('');
@@ -88,6 +94,11 @@ export default function FotosEditor({
   const tagAngles = !!(angleByPhoto && onAngleByPhotoChange);
   const taggedAngles = new Set(Object.values(angleByPhoto ?? {}));
   const missingRequired = REQUIRED_SPIN_ANGLES.filter((a) => !taggedAngles.has(a));
+  // Freeze the form tags exactly as publish does, so the preview shows what
+  // buyers will get (empty until the required angles are tagged).
+  const previewPhotoAngles = tagAngles ? toPhotoAngles(fotos, angleByPhoto ?? {}) : null;
+  const spinFrames = getSpinFrames(fotos, previewPhotoAngles);
+  const spinAngles = getSpinAngles(fotos, previewPhotoAngles);
 
   const setPhotoAngle = (foto: string, angle: SpinAngle | '') => {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
@@ -377,9 +388,20 @@ export default function FotosEditor({
           }`}
         >
           {missingRequired.length === 0 ? (
-            <span className="font-semibold">
-              ✓ Vista 360° ativa — os compradores vão poder rodar o veículo no anúncio.
-            </span>
+            <>
+              <span className="font-semibold">
+                ✓ Vista 360° ativa — os compradores vão poder rodar o veículo no anúncio.
+              </span>
+              {spinFrames.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSpinPreviewOpen(true)}
+                  className="mt-1.5 flex items-center gap-1.5 font-bold text-accent hover:text-accent-hover transition"
+                >
+                  <ArrowsClockwise size={14} weight="bold" /> Pré-visualizar a vista 360°
+                </button>
+              )}
+            </>
           ) : (
             <>
               <span className="font-semibold text-fg">
@@ -515,6 +537,13 @@ export default function FotosEditor({
           </button>
         ))}
       </div>
+
+      <Spin360Viewer
+        show={spinPreviewOpen}
+        onClose={() => setSpinPreviewOpen(false)}
+        frames={spinFrames}
+        angles={spinAngles}
+      />
 
       {guidedOpen && angleByPhoto && (
         <GuidedSpinCapture
