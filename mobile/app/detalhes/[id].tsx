@@ -16,6 +16,8 @@ import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
+import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
@@ -35,6 +37,7 @@ export default function DetalhesCarroScreen() {
   const [loading, setLoading] = useState(true);
   const [visorAberto, setVisorAberto] = useState(false);
   const [indiceVisor, setIndiceVisor] = useState(0);
+  const [spinAberto, setSpinAberto] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -69,6 +72,8 @@ export default function DetalhesCarroScreen() {
   }
 
   const fotos = carro.fotos?.length ? carro.fotos : [];
+  const spinFrames = getSpinFrames(fotos, carro.photoAngles);
+  const spinAngles = getSpinAngles(fotos, carro.photoAngles);
   const ehDono = !!carro.criadorUid && carro.criadorUid === user?.uid;
   const podeMensagem = !!carro.criadorUid && carro.criadorUid !== user?.uid;
 
@@ -137,6 +142,17 @@ export default function DetalhesCarroScreen() {
               <Ionicons name="expand-outline" size={13} color="#fff" />
               <Text className="text-xs font-semibold text-white">{fotos.length}</Text>
             </View>
+          )}
+          {spinFrames.length > 0 && (
+            <Pressable
+              onPress={() => setSpinAberto(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Abrir vista 360 graus"
+              className="absolute bottom-3 left-3 flex-row items-center gap-1 rounded-full bg-black/55 px-2.5 py-1 active:bg-black/70"
+            >
+              <Ionicons name="sync-outline" size={13} color="#fff" />
+              <Text className="text-xs font-bold text-white">360°</Text>
+            </Pressable>
           )}
         </View>
 
@@ -256,6 +272,13 @@ export default function DetalhesCarroScreen() {
         fotos={fotos}
         initialIndex={indiceVisor}
         onClose={() => setVisorAberto(false)}
+      />
+
+      <Spin360Viewer
+        visible={spinAberto}
+        frames={spinFrames}
+        angles={spinAngles}
+        onClose={() => setSpinAberto(false)}
       />
     </View>
   );

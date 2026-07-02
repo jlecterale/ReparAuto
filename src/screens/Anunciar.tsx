@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
+import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
@@ -81,6 +82,7 @@ export default function Anunciar() {
   const [publicado, setPublicado] = useState(false);
 
   const [fotos, setFotos] = useState<string[]>([]);
+  const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>({});
   // Module-scope registry so picked files survive route changes in-session
   // and a resumed draft can still upload them.
   const pendingFilesRef = useRef(pendingUploadFiles);
@@ -104,13 +106,21 @@ export default function Anunciar() {
     // Photos whose blob URL died (page reload) are recovered from IndexedDB
     // and re-keyed; anything unrecoverable is dropped with a notice.
     const savedFotos = draft.data.fotos ?? [];
-    void restoreDraftPhotos(savedFotos).then(({ fotos: restoredFotos, lostCount }) => {
+    void restoreDraftPhotos(savedFotos).then(({ fotos: restoredFotos, lostCount, renames }) => {
       setFotos(restoredFotos);
+      // Vista 360 tags are keyed by photo string — follow the re-keys and
+      // drop tags of photos that could not be restored.
+      const restoredTags = restoreAngleByPhoto(draft.data.angleByPhoto, renames, restoredFotos);
+      setAngleByPhoto(restoredTags);
       if (restoredFotos.some((foto, i) => foto !== savedFotos[i]) || lostCount > 0) {
         // Persist the re-keyed list right away — the stale blob URLs in the
         // stored draft no longer resolve to anything.
         const step = lostCount > 0 ? 1 : draft.data.step;
-        saveAdDraft<CarAdDraftData>('carro', { dados: dadosRestaurados, fotos: restoredFotos, step }, { uid: user?.uid ?? null });
+        saveAdDraft<CarAdDraftData>(
+          'carro',
+          { dados: dadosRestaurados, fotos: restoredFotos, angleByPhoto: restoredTags, step },
+          { uid: user?.uid ?? null },
+        );
       }
       if (lostCount > 0) {
         setPasso(1);
@@ -125,7 +135,10 @@ export default function Anunciar() {
     });
   };
 
-  const carSnapshot = useMemo<CarAdDraftData>(() => ({ dados, fotos, step: passo }), [dados, fotos, passo]);
+  const carSnapshot = useMemo<CarAdDraftData>(
+    () => ({ dados, fotos, angleByPhoto, step: passo }),
+    [dados, fotos, angleByPhoto, passo],
+  );
   const carDraft = useAdDraft<CarAdDraftData>({
     kind: 'carro',
     enabled: categoria === 'carro',
@@ -159,8 +172,9 @@ export default function Anunciar() {
     setUploading(true);
 
     try {
-      // Upload pending photos to Firebase Storage
-      const fotosFinais: string[] = (
+      // Upload pending photos to Firebase Storage, keeping the original →
+      // uploaded pairing so angle tags (keyed by photo string) can follow.
+      const fotosProcessadas = (
         await Promise.all(
           fotos.map(async (foto, index) => {
             if (foto.startsWith('blob:')) {
@@ -171,15 +185,18 @@ export default function Anunciar() {
                 const fileName = `${Date.now()}_${index}.${ext}`;
                 const downloadUrl = await uploadFileToStorage(file, folder, fileName);
                 void unregisterPendingFile(foto);
-                return downloadUrl;
+                return { original: foto, final: downloadUrl };
               }
               // blob sem ficheiro no Map → skip (não incluir no array)
               return null;
             }
-            return foto; // keep emoji or existing URL as-is
+            return { original: foto, final: foto }; // keep emoji or existing URL as-is
           }),
         )
-      ).filter((f): f is string => f !== null);
+      ).filter((f): f is { original: string; final: string } => f !== null);
+
+      const fotosFinais = fotosProcessadas.map((f) => f.final);
+      const photoAngles = buildPhotoAngles(fotosProcessadas, angleByPhoto);
 
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
@@ -189,6 +206,7 @@ export default function Anunciar() {
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
+        photoAngles: photoAngles ?? undefined,
         preco: Number(dados.preco),
         km: Number(dados.km),
         portas: Number(dados.portas),
@@ -245,19 +263,20 @@ export default function Anunciar() {
     setCategoria(null);
     setPasso(0);
     setFotos([]);
+    setAngleByPhoto({});
     setPecaDraft(null);
     const nextDados: CarroFormData = { ...dados, preco: '', descricao: '', videoUrl: '', tiposManutencao: [], features: [] };
     setDados(nextDados);
     // The kept fields (marca/modelo/…) are a convenience prefill, not user
     // progress — re-anchor the baseline so they don't autosave as a ghost
     // draft of the listing that was just published.
-    carDraft.resetBaseline({ dados: nextDados, fotos: [], step: 0 });
+    carDraft.resetBaseline({ dados: nextDados, fotos: [], angleByPhoto: {}, step: 0 });
   };
 
   if (publicado) {
     const isPeca = categoria === 'peca';
     return (
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="text-center py-6">
           <CheckCircle className="text-green-500 text-5xl mb-3" />
           <h3 className="text-xl font-extrabold text-fg-heading">Anúncio enviado!</h3>
@@ -301,7 +320,7 @@ export default function Anunciar() {
       : 'Preencha os dados abaixo';
 
   return (
-    <div className="max-w-2xl mx-auto page-enter">
+    <div className="max-w-3xl mx-auto page-enter">
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
         <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
         <p className={`text-fg-subtle text-sm ${categoria === 'carro' && passo >= 1 ? 'mb-1' : 'mb-5'}`}>{subtitulo}</p>
@@ -320,6 +339,8 @@ export default function Anunciar() {
                 fotos={fotos}
                 setFotos={setFotos}
                 filesRef={pendingFilesRef}
+                angleByPhoto={angleByPhoto}
+                onAngleByPhotoChange={setAngleByPhoto}
                 persistFiles
                 onNext={() => setPasso(2)}
                 onBack={() => { setCategoria(null); setPasso(0); }}

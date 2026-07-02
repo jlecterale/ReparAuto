@@ -18,13 +18,16 @@
  */
 
 import type { CarroFormData } from '@/types/carro';
+import type { SpinAngle } from '@/lib/spin360';
 
 export type AdDraftKind = 'carro' | 'peca' | 'oficina' | 'intencao';
 
-/** Draft payload of the car wizard: form data, photo URLs and wizard step. */
+/** Draft payload of the car wizard: form data, photo URLs, 360 angle tags and wizard step. */
 export interface CarAdDraftData {
   dados: CarroFormData;
   fotos: string[];
+  /** Vista 360 tags, keyed by photo string (restore re-keys them with the photos). */
+  angleByPhoto?: Record<string, SpinAngle>;
   step?: number;
 }
 

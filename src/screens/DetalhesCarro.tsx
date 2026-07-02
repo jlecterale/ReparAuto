@@ -1,14 +1,16 @@
 'use client';
 
-import { ArrowLeft, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsClockwise, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
+import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
+import Spin360Viewer from '@/components/detalhes/Spin360Viewer';
 import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
 import FinanciamentoSeguroWidget from '@/components/detalhes/FinanciamentoSeguroWidget';
@@ -34,6 +36,7 @@ export default function DetalhesCarro() {
   const [bloqueado, setBloqueado] = useState(false);
   const [galeriaAberta, setGaleriaAberta] = useState(false);
   const [indiceGaleria, setIndiceGaleria] = useState(0);
+  const [spinAberto, setSpinAberto] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -128,6 +131,8 @@ export default function DetalhesCarro() {
   }
 
   const isLowCost = carro.preco <= 2000;
+  const spinFrames = getSpinFrames(carro.fotos || [], carro.photoAngles);
+  const spinAngles = getSpinAngles(carro.fotos || [], carro.photoAngles);
 
   return (
     <div className="page-enter">
@@ -210,6 +215,15 @@ export default function DetalhesCarro() {
                     <ArrowsOut className="mr-1" /> Ver {carro.fotos.length} fotos
                   </span>
                 </div>
+              )}
+              {spinFrames.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSpinAberto(true); }}
+                  aria-label="Abrir vista 360 graus"
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-bold px-3 py-1.5 rounded-full transition"
+                >
+                  <ArrowsClockwise weight="bold" /> 360°
+                </button>
               )}
             </div>
             {carro.fotos.length > 1 && (
@@ -314,6 +328,13 @@ export default function DetalhesCarro() {
         onClose={() => setGaleriaAberta(false)}
         fotos={carro.fotos}
         indiceInicial={indiceGaleria}
+      />
+
+      <Spin360Viewer
+        show={spinAberto}
+        onClose={() => setSpinAberto(false)}
+        frames={spinFrames}
+        angles={spinAngles}
       />
     </div>
   );

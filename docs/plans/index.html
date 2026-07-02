@@ -1100,6 +1100,15 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-20" id="tab-20" onclick="switchTab('20')" tabindex="-1">
       <span class="tab-num">20</span> Brasil <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-21" id="tab-21" onclick="switchTab('21')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Recorte de Fotos <span class="priority-badge priority-implementado">FEITO</span>
+    </button></li>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-22" id="tab-22" onclick="switchTab('22')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Campos &amp; Filtros <span class="priority-badge priority-implementado">FEITO</span>
+    </button></li>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-23" id="tab-23" onclick="switchTab('23')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Vista 360&deg; <span class="priority-badge priority-implementado">FEITO</span>
+    </button></li>
   </ul>
 </nav>
 
@@ -1237,6 +1246,9 @@
           <tr><td>18</td><td>Integracao de APIs &amp; Parcerias</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>15-20 dias</td><td>Dados externos e parcerias</td></tr>
           <tr class="implemented"><td>19</td><td>App React Native (iOS &amp; Android)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~12 semanas</td><td>Presenca nativa nas lojas</td></tr>
           <tr><td>20</td><td>Expansao para o Brasil</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Novo mercado de lancamento</td></tr>
+          <tr class="implemented"><td>21</td><td>Recorte de Fotos nos Anuncios</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Fotos uniformes (4:3) em cards e galerias</td></tr>
+          <tr class="implemented"><td>22</td><td>Campos e Filtros Adicionais (Carros)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~4-6 dias</td><td>Anuncios mais completos e busca mais precisa</td></tr>
+          <tr class="implemented"><td>23</td><td>Vista 360&deg; dos Veiculos</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Rotacao interativa do veiculo, confianca do comprador</td></tr>
         </tbody>
       </table>
     </div>
@@ -1267,6 +1279,9 @@
 <div class="tab-panel" id="panel-18" role="tabpanel" aria-labelledby="tab-18"></div>
 <div class="tab-panel" id="panel-19" role="tabpanel" aria-labelledby="tab-19"></div>
 <div class="tab-panel" id="panel-20" role="tabpanel" aria-labelledby="tab-20"></div>
+<div class="tab-panel" id="panel-21" role="tabpanel" aria-labelledby="tab-21"></div>
+<div class="tab-panel" id="panel-22" role="tabpanel" aria-labelledby="tab-22"></div>
+<div class="tab-panel" id="panel-23" role="tabpanel" aria-labelledby="tab-23"></div>
 
 </main>
 
@@ -2250,6 +2265,20 @@ const extraPlans = [
     impact: 'Fotos uniformes (4:3) em cards e galerias, com girar/zoom/recortar no upload',
     summary: 'Editor de imagem (girar 90, zoom, arrastar e recortar para 4:3) acionado ao carregar ou editar fotos, tanto no site (canvas) como na app mobile (gesture-handler + reanimated + expo-image-manipulator).',
     evidence: 'Entregue — ImageCropper partilhado no FotosEditor/PecaForm (web) e no PhotoPicker (mobile).'
+  },
+  {
+    id: '22', title: 'Campos e Filtros Adicionais nos Anuncios de Carros (Web + Mobile)', priority: 'MEDIA', effort: '~4-6 dias',
+    implemented: true, file: '22-campos-filtros-anuncios-carros.md',
+    impact: 'Anuncios mais completos e busca mais precisa',
+    summary: 'Novos atributos do veiculo (categoria/carroceria, condicao, lugares, potencia, cilindrada, tracao, equipamento) no formulario, ficha tecnica e filtros da home, em ambas as plataformas.',
+    evidence: 'Entregue em a38ba03 (#39) — carSpecFilters, ChipSelect/MultiChipSelect, TechnicalSheet estendida.'
+  },
+  {
+    id: '23', title: 'Vista 360 graus dos Veiculos (Web + Mobile)', priority: 'MEDIA', effort: '~3-4 dias',
+    implemented: true, file: '23-vista-360-veiculos.md',
+    impact: 'Rotacao interativa do veiculo, mais confianca na compra a distancia',
+    summary: 'O vendedor marca o angulo de cada foto (frente, tras, laterais, diagonais); com os 4 angulos cardeais marcados, o anuncio ganha um viewer de arrastar-para-rodar (pointer events na web, gesture-handler no mobile), sem fotos extra nem dependencias novas.',
+    evidence: 'Entregue — src/lib/spin360.ts (+20 testes TDD), campo photoAngles em cars, seletor de angulo no FotosEditor/PhotoPicker, captura guiada com moldura (GuidedSpinCapture; expo-camera no mobile) e Spin360Viewer em ambas as plataformas.'
   }
 ];
 

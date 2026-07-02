@@ -83,6 +83,8 @@ export interface Carro {
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   fotos: string[];
+  /** Vehicle angle → index into `fotos`; enables the 360 spin viewer (see src/lib/spin360.ts). */
+  photoAngles?: Record<string, number> | null;
   criador: string;
   criadorUid?: string;
   vendedorNome?: string;
