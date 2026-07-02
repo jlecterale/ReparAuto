@@ -26,7 +26,7 @@ import type {
 import type { TipoNotificacao } from '@/types/notificacao';
 import type { SearchFilters } from '@/types/busca';
 
-export const MAX_ALERT_SUBSCRIPTIONS = 20;
+export const MAX_ALERT_SUBSCRIPTIONS = 10;
 export const MAX_ALERT_TEXT_LENGTH = 60;
 export const MIN_KEYWORD_LENGTH = 2;
 
@@ -158,13 +158,28 @@ export function sanitizeAlertSubscriptionInput(
     if (Object.keys(filters).length === 0) return null;
     return {
       tipo: 'filtro_salvo',
-      nome: nome || 'Filtro guardado',
+      nome: nome || defaultFilterAlertName(filters),
       ativo,
       filters,
     };
   }
 
   return null;
+}
+
+/** Short human label for a saved-filter alert when the user doesn't name it. */
+function defaultFilterAlertName(filters: SearchFilters): string {
+  const marcaModelo = [filters.marca, filters.modelo].filter(Boolean).join(' ');
+  const local = filters.concelho || filters.distrito;
+  const preco =
+    filters.precoMax !== undefined
+      ? `até ${filters.precoMax.toLocaleString('pt-PT')} €`
+      : filters.precoMin !== undefined
+        ? `desde ${filters.precoMin.toLocaleString('pt-PT')} €`
+        : undefined;
+  const parts = [filters.texto, marcaModelo, local, preco].filter(Boolean) as string[];
+  if (parts.length === 0) return 'Filtro guardado';
+  return sanitizeAlertText(parts.join(' · '), MAX_ALERT_TEXT_LENGTH);
 }
 
 function clampOptional(value: unknown, min: number, max: number): number | undefined {

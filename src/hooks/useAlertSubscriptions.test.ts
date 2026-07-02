@@ -6,6 +6,7 @@ import {
   subscribeAlertSubscriptions,
   updateAlertSubscription,
 } from '@/lib/db';
+import { MAX_ALERT_SUBSCRIPTIONS } from '@/lib/alerts';
 import type { AlertSubscription } from '@/types/alertas';
 
 jest.mock('@/lib/db', () => ({
@@ -76,6 +77,19 @@ describe('useAlertSubscriptions', () => {
     expect(mockAdd).toHaveBeenCalledWith('u1', expect.objectContaining({ keyword: 'golf' }));
   });
 
+  it('is not atLimit one below the cap', async () => {
+    let emit: (subs: AlertSubscription[]) => void = () => {};
+    mockSubscribe.mockImplementation((_uid, onData) => {
+      emit = onData;
+      return jest.fn();
+    });
+    const { result } = renderHook(() => useAlertSubscriptions('u1'));
+    const almost = Array.from({ length: MAX_ALERT_SUBSCRIPTIONS - 1 }, (_, i) => ({ ...alerta, id: `a${i}` }));
+    act(() => emit(almost as AlertSubscription[]));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.atLimit).toBe(false);
+  });
+
   it('exposes atLimit when the cap is reached', async () => {
     let emit: (subs: AlertSubscription[]) => void = () => {};
     mockSubscribe.mockImplementation((_uid, onData) => {
@@ -83,7 +97,7 @@ describe('useAlertSubscriptions', () => {
       return jest.fn();
     });
     const { result } = renderHook(() => useAlertSubscriptions('u1'));
-    const many = Array.from({ length: 20 }, (_, i) => ({ ...alerta, id: `a${i}` }));
+    const many = Array.from({ length: MAX_ALERT_SUBSCRIPTIONS }, (_, i) => ({ ...alerta, id: `a${i}` }));
     act(() => emit(many as AlertSubscription[]));
     await waitFor(() => expect(result.current.atLimit).toBe(true));
   });

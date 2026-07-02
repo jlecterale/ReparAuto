@@ -183,6 +183,37 @@ describe('sanitizeAlertSubscriptionInput — filtro_salvo', () => {
     ).toBeNull();
   });
 
+  it('derives a readable name from the filters when none is given', () => {
+    const result = sanitizeAlertSubscriptionInput({
+      tipo: 'filtro_salvo',
+      nome: '',
+      ativo: true,
+      filters: { marca: 'BMW', modelo: 'Série 3', concelho: 'Braga', precoMax: 25000 },
+    });
+    // pt-PT groups thousands with a non-breaking space (matches formatarPreco elsewhere).
+    expect(result?.nome).toBe('BMW Série 3 · Braga · até 25 000 €');
+  });
+
+  it('falls back to a generic name when the filters give no useful label', () => {
+    const result = sanitizeAlertSubscriptionInput({
+      tipo: 'filtro_salvo',
+      nome: '',
+      ativo: true,
+      filters: { rodando: true, minFotos: 2 },
+    });
+    expect(result?.nome).toBe('Filtro guardado');
+  });
+
+  it('keeps a user-supplied name instead of deriving one', () => {
+    const result = sanitizeAlertSubscriptionInput({
+      tipo: 'filtro_salvo',
+      nome: 'O meu filtro preferido',
+      ativo: true,
+      filters: { marca: 'BMW' },
+    });
+    expect(result?.nome).toBe('O meu filtro preferido');
+  });
+
   it('drops a texto shorter than the minimum keyword length', () => {
     const result = sanitizeAlertSubscriptionInput({
       tipo: 'filtro_salvo',
