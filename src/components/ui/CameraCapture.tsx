@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, Check, ArrowCounterClockwise, Warning } from '@phosphor-icons/react';
+import { centerCropRect } from '@/lib/cropImage';
 import Button from './Button';
 
 interface Props {
@@ -27,26 +28,26 @@ export default function CameraCapture({
   keepOpenAfterCapture = false,
 }: Props) {
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [currentFacingMode, setCurrentFacingMode] = useState<'user' | 'environment'>(facingMode);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Ref (not state) so camera toggles and the unmount cleanup always see the
+  // live stream instead of a stale closure.
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startCamera = async (mode: 'user' | 'environment') => {
-    // Stop any existing stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+
     try {
       setPermissionState('prompt');
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
-      setStream(newStream);
+      streamRef.current = newStream;
       setPermissionState('granted');
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
@@ -60,11 +61,20 @@ export default function CameraCapture({
   useEffect(() => {
     startCamera(currentFacingMode);
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFacingMode]);
+
+  // The <video> unmounts while a capture is being reviewed (the preview <img>
+  // replaces it) and on the permission screens — reattach the stream whenever
+  // it comes back, or multi-shot flows go black after the first photo.
+  useEffect(() => {
+    if (permissionState === 'granted' && !capturedDataUrl && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [permissionState, capturedDataUrl]);
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -74,21 +84,12 @@ export default function CameraCapture({
       if (ctx) {
         // Center-crop the source frame to cropAspect (when set) so the saved
         // photo matches the on-screen guide frame.
-        let sx = 0;
-        let sy = 0;
-        let sw = video.videoWidth;
-        let sh = video.videoHeight;
-        if (cropAspect && sw > 0 && sh > 0) {
-          if (sw / sh > cropAspect) {
-            sw = Math.round(sh * cropAspect);
-            sx = Math.round((video.videoWidth - sw) / 2);
-          } else {
-            sh = Math.round(sw / cropAspect);
-            sy = Math.round((video.videoHeight - sh) / 2);
-          }
-        }
-        canvas.width = sw;
-        canvas.height = sh;
+        const src =
+          cropAspect && video.videoWidth > 0 && video.videoHeight > 0
+            ? centerCropRect(video.videoWidth, video.videoHeight, cropAspect)
+            : { x: 0, y: 0, width: video.videoWidth, height: video.videoHeight };
+        canvas.width = src.width;
+        canvas.height = src.height;
 
         // If front camera is active, flip horizontally to match preview mirror effect
         if (currentFacingMode === 'user') {
@@ -96,7 +97,7 @@ export default function CameraCapture({
           ctx.scale(-1, 1);
         }
 
-        ctx.drawImage(video, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, src.x, src.y, src.width, src.height, 0, 0, canvas.width, canvas.height);
 
         // Reset scale/translate just in case
         ctx.setTransform(1, 0, 0, 1, 0, 0);

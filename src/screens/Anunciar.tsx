@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
-import { toPhotoAngles, type SpinAngle } from '@/lib/spin360';
+import { buildPhotoAngles, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -118,12 +118,7 @@ export default function Anunciar() {
       ).filter((f): f is { original: string; final: string } => f !== null);
 
       const fotosFinais = fotosProcessadas.map((f) => f.final);
-      const uploadedAngleByPhoto: Record<string, SpinAngle> = {};
-      for (const { original, final } of fotosProcessadas) {
-        const angle = angleByPhoto[original];
-        if (angle) uploadedAngleByPhoto[final] = angle;
-      }
-      const photoAngles = toPhotoAngles(fotosFinais, uploadedAngleByPhoto);
+      const photoAngles = buildPhotoAngles(fotosProcessadas, angleByPhoto);
 
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
@@ -133,7 +128,7 @@ export default function Anunciar() {
         coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
-        photoAngles: Object.keys(photoAngles).length > 0 ? photoAngles : undefined,
+        photoAngles: photoAngles ?? undefined,
         preco: Number(dados.preco),
         km: Number(dados.km),
         portas: Number(dados.portas),

@@ -19,6 +19,9 @@ import {
   REQUIRED_SPIN_ANGLES,
   SPIN_ANGLE_LABELS,
   SPIN_ANGLE_ORDER,
+  withoutPhoto,
+  withPhotoAngle,
+  withPhotoRenamed,
   type SpinAngle,
 } from '@/lib/spin360';
 import { colors } from '@/theme/colors';
@@ -56,36 +59,23 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
 
   function setPhotoAngle(foto: string, angle: SpinAngle | null) {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
-    const next = { ...angleByPhoto };
-    // Each angle belongs to a single photo — retagging steals it.
-    for (const [f, a] of Object.entries(next)) {
-      if (a === angle || f === foto) delete next[f];
-    }
-    if (angle) next[foto] = angle;
-    onAngleByPhotoChange(next);
+    onAngleByPhotoChange(withPhotoAngle(angleByPhoto, foto, angle));
   }
 
   function dropPhotoAngle(foto: string) {
-    if (!angleByPhoto || !onAngleByPhotoChange || !(foto in angleByPhoto)) return;
-    const next = { ...angleByPhoto };
-    delete next[foto];
-    onAngleByPhotoChange(next);
+    if (!angleByPhoto || !onAngleByPhotoChange) return;
+    onAngleByPhotoChange(withoutPhoto(angleByPhoto, foto));
   }
 
   function movePhotoAngle(from: string, to: string) {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
-    const angle = angleByPhoto[from];
-    if (!angle) return;
-    const next = { ...angleByPhoto };
-    delete next[from];
-    next[to] = angle;
-    onAngleByPhotoChange(next);
+    onAngleByPhotoChange(withPhotoRenamed(angleByPhoto, from, to));
   }
 
   function handleGuidedCapture(uri: string, angle: SpinAngle) {
-    if (fotos.length >= max || !angleByPhoto || !onAngleByPhotoChange) return;
-    onChange([...fotos, uri].slice(0, max));
-    onAngleByPhotoChange({ ...angleByPhoto, [uri]: angle });
+    if (fotos.length >= max) return;
+    onChange([...fotos, uri]);
+    setPhotoAngle(uri, angle);
   }
 
   // Freshly-picked images awaiting crop, processed one at a time.
@@ -471,9 +461,8 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
         </View>
       </BottomSheet>
 
-      {tagAngles && (
+      {tagAngles && guidedOpen && (
         <GuidedSpinCapture
-          visible={guidedOpen}
           angleByPhoto={angleByPhoto ?? {}}
           remainingSlots={restantes}
           onCapture={handleGuidedCapture}

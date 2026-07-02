@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, G, Rect } from 'react-native-svg';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { Button } from '@/components/ui/Button';
+import { centerCropRect } from '@/lib/images';
 import {
   getCaptureSequence,
   REQUIRED_SPIN_ANGLES,
@@ -20,7 +21,6 @@ import { colors } from '@/theme/colors';
 const OUTPUT_WIDTH = 1600;
 
 interface GuidedSpinCaptureProps {
-  visible: boolean;
   /** Current form tags — angles already photographed are skipped. */
   angleByPhoto: Record<string, SpinAngle>;
   /** How many photos can still be added to the listing. */
@@ -57,7 +57,6 @@ function CapturePositionDiagram({ angle }: { angle: SpinAngle }) {
  * (Mirror of the web GuidedSpinCapture; needs expo-camera for the overlay.)
  */
 export function GuidedSpinCapture({
-  visible,
   angleByPhoto,
   remainingSlots,
   onCapture,
@@ -68,35 +67,23 @@ export function GuidedSpinCapture({
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
 
-  // The tour is frozen when it opens; skipped angles are not re-offered.
-  const [sequence, setSequence] = useState<SpinAngle[]>([]);
+  // The tour is frozen when the modal mounts; skipped angles are not re-offered.
+  const [sequence] = useState(() => getCaptureSequence(angleByPhoto));
   const [step, setStep] = useState(0);
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setSequence(getCaptureSequence(angleByPhoto));
-      setStep(0);
-      setPreviewUri(null);
-      setBusy(false);
-    }
-    // Recomputing on every tag change would re-offer skipped angles mid-tour.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  useEffect(() => {
-    if (visible && (remainingSlots <= 0 || (sequence.length > 0 && step >= sequence.length))) {
-      onClose();
-    }
-  }, [visible, remainingSlots, step, sequence.length, onClose]);
-
   const angle = sequence[step];
-  if (!visible || !angle || remainingSlots <= 0) return null;
+  if (!angle || remainingSlots <= 0) return null;
 
   const isRequired = REQUIRED_SPIN_ANGLES.includes(angle);
   const frameW = width - 24;
   const frameH = frameW / LISTING_PHOTO_ASPECT;
+
+  const advance = () => {
+    if (step + 1 >= sequence.length) onClose();
+    else setStep(step + 1);
+  };
 
   async function takePhoto() {
     if (busy || !cameraRef.current) return;
@@ -104,16 +91,10 @@ export function GuidedSpinCapture({
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.9 });
       // Center-crop to the listing aspect so the saved photo matches the frame.
-      const cropW = Math.min(photo.width, Math.round(photo.height * LISTING_PHOTO_ASPECT));
-      const cropH = Math.min(photo.height, Math.round(cropW / LISTING_PHOTO_ASPECT));
+      const rect = centerCropRect(photo.width, photo.height, LISTING_PHOTO_ASPECT);
       const ref = await ImageManipulator.manipulate(photo.uri)
-        .crop({
-          originX: Math.round((photo.width - cropW) / 2),
-          originY: Math.round((photo.height - cropH) / 2),
-          width: cropW,
-          height: cropH,
-        })
-        .resize({ width: Math.min(OUTPUT_WIDTH, cropW) })
+        .crop({ originX: rect.x, originY: rect.y, width: rect.width, height: rect.height })
+        .resize({ width: Math.min(OUTPUT_WIDTH, rect.width) })
         .renderAsync();
       const saved = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.82 });
       setPreviewUri(saved.uri);
@@ -128,7 +109,8 @@ export function GuidedSpinCapture({
     if (!previewUri) return;
     onCapture(previewUri, angle);
     setPreviewUri(null);
-    setStep((s) => s + 1);
+    if (remainingSlots <= 1) onClose();
+    else advance();
   }
 
   return (
@@ -220,7 +202,7 @@ export function GuidedSpinCapture({
                 )}
               </Pressable>
               <Pressable
-                onPress={() => setStep((s) => s + 1)}
+                onPress={advance}
                 accessibilityRole="button"
                 className="rounded-full bg-white/15 px-4 py-2 active:bg-white/25"
               >

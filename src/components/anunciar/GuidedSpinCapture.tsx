@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import CameraCapture from '@/components/ui/CameraCapture';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import {
@@ -56,19 +56,23 @@ export default function GuidedSpinCapture({
   const [sequence] = useState(() => getCaptureSequence(angleByPhoto));
   const [step, setStep] = useState(0);
 
-  useEffect(() => {
-    if (remainingSlots <= 0 || step >= sequence.length) onClose();
-  }, [remainingSlots, step, sequence.length, onClose]);
-
   const angle = sequence[step];
   if (!angle || remainingSlots <= 0) return null;
 
   const isRequired = REQUIRED_SPIN_ANGLES.includes(angle);
 
+  const advance = () => {
+    if (step + 1 >= sequence.length) onClose();
+    else setStep(step + 1);
+  };
+
   const overlay = (
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-      {/* Framing guide matching the captured 4:3 area */}
-      <div className="relative w-full aspect-[4/3] max-h-full border-2 border-dashed border-white/50 rounded-xl">
+      {/* Framing guide matching the captured area (same aspect as the crop) */}
+      <div
+        style={{ aspectRatio: LISTING_PHOTO_ASPECT }}
+        className="relative w-full max-h-full border-2 border-dashed border-white/50 rounded-xl"
+      >
         <div className="absolute top-2 left-2 right-2 flex items-start justify-between gap-2">
           <div className="bg-black/55 rounded-lg px-2.5 py-1.5">
             <p className="text-white text-sm font-extrabold">{SPIN_ANGLE_LABELS[angle]}</p>
@@ -83,7 +87,7 @@ export default function GuidedSpinCapture({
         </p>
         <button
           type="button"
-          onClick={() => setStep((s) => s + 1)}
+          onClick={advance}
           className="absolute bottom-2 left-1/2 -translate-x-1/2 pointer-events-auto text-white text-xs font-bold bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-full transition"
         >
           {step + 1 >= sequence.length ? 'Concluir' : 'Saltar este ângulo →'}
@@ -100,7 +104,8 @@ export default function GuidedSpinCapture({
       keepOpenAfterCapture
       onCapture={(file) => {
         onCapture(file, angle);
-        setStep((s) => s + 1);
+        if (remainingSlots <= 1) onClose();
+        else advance();
       }}
       onClose={onClose}
     />

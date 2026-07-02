@@ -9,6 +9,9 @@ import {
   REQUIRED_SPIN_ANGLES,
   SPIN_ANGLE_LABELS,
   SPIN_ANGLE_ORDER,
+  withoutPhoto,
+  withPhotoAngle,
+  withPhotoRenamed,
   type SpinAngle,
 } from '@/lib/spin360';
 import Button from '@/components/ui/Button';
@@ -80,39 +83,24 @@ export default function FotosEditor({
 
   const setPhotoAngle = (foto: string, angle: SpinAngle | '') => {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
-    const next = { ...angleByPhoto };
-    // Each angle belongs to a single photo — retagging steals it.
-    for (const [f, a] of Object.entries(next)) {
-      if (a === angle || f === foto) delete next[f];
-    }
-    if (angle) next[foto] = angle;
-    onAngleByPhotoChange(next);
+    onAngleByPhotoChange(withPhotoAngle(angleByPhoto, foto, angle || null));
   };
 
   const dropPhotoAngle = (foto: string) => {
-    if (!angleByPhoto || !onAngleByPhotoChange || !(foto in angleByPhoto)) return;
-    const next = { ...angleByPhoto };
-    delete next[foto];
-    onAngleByPhotoChange(next);
+    if (!angleByPhoto || !onAngleByPhotoChange) return;
+    onAngleByPhotoChange(withoutPhoto(angleByPhoto, foto));
   };
 
   const movePhotoAngle = (from: string, to: string) => {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
-    const angle = angleByPhoto[from];
-    if (!angle) return;
-    const next = { ...angleByPhoto };
-    delete next[from];
-    next[to] = angle;
-    onAngleByPhotoChange(next);
+    onAngleByPhotoChange(withPhotoRenamed(angleByPhoto, from, to));
   };
 
   const handleGuidedCapture = (file: File, angle: SpinAngle) => {
     if (fotos.length >= max) return;
     const { url } = blobToFile(file);
     setFotos([...fotos, url]);
-    if (angleByPhoto && onAngleByPhotoChange) {
-      onAngleByPhotoChange({ ...angleByPhoto, [url]: angle });
-    }
+    setPhotoAngle(url, angle);
   };
 
   // Revoke transient crop-source URLs if the flow is abandoned (component unmounts

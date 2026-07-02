@@ -14,7 +14,7 @@ import {
 } from '@/lib/constants';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
 import { toggleInList, parsePositiveInt } from '@/lib/utils';
-import { toAngleByPhoto, toPhotoAngles, type SpinAngle } from '@/lib/spin360';
+import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
@@ -78,8 +78,9 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const handleSave = async () => {
     setSaving(true);
     try {
-      const finalAngleByPhoto: Record<string, SpinAngle> = { ...angleByPhoto };
-      const fotosFinais: string[] = await Promise.all(
+      // original → uploaded pairs so angle tags (keyed by photo string) can
+      // follow each photo to its storage URL.
+      const fotosProcessadas = await Promise.all(
         fotos.map(async (foto, index) => {
           if (foto.startsWith('blob:')) {
             const file = pendingFilesRef.current.get(foto);
@@ -90,19 +91,14 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
               const downloadUrl = await uploadFileToStorage(file, folder, fileName);
               URL.revokeObjectURL(foto);
               pendingFilesRef.current.delete(foto);
-              // Angle tags follow the photo from its blob URL to the uploaded URL.
-              const angle = finalAngleByPhoto[foto];
-              if (angle) {
-                delete finalAngleByPhoto[foto];
-                finalAngleByPhoto[downloadUrl] = angle;
-              }
-              return downloadUrl;
+              return { original: foto, final: downloadUrl };
             }
           }
-          return foto;
+          return { original: foto, final: foto };
         }),
       );
-      const photoAngles = toPhotoAngles(fotosFinais, finalAngleByPhoto);
+      const fotosFinais = fotosProcessadas.map((f) => f.final);
+      const photoAngles = buildPhotoAngles(fotosProcessadas, angleByPhoto);
 
       await onSave(carro.id, {
         marca: form.marca,
@@ -131,7 +127,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         videoUrl: form.videoUrl.trim() || null,
         estadoVeiculo: form.estadoVeiculo,
         fotos: fotosFinais,
-        photoAngles: Object.keys(photoAngles).length > 0 ? photoAngles : null,
+        photoAngles,
       });
       onClose();
     } catch (err) {

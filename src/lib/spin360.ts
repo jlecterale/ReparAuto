@@ -58,13 +58,26 @@ export const SPIN_ANGLE_LABELS: Record<SpinAngle, string> = {
 /** Angle → index into the listing's `fotos` array, as persisted in Firestore. */
 export type PhotoAngles = Record<string, number>;
 
-function isValidPhotoIndex(index: number | undefined, totalFotos: number): index is number {
-  return typeof index === 'number' && Number.isInteger(index) && index >= 0 && index < totalFotos;
+// Listing photos may also be emoji placeholders; a spin frame must be a real
+// image (URL, path or data/blob URI — anything with a dot, slash or scheme).
+function isImageFoto(foto: string | undefined): foto is string {
+  return typeof foto === 'string' && (/[./]/.test(foto) || foto.startsWith('data:') || foto.startsWith('blob:'));
 }
 
-export function isSpinEnabled(photoAngles: PhotoAngles | null | undefined, totalFotos: number): boolean {
+function isValidPhotoTag(photoAngles: PhotoAngles, angle: SpinAngle, fotos: string[]): boolean {
+  const index = photoAngles[angle];
+  return (
+    typeof index === 'number' &&
+    Number.isInteger(index) &&
+    index >= 0 &&
+    index < fotos.length &&
+    isImageFoto(fotos[index])
+  );
+}
+
+export function isSpinEnabled(photoAngles: PhotoAngles | null | undefined, fotos: string[]): boolean {
   if (!photoAngles) return false;
-  return REQUIRED_SPIN_ANGLES.every((angle) => isValidPhotoIndex(photoAngles[angle], totalFotos));
+  return REQUIRED_SPIN_ANGLES.every((angle) => isValidPhotoTag(photoAngles, angle, fotos));
 }
 
 /** How many pixels of horizontal drag advance the spin by one frame. */
@@ -96,8 +109,72 @@ export function getSpinFrames(fotos: string[], photoAngles: PhotoAngles | null |
 
 /** The angle of each frame returned by getSpinFrames, in the same order. */
 export function getSpinAngles(fotos: string[], photoAngles: PhotoAngles | null | undefined): SpinAngle[] {
-  if (!photoAngles || !isSpinEnabled(photoAngles, fotos.length)) return [];
-  return SPIN_ANGLE_ORDER.filter((angle) => isValidPhotoIndex(photoAngles[angle], fotos.length));
+  if (!photoAngles || !isSpinEnabled(photoAngles, fotos)) return [];
+  return SPIN_ANGLE_ORDER.filter((angle) => isValidPhotoTag(photoAngles, angle, fotos));
+}
+
+/**
+ * Form-state invariant helpers shared by the web and mobile photo editors:
+ * each angle belongs to exactly one photo.
+ */
+export function withPhotoAngle(
+  angleByPhoto: Record<string, SpinAngle>,
+  foto: string,
+  angle: SpinAngle | null
+): Record<string, SpinAngle> {
+  const next = { ...angleByPhoto };
+  // Retagging steals the angle from whichever photo held it.
+  for (const [f, a] of Object.entries(next)) {
+    if (a === angle || f === foto) delete next[f];
+  }
+  if (angle) next[foto] = angle;
+  return next;
+}
+
+/** Drops the tag of a removed photo. */
+export function withoutPhoto(
+  angleByPhoto: Record<string, SpinAngle>,
+  foto: string
+): Record<string, SpinAngle> {
+  if (!(foto in angleByPhoto)) return angleByPhoto;
+  const next = { ...angleByPhoto };
+  delete next[foto];
+  return next;
+}
+
+/** Moves a tag when a photo string changes (re-crop, upload). */
+export function withPhotoRenamed(
+  angleByPhoto: Record<string, SpinAngle>,
+  from: string,
+  to: string
+): Record<string, SpinAngle> {
+  const angle = angleByPhoto[from];
+  if (!angle) return angleByPhoto;
+  const next = { ...angleByPhoto };
+  delete next[from];
+  next[to] = angle;
+  return next;
+}
+
+/**
+ * Publish-time freeze: follows tags through upload pairs (photo string
+ * changes blob/local URI → storage URL) and converts them to the persisted
+ * angle → index map. Returns null when empty so both addDoc and updateDoc
+ * callers can store a Firestore-friendly value.
+ */
+export function buildPhotoAngles(
+  pairs: { original: string; final: string }[],
+  angleByPhoto: Record<string, SpinAngle>
+): PhotoAngles | null {
+  let uploaded = angleByPhoto;
+  for (const { original, final } of pairs) {
+    if (original !== final) uploaded = withPhotoRenamed(uploaded, original, final);
+  }
+  const photoAngles = toPhotoAngles(
+    pairs.map((p) => p.final),
+    uploaded
+  );
+  return Object.keys(photoAngles).length > 0 ? photoAngles : null;
 }
 
 /**
@@ -130,8 +207,7 @@ export function toAngleByPhoto(
   const angleByPhoto: Record<string, SpinAngle> = {};
   if (!photoAngles) return angleByPhoto;
   for (const angle of SPIN_ANGLE_ORDER) {
-    const index = photoAngles[angle];
-    if (isValidPhotoIndex(index, fotos.length)) angleByPhoto[fotos[index]] = angle;
+    if (isValidPhotoTag(photoAngles, angle, fotos)) angleByPhoto[fotos[photoAngles[angle]]] = angle;
   }
   return angleByPhoto;
 }

@@ -55,6 +55,26 @@ export function clampOffset(
   return Math.min(max, Math.max(-max, offset));
 }
 
+/**
+ * Largest centered rect of a source image with the given aspect ratio —
+ * what guided capture saves so the photo matches the on-screen guide frame.
+ */
+export function centerCropRect(srcWidth: number, srcHeight: number, aspect: number) {
+  let width = srcWidth;
+  let height = srcHeight;
+  if (srcWidth / srcHeight > aspect) {
+    width = Math.round(srcHeight * aspect);
+  } else {
+    height = Math.round(srcWidth / aspect);
+  }
+  return {
+    x: Math.round((srcWidth - width) / 2),
+    y: Math.round((srcHeight - height) / 2),
+    width,
+    height,
+  };
+}
+
 export function cropImageToBlob(
   img: HTMLImageElement,
   frameWidth: number,

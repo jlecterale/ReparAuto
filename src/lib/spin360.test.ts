@@ -1,4 +1,5 @@
 import {
+  buildPhotoAngles,
   getCaptureSequence,
   getSpinAngles,
   getSpinFrames,
@@ -6,32 +7,43 @@ import {
   spinFrameFromDrag,
   toAngleByPhoto,
   toPhotoAngles,
+  withPhotoAngle,
+  withPhotoRenamed,
+  withoutPhoto,
 } from '@/lib/spin360';
 
 // The 360 spin mode turns on only when the seller has tagged the four
 // cardinal angles (front, right, rear, left) on real photos. These are pure
 // predicates so the viewer/forms stay testable in isolation from Firestore.
 describe('isSpinEnabled', () => {
+  const fotos = ['f.jpg', 'r.jpg', 't.jpg', 'l.jpg'];
+
   it('is disabled when no angles were tagged', () => {
-    expect(isSpinEnabled(undefined, 8)).toBe(false);
-    expect(isSpinEnabled(null, 8)).toBe(false);
-    expect(isSpinEnabled({}, 8)).toBe(false);
+    expect(isSpinEnabled(undefined, fotos)).toBe(false);
+    expect(isSpinEnabled(null, fotos)).toBe(false);
+    expect(isSpinEnabled({}, fotos)).toBe(false);
   });
 
   it('is enabled once front, right, rear and left are all tagged', () => {
-    expect(isSpinEnabled({ front: 0, right: 1, rear: 2, left: 3 }, 4)).toBe(true);
+    expect(isSpinEnabled({ front: 0, right: 1, rear: 2, left: 3 }, fotos)).toBe(true);
   });
 
   it('is disabled while any cardinal angle is missing', () => {
-    expect(isSpinEnabled({ front: 0, right: 1, rear: 2 }, 4)).toBe(false);
-    expect(isSpinEnabled({ front: 0, frontRight: 1, rear: 2, left: 3 }, 4)).toBe(false);
+    expect(isSpinEnabled({ front: 0, right: 1, rear: 2 }, fotos)).toBe(false);
+    expect(isSpinEnabled({ front: 0, frontRight: 1, rear: 2, left: 3 }, fotos)).toBe(false);
   });
 
   it('ignores tags whose photo index no longer exists', () => {
     // e.g. the seller tagged 5 photos but later removed some in an edit
-    expect(isSpinEnabled({ front: 0, right: 1, rear: 2, left: 3 }, 3)).toBe(false);
-    expect(isSpinEnabled({ front: -1, right: 1, rear: 2, left: 3 }, 4)).toBe(false);
-    expect(isSpinEnabled({ front: 0.5, right: 1, rear: 2, left: 3 }, 4)).toBe(false);
+    expect(isSpinEnabled({ front: 0, right: 1, rear: 3, left: 2 }, fotos.slice(0, 3))).toBe(false);
+    expect(isSpinEnabled({ front: -1, right: 1, rear: 2, left: 3 }, fotos)).toBe(false);
+    expect(isSpinEnabled({ front: 0.5, right: 1, rear: 2, left: 3 }, fotos)).toBe(false);
+  });
+
+  it('ignores tags pointing at emoji placeholders instead of real photos', () => {
+    // Legacy/corrupted data: the tagging UI never offers emojis, but stored
+    // maps must not enable a spin whose frame cannot render as an image.
+    expect(isSpinEnabled({ front: 0, right: 1, rear: 2, left: 3 }, ['🚗', 'r.jpg', 't.jpg', 'l.jpg'])).toBe(false);
   });
 });
 
@@ -67,6 +79,61 @@ describe('getSpinAngles', () => {
     const photoAngles = { front: 0, right: 1, rear: 2, left: 3, rearLeft: 99 };
     expect(getSpinAngles(fotos, photoAngles)).toEqual(['front', 'right', 'rear', 'left']);
     expect(getSpinAngles(fotos, { front: 0 })).toEqual([]);
+  });
+});
+
+// The form-state invariant — each angle belongs to exactly one photo — is
+// enforced by these helpers, shared by the web and mobile photo editors.
+describe('withPhotoAngle', () => {
+  it('tags a photo and steals the angle from any other photo holding it', () => {
+    expect(withPhotoAngle({ 'a.jpg': 'front' }, 'b.jpg', 'front')).toEqual({ 'b.jpg': 'front' });
+  });
+
+  it('replaces the photo previous angle', () => {
+    expect(withPhotoAngle({ 'a.jpg': 'front' }, 'a.jpg', 'rear')).toEqual({ 'a.jpg': 'rear' });
+  });
+
+  it('clears the photo tag when angle is null', () => {
+    expect(withPhotoAngle({ 'a.jpg': 'front', 'b.jpg': 'rear' }, 'a.jpg', null)).toEqual({
+      'b.jpg': 'rear',
+    });
+  });
+});
+
+describe('withoutPhoto', () => {
+  it('drops the tag of a removed photo and keeps the rest', () => {
+    expect(withoutPhoto({ 'a.jpg': 'front', 'b.jpg': 'rear' }, 'a.jpg')).toEqual({ 'b.jpg': 'rear' });
+    expect(withoutPhoto({ 'a.jpg': 'front' }, 'unknown.jpg')).toEqual({ 'a.jpg': 'front' });
+  });
+});
+
+describe('withPhotoRenamed', () => {
+  it('moves a tag when a photo string changes (re-crop, upload)', () => {
+    expect(withPhotoRenamed({ 'blob:x': 'front' }, 'blob:x', 'https://a.jpg')).toEqual({
+      'https://a.jpg': 'front',
+    });
+    expect(withPhotoRenamed({ 'a.jpg': 'front' }, 'other.jpg', 'new.jpg')).toEqual({ 'a.jpg': 'front' });
+  });
+});
+
+// Publishing uploads photos (string changes blob/local → storage URL) and then
+// freezes the tags into the persisted map in one step.
+describe('buildPhotoAngles', () => {
+  it('follows tags through upload pairs and freezes them to final indices', () => {
+    const pairs = [
+      { original: 'blob:1', final: 'https://f.jpg' },
+      { original: '🚗', final: '🚗' },
+      { original: 'blob:2', final: 'https://r.jpg' },
+    ];
+    expect(buildPhotoAngles(pairs, { 'blob:1': 'front', 'blob:2': 'right' })).toEqual({
+      front: 0,
+      right: 2,
+    });
+  });
+
+  it('returns null when nothing is tagged (Firestore-friendly empty)', () => {
+    expect(buildPhotoAngles([{ original: 'a.jpg', final: 'a.jpg' }], {})).toBeNull();
+    expect(buildPhotoAngles([], { 'gone.jpg': 'front' })).toBeNull();
   });
 });
 

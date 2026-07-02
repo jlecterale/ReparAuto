@@ -2,7 +2,7 @@
 
 import { X, ArrowsClockwise, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { SPIN_ANGLE_LABELS, spinFrameFromDrag, type SpinAngle } from '@/lib/spin360';
+import { SPIN_ANGLE_LABELS, SPIN_PX_PER_FRAME, spinFrameFromDrag, type SpinAngle } from '@/lib/spin360';
 
 interface Spin360ViewerProps {
   show: boolean;
@@ -26,7 +26,8 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
   const stepFrame = useCallback(
     (delta: number) => {
       setInteracted(true);
-      setFrame((f) => (((f + delta) % frames.length) + frames.length) % frames.length);
+      // One step = one frame of drag, sharing the tested wrap-around math.
+      setFrame((f) => spinFrameFromDrag(f, -delta * SPIN_PX_PER_FRAME, frames.length));
     },
     [frames.length],
   );

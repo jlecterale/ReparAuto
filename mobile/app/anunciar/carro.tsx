@@ -15,7 +15,7 @@ import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import { isValidYoutubeUrl } from '@/lib/youtube';
-import { toAngleByPhoto, toPhotoAngles, type SpinAngle } from '@/lib/spin360';
+import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import {
   CAMBIOS,
   COMBUSTIVEIS,
@@ -140,12 +140,10 @@ export default function AnunciarCarroScreen() {
 
       // Angle tags are keyed by the local URI — follow each photo to its
       // uploaded URL (same index) before freezing them into indices.
-      const uploadedAngleByPhoto: Record<string, SpinAngle> = {};
-      fotos.forEach((uri, i) => {
-        const angle = angleByPhoto[uri];
-        if (angle) uploadedAngleByPhoto[urls[i]] = angle;
-      });
-      const photoAngles = toPhotoAngles(urls, uploadedAngleByPhoto);
+      const photoAngles = buildPhotoAngles(
+        fotos.map((uri, i) => ({ original: uri, final: urls[i] })),
+        angleByPhoto,
+      );
 
       const dados = {
         marca: marca.trim(),
@@ -170,7 +168,7 @@ export default function AnunciarCarroScreen() {
         videoUrl: videoUrl.trim() || undefined,
         fotos: urls,
         // null (not undefined) so an edit that untags all angles clears the field.
-        photoAngles: Object.keys(photoAngles).length > 0 ? photoAngles : null,
+        photoAngles,
         vendedorNome: user.nome,
         vendedorTelefone: telefone.trim() || undefined,
         vendedorWhatsApp: whatsapp.trim() || undefined,

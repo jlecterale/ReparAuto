@@ -1,4 +1,4 @@
-import { rotatedSize, coverScale, clampOffset } from '@/lib/cropImage';
+import { rotatedSize, coverScale, clampOffset, centerCropRect } from '@/lib/cropImage';
 
 // Geometry behind the listing photo cropper: every photo is positioned (zoom +
 // 90° rotation + pan) inside a fixed-aspect frame and exported at that crop. The
@@ -6,6 +6,22 @@ import { rotatedSize, coverScale, clampOffset } from '@/lib/cropImage';
 // two stay pixel-consistent only as long as the maths below holds. The canvas
 // export itself (`cropImageToBlob`) and `loadImage` are thin DOM/canvas wrappers
 // and are exercised manually, not here.
+
+// Guided 360 capture saves exactly the guide-frame region: the largest
+// centered rect of the source with the listing aspect.
+describe('centerCropRect', () => {
+  it('crops the sides of a source wider than the target aspect', () => {
+    expect(centerCropRect(1280, 720, 4 / 3)).toEqual({ x: 160, y: 0, width: 960, height: 720 });
+  });
+
+  it('crops top/bottom of a source taller than the target aspect', () => {
+    expect(centerCropRect(720, 1280, 4 / 3)).toEqual({ x: 0, y: 370, width: 720, height: 540 });
+  });
+
+  it('keeps a source already at the target aspect untouched', () => {
+    expect(centerCropRect(1600, 1200, 4 / 3)).toEqual({ x: 0, y: 0, width: 1600, height: 1200 });
+  });
+});
 
 describe('rotatedSize', () => {
   it('keeps dimensions for 0° and 180° (no axis swap)', () => {
