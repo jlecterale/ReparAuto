@@ -18,7 +18,7 @@ interface Spin360ViewerProps {
  * scrubs through the tagged angle photos in circular order.
  */
 /** Auto-play intervals offered by the speed selector (UI copy stays Portuguese). */
-const PLAY_SPEEDS_MS = [1000, 2000, 5000] as const;
+const PLAY_SPEEDS_MS = [100, 1000, 2000] as const;
 
 export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360ViewerProps) {
   const [frame, setFrame] = useState(0);
