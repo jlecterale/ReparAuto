@@ -130,8 +130,17 @@ Before opening a PR or marking a task done, **always do a self-review pass** —
 - **Firestore-rules provability** — any new query is provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
 - **Tests** — written test-first for new/changed logic; `npm test` green; new behavior has a test that would fail without the change.
 - **Type safety** — run `npx tsc --noEmit` and `npm run build`; fix every error before reporting done.
+- **Risk analysis** — think through what could break: other screens/hooks/components consuming the same data or component, Firestore rules/queries, realtime subscriptions, SEO/metadata, other routes/locales. This feeds the PR description (see **PR description requirements** below).
 
 Only after this pass is clean should you open the PR (when the user asks) or report the task complete.
+
+### 6. PR description requirements
+
+Every PR must include, in **português do Brasil**, regardless of the language used in code/commits:
+
+- **Descrição em pt-BR** — resumo do que mudou e por quê.
+- **"O que pode quebrar"** — seção explícita com a análise de risco do item acima: efeitos colaterais prováveis em outras telas/hooks/componentes, regras do Firestore, subscriptions, SEO, etc.
+- **"Como testar"** — passo a passo numerado e reproduzível para validação manual, cobrindo caminho feliz e casos de borda.
 
 ## Conventions
 

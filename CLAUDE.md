@@ -192,6 +192,7 @@ Before opening a PR or reporting a task as done, **always do a self-review pass*
 7. **Firestore-rules provability** — any new query must be provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
 8. **Tests** — tests were written test-first (TDD) for any new/changed logic; `npm test` is green. New behavior has a test that would fail without the change.
 9. **Type safety** — run `npx tsc --noEmit` and `npm run build`. Fix every error before reporting done.
+10. **Risk analysis** — think through what this change could break: other screens/hooks/components consuming the same data or component, Firestore rules/queries, realtime subscriptions, SEO/metadata, shared UI primitives, other locales/routes. Write this down — it feeds directly into the PR description (see below).
 
 Only after this pass is clean should you open the PR or report the task complete.
 
@@ -202,3 +203,11 @@ Only after this pass is clean should you open the PR or report the task complete
 - Conventional commits (`feat:`, `fix:`, `docs:`, …), imperative present, English, short subject + a body explaining the *why*.
 - **Never add Claude/Anthropic as a co-author** — no `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line. Commits are authored by the user only.
 - **Commit/push only when the user asks.** As with deploys, never push or open PRs unprompted.
+
+### PR description requirements
+
+Every PR opened in this repo must include, regardless of the language used elsewhere in the codebase:
+
+1. **Escrita em português do Brasil.** O corpo da PR (título pode ficar em inglês se seguir o padrão de commits, mas a descrição deve ser em pt-BR) — resumo do que mudou e por quê, para revisores que não leem o código a fundo.
+2. **Análise de risco / o que pode quebrar** — uma seção explícita (ex.: "## O que pode quebrar") listando os efeitos colaterais prováveis: outras telas/hooks/componentes que consomem os mesmos dados, regras do Firestore, subscriptions em tempo real, SEO/metadata, comportamento para usuários não autenticados, etc. Baseie-se no item 10 do checklist de pre-PR acima.
+3. **Passo a passo para testar** — uma seção (ex.: "## Como testar") com instruções numeradas e reproduzíveis para um humano validar a mudança manually (rotas a acessar, ações a tomar, o que esperar ver), cobrindo o caminho feliz e os principais casos de borda.
