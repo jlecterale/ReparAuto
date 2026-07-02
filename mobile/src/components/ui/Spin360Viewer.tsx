@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SPIN_ANGLE_LABELS, spinFrameFromDrag, type SpinAngle } from '@/lib/spin360';
+import { SPIN_ANGLE_LABELS, SPIN_PX_PER_FRAME, spinFrameFromDrag, type SpinAngle } from '@/lib/spin360';
 
 interface Spin360ViewerProps {
   visible: boolean;
@@ -19,11 +19,16 @@ interface Spin360ViewerProps {
  * Fullscreen drag-to-rotate viewer: a horizontal pan scrubs through the
  * tagged angle photos in circular order (mirror of the web Spin360Viewer).
  */
+/** Auto-play intervals offered by the speed selector (UI copy stays Portuguese). */
+const PLAY_SPEEDS_MS = [1000, 2000, 5000] as const;
+
 export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360ViewerProps) {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [frame, setFrame] = useState(0);
   const [interacted, setInteracted] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [speedMs, setSpeedMs] = useState<number>(PLAY_SPEEDS_MS[0]);
   // Refs so the gesture callbacks never read a stale frame mid-drag.
   const frameRef = useRef(0);
   const startFrameRef = useRef(0);
@@ -33,8 +38,21 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
       frameRef.current = 0;
       setFrame(0);
       setInteracted(false);
+      setPlaying(false);
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (!visible || !playing) return;
+    const id = setInterval(() => {
+      // Advance through frameRef (not setState alone) so a drag right after
+      // auto-play always starts from the frame on screen.
+      const next = spinFrameFromDrag(frameRef.current, -SPIN_PX_PER_FRAME, frames.length);
+      frameRef.current = next;
+      setFrame(next);
+    }, speedMs);
+    return () => clearInterval(id);
+  }, [visible, playing, speedMs, frames.length]);
 
   if (!visible || frames.length === 0) return null;
 
@@ -48,6 +66,8 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
     .onStart(() => {
       startFrameRef.current = frameRef.current;
       setInteracted(true);
+      // Taking over manually pauses the auto-rotation.
+      setPlaying(false);
     })
     .onUpdate((e) => {
       showFrame(spinFrameFromDrag(startFrameRef.current, e.translationX, frames.length));
@@ -102,13 +122,51 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
 
               {/* Drag hint (until first interaction) */}
               {!interacted && (
-                <View className="absolute bottom-8 flex-row items-center gap-1.5">
+                <View
+                  style={{ bottom: insets.bottom + 84 }}
+                  className="absolute flex-row items-center gap-1.5"
+                >
                   <Ionicons name="sync-outline" size={14} color="rgba(255,255,255,0.7)" />
                   <Text className="text-[11px] text-white/70">
                     Arraste para os lados para rodar o veículo
                   </Text>
                 </View>
               )}
+
+              {/* Auto-rotation controls */}
+              <View
+                style={{ bottom: insets.bottom + 24 }}
+                className="absolute flex-row items-center gap-2"
+              >
+                <Pressable
+                  onPress={() => {
+                    setInteracted(true);
+                    setPlaying((p) => !p);
+                  }}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={playing ? 'Pausar rotação automática' : 'Reproduzir rotação automática'}
+                  className="h-11 w-11 items-center justify-center rounded-full bg-white/10 active:bg-white/25"
+                >
+                  <Ionicons name={playing ? 'pause' : 'play'} size={20} color="#fff" />
+                </Pressable>
+                <View className="flex-row overflow-hidden rounded-full bg-white/10">
+                  {PLAY_SPEEDS_MS.map((ms) => (
+                    <Pressable
+                      key={ms}
+                      onPress={() => setSpeedMs(ms)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: speedMs === ms }}
+                      accessibilityLabel={`Velocidade: ${ms / 1000} segundos`}
+                      className={`px-3 py-2 active:bg-white/25 ${speedMs === ms ? 'bg-white/30' : ''}`}
+                    >
+                      <Text className={`text-xs font-bold ${speedMs === ms ? 'text-white' : 'text-white/60'}`}>
+                        {ms / 1000}s
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
             </View>
           </GestureDetector>
         </View>

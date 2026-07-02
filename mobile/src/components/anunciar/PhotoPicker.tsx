@@ -13,12 +13,16 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { parseExternalImageUrl } from '@/lib/images';
 import {
   getCaptureSequence,
+  getSpinAngles,
+  getSpinFrames,
   REQUIRED_SPIN_ANGLES,
   SPIN_ANGLE_LABELS,
   SPIN_ANGLE_ORDER,
+  toPhotoAngles,
   withoutPhoto,
   withPhotoAngle,
   withPhotoRenamed,
@@ -56,6 +60,13 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
   const [anglePickerUri, setAnglePickerUri] = useState<string | null>(null);
   // Guided 360 capture (camera with angle frame overlay).
   const [guidedOpen, setGuidedOpen] = useState(false);
+  // Drag-to-rotate preview of the tagged angles (same viewer as the detail screen).
+  const [spinPreviewOpen, setSpinPreviewOpen] = useState(false);
+  // Freeze the form tags exactly as publish does, so the preview shows what
+  // buyers will get (empty until the required angles are tagged).
+  const previewPhotoAngles = tagAngles ? toPhotoAngles(fotos, angleByPhoto ?? {}) : null;
+  const spinFrames = getSpinFrames(fotos, previewPhotoAngles);
+  const spinAngles = getSpinAngles(fotos, previewPhotoAngles);
 
   function setPhotoAngle(foto: string, angle: SpinAngle | null) {
     if (!angleByPhoto || !onAngleByPhotoChange) return;
@@ -311,9 +322,23 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
           }`}
         >
           {missingRequired.length === 0 ? (
-            <Text className="text-[11px] font-bold text-success-700">
-              ✓ Vista 360° ativa — os compradores vão poder rodar o veículo no anúncio.
-            </Text>
+            <>
+              <Text className="text-[11px] font-bold text-success-700">
+                ✓ Vista 360° ativa — os compradores vão poder rodar o veículo no anúncio.
+              </Text>
+              {spinFrames.length > 0 && (
+                <Pressable
+                  onPress={() => setSpinPreviewOpen(true)}
+                  accessibilityRole="button"
+                  className="mt-1.5 flex-row items-center gap-1.5 active:opacity-70"
+                >
+                  <Ionicons name="sync-outline" size={14} color={colors.secondary[600]} />
+                  <Text className="text-[11px] font-bold text-secondary-600">
+                    Pré-visualizar a vista 360°
+                  </Text>
+                </Pressable>
+              )}
+            </>
           ) : (
             <Text className="text-[11px] text-fg-muted">
               <Text className="font-bold text-fg">
@@ -460,6 +485,13 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
           )}
         </View>
       </BottomSheet>
+
+      <Spin360Viewer
+        visible={spinPreviewOpen}
+        onClose={() => setSpinPreviewOpen(false)}
+        frames={spinFrames}
+        angles={spinAngles}
+      />
 
       {tagAngles && guidedOpen && (
         <GuidedSpinCapture
