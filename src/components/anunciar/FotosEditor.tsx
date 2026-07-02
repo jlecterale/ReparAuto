@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowsClockwise, Camera, CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
+import {
+  ArrowsClockwise,
+  Camera,
+  CaretLeft,
+  CaretRight,
+  LinkSimple,
+  MagnifyingGlassPlus,
+  PencilSimple,
+  Swap,
+  Trash,
+  UploadSimple,
+  X,
+} from '@phosphor-icons/react';
 import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { parseExternalImageUrl } from '@/lib/utils';
 import {
@@ -80,6 +92,12 @@ export default function FotosEditor({
   const [batchTotal, setBatchTotal] = useState(0);
   // Index of an already-added photo being re-cropped, or null.
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  // Fullscreen preview (lightbox) of an added photo, with edit/replace/delete.
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  // "Trocar" flow: index being replaced + the picked file awaiting crop.
+  const [replaceIndex, setReplaceIndex] = useState<number | null>(null);
+  const [replaceSrc, setReplaceSrc] = useState<string | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement>(null);
   // Guided 360 capture (camera with angle frame overlay).
   const [guidedOpen, setGuidedOpen] = useState(false);
   // Drag-to-rotate preview of the tagged angles (same viewer as the detail page).
@@ -131,6 +149,20 @@ export default function FotosEditor({
     () => () => pendingUrlsRef.current.forEach((url) => URL.revokeObjectURL(url)),
     [],
   );
+
+  // Lightbox: lock page scroll and close on Escape while open.
+  useEffect(() => {
+    if (previewIndex === null) return;
+    document.body.style.overflow = 'hidden';
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewIndex(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [previewIndex]);
 
   const selecionarFicheiros = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -191,9 +223,10 @@ export default function FotosEditor({
     avancarFila();
   };
 
-  const confirmarEdicao = (blob: Blob) => {
-    if (editIndex === null) return;
-    const antiga = fotos[editIndex];
+  // Swaps the photo at `index` for a freshly cropped blob, keeping its slot
+  // and moving its angle tag onto the new photo string.
+  const substituirFoto = (index: number, blob: Blob) => {
+    const antiga = fotos[index];
     if (antiga?.startsWith('blob:')) {
       URL.revokeObjectURL(antiga);
       filesRef?.current.delete(antiga);
@@ -201,8 +234,37 @@ export default function FotosEditor({
     }
     const { url } = blobToFile(blob);
     if (antiga) movePhotoAngle(antiga, url);
-    setFotos(fotos.map((f, i) => (i === editIndex ? url : f)));
+    setFotos(fotos.map((f, i) => (i === index ? url : f)));
+  };
+
+  const confirmarEdicao = (blob: Blob) => {
+    if (editIndex === null) return;
+    substituirFoto(editIndex, blob);
     setEditIndex(null);
+  };
+
+  const cancelarTroca = () => {
+    if (replaceSrc) URL.revokeObjectURL(replaceSrc);
+    setReplaceSrc(null);
+    setReplaceIndex(null);
+  };
+
+  const confirmarTroca = (blob: Blob) => {
+    if (replaceIndex !== null) substituirFoto(replaceIndex, blob);
+    cancelarTroca();
+  };
+
+  const selecionarSubstituta = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (replaceInputRef.current) replaceInputRef.current.value = '';
+    if (!file) return;
+    if (file.size > MAX_FOTO_SIZE_BYTES) {
+      setErro(`A imagem excedeu o limite de ${MAX_FOTO_SIZE_MB} MB.`);
+      setReplaceIndex(null);
+      return;
+    }
+    setErro(null);
+    setReplaceSrc(URL.createObjectURL(file));
   };
 
   // Confirms the pasted URL actually serves a renderable image before adding it.
@@ -469,14 +531,24 @@ export default function FotosEditor({
                 )}
 
                 {isImg && (
-                  <button
-                    type="button"
-                    onClick={() => setEditIndex(i)}
-                    aria-label={`Editar foto ${i + 1}`}
-                    className="absolute top-1 left-1 w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
-                  >
-                    <PencilSimple size={12} weight="bold" />
-                  </button>
+                  <div className="absolute top-1 left-1 flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewIndex(i)}
+                      aria-label={`Ver foto ${i + 1}`}
+                      className="w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
+                    >
+                      <MagnifyingGlassPlus size={12} weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditIndex(i)}
+                      aria-label={`Editar foto ${i + 1}`}
+                      className="w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
+                    >
+                      <PencilSimple size={12} weight="bold" />
+                    </button>
+                  </div>
                 )}
 
                 {podeReordenar && (
@@ -564,6 +636,101 @@ export default function FotosEditor({
         frames={spinFrames}
         angles={spinAngles}
       />
+
+      {/* Hidden picker for the lightbox "Trocar" action. */}
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={selecionarSubstituta}
+      />
+
+      {/* Photo lightbox: large preview with edit / replace / delete. */}
+      {previewIndex !== null && fotos[previewIndex] && (
+        <div
+          className="fixed inset-0 z-[110] bg-black/90 flex flex-col p-4 page-enter"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Foto ${previewIndex + 1} de ${fotos.length}`}
+        >
+          <div className="flex items-center justify-between shrink-0 mb-3">
+            <span className="text-sm font-extrabold text-fg-inverse">
+              Foto {previewIndex + 1} de {fotos.length}
+              {exibirCapa && previewIndex === 0 && (
+                <span className="ml-2 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded align-middle">
+                  Capa
+                </span>
+              )}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPreviewIndex(null)}
+              aria-label="Fechar pré-visualização"
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
+            >
+              <X className="text-xl" />
+            </button>
+          </div>
+
+          {/* Compact centered column, matching the 360 viewer: the photo in a
+              fixed-aspect box with the actions right below it. */}
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3">
+            <div className="relative w-full max-w-2xl max-h-[70vh]" style={{ aspectRatio: aspect }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={fotos[previewIndex]}
+                alt={`Foto ${previewIndex + 1}`}
+                className="absolute inset-0 w-full h-full object-contain rounded-xl"
+              />
+            </div>
+
+            <div className="flex items-center justify-center gap-3 shrink-0">
+              <Button
+                tipo="ghost"
+                icone={<PencilSimple />}
+                onClick={() => {
+                  setEditIndex(previewIndex);
+                  setPreviewIndex(null);
+                }}
+              >
+                Editar
+              </Button>
+              <Button
+                tipo="ghost"
+                icone={<Swap />}
+                onClick={() => {
+                  setReplaceIndex(previewIndex);
+                  setPreviewIndex(null);
+                  replaceInputRef.current?.click();
+                }}
+              >
+                Trocar
+              </Button>
+              <Button
+                tipo="perigo"
+                icone={<Trash />}
+                onClick={() => {
+                  removerFoto(previewIndex);
+                  setPreviewIndex(null);
+                }}
+              >
+                Apagar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {replaceIndex !== null && replaceSrc && (
+        <ImageCropper
+          src={replaceSrc}
+          aspect={aspect}
+          titulo="Trocar foto"
+          onCancel={cancelarTroca}
+          onConfirm={confirmarTroca}
+        />
+      )}
 
       {guidedOpen && angleByPhoto && (
         <GuidedSpinCapture
