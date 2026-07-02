@@ -12,8 +12,18 @@ export const CAR_KM_MAX = 999_999;
 export const CAR_DOORS_MIN = 2;
 export const CAR_DOORS_MAX = 7;
 export const CAR_SEATS_MIN = 1;
-// Up to 99 so vans/minibuses fit, not just passenger cars.
-export const CAR_SEATS_MAX = 99;
+// Passenger cars cap at 9; only van/minibus-style body types go higher.
+export const CAR_SEATS_MAX = 9;
+export const CAR_SEATS_MAX_LARGE = 99;
+/** Body types that ship in van/minibus configurations with more than 9 seats. */
+export const LARGE_SEAT_BODY_TYPES = ['Carrinha', 'Monovolume'] as const;
+
+/** Max allowed seats for a given body type (99 for vans/minibuses, else 9). */
+export function maxSeatsForBodyType(bodyType?: string): number {
+  return bodyType && (LARGE_SEAT_BODY_TYPES as readonly string[]).includes(bodyType)
+    ? CAR_SEATS_MAX_LARGE
+    : CAR_SEATS_MAX;
+}
 export const CAR_POWER_MAX = 2000; // cv
 export const CAR_DISPLACEMENT_MAX = 10_000; // cc
 export const CAR_PRICE_MAX = 10_000_000; // €
@@ -33,6 +43,7 @@ export function validarDadosVeiculo(dados: {
   km?: string;
   cor?: string;
   portas?: string;
+  bodyType?: string;
   seats?: string;
   power?: string;
   displacement?: string;
@@ -87,7 +98,8 @@ export function validarDadosVeiculo(dados: {
     const n = Number(raw);
     if (!Number.isInteger(n) || n < min || n > max) erros[campo] = msg;
   };
-  validarOpcional('seats', dados.seats, CAR_SEATS_MIN, CAR_SEATS_MAX, `Lugares deve estar entre ${CAR_SEATS_MIN} e ${CAR_SEATS_MAX}.`);
+  const seatsMax = maxSeatsForBodyType(dados.bodyType);
+  validarOpcional('seats', dados.seats, CAR_SEATS_MIN, seatsMax, `Lugares deve estar entre ${CAR_SEATS_MIN} e ${seatsMax}.`);
   validarOpcional('power', dados.power, 1, CAR_POWER_MAX, `Potência deve estar entre 1 e ${CAR_POWER_MAX} cv.`);
   validarOpcional('displacement', dados.displacement, 1, CAR_DISPLACEMENT_MAX, `Cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`);
 

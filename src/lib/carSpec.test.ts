@@ -69,11 +69,22 @@ describe('validarDadosVeiculo', () => {
   });
 
   it('validates optional fields only once filled', () => {
-    expect(validarDadosVeiculo({ ...valido, seats: '100' }).seats).toBeTruthy();
-    expect(validarDadosVeiculo({ ...valido, seats: '99' }).seats).toBeUndefined(); // vans/minibuses
     expect(validarDadosVeiculo({ ...valido, seats: '5' }).seats).toBeUndefined();
     expect(validarDadosVeiculo({ ...valido, power: '99999' }).power).toBeTruthy();
     expect(validarDadosVeiculo({ ...valido, displacement: '99999' }).displacement).toBeTruthy();
+  });
+
+  it('caps seats at 9 for passenger-car body types', () => {
+    expect(validarDadosVeiculo({ ...valido, seats: '9' }).seats).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, seats: '10' }).seats).toBeTruthy();
+    // an explicit passenger body type is still capped at 9
+    expect(validarDadosVeiculo({ ...valido, bodyType: 'Coupé', seats: '15' }).seats).toBeTruthy();
+  });
+
+  it('allows up to 99 seats for van/minibus body types (Carrinha, Monovolume)', () => {
+    expect(validarDadosVeiculo({ ...valido, bodyType: 'Carrinha', seats: '15' }).seats).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, bodyType: 'Monovolume', seats: '99' }).seats).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, bodyType: 'Carrinha', seats: '100' }).seats).toBeTruthy();
   });
 
   it('rejects non-integer / non-numeric numeric input', () => {

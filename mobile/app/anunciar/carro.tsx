@@ -26,10 +26,10 @@ import {
   CAR_KM_MAX,
   CAR_POWER_MAX,
   CAR_PRICE_MAX,
-  CAR_SEATS_MAX,
   CAR_SEATS_MIN,
   CAR_YEAR_MIN,
   carYearMax,
+  maxSeatsForBodyType,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
   EQUIPAMENTOS_CARRO,
@@ -190,8 +190,9 @@ export default function AnunciarCarroScreen() {
     }
     if (seats.trim()) {
       const seatsNum = Number(seats);
-      if (!Number.isInteger(seatsNum) || seatsNum < CAR_SEATS_MIN || seatsNum > CAR_SEATS_MAX)
-        return `O número de lugares deve estar entre ${CAR_SEATS_MIN} e ${CAR_SEATS_MAX}.`;
+      const seatsMax = maxSeatsForBodyType(bodyType ?? undefined);
+      if (!Number.isInteger(seatsNum) || seatsNum < CAR_SEATS_MIN || seatsNum > seatsMax)
+        return `O número de lugares deve estar entre ${CAR_SEATS_MIN} e ${seatsMax}.`;
     }
     if (power.trim()) {
       const powerNum = Number(power);
