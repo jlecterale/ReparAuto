@@ -1208,8 +1208,8 @@
     <!-- Title -->
     <h1>Analise Competitiva &mdash; RecarGarage</h1>
     <div class="doc-meta">
-      <span class="meta-tag"><strong>Data:</strong> 1 de julho de 2026</span>
-      <span class="meta-tag"><strong>Versao:</strong> 2.0</span>
+      <span class="meta-tag"><strong>Data:</strong> 2 de julho de 2026</span>
+      <span class="meta-tag"><strong>Versao:</strong> 2.1</span>
       <span class="meta-tag"><strong>Mercados:</strong> Portugal + Brasil</span>
       <span class="meta-tag"><strong>Classificacao:</strong> Documento estrategico interno</span>
     </div>
@@ -1217,10 +1217,11 @@
     <!-- ============ SECTION 1 ============ -->
     <h2 class="section-heading" id="resumo-executivo">1. Resumo Executivo</h2>
     <div class="executive-summary">
+      <p><strong>Nota de versao (v2.1, 2 de julho de 2026):</strong> revisao do estado das lacunas com base nos commits e PRs mais recentes. <strong>Entregues em producao</strong>: pesquisas guardadas e alertas + alerta de reducao de preco (plano 3.1, PR #50) &mdash; fecham GAP-02 e GAP-10; compatibilidade veicular granular de pecas (GAP-08); simulador de financiamento/seguro com captacao de leads (GAP-09); campos e filtros avancados + pesquisa por raio (plano 22, PR #39); vista 360&deg; (plano 23, PR #51). <strong>Em PR aberta</strong>: inteligencia de precos (PR #9), anuncios com IA (PR #54), expansao Brasil (PR #47), painel profissional + CRM (PR #33). <strong>Novas lacunas identificadas</strong> que tinham ficado de fora: comparador de veiculos (GAP-16), busca por mapa (GAP-17), relatorio de historico do veiculo (GAP-18) e alertas por email (GAP-19).</p>
       <p><strong>Nota de versao (v2.0, julho 2026):</strong> esta revisao atualiza a analise de maio de 2026 com (a) a plataforma <strong>reconstruida em Next.js 15</strong> (SSR/ISR, metadados dinamicos, JSON-LD) &mdash; que <strong>fecha as lacunas criticas de SEO e de app movel</strong>; (b) as funcionalidades entregues desde entao (app movel nativa, diretorio de profissionais/oficinas, marketplace reverso de intencao de compra, avaliacoes, verificacao, video nos anuncios); e (c) o novo posicionamento <strong>dual-market Portugal + Brasil</strong>, com numeros de dimensao de mercado para ambos os paises.</p>
       <p>O RecarGarage posiciona-se como um marketplace de veiculos usados e pecas automoveis com uma proposta de valor diferenciada: <strong>transparencia radical sobre o estado real do veiculo</strong>. Enquanto a maioria dos concorrentes foca em veiculos em bom estado e esconde ou minimiza avarias, o produto abraca o segmento de carros que necessitam de reparacao, oferecendo campos estruturados para tipos de manutencao, orcamentos de reparacao, indicacao de mecanicos de confianca e status de inspecao. Complementa essa proposta com um marketplace unificado de pecas (venda, desmonte e procura), um <strong>diretorio de profissionais e oficinas</strong> e um <strong>marketplace reverso</strong> onde o comprador publica o que procura e os vendedores respondem &mdash; criando um ecossistema fechado entre quem vende carros para reparar, quem fornece pecas, quem repara e quem procura.</p>
       <p>A dimensao dos dois mercados-alvo e substancial: em <strong>Portugal</strong>, ~813 mil carros usados transacionados em 2024 (racio de ~4:1 face a novos), um parque de ~6 milhoes de ligeiros de passageiros e um mercado de reparacao/pos-venda estimado em ~<strong>&euro;3,5 mil milhoes</strong>; no <strong>Brasil</strong>, <strong>15,8 milhoes</strong> de usados vendidos em 2024 (18,5M em 2025), uma frota de <strong>~124 milhoes</strong> de veiculos e uma industria de autopecas de <strong>R$256,7 mil milhoes</strong> (reposicao ~R$59,3 mil milhoes). Ver a seccao <em>Dimensao do Mercado</em>.</p>
-      <p>A presente analise avalia 13 concorrentes diretos e indiretos &mdash; 7 no mercado brasileiro e 6 no mercado europeu &mdash; num sector dominado por plataformas com mais de uma decada de operacao e bases massivas (OLX Brasil ~50&ndash;56M utilizadores/mes; Mercado Livre 121M compradores ativos em 2025; AutoScout24 30M+; Standvirtual, lider em Portugal, ~5&ndash;6M visitas/mes). O RecarGarage mantem vantagens defensaveis em: (1) condicao estruturada do veiculo; (2) ecossistema veiculos + pecas + profissionais + intencao de compra; (3) conformidade RGPD/DSA nativa; e agora (4) <strong>app movel nativa</strong> e (5) <strong>base tecnica SSR moderna</strong>. Permanecem lacunas em avaliacao de preco (indicador de "preco justo"), pesquisas guardadas/alertas, financiamento, monetizacao ativa (infra construida, Stripe por ligar) e no arranque efetivo do mercado brasileiro.</p>
+      <p>A presente analise avalia 13 concorrentes diretos e indiretos &mdash; 7 no mercado brasileiro e 6 no mercado europeu &mdash; num sector dominado por plataformas com mais de uma decada de operacao e bases massivas (OLX Brasil ~50&ndash;56M utilizadores/mes; Mercado Livre 121M compradores ativos em 2025; AutoScout24 30M+; Standvirtual, lider em Portugal, ~5&ndash;6M visitas/mes). O RecarGarage mantem vantagens defensaveis em: (1) condicao estruturada do veiculo; (2) ecossistema veiculos + pecas + profissionais + intencao de compra; (3) conformidade RGPD/DSA nativa; e agora (4) <strong>app movel nativa</strong> e (5) <strong>base tecnica SSR moderna</strong>. Permanecem lacunas em avaliacao de preco (indicador de "preco justo" &mdash; em PR), monetizacao ativa (infra construida, Stripe por ligar), comparador de veiculos, verificacao visivel do vendedor nos resultados e no arranque efetivo do mercado brasileiro (em PR); pesquisas guardadas/alertas e simulacao de financiamento foram entretanto entregues.</p>
       <p>As recomendacoes estrategicas organizam-se em tres fases: consolidacao (0&ndash;3 meses), confianca e monetizacao (3&ndash;9 meses) e escalabilidade e inteligencia de dados (9&ndash;18 meses). Boa parte da Fase 1 original (SEO/SSR, app movel) ja foi entregue; o foco desloca-se para inteligencia de precos, retencao (alertas), ativacao de receita e expansao ao Brasil. A execucao disciplinada deste roadmap consolida a evolucao de um MVP para uma plataforma competitiva e sustentavel, mantendo a transparencia como pilar diferenciador.</p>
     </div>
 
@@ -2214,7 +2215,7 @@
           <tr><td>Anuncio de carros usados</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
           <tr><td>Wizard multi-etapas</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
           <tr><td>Upload multiplas fotos</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
-          <tr><td>Visualizacao 360&deg; / video</td><td class="col-reparauto"><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
+          <tr><td>Visualizacao 360&deg; / video</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
           <tr><td>Estado do veiculo estruturado</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
           <tr><td>Detalhamento de manutencao</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
           <tr><td>Orcamento de reparacao</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
@@ -2252,9 +2253,9 @@
         </thead>
         <tbody>
           <tr><td>Pesquisa textual</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
-          <tr><td>Filtros avancados</td><td class="col-reparauto"><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
-          <tr><td>Pesquisas guardadas / alertas</td><td class="col-reparauto"><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
-          <tr><td>Alerta de reducao de preco</td><td class="col-reparauto"><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
+          <tr><td>Filtros avancados</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
+          <tr><td>Pesquisas guardadas / alertas</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
+          <tr><td>Alerta de reducao de preco</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
           <tr><td>Avaliacao de preco justo</td><td class="col-reparauto"><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td></tr>
           <tr><td>Verificacao de historico</td><td class="col-reparauto"><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td></tr>
           <tr><td>Filtro por localizacao granular</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
@@ -2326,9 +2327,9 @@
           <tr><td>Diretorio de profissionais / oficinas</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td></tr>
           <tr><td>Tipos de peca (venda/desmonte/procura)</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
           <tr><td>Categorias de peca especializadas</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
-          <tr><td>Compatibilidade veicular (pecas)</td><td class="col-reparauto"><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
+          <tr><td>Compatibilidade veicular (pecas)</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
           <tr><td>Servicos mecanicos integrados</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td></tr>
-          <tr><td>Simulacao de financiamento</td><td class="col-reparauto"><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td></tr>
+          <tr><td>Simulacao de financiamento</td><td class="col-reparauto"><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-partial">&#9888;</span></td></tr>
           <tr><td>Garantia pos-venda</td><td class="col-reparauto"><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-complete">&#10004;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-absent">&#10008;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-partial">&#9888;</span></td><td><span class="status-complete">&#10004;</span></td></tr>
         </tbody>
       </table>
@@ -2374,9 +2375,9 @@
 
     <h3 class="subsection-heading" id="gap-criticas">5.1 Lacunas Criticas (Prioridade Alta)</h3>
 
-    <div class="gap-card">
+    <div class="gap-card is-progress">
       <div class="gap-header">
-        <span class="gap-badge gap-critico">Critico</span>
+        <span class="gap-badge gap-progresso">Em Progresso</span>
         <div>
           <div class="gap-id">GAP-01</div>
           <div class="gap-title">Avaliacao Automatizada de Preco</div>
@@ -2390,11 +2391,12 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Integrar com bases de dados de preco do mercado portugues (ex: Eurotax, dados do Standvirtual via scraping etico, ou construir base propria). Exibir indicador visual de "bom preco" / "preco justo" / "acima do mercado".</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-02">&#128203; Abrir Plano 02 &mdash; Inteligencia de Precos &#8599;</a></div></div>
       </div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso (2 PRs abertas):</strong> a <strong>PR #9</strong> implementa o pacote completo de inteligencia de precos (badge de 5 niveis por anuncio, pagina <code>/avaliar-veiculo</code> com estimativa P25&ndash;P75 e pagina <code>/mercado</code> com KPIs e histograma); a <strong>PR #54</strong> (plano 4.1) acrescenta sugestao de preco com IA ancorada na mediana/quartis de anuncios aprovados comparaveis. Falta rever/fazer merge.</div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-resolved">
       <div class="gap-header">
-        <span class="gap-badge gap-critico">Critico</span>
+        <span class="gap-badge gap-resolvido">Resolvido</span>
         <div>
           <div class="gap-id">GAP-02</div>
           <div class="gap-title">Pesquisas Guardadas e Alertas de Novos Anuncios</div>
@@ -2408,6 +2410,7 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Implementar sistema de pesquisas guardadas com notificacoes push via Firebase Cloud Messaging e email.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-03">&#128203; Abrir Plano 03 &mdash; Busca e Descoberta &#8599;</a></div></div>
       </div>
+      <div class="resolution-note"><strong>&#10004; Resolvido (plano 3.1, PR #50):</strong> alertas por <strong>palavra-chave</strong>, por <strong>criterios</strong> (tipo/categoria/concelho) e por <strong>filtro salvo</strong>, avaliados por Cloud Functions quando um anuncio e aprovado, com entrega <strong>in-app + push (FCM)</strong> e preferencias por tipo e por canal no perfil. Canal de <strong>email</strong> ainda nao existe &mdash; ver GAP-19.</div>
     </div>
 
     <div class="gap-card is-resolved">
@@ -2465,7 +2468,7 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Expandir para todos os 18 distritos + Acores e Madeira. Implementar selecao hierarquica e pesquisa por raio.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div>Concretizado sem plano numerado dedicado.</div></div>
       </div>
-      <div class="resolution-note"><strong>&#10004; Resolvido:</strong> cobertura nacional com 20 distritos e 308 concelhos (com coordenadas), selecao hierarquica e mapa de Portugal interativo no admin. Falta apenas a pesquisa por raio de distancia.</div>
+      <div class="resolution-note"><strong>&#10004; Resolvido:</strong> cobertura nacional com 20 distritos e 308 concelhos (com coordenadas), selecao hierarquica e mapa de Portugal interativo no admin. A <strong>pesquisa por raio de distancia</strong> foi entretanto entregue no plano 22 (PR #39) &mdash; filtro de raio em km aplicado a carros e pecas via haversine.</div>
     </div>
 
     <div class="gap-card is-resolved">
@@ -2501,12 +2504,12 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Implementar verificacao por NIF, selo visual no perfil, e prioridade nos resultados para verificados.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-01">&#128203; Abrir Plano 01 &mdash; Confianca e Seguranca &#8599;</a></div></div>
       </div>
-      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso:</strong> existe um fluxo de verificacao (colecao <code>verifications</code>) para vendedores/profissionais. Falta consolidar a verificacao por NIF, o selo visual e a priorizacao nos resultados. Ver tambem o plano de <em>lojas/vendedores verificados</em>.</div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso:</strong> o fluxo de verificacao (colecao <code>verifications</code>) ja recolhe <strong>NIF</strong> (opcional) e o selo "Verificado" ja aparece no <strong>perfil</strong> e na <strong>pagina de detalhes</strong> (SellerBadges). Falta o selo nos <strong>cards de listagem</strong> e a <strong>priorizacao dos verificados nos resultados</strong> &mdash; em resolucao numa PR dedicada desta ronda. Ver tambem o plano de <em>lojas/vendedores verificados</em>.</div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-resolved">
       <div class="gap-header">
-        <span class="gap-badge gap-medio">Medio</span>
+        <span class="gap-badge gap-resolvido">Resolvido</span>
         <div>
           <div class="gap-id">GAP-08</div>
           <div class="gap-title">Compatibilidade Veicular Avancada para Pecas</div>
@@ -2519,11 +2522,12 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Construir base de dados de compatibilidade (marca &rarr; modelo &rarr; geracao &rarr; motorizacao).</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-08">&#128203; Abrir Plano 08 &mdash; Ecossistema de Pecas &#8599;</a></div></div>
       </div>
+      <div class="resolution-note"><strong>&#10004; Resolvido (plano 08):</strong> o vendedor declara compatibilidades granulares (<strong>marca &rarr; modelo &rarr; intervalo de anos &rarr; motorizacao</strong>) via <code>CompatibilitySelector</code>; o matching (<code>src/lib/compatibility.ts</code>) alimenta os detalhes da peca e a seccao <strong>"Pecas compativeis"</strong> na pagina de cada carro.</div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-resolved">
       <div class="gap-header">
-        <span class="gap-badge gap-medio">Medio</span>
+        <span class="gap-badge gap-resolvido">Resolvido</span>
         <div>
           <div class="gap-id">GAP-09</div>
           <div class="gap-title">Simulacao de Financiamento</div>
@@ -2536,11 +2540,12 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Integrar simulador de credito via parceria financeira ou calculadora generica com TAN/TAEG.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-06">&#128203; Abrir Plano 06 &mdash; Servicos Financeiros &#8599;</a></div></div>
       </div>
+      <div class="resolution-note"><strong>&#10004; Resolvido:</strong> a pagina de detalhes do veiculo tem simulador de <strong>credito</strong> (entrada, prazo e prestacao mensal com TAN indicativa) e de <strong>seguro</strong>, com captacao de leads para parceiros mediante consentimento RGPD (<code>FinanciamentoSeguroWidget</code>), ativavel pelo painel admin. Falta apenas fechar a parceria financeira real que consome as leads.</div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-resolved">
       <div class="gap-header">
-        <span class="gap-badge gap-medio">Medio</span>
+        <span class="gap-badge gap-resolvido">Resolvido</span>
         <div>
           <div class="gap-id">GAP-10</div>
           <div class="gap-title">Alerta de Reducao de Preco</div>
@@ -2553,6 +2558,26 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Implementar tracking de preco em favoritos com notificacao automatica.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-03">&#128203; Abrir Plano 03 &mdash; Busca e Descoberta (alertas) &#8599;</a></div></div>
       </div>
+      <div class="resolution-note"><strong>&#10004; Resolvido (plano 3.1, PR #50):</strong> Cloud Function de queda de preco notifica automaticamente quem tem o anuncio nos favoritos (in-app + push), respeitando as preferencias de notificacao por tipo e canal.</div>
+    </div>
+
+    <div class="gap-card is-progress">
+      <div class="gap-header">
+        <span class="gap-badge gap-progresso">Em Progresso</span>
+        <div>
+          <div class="gap-id">GAP-16</div>
+          <div class="gap-title">Comparador de Veiculos Lado a Lado</div>
+        </div>
+      </div>
+      <div class="gap-detail">
+        <div class="gap-detail-row"><div class="gap-detail-label">Descricao</div><div>Nao e possivel selecionar 2&ndash;3 veiculos e compara-los lado a lado (preco, ano, km, combustivel, estado, custos de reparacao). Num inventario com carros "para reparar", a comparacao estruturada e ainda mais decisiva do que nos marketplaces classicos. <em>Lacuna identificada na revisao v2.1 &mdash; tinha ficado de fora da analise.</em></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Concorrentes</div><div>Webmotors ("Comparar"), iCarros (comparador dedicado), Standvirtual, AutoScout24, Mobile.de, AutoTrader UK</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Impacto</div><div><strong>Medio</strong> &mdash; Ajuda na fase de decisao e aumenta paginas vistas por sessao; padrao de mercado consolidado.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Prioridade</div><div><span class="gap-badge gap-medio">P2 (Media)</span></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Comparacao client-side de ate 3 veiculos (selecao nos cards, barra flutuante, tabela comparativa com destaque do melhor valor por linha), sem colecoes novas &mdash; conforme o plano 3.2.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-03.2">&#128203; Abrir Plano 3.2 &mdash; Busca Avancada e Descoberta &#8599;</a></div></div>
+      </div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso:</strong> em resolucao numa PR dedicada desta ronda.</div>
     </div>
 
     <h3 class="subsection-heading" id="gap-crescimento">5.3 Lacunas de Crescimento (Prioridade Baixa / Longo Prazo)</h3>
@@ -2574,9 +2599,9 @@
       </div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-progress">
       <div class="gap-header">
-        <span class="gap-badge gap-baixo">Baixo</span>
+        <span class="gap-badge gap-progresso">Em Progresso</span>
         <div>
           <div class="gap-id">GAP-12</div>
           <div class="gap-title">Geracao de Anuncios com IA</div>
@@ -2589,11 +2614,12 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Integrar API de LLM para gerar descricao otimizada a partir dos dados estruturados.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-04">&#128203; Abrir Plano 04 &mdash; Funcionalidades de IA &#8599;</a></div></div>
       </div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso (PR #54, plano 4.1):</strong> geracao de descricao, sugestao de preco e analise de danos por foto (Gemini via Cloud Functions, com quotas, sanitizacao e moderacao). Falta rever/fazer merge.</div>
     </div>
 
-    <div class="gap-card">
+    <div class="gap-card is-progress">
       <div class="gap-header">
-        <span class="gap-badge gap-baixo">Baixo</span>
+        <span class="gap-badge gap-progresso">Em Progresso</span>
         <div>
           <div class="gap-id">GAP-13</div>
           <div class="gap-title">Conteudo Editorial / Video</div>
@@ -2606,6 +2632,7 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Criar blog/guias integrados ao site com topicos alinhados a proposta de valor.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-10">&#128203; Abrir Plano 10 &mdash; Comunidade e Conteudo &#8599;</a></div></div>
       </div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso:</strong> primeira leva de <strong>guias de compra</strong> estaticos com SEO (Server Components + ISR, JSON-LD Article) em resolucao numa PR dedicada desta ronda &mdash; low-hanging fruit deste gap; blog dinamico e video ficam para o plano 10.</div>
     </div>
 
     <div class="gap-card">
@@ -2640,7 +2667,61 @@
         <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Implementar modelo freemium com planos pagos de destaque. Integrar Stripe para pagamentos.</div></div>
         <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-17">&#128203; Abrir Plano 17 &mdash; Monetizacao &#8599;</a></div></div>
       </div>
-      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso (plano 17):</strong> desenhada a monetizacao B2B (assinaturas de profissionais, pay-per-lead na intencao de compra, anuncios/parcerias) com modal de planos ja construido. Falta a ligacao final ao Stripe (Price IDs de producao e endpoint de pagamento) para ativar receita.</div>
+      <div class="resolution-note" style="background:rgba(37,99,235,0.06); border-color:rgba(37,99,235,0.25);"><strong>&#9679; Em progresso (plano 17):</strong> desenhada a monetizacao B2B (assinaturas de profissionais, pay-per-lead na intencao de compra, anuncios/parcerias) com modal de planos ja construido; a PR #33 (painel profissional + CRM) reforca a proposta de valor B2B. <strong>Bloqueado em acao externa:</strong> criar a conta/Price IDs de producao no Stripe e o endpoint de pagamento &mdash; depende do proprietario, nao e resoluvel so com codigo.</div>
+    </div>
+
+    <div class="gap-card">
+      <div class="gap-header">
+        <span class="gap-badge gap-baixo">Baixo</span>
+        <div>
+          <div class="gap-id">GAP-17</div>
+          <div class="gap-title">Busca por Mapa</div>
+        </div>
+      </div>
+      <div class="gap-detail">
+        <div class="gap-detail-row"><div class="gap-detail-label">Descricao</div><div>Nao existe visualizacao dos anuncios num mapa interativo. Ja ha filtro por concelho/distrito e por raio de distancia, mas nao a exploracao visual "o que ha perto de mim". <em>Lacuna identificada na revisao v2.1.</em></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Concorrentes</div><div>LeBonCoin (mapa nativo), AutoScout24, Mobile.de, OLX (por localizacao)</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Impacto</div><div><strong>Baixo-Medio</strong> &mdash; Complementa a pesquisa por raio ja entregue; mais relevante para pecas/oficinas do que para carros.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Prioridade</div><div><span class="gap-badge gap-baixo">P3 (Baixa)</span></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Leaflet + OpenStreetMap (sem custos/API key), pins agregados por concelho com as coordenadas ja existentes em <code>geo.ts</code> &mdash; conforme o plano 3.2. A infra de mapa ja existe para oficinas (<code>MapViewer</code>/<code>MapSelector</code>).</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-03.2">&#128203; Abrir Plano 3.2 &mdash; Busca Avancada e Descoberta &#8599;</a></div></div>
+      </div>
+    </div>
+
+    <div class="gap-card">
+      <div class="gap-header">
+        <span class="gap-badge gap-baixo">Baixo</span>
+        <div>
+          <div class="gap-id">GAP-18</div>
+          <div class="gap-title">Relatorio de Historico do Veiculo</div>
+        </div>
+      </div>
+      <div class="gap-detail">
+        <div class="gap-detail-row"><div class="gap-detail-label">Descricao</div><div>O painel de VIN atual faz apenas descodificacao basica offline (marca/ano/pais pelo WMI). Nao ha relatorio de historico real &mdash; acidentes, quilometragem verificada, importacao, penhoras &mdash; que e o que gera confianca na compra. <em>Lacuna identificada na revisao v2.1; o estado "parcial" ja constava da matriz 4.2.</em></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Concorrentes</div><div>Webmotors (historico veicular), Kavak/InstaCarro (inspecao propria), AutoTrader UK (HPI check), Standvirtual/AutoScout24 (parcerias carVertical)</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Impacto</div><div><strong>Medio</strong> &mdash; No segmento "carros para reparar", validar o historico evita fraudes de km e sinistros ocultos; alinha com a proposta de transparencia.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Prioridade</div><div><span class="gap-badge gap-baixo">P3 (Baixa)</span> &mdash; requer parceria/API paga (carVertical, Autocheck)</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Parceria de afiliacao com carVertical (PT/BR) no painel VIN existente como primeiro passo sem custos; a prazo, relatorio integrado pago (plano 18 &mdash; APIs &amp; parcerias).</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-18">&#128203; Abrir Plano 18 &mdash; Integracao de APIs &amp; Parcerias &#8599;</a></div></div>
+      </div>
+    </div>
+
+    <div class="gap-card">
+      <div class="gap-header">
+        <span class="gap-badge gap-baixo">Baixo</span>
+        <div>
+          <div class="gap-id">GAP-19</div>
+          <div class="gap-title">Alertas e Resumos por Email</div>
+        </div>
+      </div>
+      <div class="gap-detail">
+        <div class="gap-detail-row"><div class="gap-detail-label">Descricao</div><div>Os alertas do plano 3.1 chegam in-app e por push, mas nao existe canal de <strong>email</strong> (alertas individuais nem resumo semanal). Email continua a ser o canal com maior alcance para utilizadores pouco frequentes e para reativacao. <em>Lacuna identificada na revisao v2.1.</em></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Concorrentes</div><div>Standvirtual, AutoScout24, Mobile.de, AutoTrader UK, OLX (todos enviam alertas/resumos por email)</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Impacto</div><div><strong>Baixo-Medio</strong> &mdash; Push exige opt-in do browser/app; email recupera quem nunca deu essa permissao.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Prioridade</div><div><span class="gap-badge gap-baixo">P3 (Baixa)</span></div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Recomendacao</div><div>Acrescentar canal "email" as <code>NotificationPreferences</code> existentes e enviar via Cloud Functions + servico transacional (Resend/SendGrid; a extensao Trigger Email do Firebase e o caminho mais curto). Comecar pelo resumo semanal de alertas.</div></div>
+        <div class="gap-detail-row"><div class="gap-detail-label">Plano</div><div><a class="plan-link" href="index.html#plan-03.1">&#128203; Abrir Plano 3.1 &mdash; Notificacoes e Alertas (extensao) &#8599;</a></div></div>
+      </div>
     </div>
 
     <!-- ============ SECTION 6 ============ -->
@@ -2725,16 +2806,16 @@
           <div class="phase-subtitle">0&ndash;3 meses &bull; Resolver lacunas criticas que bloqueiam crescimento organico</div>
         </div>
         <div class="phase-progress">
-          <div class="progress-bar"><div class="progress-fill" style="width: 60%"></div></div>
-          <span>60%</span>
+          <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          <span>100%</span>
         </div>
       </div>
       <div class="phase-body">
         <div class="roadmap-item"><div class="roadmap-id">R-01</div><div class="roadmap-action"><strong>Migrar para SSR + metadados dinamicos</strong> <span class="shipped-tag">Feito</span> &mdash; Concretizado via <strong>Next.js 15 (App Router)</strong>: SSR/ISR, <code>generateMetadata</code>, Open Graph, Twitter Cards e JSON-LD (schema Vehicle), sitemap/robots dinamicos. <em>(GAP-04)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-muito-alto">Muito Alto</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-02</div><div class="roadmap-action"><strong>Implementar pesquisas guardadas e alertas</strong> &mdash; Guardar criterios de filtro no Firestore, executar matching via Cloud Function, notificar por email e in-app. <em>(GAP-02)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-02</div><div class="roadmap-action"><strong>Implementar pesquisas guardadas e alertas</strong> <span class="shipped-tag">Feito</span> &mdash; Entregue no plano 3.1 (PR #50): subscricoes por palavra-chave/criterios/filtro salvo, matching via Cloud Functions, entrega in-app + push com preferencias por canal. Email fica para o GAP-19. <em>(GAP-02)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-03</div><div class="roadmap-action"><strong>Expandir cobertura geografica</strong> <span class="shipped-tag">Feito</span> &mdash; Cobertura nacional (20 distritos / 308 concelhos) com selecao hierarquica e mapa interativo. <em>(GAP-05)</em></div><div><span class="effort-tag effort-baixo">Baixo</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-04</div><div class="roadmap-action"><strong>App movel + notificacoes push</strong> <span class="shipped-tag">Feito</span> &mdash; Entregue a app nativa React Native/Expo (App Store + Google Play) com push via FCM; web instalavel/PWA. <em>(GAP-03)</em></div><div><span class="effort-tag effort-baixo">Baixo</span></div><div><span class="impact-tag impact-medio-alto">Medio-Alto</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-05</div><div class="roadmap-action"><strong>Implementar alerta de reducao de preco</strong> &mdash; Detetar alteracao de preco em favoritos e notificar utilizador. <em>(GAP-10)</em></div><div><span class="effort-tag effort-baixo">Baixo</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-05</div><div class="roadmap-action"><strong>Implementar alerta de reducao de preco</strong> <span class="shipped-tag">Feito</span> &mdash; Entregue no plano 3.1 (PR #50): trigger de queda de preco notifica quem favoritou. <em>(GAP-10)</em></div><div><span class="effort-tag effort-baixo">Baixo</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
       </div>
     </div>
 
@@ -2747,17 +2828,17 @@
           <div class="phase-subtitle">3&ndash;9 meses &bull; Construir mecanismos de confianca e iniciar geracao de receita</div>
         </div>
         <div class="phase-progress">
-          <div class="progress-bar"><div class="progress-fill" style="width: 35%"></div></div>
-          <span>35%</span>
+          <div class="progress-bar"><div class="progress-fill" style="width: 65%"></div></div>
+          <span>65%</span>
         </div>
       </div>
       <div class="phase-body">
-        <div class="roadmap-item"><div class="roadmap-id">R-06</div><div class="roadmap-action"><strong>Implementar indicador de preco justo</strong> &mdash; Construir base de dados de precos de mercado. Exibir em cada anuncio se o preco esta "abaixo", "na media" ou "acima" do mercado. <em>(GAP-01)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-muito-alto">Muito Alto</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-06</div><div class="roadmap-action"><strong>Implementar indicador de preco justo</strong> <span class="shipped-tag">Em PR</span> &mdash; PR #9 (badge 5 niveis, /avaliar-veiculo, /mercado) e PR #54 (sugestao de preco com IA) abertas. <em>(GAP-01)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-muito-alto">Muito Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-07</div><div class="roadmap-action"><strong>Implementar verificacao de vendedor</strong> &mdash; Verificacao por NIF, selo visual "Vendedor Verificado". <em>(GAP-07)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-08</div><div class="roadmap-action"><strong>Lancar modelo de monetizacao</strong> &mdash; Planos freemium com destaque. Integrar Stripe. <em>(GAP-15)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-09</div><div class="roadmap-action"><strong>Sistema de avaliacao e reputacao</strong> <span class="shipped-tag">Feito</span> &mdash; Avaliacoes/reviews em producao (colecao <code>reviews</code>). <em>(GAP-06)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-medio-alto">Medio-Alto</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-10</div><div class="roadmap-action"><strong>Compatibilidade veicular avancada para pecas</strong> &mdash; Base de dados marca &rarr; modelo &rarr; geracao &rarr; motorizacao. <em>(GAP-08)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-11</div><div class="roadmap-action"><strong>Simulador de financiamento</strong> &mdash; Calculadora generica de credito ou parceria financeira. <em>(GAP-09)</em></div><div><span class="effort-tag effort-medio">Baixo-Medio</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-10</div><div class="roadmap-action"><strong>Compatibilidade veicular avancada para pecas</strong> <span class="shipped-tag">Feito</span> &mdash; Compatibilidades granulares (marca &rarr; modelo &rarr; anos &rarr; motorizacao) declaradas pelo vendedor + matching nos detalhes e "Pecas compativeis". <em>(GAP-08)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-11</div><div class="roadmap-action"><strong>Simulador de financiamento</strong> <span class="shipped-tag">Feito</span> &mdash; Simulador de credito/seguro com captacao de leads (RGPD) nos detalhes do veiculo; falta so a parceria financeira real. <em>(GAP-09)</em></div><div><span class="effort-tag effort-medio">Baixo-Medio</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
       </div>
     </div>
 
@@ -2770,18 +2851,18 @@
           <div class="phase-subtitle">9&ndash;18 meses &bull; Diferenciacao tecnologica, escala e efeitos de rede</div>
         </div>
         <div class="phase-progress">
-          <div class="progress-bar"><div class="progress-fill" style="width: 28%"></div></div>
-          <span>28%</span>
+          <div class="progress-bar"><div class="progress-fill" style="width: 35%"></div></div>
+          <span>35%</span>
         </div>
       </div>
       <div class="phase-body">
         <div class="roadmap-item"><div class="roadmap-id">R-12</div><div class="roadmap-action"><strong>App movel nativa</strong> <span class="shipped-tag">Feito</span> &mdash; React Native/Expo para iOS e Android, publicada nas lojas, com OTA (EAS Update). <em>(GAP-03, plano 19)</em></div><div><span class="effort-tag effort-muito-alto">Muito Alto</span></div><div><span class="impact-tag impact-alto">Alto</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-13</div><div class="roadmap-action"><strong>Assistente IA para criacao de anuncios</strong> &mdash; LLM para titulo e descricao otimizados. Classificacao visual de danos. <em>(GAP-12)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-medio-alto">Medio-Alto</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-13</div><div class="roadmap-action"><strong>Assistente IA para criacao de anuncios</strong> <span class="shipped-tag">Em PR</span> &mdash; PR #54 (plano 4.1): descricao, sugestao de preco e analise de danos com Gemini. <em>(GAP-12)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-medio-alto">Medio-Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-14</div><div class="roadmap-action"><strong>Conteudo editorial e guias</strong> &mdash; Blog integrado, guias de compra, videos tutoriais. <em>(GAP-13)</em></div><div><span class="effort-tag effort-medio">Medio</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-15</div><div class="roadmap-action"><strong>Pagamento seguro para pecas</strong> &mdash; Escrow via Stripe para pecas &lt; 500 EUR. <em>(GAP-11)</em></div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-16</div><div class="roadmap-action"><strong>Rede de profissionais / oficinas</strong> <span class="shipped-tag">Base feita</span> &mdash; Diretorio de profissionais e oficinas ja em producao (plano 14); falta a camada de parcerias/marketplace de servicos transacional.</div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio-alto">Medio-Alto</span></div></div>
         <div class="roadmap-item"><div class="roadmap-id">R-17</div><div class="roadmap-action"><strong>Garantia mecanica opcional</strong> &mdash; Parceria com seguradora. <em>(GAP-14)</em></div><div><span class="effort-tag effort-muito-alto">Muito Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
-        <div class="roadmap-item"><div class="roadmap-id">R-18</div><div class="roadmap-action"><strong>Dashboard de dados de mercado</strong> &mdash; Insights sobre precos, tendencias e veiculos mais procurados.</div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
+        <div class="roadmap-item"><div class="roadmap-id">R-18</div><div class="roadmap-action"><strong>Dashboard de dados de mercado</strong> <span class="shipped-tag">Em PR</span> &mdash; PR #9 inclui a pagina /mercado (KPIs, histograma, ranking de marcas); PR #33 acrescenta analytics para vendedores profissionais.</div><div><span class="effort-tag effort-alto">Alto</span></div><div><span class="impact-tag impact-medio">Medio</span></div></div>
       </div>
     </div>
 
@@ -2834,13 +2915,19 @@
           <tr><td>18 &mdash; Onboarding por Intencao</td><td>Media</td><td><span class="status-complete">&#10004;</span> Feito</td></tr>
           <tr><td>19 &mdash; App React Native (iOS/Android)</td><td>Alta</td><td><span class="status-complete">&#10004;</span> Feito</td></tr>
           <tr><td>21 &mdash; Recorte de Fotos 4:3 + testes TDD</td><td>Media</td><td><span class="status-complete">&#10004;</span> Feito</td></tr>
-          <tr><td>02 &mdash; Inteligencia de Precos ("preco justo")</td><td>Alta</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-01)</td></tr>
-          <tr><td>03 &mdash; Busca e Descoberta (pesquisas guardadas/alertas)</td><td>Alta</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-02)</td></tr>
-          <tr><td>20 &mdash; Expansao Brasil</td><td>Alta</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
+          <tr><td>3.1 &mdash; Notificacoes e Alertas</td><td>Alta</td><td><span class="status-complete">&#10004;</span> Feito (PR #50 &mdash; GAP-02/GAP-10)</td></tr>
+          <tr><td>22 &mdash; Campos e Filtros Adicionais (carros)</td><td>Media</td><td><span class="status-complete">&#10004;</span> Feito (PR #39, inclui raio de distancia)</td></tr>
+          <tr><td>23 &mdash; Vista 360&deg; dos Veiculos</td><td>Media</td><td><span class="status-complete">&#10004;</span> Feito (PR #51)</td></tr>
+          <tr><td>02 &mdash; Inteligencia de Precos ("preco justo")</td><td>Alta</td><td><span class="status-partial">&#9888;</span> Em PR (#9) (GAP-01)</td></tr>
+          <tr><td>4.1 &mdash; Anuncios com IA</td><td>Media</td><td><span class="status-partial">&#9888;</span> Em PR (#54) (GAP-12)</td></tr>
+          <tr><td>20 &mdash; Expansao Brasil</td><td>Alta</td><td><span class="status-partial">&#9888;</span> Em PR (#47)</td></tr>
+          <tr><td>21b &mdash; Painel Profissional + CRM</td><td>Media</td><td><span class="status-partial">&#9888;</span> Em PR (#33)</td></tr>
+          <tr><td>22b &mdash; Vincular Metodos de Login</td><td>Media</td><td><span class="status-partial">&#9888;</span> Plano em PR (#45, sem codigo)</td></tr>
+          <tr><td>3.2 &mdash; Busca Avancada (mapa, comparador, sugestoes)</td><td>Alta</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-16/GAP-17)</td></tr>
           <tr><td>12 &mdash; i18n e SEO</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
-          <tr><td>04 &mdash; Funcionalidades de IA</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-12)</td></tr>
+          <tr><td>4.2/4.3 &mdash; Chatbot e Deteccao de Fraude</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
           <tr><td>05 &mdash; Midia Aprimorada</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
-          <tr><td>06 &mdash; Servicos Financeiros (financiamento)</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-09)</td></tr>
+          <tr><td>06 &mdash; Servicos Financeiros (financiamento)</td><td>Media</td><td><span class="status-partial">&#9888;</span> Simulador + leads feitos (GAP-09); escrow por fazer (GAP-11)</td></tr>
           <tr><td>07 &mdash; Ferramentas Profissionais</td><td>Media</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
           <tr><td>10 &mdash; Comunidade e Conteudo</td><td>Baixa</td><td><span class="status-absent">&#10008;</span> Planeado (GAP-13)</td></tr>
           <tr><td>11 &mdash; Logistica e Servicos</td><td>Baixa</td><td><span class="status-absent">&#10008;</span> Planeado</td></tr>
@@ -2874,8 +2961,8 @@
 
   <!-- FOOTER -->
   <footer class="site-footer">
-    <p>Documento atualizado em <strong>1 de julho de 2026</strong> &bull; RecarGarage &mdash; Analise Competitiva v2.0 (revisao da v1.0 de 27 de maio de 2026)</p>
-    <p>Sessao: <a href="https://claude.ai/code/session_0191a3e6LwhD3wcZ9QZ9KSBB" target="_blank" rel="noopener">https://claude.ai/code/session_0191a3e6LwhD3wcZ9QZ9KSBB</a></p>
+    <p>Documento atualizado em <strong>2 de julho de 2026</strong> &bull; RecarGarage &mdash; Analise Competitiva v2.1 (revisao da v2.0 de 1 de julho de 2026)</p>
+    <p>Sessao: <a href="https://claude.ai/code/session_016NRLqasbZDDdCLiunewA43" target="_blank" rel="noopener">https://claude.ai/code/session_016NRLqasbZDDdCLiunewA43</a></p>
     <div class="footer-note">
       Este documento deve ser revisto trimestralmente e atualizado com novos dados de mercado, metricas de execucao e reavaliacao de prioridades.
     </div>
