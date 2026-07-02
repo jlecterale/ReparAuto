@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,11 @@ import DraggableFlatList, {
   type RenderItemParams,
 } from 'react-native-draggable-flatlist';
 import { ImageCropper } from '@/components/anunciar/ImageCropper';
+import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { parseExternalImageUrl } from '@/lib/images';
 import { colors } from '@/theme/colors';
 
 interface PhotoPickerProps {
@@ -32,6 +37,14 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
   const [batchTotal, setBatchTotal] = useState(0);
   // Index of an already-added photo being re-cropped, or null.
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  // "Add photo" source chooser (camera / gallery / URL). A BottomSheet instead
+  // of Alert.alert because Android alerts cap at 3 buttons.
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
+  // "Add photo by URL" dialog.
+  const [urlDialogOpen, setUrlDialogOpen] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
+  const [urlError, setUrlError] = useState<string | null>(null);
+  const [urlChecking, setUrlChecking] = useState(false);
 
   function enfileirar(assets: PendingCrop[]) {
     const livres = assets.slice(0, Math.max(0, max - fotos.length));
@@ -71,11 +84,51 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
       Alert.alert('Limite atingido', `Máximo de ${max} fotos.`);
       return;
     }
-    Alert.alert('Adicionar foto', undefined, [
-      { text: 'Tirar foto', onPress: tirarFoto },
-      { text: 'Escolher da galeria', onPress: escolherDaGaleria },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    setAddSheetOpen(true);
+  }
+
+  // Runs a sheet action only after the sheet Modal has dismissed — presenting
+  // the native picker (or another Modal) while it is still animating out fails
+  // silently on iOS.
+  function runAfterSheetClose(action: () => void) {
+    setAddSheetOpen(false);
+    setTimeout(action, 350);
+  }
+
+  function closeUrlDialog() {
+    setUrlDialogOpen(false);
+    setUrlValue('');
+    setUrlError(null);
+    setUrlChecking(false);
+  }
+
+  async function addByUrl() {
+    const url = parseExternalImageUrl(urlValue);
+    if (!url) {
+      setUrlError('Insira um URL de imagem válido (começado por https://).');
+      return;
+    }
+    if (fotos.includes(url)) {
+      setUrlError('Essa imagem já está no anúncio.');
+      return;
+    }
+    setUrlChecking(true);
+    // Confirms the URL actually serves a renderable image before adding it.
+    let ok = false;
+    try {
+      ok = await Image.prefetch(url);
+    } catch {
+      ok = false;
+    }
+    setUrlChecking(false);
+    if (!ok) {
+      setUrlError('Não foi possível carregar uma imagem a partir desse URL.');
+      return;
+    }
+    // URL photos skip the cropper (remote images can't be manipulated locally)
+    // and are stored as-is; upload is skipped for http(s) URIs on submit.
+    onChange([...fotos, url].slice(0, max));
+    closeUrlDialog();
   }
 
   function avancarFila() {
@@ -179,6 +232,70 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
         As fotos são recortadas para a mesma proporção.
         {reordenavel ? ' Mantenha premida uma foto para reordenar; a primeira é a capa.' : ''}
       </Text>
+
+      <BottomSheet visible={addSheetOpen} onClose={() => setAddSheetOpen(false)} title="Adicionar foto">
+        <View className="gap-1">
+          {(
+            [
+              { icon: 'camera-outline', label: 'Tirar foto', action: tirarFoto },
+              { icon: 'images-outline', label: 'Escolher da galeria', action: escolherDaGaleria },
+              { icon: 'link-outline', label: 'Adicionar por URL', action: () => setUrlDialogOpen(true) },
+            ] as const
+          ).map((opt) => (
+            <Pressable
+              key={opt.label}
+              onPress={() => runAfterSheetClose(opt.action)}
+              accessibilityRole="button"
+              className="flex-row items-center rounded-xl px-3 py-3.5 active:bg-neutral-100"
+            >
+              <Ionicons name={opt.icon} size={20} color={colors.primary[600]} style={{ marginRight: 12 }} />
+              <Text className="flex-1 text-base text-fg">{opt.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </BottomSheet>
+
+      <Modal visible={urlDialogOpen} transparent animationType="fade" onRequestClose={closeUrlDialog}>
+        <KeyboardAvoider>
+          <Pressable
+            className="flex-1 items-center justify-center bg-black/40 px-5"
+            onPress={closeUrlDialog}
+            accessibilityLabel="Fechar"
+          >
+            {/* Inner Pressable stops backdrop presses from closing the dialog. */}
+            <Pressable className="w-full rounded-2xl bg-white p-5" onPress={() => {}}>
+              <Text className="mb-1 text-lg font-extrabold text-fg-heading">Adicionar por URL</Text>
+              <Text className="mb-3 text-sm text-fg-muted">
+                Cole o endereço de uma imagem pública (https).
+              </Text>
+              <Input
+                value={urlValue}
+                onChangeText={(t) => {
+                  setUrlValue(t);
+                  setUrlError(null);
+                }}
+                error={urlError ?? undefined}
+                placeholder="https://exemplo.com/foto.jpg"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                autoFocus
+                onSubmitEditing={addByUrl}
+              />
+              <View className="mt-4 flex-row gap-3">
+                <Button label="Cancelar" variant="outline" onPress={closeUrlDialog} className="flex-1" />
+                <Button
+                  label="Adicionar"
+                  onPress={addByUrl}
+                  loading={urlChecking}
+                  disabled={!urlValue.trim()}
+                  className="flex-1"
+                />
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoider>
+      </Modal>
 
       {editIndex !== null && (
         <ImageCropper

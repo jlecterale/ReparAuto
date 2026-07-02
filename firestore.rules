@@ -60,9 +60,9 @@ service cloud.firestore {
       // damageAnalysis is the server-written AI cache (plan 4.1) — owners must
       // not be able to forge or scrub it; only the Cloud Function (Admin SDK,
       // bypasses rules) and admins may touch it.
-      allow create: if isAuthenticated() && hasValidImageCount(7)
+      allow create: if isAuthenticated() && hasValidImageCount(20)
         && !('damageAnalysis' in request.resource.data);
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)
+      allow update: if (isOwnerByEmail() && hasValidImageCount(20)
           && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['damageAnalysis'])) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()

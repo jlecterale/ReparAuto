@@ -16,7 +16,7 @@ export function Skeleton({ className = '' }: SkeletonProps) {
 export function CarCardSkeleton() {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">
-      <Skeleton className="h-44 rounded-none" />
+      <Skeleton className="aspect-[4/3] rounded-none" />
       <div className="p-4 flex flex-col flex-1 gap-2">
         <Skeleton className="h-5 w-3/4" />
         <Skeleton className="h-3 w-1/2" />

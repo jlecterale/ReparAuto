@@ -17,7 +17,7 @@ import { DAMAGE_ANALYSIS_SYSTEM_PROMPT } from "./lib/prompts";
 import { consumeAiQuota, FREE_WEEKLY_AI_LIMIT } from "./lib/quota";
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-const MAX_PHOTO_INDEX = 6; // cars carry at most 7 photos
+const MAX_PHOTO_INDEX = 19; // cars carry at most 20 photos (see firestore.rules)
 
 const DAMAGE_SCHEMA = {
   type: SchemaType.OBJECT,

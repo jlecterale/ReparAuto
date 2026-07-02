@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -14,9 +15,21 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
+import { clearAdDraft, type CarDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { isValidYoutubeUrl } from '@/lib/youtube';
 import {
   CAMBIOS,
+  CAR_DISPLACEMENT_MAX,
+  CAR_DOORS_MAX,
+  CAR_DOORS_MIN,
+  CAR_KM_MAX,
+  CAR_POWER_MAX,
+  CAR_PRICE_MAX,
+  CAR_SEATS_MIN,
+  CAR_YEAR_MIN,
+  carYearMax,
+  maxSeatsForBodyType,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
   EQUIPAMENTOS_CARRO,
@@ -29,7 +42,7 @@ import { colors } from '@/theme/colors';
 import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
 
 export default function AnunciarCarroScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -59,10 +72,64 @@ export default function AnunciarCarroScreen() {
   const [descricao, setDescricao] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
-  const [whatsapp, setWhatsapp] = useState('');
+  // The profile has no separate WhatsApp; the phone is the best default for it.
+  const [whatsapp, setWhatsapp] = useState(user?.telefone ?? '');
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  // Set once the listing is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
+
+  const draftData = useMemo<CarDraftData>(
+    () => ({
+      fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
+      seats, condition, power, displacement, traction, features, estado, local,
+      descricao, videoUrl, telefone, whatsapp,
+    }),
+    [fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
+     seats, condition, power, displacement, traction, features, estado, local,
+     descricao, videoUrl, telefone, whatsapp],
+  );
+  // Prefilled contacts don't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(marca || modelo || km || preco || descricao || fotos.length);
+
+  function restoreDraft(d: CarDraftData) {
+    setFotos(d.fotos ?? []);
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setAno(d.ano ?? '');
+    setKm(d.km ?? '');
+    setPreco(d.preco ?? '');
+    setCor(d.cor ?? '');
+    setPortas(d.portas ?? '5');
+    setCombustivel(d.combustivel ?? null);
+    setCambio(d.cambio ?? null);
+    setBodyType(d.bodyType ?? null);
+    setSeats(d.seats ?? '');
+    setCondition(d.condition ?? 'Usado');
+    setPower(d.power ?? '');
+    setDisplacement(d.displacement ?? '');
+    setTraction(d.traction ?? null);
+    setFeatures(d.features ?? []);
+    setEstado(d.estado ?? 'pronto');
+    setLocal(d.local ?? '');
+    setDescricao(d.descricao ?? '');
+    setVideoUrl(d.videoUrl ?? '');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? user?.telefone ?? '');
+  }
+
+  useAdDraft<CarDraftData>({
+    kind: 'carro',
+    enabled: !editId,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'um anúncio de carro',
+    onRestore: restoreDraft,
+  });
 
   // Edit mode: load the existing listing and prefill the form.
   useEffect(() => {
@@ -106,11 +173,37 @@ export default function AnunciarCarroScreen() {
   function validar(): string | null {
     if (fotos.length === 0) return 'Adicione pelo menos uma foto.';
     if (!marca.trim() || !modelo.trim()) return 'Indique a marca e o modelo.';
+    const anoMax = carYearMax();
     const anoNum = Number(ano);
-    if (!anoNum || anoNum < 1950 || anoNum > new Date().getFullYear() + 1)
-      return 'Indique um ano válido.';
-    if (!km.trim() || Number.isNaN(Number(km))) return 'Indique os quilómetros.';
-    if (!preco.trim() || Number.isNaN(Number(preco))) return 'Indique um preço válido.';
+    if (!Number.isInteger(anoNum) || anoNum < CAR_YEAR_MIN || anoNum > anoMax)
+      return `Indique um ano entre ${CAR_YEAR_MIN} e ${anoMax}.`;
+    const kmNum = Number(km);
+    if (!km.trim() || !Number.isFinite(kmNum) || kmNum < 0 || kmNum > CAR_KM_MAX)
+      return `Indique os quilómetros (0 a ${CAR_KM_MAX.toLocaleString('pt-PT')}).`;
+    const precoNum = Number(preco);
+    if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX)
+      return `Indique um preço entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+    if (portas.trim()) {
+      const portasNum = Number(portas);
+      if (!Number.isInteger(portasNum) || portasNum < CAR_DOORS_MIN || portasNum > CAR_DOORS_MAX)
+        return `O número de portas deve estar entre ${CAR_DOORS_MIN} e ${CAR_DOORS_MAX}.`;
+    }
+    if (seats.trim()) {
+      const seatsNum = Number(seats);
+      const seatsMax = maxSeatsForBodyType(bodyType ?? undefined);
+      if (!Number.isInteger(seatsNum) || seatsNum < CAR_SEATS_MIN || seatsNum > seatsMax)
+        return `O número de lugares deve estar entre ${CAR_SEATS_MIN} e ${seatsMax}.`;
+    }
+    if (power.trim()) {
+      const powerNum = Number(power);
+      if (!Number.isInteger(powerNum) || powerNum < 1 || powerNum > CAR_POWER_MAX)
+        return `A potência deve estar entre 1 e ${CAR_POWER_MAX} cv.`;
+    }
+    if (displacement.trim()) {
+      const ccNum = Number(displacement);
+      if (!Number.isInteger(ccNum) || ccNum < 1 || ccNum > CAR_DISPLACEMENT_MAX)
+        return `A cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`;
+    }
     if (!combustivel) return 'Selecione o combustível.';
     if (!cambio) return 'Selecione a caixa.';
     if (!local.trim()) return 'Indique a localidade.';
@@ -173,7 +266,9 @@ export default function AnunciarCarroScreen() {
           criadorUid: user.uid,
           vendedorEmail: user.email,
         });
+        clearAdDraft('carro');
       }
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
@@ -247,6 +342,7 @@ export default function AnunciarCarroScreen() {
               onChangeText={setKm}
               placeholder="120000"
               keyboardType="number-pad"
+              maxLength={6}
             />
           </View>
         </View>
@@ -259,6 +355,7 @@ export default function AnunciarCarroScreen() {
               onChangeText={setPreco}
               placeholder="15000"
               keyboardType="number-pad"
+              maxLength={8}
             />
           </View>
           <View className="flex-1">
@@ -402,6 +499,7 @@ export default function AnunciarCarroScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O anúncio fica visível após aprovação da equipa.
         </Text>
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

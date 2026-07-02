@@ -1,14 +1,18 @@
 'use client';
 
 import { Check, CheckCircle } from '@phosphor-icons/react';
-import { Fragment, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Fragment, useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
+import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import { gerarTituloIntencao, validarIntencaoCompra } from '@/lib/utils';
 import { CATEGORIAS_INTENCAO } from '@/lib/constants';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
+import { clearAdDraft, hasIntentDraftContent } from '@/lib/adDraft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import type { CategoriaIntencao } from '@/types/intencao';
 import StepCategoria from './StepCategoria';
 import StepBasico from './StepBasico';
@@ -20,7 +24,7 @@ import StepResumo from './StepResumo';
 
 const STEPS = ['Categoria', 'Básico', 'Orçamento', 'Localização', 'Preferências', 'Contacto', 'Resumo'];
 
-interface FormState {
+export interface FormState {
   categoria: CategoriaIntencao | null;
   criterios: {
     marca: string;
@@ -47,6 +51,12 @@ interface FormState {
   contatoPreferido: 'chat' | 'whatsapp' | 'ambos';
   mostrarTelefone: boolean;
   descricao: string;
+}
+
+/** Serializable snapshot persisted as the purchase-intent draft. */
+export interface IntencaoFormDraft {
+  form: FormState;
+  passo: number;
 }
 
 const formInicial: FormState = {
@@ -77,7 +87,34 @@ export default function CriarIntencaoCompra() {
   const [sucesso, setSucesso] = useState(false);
   const { intencoes, auth } = useApp();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1 to
+  // resume the saved draft directly, without re-asking.
+  const resumeParam = searchParams.get('retomar') === '1';
+
+  const applyDraft = (d: IntencaoFormDraft) => {
+    setForm({
+      ...formInicial,
+      ...d.form,
+      criterios: {
+        ...formInicial.criterios,
+        ...d.form?.criterios,
+        localizacao: { ...formInicial.criterios.localizacao, ...d.form?.criterios?.localizacao },
+      },
+    });
+    setPasso(Math.min(Math.max(d.passo ?? 0, 0), STEPS.length - 1));
+  };
+
+  const draftSnapshot = useMemo<IntencaoFormDraft>(() => ({ form, passo }), [form, passo]);
+  const intentDraft = useAdDraft<IntencaoFormDraft>({
+    kind: 'intencao',
+    suspended: sucesso || publicando,
+    data: draftSnapshot,
+    hasContent: hasIntentDraftContent(form),
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => applyDraft(draft.data),
+  });
 
   const updateForm = (field: string, value: any) => {
     const keys = field.split('.');
@@ -161,6 +198,7 @@ export default function CriarIntencaoCompra() {
           `Uma nova intenção de compra foi publicada: ${titulo}.`,
           `/admin`);
       });
+      clearAdDraft('intencao');
       setSucesso(true);
       toast?.sucesso('Intenção de compra publicada com sucesso!');
     } catch (err: any) {
@@ -371,7 +409,8 @@ export default function CriarIntencaoCompra() {
           </>
         )}
 
-        <div className="flex justify-between mt-6 pt-4 border-t border-slate-200">
+        {passo > 0 && <DraftSavedNote className="mt-6" />}
+        <div className={`flex justify-between pt-4 border-t border-slate-200 ${passo > 0 ? 'mt-2' : 'mt-6'}`}>
           <Button
             tipo="terciario"
             onClick={() => setPasso(Math.max(0, passo - 1))}
@@ -400,6 +439,15 @@ export default function CriarIntencaoCompra() {
           )}
         </div>
       </div>
+
+      {intentDraft.prompt && (
+        <DraftResumePrompt
+          itemLabel="uma intenção de compra"
+          savedAt={intentDraft.prompt.savedAt}
+          onDiscard={intentDraft.discard}
+          onResume={intentDraft.resume}
+        />
+      )}
     </div>
   );
 }

@@ -4,8 +4,13 @@ import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Hea
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
+import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
+import { releasePendingFiles } from '@/lib/pendingUploadFiles';
+import type { PecaFormDraft } from '@/components/pecas/PecaForm';
+import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompra';
+import type { OficinaFormDraft } from '@/screens/RegistarOficina';
 import type { IntencaoCompra } from '@/types/intencao';
-import { formatarPreco } from '@/lib/utils';
+import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth as firebaseAuth } from '@/lib/firebase';
@@ -24,6 +29,42 @@ import useVerification from '@/hooks/useVerification';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
+/** Card for a locally saved listing draft, with resume and discard actions. */
+function DraftCard({ titulo, savedAt, onContinue, onDiscard }: {
+  titulo: string;
+  savedAt: number;
+  onContinue: () => void;
+  onDiscard: () => void;
+}) {
+  return (
+    <div className="bg-neutral-50 rounded-xl p-3 border border-dashed border-neutral-300 mb-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-bold text-fg-heading text-sm">{titulo}</p>
+            <Badge cor="gray">Rascunho</Badge>
+          </div>
+          <p className="text-xs text-fg-subtle">
+            Por terminar · guardado apenas neste dispositivo em {new Date(savedAt).toLocaleDateString('pt-PT')}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Button tipo="primario" tamanho="sm" onClick={onContinue}>
+            Continuar
+          </Button>
+          <button
+            onClick={onDiscard}
+            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+            title="Descartar rascunho"
+          >
+            <Trash className="text-xs" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileLoggedIn() {
   const { auth } = useApp();
   const { user, logout, isAdmin, updateProfile, refreshProfile } = auth;
@@ -37,6 +78,10 @@ export default function ProfileLoggedIn() {
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ tipo: 'carro' | 'peca'; id: string; titulo: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [carDraft, setCarDraft] = useState<AdDraft<CarAdDraftData> | null>(null);
+  const [partDraft, setPartDraft] = useState<AdDraft<PecaFormDraft> | null>(null);
+  const [intentDraft, setIntentDraft] = useState<AdDraft<IntencaoFormDraft> | null>(null);
+  const [workshopDraft, setWorkshopDraft] = useState<AdDraft<OficinaFormDraft> | null>(null);
   const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
   const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
   
@@ -143,6 +188,27 @@ export default function ProfileLoggedIn() {
   }, [user?.email]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Local listing drafts (saved by the creation flows) surface alongside the
+  // published listings so an unfinished ad is never forgotten.
+  useEffect(() => {
+    if (!user?.uid) return;
+    setCarDraft(loadAdDraft<CarAdDraftData>('carro', user.uid));
+    setPartDraft(loadAdDraft<PecaFormDraft>('peca', user.uid));
+    setIntentDraft(loadAdDraft<IntencaoFormDraft>('intencao', user.uid));
+    setWorkshopDraft(loadAdDraft<OficinaFormDraft>('oficina', user.uid));
+  }, [user?.uid]);
+
+  const discardDraft = (kind: AdDraftKind) => {
+    // Free any photo Files the discarded draft kept alive in this session.
+    if (kind === 'carro') releasePendingFiles(carDraft?.data.fotos ?? []);
+    else if (kind === 'peca') releasePendingFiles([partDraft?.data.foto]);
+    clearAdDraft(kind);
+    if (kind === 'carro') setCarDraft(null);
+    else if (kind === 'peca') setPartDraft(null);
+    else if (kind === 'intencao') setIntentDraft(null);
+    else if (kind === 'oficina') setWorkshopDraft(null);
+  };
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
     await updateCarro(id, { ...dados, status: 'pendente' });
@@ -339,6 +405,15 @@ export default function ProfileLoggedIn() {
           <ListChecks className="text-accent" /> Os Seus Carros Anunciados
         </h4>
 
+        {carDraft && (
+          <DraftCard
+            titulo={`${carDraft.data.dados?.marca ?? ''} ${carDraft.data.dados?.modelo ?? ''}`.trim() || 'Anúncio de carro'}
+            savedAt={carDraft.savedAt}
+            onContinue={() => router.push('/anunciar?tipo=carro&retomar=1')}
+            onDiscard={() => discardDraft('carro')}
+          />
+        )}
+
         {meusCarros.length === 0 ? (
           <div className="flex flex-col items-center text-center py-10 px-4 bg-neutral-50 border border-neutral-100 rounded-xl">
             <ListChecks size={32} className="text-neutral-300 mb-2" />
@@ -408,6 +483,15 @@ export default function ProfileLoggedIn() {
           <GearSix className="text-accent" /> As Suas Peças & Pedidos
         </h4>
 
+        {partDraft && (
+          <DraftCard
+            titulo={partDraft.data.form?.titulo || 'Anúncio de peça'}
+            savedAt={partDraft.savedAt}
+            onContinue={() => router.push('/anunciar?tipo=peca&retomar=1')}
+            onDiscard={() => discardDraft('peca')}
+          />
+        )}
+
         {minhasPecas.length === 0 ? (
           <div className="flex flex-col items-center text-center py-10 px-4 bg-neutral-50 border border-neutral-100 rounded-xl">
             <GearSix size={32} className="text-neutral-300 mb-2" />
@@ -459,11 +543,43 @@ export default function ProfileLoggedIn() {
         )}
       </div>
 
+      {/* Workshop draft (the profile has no workshop section, so the pending
+          registration surfaces as its own card) */}
+      {workshopDraft && (
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+            <Storefront className="text-accent" /> A Sua Oficina
+          </h4>
+          <DraftCard
+            titulo={workshopDraft.data.nome || 'Registo de oficina'}
+            savedAt={workshopDraft.savedAt}
+            onContinue={() => router.push('/oficinas/registar?retomar=1')}
+            onDiscard={() => discardDraft('oficina')}
+          />
+        </div>
+      )}
+
       {/* My Purchase Intentions */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
         <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
           <MagnifyingGlass className="text-accent" /> Minhas Intenções de Compra
         </h4>
+        {intentDraft && (
+          <DraftCard
+            titulo={
+              intentDraft.data.form
+                ? gerarTituloIntencao({
+                    categoria: intentDraft.data.form.categoria || undefined,
+                    criterios: intentDraft.data.form.criterios,
+                    descricao: intentDraft.data.form.descricao,
+                  })
+                : 'Intenção de compra'
+            }
+            savedAt={intentDraft.savedAt}
+            onContinue={() => router.push('/comprar?retomar=1')}
+            onDiscard={() => discardDraft('intencao')}
+          />
+        )}
         {minhasIntencoes.length === 0 ? (
           <div className="flex flex-col items-center text-center py-6 text-fg-subtle text-sm bg-slate-50 rounded-xl">
             <p>Nenhuma intenção de compra ativa.</p>
