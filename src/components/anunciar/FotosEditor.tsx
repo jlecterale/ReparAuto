@@ -298,7 +298,10 @@ export default function FotosEditor({
   };
 
   const podeAdicionar = fotos.length < max;
-  const alturaFoto = max === 1 ? 'h-40' : 'h-20';
+  // Single-photo flows keep a fixed height; grids follow the crop aspect so
+  // the cells scale with the container (and leave room for readable labels).
+  const alturaFoto = max === 1 ? 'h-40' : 'h-auto';
+  const fotoStyle = max === 1 ? undefined : { aspectRatio: aspect };
 
   return (
     <div>
@@ -423,7 +426,7 @@ export default function FotosEditor({
         </div>
       )}
 
-      <div className={`grid gap-3 ${max === 1 ? 'grid-cols-1' : 'grid-cols-3 sm:grid-cols-6'}`}>
+      <div className={`grid gap-3 ${max === 1 ? 'grid-cols-1' : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'}`}>
         {fotos.map((foto, i) => {
           const isImg = foto.startsWith('data:') || foto.startsWith('blob:') || foto.startsWith('http');
           const isDragging = draggingIndex === i;
@@ -436,89 +439,105 @@ export default function FotosEditor({
               onDragOver={podeReordenar ? handleDragOver(i) : undefined}
               onDrop={podeReordenar ? handleDrop(i) : undefined}
               onDragEnd={podeReordenar ? handleDragEnd : undefined}
-              className={`relative group transition ${podeReordenar ? 'cursor-move' : ''} ${
+              className={`group transition ${podeReordenar ? 'cursor-move' : ''} ${
                 isDragging ? 'opacity-40' : ''
               } ${isDragOver ? 'ring-2 ring-accent rounded-lg' : ''}`}
             >
-              {isImg ? (
-                <img
-                  src={foto}
-                  alt={`Foto ${i + 1}`}
-                  draggable={false}
-                  className={`w-full object-cover rounded-lg border border-neutral-200 ${alturaFoto} pointer-events-none`}
-                />
-              ) : (
-                <div
-                  className={`w-full flex items-center justify-center text-3xl bg-neutral-50 rounded-lg border border-neutral-200 ${alturaFoto} pointer-events-none`}
-                >
-                  {foto}
-                </div>
-              )}
+              {/* Overlays anchor to the image only, so they never cover the angle select below. */}
+              <div className="relative">
+                {isImg ? (
+                  <img
+                    src={foto}
+                    alt={`Foto ${i + 1}`}
+                    draggable={false}
+                    style={fotoStyle}
+                    className={`w-full object-cover rounded-lg border border-neutral-200 ${alturaFoto} pointer-events-none`}
+                  />
+                ) : (
+                  <div
+                    style={fotoStyle}
+                    className={`w-full flex items-center justify-center text-3xl bg-neutral-50 rounded-lg border border-neutral-200 ${alturaFoto} pointer-events-none`}
+                  >
+                    {foto}
+                  </div>
+                )}
 
-              {exibirCapa && i === 0 && (
-                <span className="absolute bottom-1 left-1 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
-                  Capa
-                </span>
-              )}
+                {exibirCapa && i === 0 && (
+                  <span className="absolute bottom-1 left-1 bg-accent text-white text-[10px] font-bold px-1.5 py-0.5 rounded pointer-events-none">
+                    Capa
+                  </span>
+                )}
 
-              {isImg && (
+                {isImg && (
+                  <button
+                    type="button"
+                    onClick={() => setEditIndex(i)}
+                    aria-label={`Editar foto ${i + 1}`}
+                    className="absolute top-1 left-1 w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
+                  >
+                    <PencilSimple size={12} weight="bold" />
+                  </button>
+                )}
+
+                {podeReordenar && (
+                  <div className="absolute bottom-1 right-1 flex gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => moverFoto(i, i - 1)}
+                      disabled={i === 0}
+                      aria-label={`Mover foto ${i + 1} para a esquerda`}
+                      className="w-5 h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
+                    >
+                      <CaretLeft size={10} weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moverFoto(i, i + 1)}
+                      disabled={i === fotos.length - 1}
+                      aria-label={`Mover foto ${i + 1} para a direita`}
+                      className="w-5 h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
+                    >
+                      <CaretRight size={10} weight="bold" />
+                    </button>
+                  </div>
+                )}
+
                 <button
                   type="button"
-                  onClick={() => setEditIndex(i)}
-                  aria-label={`Editar foto ${i + 1}`}
-                  className="absolute top-1 left-1 w-6 h-6 sm:w-5 sm:h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition hover:bg-white"
+                  onClick={() => removerFoto(i)}
+                  aria-label={`Remover foto ${i + 1}`}
+                  className="absolute -top-1.5 -right-1.5 w-6 h-6 sm:w-5 sm:h-5 bg-danger-600 text-white rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition shadow"
                 >
-                  <PencilSimple size={12} weight="bold" />
+                  <X size={12} weight="bold" />
                 </button>
-              )}
-
-              {podeReordenar && (
-                <div className="absolute bottom-1 right-1 flex gap-0.5">
-                  <button
-                    type="button"
-                    onClick={() => moverFoto(i, i - 1)}
-                    disabled={i === 0}
-                    aria-label={`Mover foto ${i + 1} para a esquerda`}
-                    className="w-5 h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
-                  >
-                    <CaretLeft size={10} weight="bold" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => moverFoto(i, i + 1)}
-                    disabled={i === fotos.length - 1}
-                    aria-label={`Mover foto ${i + 1} para a direita`}
-                    className="w-5 h-5 bg-white/90 text-fg rounded flex items-center justify-center shadow border border-neutral-200 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white"
-                  >
-                    <CaretRight size={10} weight="bold" />
-                  </button>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={() => removerFoto(i)}
-                aria-label={`Remover foto ${i + 1}`}
-                className="absolute -top-1.5 -right-1.5 w-6 h-6 sm:w-5 sm:h-5 bg-danger-600 text-white rounded-full flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition shadow"
-              >
-                <X size={12} weight="bold" />
-              </button>
+              </div>
 
               {tagAngles && isImg && (
                 <select
                   value={angleByPhoto?.[foto] ?? ''}
                   onChange={(e) => setPhotoAngle(foto, e.target.value as SpinAngle | '')}
                   aria-label={`Ângulo da foto ${i + 1}`}
-                  className={`mt-1 w-full rounded-lg border px-1 py-1 text-[10px] focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none ${
+                  className={`mt-1 w-full rounded-lg border px-2 py-1.5 text-xs focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none ${
                     angleByPhoto?.[foto] ? 'border-success-300 bg-success-50 text-success-700 font-semibold' : 'border-slate-300 text-fg-muted'
                   }`}
                 >
                   <option value="">Ângulo…</option>
-                  {SPIN_ANGLE_ORDER.map((angle) => (
-                    <option key={angle} value={angle}>
-                      {SPIN_ANGLE_LABELS[angle]}
-                    </option>
-                  ))}
+                  {/* Required angles first, grouped — "Frente" and "Frente direita"
+                      are easy to mix up in a flat list. */}
+                  <optgroup label="Necessários para o 360°">
+                    {SPIN_ANGLE_ORDER.filter((angle) => REQUIRED_SPIN_ANGLES.includes(angle)).map((angle) => (
+                      <option key={angle} value={angle}>
+                        {SPIN_ANGLE_LABELS[angle]}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Opcionais">
+                    {SPIN_ANGLE_ORDER.filter((angle) => !REQUIRED_SPIN_ANGLES.includes(angle)).map((angle) => (
+                      <option key={angle} value={angle}>
+                        {SPIN_ANGLE_LABELS[angle]}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               )}
             </div>
@@ -526,11 +545,12 @@ export default function FotosEditor({
         })}
         {/* Cap the empty add slots at one desktop row — with a 20-photo limit,
             rendering every remaining slot would flood the grid. */}
-        {Array.from({ length: Math.min(Math.max(0, max - fotos.length), 6) }).map((_, i) => (
+        {Array.from({ length: Math.min(Math.max(0, max - fotos.length), 4) }).map((_, i) => (
           <button
             type="button"
             key={`empty-${i}`}
             onClick={() => fileInputRef.current?.click()}
+            style={fotoStyle}
             className={`w-full border-2 border-dashed border-neutral-200 rounded-lg flex items-center justify-center text-fg-muted text-xs cursor-pointer hover:bg-neutral-50 transition ${alturaFoto}`}
           >
             {fotos.length + i + 1}

@@ -4,6 +4,7 @@ import {
   getSpinAngles,
   getSpinFrames,
   isSpinEnabled,
+  restoreAngleByPhoto,
   spinFrameFromDrag,
   toAngleByPhoto,
   toPhotoAngles,
@@ -113,6 +114,30 @@ describe('withPhotoRenamed', () => {
       'https://a.jpg': 'front',
     });
     expect(withPhotoRenamed({ 'a.jpg': 'front' }, 'other.jpg', 'new.jpg')).toEqual({ 'a.jpg': 'front' });
+  });
+});
+
+// Restoring a draft re-keys dead blob URLs to fresh ones (see
+// restoreDraftPhotos) and may lose photos entirely — saved tags must follow
+// the renames and tags of lost photos must be dropped.
+describe('restoreAngleByPhoto', () => {
+  it('moves tags across re-keyed photos and keeps tags of surviving photos', () => {
+    const saved = { 'blob:old': 'front', 'https://a.jpg': 'rear' } as const;
+    const renames = [{ from: 'blob:old', to: 'blob:new' }];
+    expect(restoreAngleByPhoto(saved, renames, ['blob:new', 'https://a.jpg'])).toEqual({
+      'blob:new': 'front',
+      'https://a.jpg': 'rear',
+    });
+  });
+
+  it('drops tags of photos that could not be restored', () => {
+    const saved = { 'blob:lost': 'front', '🚗': 'rear' } as const;
+    expect(restoreAngleByPhoto(saved, [], ['🚗'])).toEqual({ '🚗': 'rear' });
+  });
+
+  it('returns an empty map for an empty or missing saved map', () => {
+    expect(restoreAngleByPhoto({}, [], ['a.jpg'])).toEqual({});
+    expect(restoreAngleByPhoto(undefined, [], ['a.jpg'])).toEqual({});
   });
 });
 

@@ -157,6 +157,22 @@ export function withPhotoRenamed(
 }
 
 /**
+ * Draft-restore counterpart of withPhotoRenamed: follows saved tags through
+ * the blob-URL re-keys reported by restoreDraftPhotos and drops tags whose
+ * photo did not survive the restore.
+ */
+export function restoreAngleByPhoto(
+  saved: Record<string, SpinAngle> | null | undefined,
+  renames: Array<{ from: string; to: string }>,
+  fotos: string[]
+): Record<string, SpinAngle> {
+  let tags = saved ?? {};
+  for (const { from, to } of renames) tags = withPhotoRenamed(tags, from, to);
+  const surviving = new Set(fotos);
+  return Object.fromEntries(Object.entries(tags).filter(([foto]) => surviving.has(foto)));
+}
+
+/**
  * Publish-time freeze: follows tags through upload pairs (photo string
  * changes blob/local URI → storage URL) and converts them to the persisted
  * angle → index map. Returns null when empty so both addDoc and updateDoc

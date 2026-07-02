@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
-import { buildPhotoAngles, type SpinAngle } from '@/lib/spin360';
+import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
@@ -106,13 +106,21 @@ export default function Anunciar() {
     // Photos whose blob URL died (page reload) are recovered from IndexedDB
     // and re-keyed; anything unrecoverable is dropped with a notice.
     const savedFotos = draft.data.fotos ?? [];
-    void restoreDraftPhotos(savedFotos).then(({ fotos: restoredFotos, lostCount }) => {
+    void restoreDraftPhotos(savedFotos).then(({ fotos: restoredFotos, lostCount, renames }) => {
       setFotos(restoredFotos);
+      // Vista 360 tags are keyed by photo string — follow the re-keys and
+      // drop tags of photos that could not be restored.
+      const restoredTags = restoreAngleByPhoto(draft.data.angleByPhoto, renames, restoredFotos);
+      setAngleByPhoto(restoredTags);
       if (restoredFotos.some((foto, i) => foto !== savedFotos[i]) || lostCount > 0) {
         // Persist the re-keyed list right away — the stale blob URLs in the
         // stored draft no longer resolve to anything.
         const step = lostCount > 0 ? 1 : draft.data.step;
-        saveAdDraft<CarAdDraftData>('carro', { dados: dadosRestaurados, fotos: restoredFotos, step }, { uid: user?.uid ?? null });
+        saveAdDraft<CarAdDraftData>(
+          'carro',
+          { dados: dadosRestaurados, fotos: restoredFotos, angleByPhoto: restoredTags, step },
+          { uid: user?.uid ?? null },
+        );
       }
       if (lostCount > 0) {
         setPasso(1);
@@ -127,7 +135,10 @@ export default function Anunciar() {
     });
   };
 
-  const carSnapshot = useMemo<CarAdDraftData>(() => ({ dados, fotos, step: passo }), [dados, fotos, passo]);
+  const carSnapshot = useMemo<CarAdDraftData>(
+    () => ({ dados, fotos, angleByPhoto, step: passo }),
+    [dados, fotos, angleByPhoto, passo],
+  );
   const carDraft = useAdDraft<CarAdDraftData>({
     kind: 'carro',
     enabled: categoria === 'carro',
@@ -259,13 +270,13 @@ export default function Anunciar() {
     // The kept fields (marca/modelo/…) are a convenience prefill, not user
     // progress — re-anchor the baseline so they don't autosave as a ghost
     // draft of the listing that was just published.
-    carDraft.resetBaseline({ dados: nextDados, fotos: [], step: 0 });
+    carDraft.resetBaseline({ dados: nextDados, fotos: [], angleByPhoto: {}, step: 0 });
   };
 
   if (publicado) {
     const isPeca = categoria === 'peca';
     return (
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="text-center py-6">
           <CheckCircle className="text-green-500 text-5xl mb-3" />
           <h3 className="text-xl font-extrabold text-fg-heading">Anúncio enviado!</h3>
@@ -309,7 +320,7 @@ export default function Anunciar() {
       : 'Preencha os dados abaixo';
 
   return (
-    <div className="max-w-2xl mx-auto page-enter">
+    <div className="max-w-3xl mx-auto page-enter">
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
         <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
         <p className={`text-fg-subtle text-sm ${categoria === 'carro' && passo >= 1 ? 'mb-1' : 'mb-5'}`}>{subtitulo}</p>
