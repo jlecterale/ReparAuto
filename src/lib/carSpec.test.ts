@@ -69,7 +69,8 @@ describe('validarDadosVeiculo', () => {
   });
 
   it('validates optional fields only once filled', () => {
-    expect(validarDadosVeiculo({ ...valido, seats: '99' }).seats).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, seats: '100' }).seats).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, seats: '99' }).seats).toBeUndefined(); // vans/minibuses
     expect(validarDadosVeiculo({ ...valido, seats: '5' }).seats).toBeUndefined();
     expect(validarDadosVeiculo({ ...valido, power: '99999' }).power).toBeTruthy();
     expect(validarDadosVeiculo({ ...valido, displacement: '99999' }).displacement).toBeTruthy();

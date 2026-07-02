@@ -12,7 +12,8 @@ export const CAR_KM_MAX = 999_999;
 export const CAR_DOORS_MIN = 2;
 export const CAR_DOORS_MAX = 7;
 export const CAR_SEATS_MIN = 1;
-export const CAR_SEATS_MAX = 9;
+// Up to 99 so vans/minibuses fit, not just passenger cars.
+export const CAR_SEATS_MAX = 99;
 export const CAR_POWER_MAX = 2000; // cv
 export const CAR_DISPLACEMENT_MAX = 10_000; // cc
 export const CAR_PRICE_MAX = 10_000_000; // €
