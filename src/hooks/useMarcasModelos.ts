@@ -35,7 +35,10 @@ function setCache(dados: MarcaModeloDoc[]): void {
 }
 
 function isCacheValid(cache: MarcasModelosCache): boolean {
-  return Date.now() - cache.timestamp < CACHE_TTL_MS;
+  // An empty cache is never usable: earlier versions persisted `[]` after a
+  // transient empty read, which then pinned an empty brand list for the whole
+  // TTL window. Treat it as absent so we re-fetch (and show the JSON fallback).
+  return cache.dados.length > 0 && Date.now() - cache.timestamp < CACHE_TTL_MS;
 }
 
 function getFallbackData(): MarcaModeloDoc[] {
@@ -64,18 +67,18 @@ interface UseMarcasModelosResult {
 export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasModelosResult {
   const { tipo } = options ?? {};
   const [docs, setDocs] = useState<MarcaModeloDoc[]>(() => {
-    // Try cache first
+    // Seed synchronously so the brand list is populated on the very first
+    // paint (and during SSR): fresh cache if we have it, otherwise the
+    // bundled JSON. The Firestore read below only *upgrades* this baseline,
+    // so the dropdown never blocks on — or is emptied by — the network
+    // (blocked by CSP/adblocker, offline, hanging, or an empty snapshot).
     const cached = getCache();
-    if (cached && isCacheValid(cached)) {
-      return cached.dados;
-    }
-    return [];
+    if (cached && isCacheValid(cached)) return cached.dados;
+    return getFallbackData();
   });
-  const [loading, setLoading] = useState(() => {
-    const cached = getCache();
-    return !(cached && isCacheValid(cached));
-  });
-  const [error, setError] = useState<string | null>(null);
+  // Always have data to show, so there's no loading gate and no stuck skeleton.
+  const loading = false;
+  const error = null;
 
   useEffect(() => {
     let cancelled = false;
@@ -84,10 +87,7 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
       // Check cache again (in case it was set between render and effect)
       const cached = getCache();
       if (cached && isCacheValid(cached)) {
-        if (!cancelled) {
-          setDocs(cached.dados);
-          setLoading(false);
-        }
+        if (!cancelled) setDocs(cached.dados);
         return;
       }
 
@@ -104,20 +104,16 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
           result.push({ ...data, nome: doc.id });
         });
 
-        if (!cancelled) {
+        // Only replace the seeded fallback with a non-empty server result. An
+        // empty snapshot (e.g. an offline persistentLocalCache read, which
+        // resolves rather than throws) keeps the bundled JSON in place.
+        if (!cancelled && result.length > 0) {
           setDocs(result);
           setCache(result);
-          setLoading(false);
         }
       } catch (err) {
+        // Keep the seeded fallback — the user doesn't need to know.
         console.warn('[useMarcasModelos] Erro ao buscar do Firestore, usando fallback:', err);
-        const fallback = getFallbackData();
-        if (!cancelled) {
-          setDocs(fallback);
-          setCache(fallback);
-          setLoading(false);
-          setError(null); // Fallback is silent — user doesn't need to know
-        }
       }
     }
 
