@@ -115,6 +115,19 @@ export function cropImageToBlob(
   });
 }
 
+/**
+ * Decode a base64 data URL into a File. Camera capture can't fetch() the data
+ * URL — the site CSP's connect-src blocks the data: scheme.
+ */
+export function dataUrlToFile(dataUrl: string, fileName: string): File {
+  const [header, base64] = dataUrl.split(',');
+  const mime = header.match(/^data:([^;]+)/)?.[1] || 'image/jpeg';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new File([bytes], fileName, { type: mime });
+}
+
 /** Load a source URL into an <img>, requesting CORS so remote (Storage) images stay canvas-exportable. */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {

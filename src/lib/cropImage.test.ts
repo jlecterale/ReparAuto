@@ -1,4 +1,4 @@
-import { rotatedSize, coverScale, clampOffset, centerCropRect } from '@/lib/cropImage';
+import { rotatedSize, coverScale, clampOffset, centerCropRect, dataUrlToFile } from '@/lib/cropImage';
 
 // Geometry behind the listing photo cropper: every photo is positioned (zoom +
 // 90° rotation + pan) inside a fixed-aspect frame and exported at that crop. The
@@ -20,6 +20,37 @@ describe('centerCropRect', () => {
 
   it('keeps a source already at the target aspect untouched', () => {
     expect(centerCropRect(1600, 1200, 4 / 3)).toEqual({ x: 0, y: 0, width: 1600, height: 1200 });
+  });
+});
+
+// Camera capture converts the canvas data URL into an uploadable File without
+// fetch(): the site CSP's connect-src blocks data: URLs, so the decode must be
+// a plain base64 conversion.
+describe('dataUrlToFile', () => {
+  const bytes = Uint8Array.from([0xff, 0xd8, 0x00, 0x41, 0x42]);
+  const dataUrl = `data:image/jpeg;base64,${btoa(String.fromCharCode(...bytes))}`;
+
+  it('decodes the base64 payload into the original bytes', async () => {
+    const file = dataUrlToFile(dataUrl, 'photo.jpg');
+    // jsdom's File has no arrayBuffer(); FileReader is the supported read path.
+    const buffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsArrayBuffer(file);
+    });
+    expect(new Uint8Array(buffer)).toEqual(bytes);
+  });
+
+  it('uses the given file name and the MIME type from the data URL header', () => {
+    const file = dataUrlToFile(dataUrl, 'photo.jpg');
+    expect(file.name).toBe('photo.jpg');
+    expect(file.type).toBe('image/jpeg');
+  });
+
+  it('reads the MIME type of non-JPEG data URLs', () => {
+    const png = `data:image/png;base64,${btoa('x')}`;
+    expect(dataUrlToFile(png, 'a.png').type).toBe('image/png');
   });
 });
 

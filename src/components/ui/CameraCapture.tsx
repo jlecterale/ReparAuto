@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, Check, ArrowCounterClockwise, Warning } from '@phosphor-icons/react';
-import { centerCropRect } from '@/lib/cropImage';
+import { centerCropRect, dataUrlToFile } from '@/lib/cropImage';
 import Button from './Button';
 
 interface Props {
@@ -110,14 +110,8 @@ export default function CameraCapture({
 
   const handleUsePhoto = () => {
     if (capturedDataUrl) {
-      // Convert dataUrl to File object
-      fetch(capturedDataUrl)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
-          onCapture(file);
-          if (keepOpenAfterCapture) setCapturedDataUrl(null);
-        });
+      onCapture(dataUrlToFile(capturedDataUrl, `camera_${Date.now()}.jpg`));
+      if (keepOpenAfterCapture) setCapturedDataUrl(null);
     }
   };
 
