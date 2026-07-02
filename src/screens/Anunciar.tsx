@@ -87,6 +87,10 @@ export default function Anunciar() {
   const [uploading, setUploading] = useState(false);
   const [dados, setDados] = useState<CarroFormData>(() => ({
     ...initialDados,
+    // Prefill the seller contact from the profile so users don't retype it.
+    // WhatsApp is the primary/recommended field; the profile phone is the best
+    // default for it (there's no separate WhatsApp on the profile).
+    vendedorWhatsApp: user?.telefone || '',
     vendedorTelefone: user?.telefone || '',
     vendedorEmail: user?.email || '',
   }));

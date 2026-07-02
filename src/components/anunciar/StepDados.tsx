@@ -10,6 +10,18 @@ import {
   TIPOS_TRACAO,
   EQUIPAMENTOS_CARRO,
 } from '@/lib/constants';
+import {
+  CAR_YEAR_MIN,
+  carYearMax,
+  CAR_KM_MAX,
+  CAR_DOORS_MIN,
+  CAR_DOORS_MAX,
+  CAR_SEATS_MIN,
+  CAR_SEATS_MAX,
+  CAR_POWER_MAX,
+  CAR_DISPLACEMENT_MAX,
+  validarDadosVeiculo,
+} from '@/lib/carSpec';
 import { toggleInList } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
@@ -31,15 +43,20 @@ interface CampoOptions {
   required?: boolean;
   /** Optional selects get an empty "Indiferente" choice unless the value set is exhaustive (e.g. condition). */
   emptyOption?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
 }
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
-  const [erros, setErros] = useState<Record<string, boolean>>({});
+  // Maps a field id to its error message (empty/absent = valid).
+  const [erros, setErros] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  const anoMax = carYearMax();
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
-    setErros((prev) => ({ ...prev, [campo]: false }));
+    setErros((prev) => ({ ...prev, [campo]: '' }));
   };
 
   const toggleFeature = (feature: string) => {
@@ -47,15 +64,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   };
 
   const validar = () => {
-    const novosErros: Record<string, boolean> = {};
-    if (!dados.marca?.trim()) novosErros.marca = true;
-    if (!dados.modelo?.trim()) novosErros.modelo = true;
-    if (!dados.anoFabricacao) novosErros.anoFabricacao = true;
-    if (!dados.anoModelo) novosErros.anoModelo = true;
-    if (!dados.km && dados.km !== '0') novosErros.km = true;
-    if (!dados.cor?.trim()) novosErros.cor = true;
-    if (!dados.portas) novosErros.portas = true;
-
+    const novosErros = validarDadosVeiculo(dados);
     setErros(novosErros);
     if (Object.keys(novosErros).length === 0) {
       onNext();
@@ -65,7 +74,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   const campo = (
     label: string,
     campoId: keyof CarroFormData,
-    { type = 'text', placeholder = '', options, required = true, emptyOption = true }: CampoOptions = {},
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true, min, max, step }: CampoOptions = {},
   ) => (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
@@ -85,7 +94,11 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
       ) : (
         <input
           type={type}
+          inputMode={type === 'number' ? 'numeric' : undefined}
           placeholder={placeholder}
+          min={min}
+          max={max}
+          step={step}
           value={(dados[campoId] as string) || ''}
           onChange={(e) => atualizar(campoId, e.target.value)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
@@ -94,7 +107,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         />
       )}
       {erros[campoId] && (
-        <span className="text-xs text-red-500 mt-1 block">Este campo é obrigatório.</span>
+        <span className="text-xs text-red-500 mt-1 block">{erros[campoId]}</span>
       )}
     </div>
   );
@@ -110,18 +123,18 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           atualizar('modelo', '');
         }}
         onChangeModelo={(m) => atualizar('modelo', m)}
-        errors={{ marca: erros.marca, modelo: erros.modelo }}
+        errors={{ marca: !!erros.marca, modelo: !!erros.modelo }}
         className="mb-4"
       />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007' })}
-        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008' })}
-        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000' })}
+        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007', min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
+        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008', min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
+        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000', min: 0, max: CAR_KM_MAX, step: 1 })}
         {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento' })}
         {campo('Combustível', 'combustivel', { options: TIPOS_COMBUSTIVEL })}
         {campo('Câmbio', 'cambio', { options: TIPOS_CAMBIO })}
-        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5' })}
-        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false })}
+        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5', min: CAR_DOORS_MIN, max: CAR_DOORS_MAX, step: 1 })}
+        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false, min: CAR_SEATS_MIN, max: CAR_SEATS_MAX, step: 1 })}
         {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
         {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
@@ -151,8 +164,8 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
       {showMore && (
         <div className="mb-4 space-y-4 border-t border-slate-100 pt-4">
           <div className="grid grid-cols-2 gap-3">
-            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false })}
-            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false })}
+            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false, min: 1, max: CAR_POWER_MAX, step: 1 })}
+            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false, min: 1, max: CAR_DISPLACEMENT_MAX, step: 1 })}
             {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
           </div>
           <div>

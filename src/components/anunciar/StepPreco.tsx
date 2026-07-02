@@ -3,6 +3,7 @@
 import { IdentificationCard, Invoice, RoadHorizon, YoutubeLogo } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
+import { CAR_PRICE_MAX } from '@/lib/carSpec';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
@@ -41,7 +42,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
 
   const validar = () => {
     const novosErros: Record<string, boolean> = {};
-    if (!dados.preco || Number(dados.preco) <= 0) novosErros.preco = true;
+    if (!dados.preco || Number(dados.preco) <= 0 || Number(dados.preco) > CAR_PRICE_MAX) novosErros.preco = true;
     if (!dados.descricao?.trim()) novosErros.descricao = true;
     if (dados.videoUrl?.trim() && !isValidYoutubeUrl(dados.videoUrl)) novosErros.videoUrl = true;
     if (dados.estadoVeiculo === 'manutencao' && (!dados.tiposManutencao || dados.tiposManutencao.length === 0)) {
@@ -77,14 +78,22 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
         </label>
         <input
           type="number"
+          inputMode="numeric"
           placeholder="Ex: 950 ou 15000"
+          min={1}
+          max={CAR_PRICE_MAX}
+          step={1}
           value={dados.preco || ''}
           onChange={(e) => atualizar('preco', e.target.value)}
           className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-accent font-bold text-lg ${
             erros.preco ? 'border-red-400' : 'border-gray-300'
           }`}
         />
-        {erros.preco && <span className="text-xs text-red-500 mt-1 block">O preço deve ser superior a 0.</span>}
+        {erros.preco && (
+          <span className="text-xs text-red-500 mt-1 block">
+            O preço deve estar entre 1 € e {CAR_PRICE_MAX.toLocaleString('pt-PT')} €.
+          </span>
+        )}
         <p className="text-xs text-fg-subtle mt-1">{getSugestaoPreco(dados.preco)}</p>
       </div>
 

@@ -68,6 +68,23 @@ export const MAX_FOTOS_CARRO = 20;
  */
 export const LISTING_PHOTO_ASPECT = 4 / 3;
 
+/**
+ * Numeric bounds for car-listing inputs — mirrored from the web `carSpec.ts`.
+ * Feed both the `<Input maxLength>` first line of defence and `validar()` so a
+ * listing can't carry absurd specs (year 99999, 500 doors, unbounded km/price).
+ */
+export const CAR_YEAR_MIN = 1900;
+/** Upper year bound: the next model year (dealers list the coming year early). */
+export const carYearMax = () => new Date().getFullYear() + 1;
+export const CAR_KM_MAX = 999_999;
+export const CAR_DOORS_MIN = 2;
+export const CAR_DOORS_MAX = 7;
+export const CAR_SEATS_MIN = 1;
+export const CAR_SEATS_MAX = 9;
+export const CAR_POWER_MAX = 2000; // cv
+export const CAR_DISPLACEMENT_MAX = 10_000; // cc
+export const CAR_PRICE_MAX = 10_000_000; // €
+
 /** Firestore collection that is the source of truth for brands/models. */
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
 
