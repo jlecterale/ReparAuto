@@ -25,7 +25,8 @@ function CarCard({ carro }: { carro: Carro }) {
       className="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
       onClick={() => router.push(`/detalhes/${carro.id}`)}
     >
-      <div className="relative h-44 bg-slate-200 overflow-hidden">
+      {/* aspect-[4/3] matches LISTING_PHOTO_ASPECT so cropped photos render uncropped */}
+      <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
         {carro.fotos && carro.fotos.length > 0 ? (() => {
           const fotoData = renderFoto(carro.fotos[0]);
           if (fotoData.type === 'img') {

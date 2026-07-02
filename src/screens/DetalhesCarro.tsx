@@ -197,7 +197,7 @@ export default function DetalhesCarro() {
         {carro.fotos && carro.fotos.length > 0 && (
           <div className="mb-6">
             <div
-              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
+              className="w-full aspect-[4/3] sm:aspect-auto sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
               onClick={() => { setIndiceGaleria(0); setGaleriaAberta(true); }}
             >
               {/* Blurred backdrop fills the letterbox area so the contained photo never shows bare gray bars */}

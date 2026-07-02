@@ -57,8 +57,8 @@ service cloud.firestore {
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7);
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin()
+      allow create: if isAuthenticated() && hasValidImageCount(20);
+      allow update: if (isOwnerByEmail() && hasValidImageCount(20)) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])

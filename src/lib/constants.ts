@@ -8,7 +8,7 @@ import type { BodyType, Condition, Traction } from '@/types/carro';
 // Limites
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
 
-export const MAX_FOTOS_CARRO = 6;
+export const MAX_FOTOS_CARRO = 20;
 export const MAX_FOTO_SIZE_MB = 10;
 export const MAX_FOTO_SIZE_BYTES = MAX_FOTO_SIZE_MB * 1024 * 1024;
 // Every listing photo is cropped to this aspect ratio (width / height) so cards

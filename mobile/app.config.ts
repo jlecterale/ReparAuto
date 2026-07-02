@@ -60,8 +60,8 @@ const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? undefined;
 // dev builds fall back to `development`.
 const APS_ENVIRONMENT =
   process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
-const VERSION = '1.5.1';
-const BUILD_NUMBER = 52;
+const VERSION = '1.6.0';
+const BUILD_NUMBER = 60;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
