@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
 import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { parseExternalImageUrl } from '@/lib/utils';
+import { savePhotoFile, deletePhotoFiles } from '@/lib/draftPhotoStore';
 import Button from '@/components/ui/Button';
 import ImageCropper from '@/components/ui/ImageCropper';
 
@@ -18,6 +19,12 @@ interface FotosEditorProps {
   aspect?: number;
   /** Ref to collect pending File objects keyed by blob URL (for deferred upload). */
   filesRef?: React.MutableRefObject<Map<string, File>>;
+  /**
+   * Also persist picked files to IndexedDB so a saved draft can restore them
+   * after a reload. Only draft-backed flows opt in — the admin edit modals
+   * upload immediately and must not leave persisted copies behind.
+   */
+  persistFiles?: boolean;
 }
 
 const reordenar = (fotos: string[], from: number, to: number): string[] => {
@@ -38,6 +45,7 @@ export default function FotosEditor({
   mostrarCapa,
   aspect = LISTING_PHOTO_ASPECT,
   filesRef,
+  persistFiles = false,
 }: FotosEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -100,6 +108,7 @@ export default function FotosEditor({
     const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
     const url = URL.createObjectURL(file);
     filesRef?.current.set(url, file);
+    if (persistFiles) void savePhotoFile(url, file);
     return { file, url };
   };
 
@@ -130,6 +139,7 @@ export default function FotosEditor({
     if (antiga?.startsWith('blob:')) {
       URL.revokeObjectURL(antiga);
       filesRef?.current.delete(antiga);
+      if (persistFiles) void deletePhotoFiles([antiga]);
     }
     const { url } = blobToFile(blob);
     setFotos(fotos.map((f, i) => (i === editIndex ? url : f)));
@@ -190,6 +200,7 @@ export default function FotosEditor({
     if (removed?.startsWith('blob:')) {
       URL.revokeObjectURL(removed);
       filesRef?.current.delete(removed);
+      if (persistFiles) void deletePhotoFiles([removed]);
     }
     setFotos(fotos.filter((_, i) => i !== index));
     setErro(null);

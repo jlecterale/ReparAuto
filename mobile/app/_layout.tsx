@@ -84,7 +84,16 @@ function RootNavigator() {
   // is fully readable without an account. Login is only required for actions
   // (favourite, announce, contact), which push the (auth) modal on demand.
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.neutral[50] } }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        // iOS labels the back button with the previous route's title; screens
+        // pushed from the tab bar would otherwise show the literal "(tabs)"
+        // group name, so show only the chevron.
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: colors.neutral[50] },
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="pecas/[id]" options={{ headerShown: true, title: '' }} />

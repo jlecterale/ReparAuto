@@ -16,7 +16,7 @@ export default function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void })
           <List size={24} weight="bold" />
         </button>
 
-        <Link href="/" className="flex items-center no-underline">
+        <Link href="/app" className="flex items-center no-underline">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="RecarGarage" className="h-10 w-auto" />
         </Link>

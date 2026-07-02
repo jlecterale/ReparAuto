@@ -11,9 +11,11 @@ interface StepFotosProps {
   onNext: () => void;
   onBack?: () => void;
   filesRef?: MutableRefObject<Map<string, File>>;
+  /** Persist picked files to IndexedDB for draft recovery (see FotosEditor). */
+  persistFiles?: boolean;
 }
 
-export default function StepFotos({ fotos, setFotos, onNext, onBack, filesRef }: StepFotosProps) {
+export default function StepFotos({ fotos, setFotos, onNext, onBack, filesRef, persistFiles }: StepFotosProps) {
   return (
     <div>
       <h3 className="font-bold text-lg mb-3">📸 Fotos do carro</h3>
@@ -21,7 +23,7 @@ export default function StepFotos({ fotos, setFotos, onNext, onBack, filesRef }:
         Carregue ou adicione fotos reais para mostrar o estado do veículo (máximo {MAX_FOTOS_CARRO} fotos, mínimo 1).
       </p>
 
-      <FotosEditor fotos={fotos} setFotos={setFotos} max={MAX_FOTOS_CARRO} filesRef={filesRef} />
+      <FotosEditor fotos={fotos} setFotos={setFotos} max={MAX_FOTOS_CARRO} filesRef={filesRef} persistFiles={persistFiles} />
 
       {fotos.length === 0 && (
         <p className="text-xs text-red-500 mt-4 block">
