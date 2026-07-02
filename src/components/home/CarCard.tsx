@@ -8,15 +8,17 @@ import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
 import Badge from '@/components/ui/Badge';
 import Alert from '@/components/ui/Alert';
+import SellerBadges from '@/components/trust/SellerBadges';
 import type { Carro } from '@/types/carro';
 
 // memo: grids re-render on every filter/search keystroke; favourites still
 // update because the heart state comes from context, not props.
 function CarCard({ carro }: { carro: Carro }) {
   const router = useRouter();
-  const { favoritos } = useApp();
+  const { favoritos, carros } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
 
+  const vendedorVerificado = !!carro.criadorUid && carros.verifiedUids.has(carro.criadorUid);
   const isLowCost = carro.preco <= 2000;
   const isNovo = carro.dataAprovacao && (Date.now() - carro.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
 
@@ -68,10 +70,11 @@ function CarCard({ carro }: { carro: Carro }) {
           <span className="w-1 h-1 rounded-full bg-slate-300"></span>
           <span>{carro.combustivel}</span>
         </div>
-        {carro.vendedorNome && (
+        {(carro.vendedorNome || vendedorVerificado) && (
           <div className="flex items-center gap-1 text-[11px] text-fg-muted mb-1">
             <User />
-            <span className="truncate">{carro.vendedorNome}</span>
+            {carro.vendedorNome && <span className="truncate">{carro.vendedorNome}</span>}
+            {vendedorVerificado && <SellerBadges verificado compact />}
           </div>
         )}
         <div className="mt-auto flex items-center justify-between">

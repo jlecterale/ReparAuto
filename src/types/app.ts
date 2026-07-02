@@ -10,6 +10,8 @@ import type { OficinaMecanico } from './oficina';
 export interface CarrosContextValue {
   carros: Carro[];
   carrosFiltrados: Carro[];
+  /** Uids of sellers with a verified profile (drives badges + priority). */
+  verifiedUids: Set<string>;
   loading: boolean;
   filtroAtivo: FiltroAtivo;
   setFiltroAtivo: (v: FiltroAtivo) => void;
@@ -51,6 +53,8 @@ export interface CarrosContextValue {
 export interface PecasContextValue {
   pecas: Peca[];
   pecasFiltradas: Peca[];
+  /** Uids of sellers with a verified profile (drives badges + priority). */
+  verifiedUids: Set<string>;
   loading: boolean;
   filtroTipo: FiltroTipoPeca;
   setFiltroTipo: (v: FiltroTipoPeca) => void;

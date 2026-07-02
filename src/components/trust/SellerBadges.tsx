@@ -25,7 +25,7 @@ export default function SellerBadges({
     return (
       <div className="flex items-center gap-1.5 flex-wrap">
         {activeBadges.map((badge) => (
-          <span key={badge.key} className={`${badge.cor} text-xs`} title={badge.label}>
+          <span key={badge.key} className={`${badge.cor} text-xs`} title={badge.label} role="img" aria-label={badge.label}>
             <badge.Icon weight="fill" />
           </span>
         ))}

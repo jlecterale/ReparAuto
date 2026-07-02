@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
+import { prioritizeVerified } from '@/lib/sellers';
+import useVerifiedSellers from '@/hooks/useVerifiedSellers';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
 // `active` controls the realtime subscription: routes that never render the
@@ -35,6 +37,8 @@ export default function usePecas(active: boolean = true) {
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
   const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  const verifiedUids = useVerifiedSellers(pecas);
 
   const pecasFiltradas = useMemo(() => {
     let lista = [...pecas];
@@ -80,8 +84,10 @@ export default function usePecas(active: boolean = true) {
       );
     }
 
-    return lista;
-  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+    // Default (recency) order: verified sellers surface first, keeping
+    // recency within each group.
+    return prioritizeVerified(lista, verifiedUids);
+  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm, verifiedUids]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -107,6 +113,7 @@ export default function usePecas(active: boolean = true) {
   return useMemo(() => ({
     pecas,
     pecasFiltradas,
+    verifiedUids,
     loading,
     filtroTipo,
     setFiltroTipo,
@@ -130,6 +137,7 @@ export default function usePecas(active: boolean = true) {
   }), [
     pecas,
     pecasFiltradas,
+    verifiedUids,
     loading,
     filtroTipo,
     searchTerm,
