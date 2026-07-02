@@ -10,18 +10,7 @@ import {
   TIPOS_TRACAO,
   EQUIPAMENTOS_CARRO,
 } from '@/lib/constants';
-import {
-  CAR_YEAR_MIN,
-  carYearMax,
-  CAR_KM_MAX,
-  CAR_DOORS_MIN,
-  CAR_DOORS_MAX,
-  CAR_SEATS_MIN,
-  CAR_SEATS_MAX,
-  CAR_POWER_MAX,
-  CAR_DISPLACEMENT_MAX,
-  validarDadosVeiculo,
-} from '@/lib/carSpec';
+import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
@@ -43,16 +32,14 @@ interface CampoOptions {
   required?: boolean;
   /** Optional selects get an empty "Indiferente" choice unless the value set is exhaustive (e.g. condition). */
   emptyOption?: boolean;
-  min?: number;
-  max?: number;
-  step?: number;
+  /** Hard character cap. On numeric fields this is enforced live (type=number ignores maxLength). */
+  maxLength?: number;
 }
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
   // Maps a field id to its error message (empty/absent = valid).
   const [erros, setErros] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
-  const anoMax = carYearMax();
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -71,11 +58,20 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
     }
   };
 
+  // Validate a single field on blur so range errors surface as soon as the user
+  // leaves the field, not only when they press "Continuar".
+  const validarCampo = (campoId: string) => {
+    const todos = validarDadosVeiculo(dados);
+    setErros((prev) => ({ ...prev, [campoId]: todos[campoId] ?? '' }));
+  };
+
   const campo = (
     label: string,
     campoId: keyof CarroFormData,
-    { type = 'text', placeholder = '', options, required = true, emptyOption = true, min, max, step }: CampoOptions = {},
-  ) => (
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true, maxLength }: CampoOptions = {},
+  ) => {
+    const numeric = type === 'number';
+    return (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
         {label} {required && <span className="text-red-500">*</span>}
@@ -93,14 +89,18 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         </select>
       ) : (
         <input
-          type={type}
-          inputMode={type === 'number' ? 'numeric' : undefined}
+          // Numeric fields render as a digit-only text input: type=number ignores
+          // maxLength, so we cap length here and strip non-digits on input.
+          type={numeric ? 'text' : type}
+          inputMode={numeric ? 'numeric' : undefined}
+          pattern={numeric ? '[0-9]*' : undefined}
           placeholder={placeholder}
-          min={min}
-          max={max}
-          step={step}
+          maxLength={maxLength}
           value={(dados[campoId] as string) || ''}
-          onChange={(e) => atualizar(campoId, e.target.value)}
+          onChange={(e) =>
+            atualizar(campoId, numeric ? e.target.value.replace(/\D/g, '').slice(0, maxLength) : e.target.value)
+          }
+          onBlur={() => validarCampo(campoId)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
             erros[campoId] ? 'border-red-400' : 'border-gray-300'
           }`}
@@ -110,7 +110,8 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         <span className="text-xs text-red-500 mt-1 block">{erros[campoId]}</span>
       )}
     </div>
-  );
+    );
+  };
 
   return (
     <div>
@@ -127,14 +128,14 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         className="mb-4"
       />
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007', min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
-        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008', min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
-        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000', min: 0, max: CAR_KM_MAX, step: 1 })}
-        {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento' })}
+        {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007', maxLength: 4 })}
+        {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008', maxLength: 4 })}
+        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000', maxLength: 6 })}
+        {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento', maxLength: 30 })}
         {campo('Combustível', 'combustivel', { options: TIPOS_COMBUSTIVEL })}
         {campo('Câmbio', 'cambio', { options: TIPOS_CAMBIO })}
-        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5', min: CAR_DOORS_MIN, max: CAR_DOORS_MAX, step: 1 })}
-        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false, min: CAR_SEATS_MIN, max: CAR_SEATS_MAX, step: 1 })}
+        {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5', maxLength: 1 })}
+        {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false, maxLength: 2 })}
         {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
         {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
@@ -164,8 +165,8 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
       {showMore && (
         <div className="mb-4 space-y-4 border-t border-slate-100 pt-4">
           <div className="grid grid-cols-2 gap-3">
-            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false, min: 1, max: CAR_POWER_MAX, step: 1 })}
-            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false, min: 1, max: CAR_DISPLACEMENT_MAX, step: 1 })}
+            {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false, maxLength: 4 })}
+            {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false, maxLength: 5 })}
             {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
           </div>
           <div>

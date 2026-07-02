@@ -77,14 +77,21 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
           Preço (€) <span className="text-red-500">*</span>
         </label>
         <input
-          type="number"
+          // Digit-only text input so maxLength actually caps length (type=number ignores it).
+          type="text"
           inputMode="numeric"
+          pattern="[0-9]*"
           placeholder="Ex: 950 ou 15000"
-          min={1}
-          max={CAR_PRICE_MAX}
-          step={1}
+          maxLength={8}
           value={dados.preco || ''}
-          onChange={(e) => atualizar('preco', e.target.value)}
+          onChange={(e) => atualizar('preco', e.target.value.replace(/\D/g, '').slice(0, 8))}
+          onBlur={() => {
+            const n = Number(dados.preco);
+            setErros((prev) => ({
+              ...prev,
+              preco: !dados.preco || n <= 0 || n > CAR_PRICE_MAX,
+            }));
+          }}
           className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-accent font-bold text-lg ${
             erros.preco ? 'border-red-400' : 'border-gray-300'
           }`}

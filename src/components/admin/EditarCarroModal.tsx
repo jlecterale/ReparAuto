@@ -12,19 +12,7 @@ import {
   EQUIPAMENTOS_CARRO,
   MAX_FOTOS_CARRO,
 } from '@/lib/constants';
-import {
-  CAR_YEAR_MIN,
-  carYearMax,
-  CAR_KM_MAX,
-  CAR_DOORS_MIN,
-  CAR_DOORS_MAX,
-  CAR_SEATS_MIN,
-  CAR_SEATS_MAX,
-  CAR_POWER_MAX,
-  CAR_DISPLACEMENT_MAX,
-  CAR_PRICE_MAX,
-  validarDadosVeiculo,
-} from '@/lib/carSpec';
+import { CAR_PRICE_MAX, validarDadosVeiculo } from '@/lib/carSpec';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
 import { toggleInList, parsePositiveInt } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
@@ -75,7 +63,6 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const [features, setFeatures] = useState<string[]>(carro.features ?? []);
   const [fotos, setFotos] = useState<string[]>(carro.fotos || []);
   const [erros, setErros] = useState<Record<string, string>>({});
-  const anoMax = carYearMax();
 
   const toggleFeature = (feature: string) => {
     setFeatures((prev) => toggleInList(prev, feature));
@@ -87,12 +74,24 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     setErros((prev) => ({ ...prev, [campo]: '' }));
   };
 
-  const handleSave = async () => {
-    const novosErros = validarDadosVeiculo(form);
+  // Full error map: vehicle specs + price (validarDadosVeiculo doesn't cover price).
+  const computarErros = () => {
+    const todos = validarDadosVeiculo(form);
     const precoNum = Number(form.preco);
     if (!form.preco || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX) {
-      novosErros.preco = `O preço deve estar entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+      todos.preco = `O preço deve estar entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
     }
+    return todos;
+  };
+
+  // Validate a single field on blur for immediate feedback (not only on save).
+  const validarCampo = (campoId: string) => {
+    const todos = computarErros();
+    setErros((prev) => ({ ...prev, [campoId]: todos[campoId] ?? '' }));
+  };
+
+  const handleSave = async () => {
+    const novosErros = computarErros();
     if (Object.keys(novosErros).length > 0) {
       setErros(novosErros);
       toast?.erro('Corrija os campos destacados antes de guardar.');
@@ -162,8 +161,10 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     type = 'text',
     options: readonly string[] | null = null,
     allowEmpty = false,
-    bounds?: { min?: number; max?: number; step?: number },
-  ) => (
+    maxLength?: number,
+  ) => {
+    const numeric = type === 'number';
+    return (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">{label}</label>
       {options ? (
@@ -179,13 +180,17 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         </select>
       ) : (
         <input
-          type={type}
-          inputMode={type === 'number' ? 'numeric' : undefined}
-          min={bounds?.min}
-          max={bounds?.max}
-          step={bounds?.step}
+          // Numeric fields are digit-only text inputs so maxLength is honoured
+          // (type=number ignores it).
+          type={numeric ? 'text' : type}
+          inputMode={numeric ? 'numeric' : undefined}
+          pattern={numeric ? '[0-9]*' : undefined}
+          maxLength={maxLength}
           value={form[campoId as keyof typeof form] as string}
-          onChange={(e) => atualizar(campoId, e.target.value)}
+          onChange={(e) =>
+            atualizar(campoId, numeric ? e.target.value.replace(/\D/g, '').slice(0, maxLength) : e.target.value)
+          }
+          onBlur={() => validarCampo(campoId)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
             erros[campoId] ? 'border-red-400' : 'border-gray-300'
           }`}
@@ -193,26 +198,27 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       )}
       {erros[campoId] && <span className="text-xs text-red-500 mt-1 block">{erros[campoId]}</span>}
     </div>
-  );
+    );
+  };
 
   return (
     <Modal show={show} onClose={onClose} titulo={`Editar Carro — ${carro.marca} ${carro.modelo}`} tamanho="lg">
       <div className="grid grid-cols-2 gap-3 mb-4">
         {campo('Marca', 'marca')}
         {campo('Modelo', 'modelo')}
-        {campo('Ano Fabricação', 'anoFabricacao', 'number', null, false, { min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
-        {campo('Ano Modelo', 'anoModelo', 'number', null, false, { min: CAR_YEAR_MIN, max: anoMax, step: 1 })}
-        {campo('Preço (€)', 'preco', 'number', null, false, { min: 1, step: 1 })}
-        {campo('Quilómetros', 'km', 'number', null, false, { min: 0, max: CAR_KM_MAX, step: 1 })}
+        {campo('Ano Fabricação', 'anoFabricacao', 'number', null, false, 4)}
+        {campo('Ano Modelo', 'anoModelo', 'number', null, false, 4)}
+        {campo('Preço (€)', 'preco', 'number', null, false, 8)}
+        {campo('Quilómetros', 'km', 'number', null, false, 6)}
         {campo('Combustível', 'combustivel', 'text', TIPOS_COMBUSTIVEL)}
         {campo('Câmbio', 'cambio', 'text', TIPOS_CAMBIO)}
-        {campo('Cor', 'cor')}
-        {campo('Nº Portas', 'portas', 'number', null, false, { min: CAR_DOORS_MIN, max: CAR_DOORS_MAX, step: 1 })}
+        {campo('Cor', 'cor', 'text', null, false, 30)}
+        {campo('Nº Portas', 'portas', 'number', null, false, 1)}
         {campo('Categoria', 'bodyType', 'text', TIPOS_CARROCERIA, true)}
         {campo('Condição', 'condition', 'text', CONDICOES_VEICULO)}
-        {campo('Lugares', 'seats', 'number', null, false, { min: CAR_SEATS_MIN, max: CAR_SEATS_MAX, step: 1 })}
-        {campo('Potência (cv)', 'power', 'number', null, false, { min: 1, max: CAR_POWER_MAX, step: 1 })}
-        {campo('Cilindrada (cc)', 'displacement', 'number', null, false, { min: 1, max: CAR_DISPLACEMENT_MAX, step: 1 })}
+        {campo('Lugares', 'seats', 'number', null, false, 2)}
+        {campo('Potência (cv)', 'power', 'number', null, false, 4)}
+        {campo('Cilindrada (cc)', 'displacement', 'number', null, false, 5)}
         {campo('Tração', 'traction', 'text', TIPOS_TRACAO, true)}
         <div className="col-span-2">
           <SeletorLocalizacao
