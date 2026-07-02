@@ -1,2 +1,2 @@
 # Git hooks are POSIX sh scripts — must stay LF even on Windows checkouts.
-.githooks/* text eol=lf
+.githooks/** text eol=lf
