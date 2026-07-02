@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Carro } from '@/types';
+import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { formatKm, formatPreco } from '@/lib/format';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { colors } from '@/theme/colors';
@@ -27,7 +28,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
           placeholder={{ blurhash: BLURHASH }}
           contentFit="cover"
           transition={200}
-          style={{ width: '100%', height: 200 }}
+          style={{ width: '100%', aspectRatio: LISTING_PHOTO_ASPECT }}
         />
         <View className="absolute bottom-2 right-2 rounded-lg bg-primary-900/90 px-3 py-1.5">
           <Text className="text-base font-extrabold text-white">
