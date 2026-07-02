@@ -7,6 +7,13 @@ import DetalhesIntencao from '@/screens/DetalhesIntencao';
 // so a short ISR window beats re-fetching on every request.
 export const revalidate = 300;
 
+// No intent-list server fetcher exists, so nothing is pre-rendered at build
+// time — but registering (empty) static params still opts the route into ISR:
+// each intent page renders once on demand and is then served from cache.
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  return [];
+}
+
 type PageProps = { params: Promise<{ id: string }> };
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';

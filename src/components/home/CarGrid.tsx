@@ -15,6 +15,7 @@ import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
 import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { SearchFilters } from '@/types/busca';
@@ -59,7 +60,9 @@ function FilterSelect({
   );
 }
 
-export default function CarGrid() {
+// `initialCarros` (server-fetched, ISR) replaces the skeletons while the
+// realtime subscription is still loading; the live list takes over after.
+export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
@@ -474,7 +477,9 @@ export default function CarGrid() {
 
             {carros.loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-                {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
+                {initialCarros.length > 0
+                  ? initialCarros.map((carro) => <CarCard key={carro.id} carro={carro} />)
+                  : Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">
