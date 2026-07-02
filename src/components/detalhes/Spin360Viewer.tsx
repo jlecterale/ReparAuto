@@ -107,10 +107,12 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
         </button>
       </div>
 
-      {/* Stage */}
-      <div className="relative flex-1 min-h-0 overflow-hidden">
+      {/* Stage: a compact centered column — the photo box with its controls
+          right below it, not pinned to the viewport edges. */}
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-4 pb-4">
         <div
-          className="absolute inset-0 flex items-center justify-center touch-none cursor-grab active:cursor-grabbing"
+          className="relative w-full max-w-2xl max-h-[70vh] touch-none cursor-grab active:cursor-grabbing"
+          style={{ aspectRatio: '4 / 3' }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={endDrag}
@@ -123,49 +125,49 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
               src={src}
               alt={`Veículo — ${SPIN_ANGLE_LABELS[angles[i]] ?? `ângulo ${i + 1}`}`}
               draggable={false}
-              className={`absolute max-w-full max-h-full object-contain pointer-events-none ${
+              className={`absolute inset-0 w-full h-full object-contain pointer-events-none ${
                 i === frame ? 'opacity-100' : 'opacity-0'
               }`}
             />
           ))}
+
+          {/* Manual stepping for pointer devices / accessibility */}
+          <button
+            type="button"
+            onClick={() => stepFrame(-1)}
+            aria-label="Rodar para a esquerda"
+            className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
+          >
+            <CaretLeft className="text-2xl" />
+          </button>
+          <button
+            type="button"
+            onClick={() => stepFrame(1)}
+            aria-label="Rodar para a direita"
+            className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
+          >
+            <CaretRight className="text-2xl" />
+          </button>
+
+          {/* Current angle */}
+          <span
+            aria-live="polite"
+            className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/10 text-fg-inverse text-xs font-semibold px-3 py-1 rounded-full pointer-events-none"
+          >
+            {SPIN_ANGLE_LABELS[angles[frame]] ?? ''}
+          </span>
+
+          {/* Drag hint (until first interaction) */}
+          {!interacted && (
+            <p className="absolute bottom-3 left-1/2 -translate-x-1/2 w-max text-[11px] text-fg-inverse/70 flex items-center gap-1 pointer-events-none">
+              <ArrowsClockwise className="text-sm" />
+              Arraste para os lados para rodar o veículo
+            </p>
+          )}
         </div>
 
-        {/* Manual stepping for pointer devices / accessibility */}
-        <button
-          type="button"
-          onClick={() => stepFrame(-1)}
-          aria-label="Rodar para a esquerda"
-          className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
-        >
-          <CaretLeft className="text-2xl" />
-        </button>
-        <button
-          type="button"
-          onClick={() => stepFrame(1)}
-          aria-label="Rodar para a direita"
-          className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse transition"
-        >
-          <CaretRight className="text-2xl" />
-        </button>
-
-        {/* Current angle */}
-        <span
-          aria-live="polite"
-          className="absolute top-3 left-1/2 -translate-x-1/2 bg-white/10 text-fg-inverse text-xs font-semibold px-3 py-1 rounded-full pointer-events-none"
-        >
-          {SPIN_ANGLE_LABELS[angles[frame]] ?? ''}
-        </span>
-
-        {/* Drag hint (until first interaction) */}
-        {!interacted && (
-          <p className="absolute bottom-16 left-1/2 -translate-x-1/2 text-[11px] text-fg-inverse/70 flex items-center gap-1 pointer-events-none">
-            <ArrowsClockwise className="text-sm" />
-            Arraste para os lados para rodar o veículo
-          </p>
-        )}
-
-        {/* Auto-rotation controls */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+        {/* Auto-rotation controls, right below the photo */}
+        <div className="flex items-center gap-2 shrink-0">
           <button
             type="button"
             onClick={() => {

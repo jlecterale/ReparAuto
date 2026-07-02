@@ -94,50 +94,49 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
             </Pressable>
           </View>
 
-          {/* Stage */}
+          {/* Stage: a compact centered column — the photo box with its
+              controls right below it, not pinned to the screen edges. */}
           <GestureDetector gesture={pan}>
-            <View className="flex-1 items-center justify-center">
-              {/* All frames stay mounted (pre-decoded) so scrubbing never flickers. */}
-              {frames.map((src, i) => (
-                <Image
-                  key={src}
-                  source={src}
-                  style={{
-                    position: 'absolute',
-                    width,
-                    height: width * 0.75,
-                    opacity: i === frame ? 1 : 0,
-                  }}
-                  contentFit="contain"
-                  accessibilityLabel={`Veículo — ${SPIN_ANGLE_LABELS[angles[i]] ?? `ângulo ${i + 1}`}`}
-                />
-              ))}
+            <View className="flex-1 items-center justify-center gap-3">
+              <View style={{ width, height: width * 0.75 }}>
+                {/* All frames stay mounted (pre-decoded) so scrubbing never flickers. */}
+                {frames.map((src, i) => (
+                  <Image
+                    key={src}
+                    source={src}
+                    style={{
+                      position: 'absolute',
+                      width: '100%',
+                      height: '100%',
+                      opacity: i === frame ? 1 : 0,
+                    }}
+                    contentFit="contain"
+                    accessibilityLabel={`Veículo — ${SPIN_ANGLE_LABELS[angles[i]] ?? `ângulo ${i + 1}`}`}
+                  />
+                ))}
 
-              {/* Current angle */}
-              <View className="absolute top-3 rounded-full bg-white/10 px-3 py-1">
-                <Text accessibilityLiveRegion="polite" className="text-xs font-bold text-white">
-                  {SPIN_ANGLE_LABELS[angles[frame]] ?? ''}
-                </Text>
+                {/* Current angle */}
+                <View className="absolute top-3 w-full items-center">
+                  <View className="rounded-full bg-white/10 px-3 py-1">
+                    <Text accessibilityLiveRegion="polite" className="text-xs font-bold text-white">
+                      {SPIN_ANGLE_LABELS[angles[frame]] ?? ''}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Drag hint (until first interaction) */}
+                {!interacted && (
+                  <View className="absolute bottom-3 w-full flex-row items-center justify-center gap-1.5">
+                    <Ionicons name="sync-outline" size={14} color="rgba(255,255,255,0.7)" />
+                    <Text className="text-[11px] text-white/70">
+                      Arraste para os lados para rodar o veículo
+                    </Text>
+                  </View>
+                )}
               </View>
 
-              {/* Drag hint (until first interaction) */}
-              {!interacted && (
-                <View
-                  style={{ bottom: insets.bottom + 84 }}
-                  className="absolute flex-row items-center gap-1.5"
-                >
-                  <Ionicons name="sync-outline" size={14} color="rgba(255,255,255,0.7)" />
-                  <Text className="text-[11px] text-white/70">
-                    Arraste para os lados para rodar o veículo
-                  </Text>
-                </View>
-              )}
-
-              {/* Auto-rotation controls */}
-              <View
-                style={{ bottom: insets.bottom + 24 }}
-                className="absolute flex-row items-center gap-2"
-              >
+              {/* Auto-rotation controls, right below the photo */}
+              <View className="flex-row items-center gap-2">
                 <Pressable
                   onPress={() => {
                     setInteracted(true);
