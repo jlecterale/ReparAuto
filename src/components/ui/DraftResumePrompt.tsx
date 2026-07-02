@@ -21,7 +21,7 @@ export default function DraftResumePrompt({ itemLabel, savedAt, onResume, onDisc
           {new Date(savedAt).toLocaleDateString('pt-PT')}. Quer continuar onde parou?
         </p>
         <p className="text-xs text-fg-subtle mb-4">
-          Os rascunhos ficam guardados apenas neste dispositivo/navegador.
+          Os rascunhos (incluindo as fotos) ficam guardados apenas neste dispositivo/navegador.
         </p>
         <div className="flex gap-2 justify-end">
           <Button tipo="secundario" onClick={onDiscard}>

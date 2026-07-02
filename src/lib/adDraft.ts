@@ -4,9 +4,10 @@
  * A visitor who abandons a creation flow mid-way keeps their typed data in
  * localStorage (one draft per listing kind) and is offered to resume it the
  * next time they start that flow. Photo entries are persisted as their URL
- * strings only — blob: URLs are backed by in-memory Files (see
- * pendingUploadFiles.ts), so they survive route changes within a session but
- * not a reload; loaders must filter dead entries on restore.
+ * strings only — blob: URLs are backed by Files kept in memory for the
+ * session and mirrored to IndexedDB (see pendingUploadFiles.ts /
+ * draftPhotoStore.ts), so restore paths recover them across reloads via
+ * restoreDraftPhotos() and warn about anything unrecoverable.
  *
  * Drafts are stamped with the author's uid so a shared browser never leaks a
  * draft across accounts: an owned draft is only visible to the same uid, an

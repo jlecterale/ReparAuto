@@ -10,7 +10,7 @@ import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
-import pendingUploadFiles, { isRestorableFoto, releasePendingFiles } from '@/lib/pendingUploadFiles';
+import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
@@ -101,20 +101,28 @@ export default function Anunciar() {
   const applyCarDraft = (draft: AdDraft<CarAdDraftData>) => {
     const dadosRestaurados = { ...initialDados, ...draft.data.dados };
     setDados(dadosRestaurados);
-    // Blob photo URLs only survive within the same page session; drop the
-    // ones whose backing file is gone (e.g. after a reload).
+    // Photos whose blob URL died (page reload) are recovered from IndexedDB
+    // and re-keyed; anything unrecoverable is dropped with a notice.
     const savedFotos = draft.data.fotos ?? [];
-    const restoredFotos = savedFotos.filter(isRestorableFoto);
-    setFotos(restoredFotos);
-    if (restoredFotos.length < savedFotos.length) {
-      // Persist the filtered list right away so the dead entries (and this
-      // notice) don't repeat on the next visit.
-      saveAdDraft<CarAdDraftData>('carro', { dados: dadosRestaurados, fotos: restoredFotos, step: 1 }, { uid: user?.uid ?? null });
-      setPasso(1);
-      toast?.info('Rascunho recuperado. Algumas fotos expiraram — adicione-as novamente.');
-    } else {
-      setPasso(restoredFotos.length ? Math.min(Math.max(draft.data.step ?? 1, 1), 3) : 1);
-    }
+    void restoreDraftPhotos(savedFotos).then(({ fotos: restoredFotos, lostCount }) => {
+      setFotos(restoredFotos);
+      if (restoredFotos.some((foto, i) => foto !== savedFotos[i]) || lostCount > 0) {
+        // Persist the re-keyed list right away — the stale blob URLs in the
+        // stored draft no longer resolve to anything.
+        const step = lostCount > 0 ? 1 : draft.data.step;
+        saveAdDraft<CarAdDraftData>('carro', { dados: dadosRestaurados, fotos: restoredFotos, step }, { uid: user?.uid ?? null });
+      }
+      if (lostCount > 0) {
+        setPasso(1);
+        toast?.info(
+          lostCount === 1
+            ? 'Rascunho recuperado, mas 1 foto não pôde ser restaurada — adicione-a novamente.'
+            : `Rascunho recuperado, mas ${lostCount} fotos não puderam ser restauradas — adicione-as novamente.`,
+        );
+      } else {
+        setPasso(restoredFotos.length ? Math.min(Math.max(draft.data.step ?? 1, 1), 3) : 1);
+      }
+    });
   };
 
   const carSnapshot = useMemo<CarAdDraftData>(() => ({ dados, fotos, step: passo }), [dados, fotos, passo]);
@@ -162,8 +170,7 @@ export default function Anunciar() {
                 const ext = file.name.split('.').pop() || 'jpg';
                 const fileName = `${Date.now()}_${index}.${ext}`;
                 const downloadUrl = await uploadFileToStorage(file, folder, fileName);
-                URL.revokeObjectURL(foto);
-                pendingFilesRef.current.delete(foto);
+                void unregisterPendingFile(foto);
                 return downloadUrl;
               }
               // blob sem ficheiro no Map → skip (não incluir no array)
@@ -313,6 +320,7 @@ export default function Anunciar() {
                 fotos={fotos}
                 setFotos={setFotos}
                 filesRef={pendingFilesRef}
+                persistFiles
                 onNext={() => setPasso(2)}
                 onBack={() => { setCategoria(null); setPasso(0); }}
               />

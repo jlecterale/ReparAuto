@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, PencilSimple, UploadSimple, X, type Icon } from '@phosphor-icons/react';
 import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
@@ -12,8 +12,9 @@ import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
-import { clearAdDraft, hasPartDraftContent } from '@/lib/adDraft';
-import pendingUploadFiles, { isRestorableFoto } from '@/lib/pendingUploadFiles';
+import { clearAdDraft, hasPartDraftContent, saveAdDraft } from '@/lib/adDraft';
+import pendingUploadFiles, { isRestorableFoto, registerPendingFile, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
+import { useToast } from '@/components/ui/Toast';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import type { CompatibilityEntry } from '@/types/peca';
@@ -53,6 +54,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
   const { pecas, auth } = useApp();
   const { publicarPeca } = pecas;
   const { user } = auth;
+  const toast = useToast();
 
   const telefoneInicial = user?.telefone || '';
 
@@ -79,8 +81,9 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
-  // A drafted blob photo is only restorable while its backing File is still
-  // in the in-session registry (i.e. not after a page reload).
+  // A drafted blob photo whose backing File is still in the in-session
+  // registry restores synchronously; after a page reload it is recovered
+  // from IndexedDB by the effect below.
   const draftFoto = draft?.foto && isRestorableFoto(draft.foto) ? draft.foto : null;
   const [fotoFile, setFotoFile] = useState<File | null>(
     () => (draftFoto ? pendingUploadFiles.get(draftFoto) ?? null : null),
@@ -105,6 +108,35 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
     data: draftSnapshot,
     hasContent: hasPartDraftContent(form, compatibilidades) || !!fotoPreview,
   });
+
+  // Recover a drafted photo whose blob URL died in a previous session (page
+  // reload) from IndexedDB; warn when it is gone for good.
+  const deadDraftFoto = draft?.foto && !isRestorableFoto(draft.foto) ? draft.foto : null;
+  useEffect(() => {
+    if (!deadDraftFoto) return;
+    let cancelled = false;
+    void restoreDraftPhotos([deadDraftFoto]).then(({ fotos, lostCount }) => {
+      // Persist the re-keyed URL right away — the stale one in the stored
+      // draft no longer resolves to anything. Runs even if unmounted.
+      saveAdDraft<PecaFormDraft>(
+        'peca',
+        { form, compatibilidades, foto: fotos[0] ?? null },
+        { uid: user?.uid ?? null },
+      );
+      if (cancelled) return;
+      if (fotos[0]) {
+        setFotoPreview(fotos[0]);
+        setFotoFile(pendingUploadFiles.get(fotos[0]) ?? null);
+      } else if (lostCount > 0) {
+        toast?.info('A foto do rascunho não pôde ser recuperada — adicione-a novamente.');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Mount-only: the form remounts (key) whenever a different draft is resumed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
@@ -171,10 +203,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         })
         .catch(() => {});
 
-      if (fotoPreview) {
-        URL.revokeObjectURL(fotoPreview);
-        pendingUploadFiles.delete(fotoPreview);
-      }
+      if (fotoPreview) void unregisterPendingFile(fotoPreview);
 
       clearAdDraft('peca');
       setForm({
@@ -387,10 +416,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
               <button
                 type="button"
                 onClick={() => {
-                  if (fotoPreview) {
-                    URL.revokeObjectURL(fotoPreview);
-                    pendingUploadFiles.delete(fotoPreview);
-                  }
+                  if (fotoPreview) void unregisterPendingFile(fotoPreview);
                   setFotoPreview(null);
                   setFotoFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
@@ -439,13 +465,11 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
             onConfirm={(blob) => {
               const cropped = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
               if (cropSrc !== fotoPreview) URL.revokeObjectURL(cropSrc);
-              if (fotoPreview) {
-                URL.revokeObjectURL(fotoPreview);
-                pendingUploadFiles.delete(fotoPreview);
-              }
+              if (fotoPreview) void unregisterPendingFile(fotoPreview);
               const previewUrl = URL.createObjectURL(cropped);
-              // Registered so the photo survives leaving the page (draft resume).
-              pendingUploadFiles.set(previewUrl, cropped);
+              // Registered (Map + IndexedDB) so the photo survives leaving
+              // the page and even a reload (draft resume).
+              void registerPendingFile(previewUrl, cropped);
               setFotoFile(cropped);
               setFotoPreview(previewUrl);
               setCropSrc(null);
