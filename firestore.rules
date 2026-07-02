@@ -5,9 +5,6 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
     // Signed in, regardless of email verification. Used ONLY for a user
     // writing their OWN profile document — every other write still requires
     // isAuthenticated() (verified email).
@@ -32,9 +29,6 @@ service cloud.firestore {
         request.auth.uid == 'N4oCVnsPILZivmlgLo4jC7Bq8GU2' ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
-    }
-    function isCreatorByEmail() {
-      return isAuthenticated() && request.resource.data.criador == request.auth.token.email;
     }
     function isOwnerByEmail() {
       return isAuthenticated() && resource.data.criador == request.auth.token.email;
