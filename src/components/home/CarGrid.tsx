@@ -427,7 +427,7 @@ export default function CarGrid() {
               Limpar filtros
             </Button>
 
-            {/* Saved-filter alert (plan 3.1) */}
+            {/* Criar Alerta — instant saved-filter alert (plan 3.1) */}
             {tipo === 'carros' && (
               <SaveAlertButton
                 uid={user?.uid}
