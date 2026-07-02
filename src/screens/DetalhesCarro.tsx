@@ -87,6 +87,13 @@ export default function DetalhesCarro() {
     }
   };
 
+  // Must run before any conditional return — calling it after the
+  // loading/bloqueado/!carro early-returns would change the number of hooks
+  // called between the first render (carro still null) and a later one
+  // (carro loaded), violating the Rules of Hooks. The hook already handles
+  // a null carro by returning 'indisponivel'.
+  const priceInfo = usePriceIndicator(carro);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -133,7 +140,6 @@ export default function DetalhesCarro() {
   }
 
   const isLowCost = carro.preco <= 2000;
-  const priceInfo = usePriceIndicator(carro);
 
   return (
     <div className="page-enter">

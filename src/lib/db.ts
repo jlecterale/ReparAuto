@@ -38,7 +38,7 @@ import type {
   SavedSearch,
   SavedSearchInput,
 } from '@/types/preco';
-import { isSameModel, normalizeModelo } from '@/lib/priceUtils';
+import { normalizeModelo } from '@/lib/priceUtils';
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
@@ -1865,40 +1865,6 @@ export async function deleteBanner(id: string): Promise<void> {
 
 const PRICE_SNAPSHOTS_COLLECTION = 'priceSnapshots';
 const SAVED_SEARCHES_COLLECTION = 'savedSearches';
-
-// Server-side counterpart to `filtrarCarrosSimilares`. Client screens use the
-// in-memory version against the useCarros stream; this is here for the
-// eventual snapshot cron (Cloud Function) that needs to query Firestore
-// directly instead of holding the whole collection in memory.
-export async function getCarrosSimilares(
-  marca: string,
-  modelo: string,
-  options?: { anoMin?: number; anoMax?: number; excludeId?: string },
-): Promise<Carro[]> {
-  try {
-    const q = query(
-      collection(db, CARROS_COLLECTION),
-      where('marca', '==', marca),
-    );
-    const snap = await getDocs(q);
-    return snap.docs
-      .map((d) => ({ id: d.id, ...d.data() } as Carro))
-      .filter((c) => c.status === 'aprovado')
-      .filter((c) => {
-        if (options?.excludeId && c.id === options.excludeId) return false;
-        if (!isSameModel(modelo, c.modelo)) return false;
-        // See filtrarCarrosSimilares in priceUtils.ts: "Para peças" listings
-        // are excluded from price comparables.
-        if (c.condition === 'Para peças') return false;
-        if (options?.anoMin && c.anoFabricacao < options.anoMin) return false;
-        if (options?.anoMax && c.anoFabricacao > options.anoMax) return false;
-        return true;
-      });
-  } catch (err) {
-    console.error('[DB] Erro ao buscar carros similares:', err);
-    return [];
-  }
-}
 
 export async function savePriceSnapshot(data: PriceSnapshotInput): Promise<string> {
   try {
