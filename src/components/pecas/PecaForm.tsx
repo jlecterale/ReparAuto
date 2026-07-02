@@ -12,21 +12,46 @@ import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
+import { saveAdDraft, clearAdDraft, hasPartDraftContent } from '@/lib/adDraft';
 import type { CompatibilityEntry } from '@/types/peca';
+
+type PecaFormState = {
+  tipo: string;
+  titulo: string;
+  categoria: string;
+  estado: string;
+  preco: string;
+  precoNovoReferencia: string;
+  numeroOEM: string;
+  descricao: string;
+  localizacao: string;
+  localizacaoDistrito: string;
+  vendedorTelefone: string;
+  vendedorWhatsApp: string;
+  vendedorEmail: string;
+};
+
+/** Serializable snapshot persisted as the part draft (photo excluded). */
+export interface PecaFormDraft {
+  form: PecaFormState;
+  compatibilidades: CompatibilityEntry[];
+}
 
 interface PecaFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  /** Saved draft to resume from. Remount the form (key) when it changes. */
+  draft?: PecaFormDraft | null;
 }
 
-export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
+export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) {
   const { pecas, auth } = useApp();
   const { publicarPeca } = pecas;
   const { user } = auth;
 
   const telefoneInicial = user?.telefone || '';
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<PecaFormState>(() => ({
     tipo: 'venda',
     titulo: '',
     categoria: 'Motor e Transmissão',
@@ -40,9 +65,12 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     vendedorTelefone: telefoneInicial,
     vendedorWhatsApp: telefoneInicial,
     vendedorEmail: user?.email || '',
-  });
+    ...draft?.form,
+  }));
 
-  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>([]);
+  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>(
+    () => draft?.compatibilidades ?? [],
+  );
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
@@ -58,6 +86,16 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       if (fotoPreview) URL.revokeObjectURL(fotoPreview);
     };
   }, [fotoPreview]);
+
+  // Autosave the draft (debounced) whenever the form holds real progress, so
+  // leaving the page never loses what was typed. Cleared on publish.
+  useEffect(() => {
+    if (fotoUploading || !hasPartDraftContent(form, compatibilidades)) return;
+    const timer = setTimeout(() => {
+      saveAdDraft('peca', { form, compatibilidades }, { uid: user?.uid ?? null });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [form, compatibilidades, fotoUploading, user?.uid]);
 
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
@@ -126,6 +164,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
 
       if (fotoPreview) URL.revokeObjectURL(fotoPreview);
 
+      clearAdDraft('peca');
       setForm({
         tipo: 'venda',
         titulo: '',

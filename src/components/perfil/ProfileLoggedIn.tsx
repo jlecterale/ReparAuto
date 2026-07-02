@@ -4,6 +4,8 @@ import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Hea
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
+import { loadAdDraft, clearAdDraft, type AdDraft } from '@/lib/adDraft';
+import type { PecaFormDraft } from '@/components/pecas/PecaForm';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -21,7 +23,7 @@ import ReviewsList from '@/components/trust/ReviewsList';
 import NotificationPreferences from '@/components/perfil/NotificationPreferences';
 import useReviews from '@/hooks/useReviews';
 import useVerification from '@/hooks/useVerification';
-import type { Carro } from '@/types/carro';
+import type { Carro, CarroFormData } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
 export default function ProfileLoggedIn() {
@@ -37,6 +39,8 @@ export default function ProfileLoggedIn() {
   const [editPeca, setEditPeca] = useState<Peca | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<{ tipo: 'carro' | 'peca'; id: string; titulo: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [carDraft, setCarDraft] = useState<AdDraft<CarroFormData> | null>(null);
+  const [partDraft, setPartDraft] = useState<AdDraft<PecaFormDraft> | null>(null);
   const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
   const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
   
@@ -143,6 +147,14 @@ export default function ProfileLoggedIn() {
   }, [user?.email]);
 
   useEffect(() => { carregar(); }, [carregar]);
+
+  // Local listing drafts (saved by the anunciar flow) surface alongside the
+  // published listings so an unfinished ad is never forgotten.
+  useEffect(() => {
+    if (!user?.uid) return;
+    setCarDraft(loadAdDraft<CarroFormData>('carro', user.uid));
+    setPartDraft(loadAdDraft<PecaFormDraft>('peca', user.uid));
+  }, [user?.uid]);
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
     await updateCarro(id, { ...dados, status: 'pendente' });
@@ -339,6 +351,40 @@ export default function ProfileLoggedIn() {
           <ListChecks className="text-accent" /> Os Seus Carros Anunciados
         </h4>
 
+        {carDraft && (
+          <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-fg-heading text-sm">
+                    {`${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro'}
+                  </p>
+                  <Badge cor="gray">Rascunho</Badge>
+                </div>
+                <p className="text-xs text-fg-subtle">
+                  Por terminar · guardado em {new Date(carDraft.savedAt).toLocaleDateString('pt-PT')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  tipo="primario"
+                  tamanho="sm"
+                  onClick={() => router.push('/anunciar?tipo=carro&retomar=1')}
+                >
+                  Continuar
+                </Button>
+                <button
+                  onClick={() => { clearAdDraft('carro'); setCarDraft(null); }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+                  title="Descartar rascunho"
+                >
+                  <Trash className="text-xs" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {meusCarros.length === 0 ? (
           <div className="flex flex-col items-center text-center py-10 px-4 bg-neutral-50 border border-neutral-100 rounded-xl">
             <ListChecks size={32} className="text-neutral-300 mb-2" />
@@ -407,6 +453,40 @@ export default function ProfileLoggedIn() {
         <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
           <GearSix className="text-accent" /> As Suas Peças & Pedidos
         </h4>
+
+        {partDraft && (
+          <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="font-bold text-fg-heading text-sm">
+                    {partDraft.data.form?.titulo || 'Anúncio de peça'}
+                  </p>
+                  <Badge cor="gray">Rascunho</Badge>
+                </div>
+                <p className="text-xs text-fg-subtle">
+                  Por terminar · guardado em {new Date(partDraft.savedAt).toLocaleDateString('pt-PT')}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  tipo="primario"
+                  tamanho="sm"
+                  onClick={() => router.push('/anunciar?tipo=peca&retomar=1')}
+                >
+                  Continuar
+                </Button>
+                <button
+                  onClick={() => { clearAdDraft('peca'); setPartDraft(null); }}
+                  className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
+                  title="Descartar rascunho"
+                >
+                  <Trash className="text-xs" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {minhasPecas.length === 0 ? (
           <div className="flex flex-col items-center text-center py-10 px-4 bg-neutral-50 border border-neutral-100 rounded-xl">

@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle } from '@phosphor-icons/react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -9,12 +9,14 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
+import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft } from '@/lib/adDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
-import PecaForm from '@/components/pecas/PecaForm';
+import PecaForm, { type PecaFormDraft } from '@/components/pecas/PecaForm';
+import Button from '@/components/ui/Button';
 import type { CarroFormData } from '@/types/carro';
 
 type CategoriaAnuncio = 'carro' | 'peca';
@@ -67,6 +69,9 @@ export default function Anunciar() {
   const tipoParam = searchParams.get('tipo');
   const categoriaInicial: CategoriaAnuncio | null =
     tipoParam === 'carro' || tipoParam === 'peca' ? tipoParam : null;
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1 to
+  // resume the saved draft directly, without re-asking.
+  const retomarParam = searchParams.get('retomar') === '1';
 
   const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(categoriaInicial);
   const [passo, setPasso] = useState(categoriaInicial ? 1 : 0);
@@ -80,6 +85,51 @@ export default function Anunciar() {
     vendedorTelefone: user?.telefone || '',
     vendedorEmail: user?.email || '',
   }));
+
+  // Draft recovery: prompt shown when a saved draft exists for the chosen kind.
+  const [draftPrompt, setDraftPrompt] = useState<{ kind: CategoriaAnuncio; draft: AdDraft } | null>(null);
+  // Part draft handed to PecaForm once the user chooses to resume it.
+  const [pecaDraft, setPecaDraft] = useState<PecaFormDraft | null>(null);
+  // Kinds already offered/resumed this visit, so the prompt never re-appears.
+  const draftsHandledRef = useRef<Set<CategoriaAnuncio>>(new Set());
+
+  const applyDraft = (kind: CategoriaAnuncio, draft: AdDraft) => {
+    if (kind === 'carro') {
+      setDados({ ...initialDados, ...(draft.data as Partial<CarroFormData>) });
+      // Photos aren't persisted (blob URLs), so resume at the photos step.
+      setPasso(1);
+      toast?.info('Rascunho recuperado. Adicione novamente as fotos.');
+    } else {
+      setPecaDraft(draft.data as PecaFormDraft);
+    }
+  };
+
+  // Offer to resume a saved draft when a creation flow starts. Re-runs when
+  // auth resolves, because an owned draft is invisible until the uid is known.
+  useEffect(() => {
+    if (!categoria || publicado || draftsHandledRef.current.has(categoria)) return;
+    const draft = loadAdDraft(categoria, user?.uid ?? null);
+    if (!draft) return;
+    // Never clobber progress the user already made in this visit.
+    if (categoria === 'carro' && hasCarDraftContent(dados)) return;
+    draftsHandledRef.current.add(categoria);
+    if (retomarParam) {
+      applyDraft(categoria, draft);
+    } else {
+      setDraftPrompt({ kind: categoria, draft });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoria, user?.uid, publicado]);
+
+  // Autosave the car wizard (debounced) whenever it holds real progress.
+  useEffect(() => {
+    if (categoria !== 'carro' || passo < 1 || publicado || draftPrompt) return;
+    if (!hasCarDraftContent(dados)) return;
+    const timer = setTimeout(() => {
+      saveAdDraft('carro', dados, { uid: user?.uid ?? null, step: passo });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [dados, passo, categoria, publicado, draftPrompt, user?.uid]);
 
   const handlePublicar = async () => {
     if (!user) {
@@ -144,6 +194,7 @@ export default function Anunciar() {
         vendedorEmail: dados.vendedorEmail || user.email,
       });
 
+      clearAdDraft('carro');
       setPublicado(true);
       toast?.sucesso('Anúncio publicado com sucesso!');
 
@@ -271,11 +322,47 @@ export default function Anunciar() {
 
         {categoria === 'peca' && passo === 1 && (
           <PecaForm
+            // Remount when a draft is resumed so its lazy state re-initializes.
+            key={pecaDraft ? 'draft' : 'blank'}
+            draft={pecaDraft}
             onCancel={() => { setCategoria(null); setPasso(0); }}
             onSuccess={() => setPublicado(true)}
           />
         )}
       </div>
+
+      {draftPrompt && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl page-enter">
+            <h4 className="font-bold text-fg-heading mb-2">Continuar rascunho?</h4>
+            <p className="text-sm text-fg-muted mb-4">
+              Tem um anúncio de {draftPrompt.kind === 'carro' ? 'carro' : 'peça'} por terminar,
+              guardado em {new Date(draftPrompt.draft.savedAt).toLocaleDateString('pt-PT')}.
+              Quer continuar onde parou?
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                tipo="secundario"
+                onClick={() => {
+                  clearAdDraft(draftPrompt.kind);
+                  setDraftPrompt(null);
+                }}
+              >
+                Descartar
+              </Button>
+              <Button
+                tipo="primario"
+                onClick={() => {
+                  applyDraft(draftPrompt.kind, draftPrompt.draft);
+                  setDraftPrompt(null);
+                }}
+              >
+                Continuar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

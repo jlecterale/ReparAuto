@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useNavigation, usePreventRemove } from '@react-navigation/native';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
@@ -13,6 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
+import { clearAdDraft, loadAdDraft, saveAdDraft, type PartDraftData } from '@/lib/draft';
 import { colors } from '@/theme/colors';
 import { TIPO_PECA_LABELS, type TipoPeca } from '@/types';
 
@@ -24,7 +26,7 @@ const TIPOS = (Object.keys(TIPO_PECA_LABELS) as TipoPeca[]).map((t) => ({
 const ESTADOS = ['Novo', 'Usado', 'Recondicionado'].map((e) => ({ value: e, label: e }));
 
 export default function AnunciarPecaScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -46,9 +48,93 @@ export default function AnunciarPecaScreen() {
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  // Set once the listing is submitted, so the leave guard steps aside.
+  const [finalizado, setFinalizado] = useState(false);
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
+  const navigation = useNavigation();
 
   const precisaPreco = tipo !== 'procura';
+
+  const draftData = useMemo<PartDraftData>(
+    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp }),
+    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp],
+  );
+  // Prefilled contacts don't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(titulo || marca || preco || descricao || foto.length);
+
+  function restaurarRascunho(d: PartDraftData) {
+    setFoto(d.foto ?? []);
+    setTipo(d.tipo ?? 'venda');
+    setTitulo(d.titulo ?? '');
+    setCategoria(d.categoria ?? '');
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setPreco(d.preco ?? '');
+    setEstado(d.estado ?? 'Usado');
+    setLocal(d.local ?? '');
+    setDescricao(d.descricao ?? '');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+  }
+
+  // New-listing mode: offer to resume a saved draft (or resume directly when
+  // opened via "Continuar" in Os meus anúncios, which passes ?retomar=1).
+  const draftPromptedRef = useRef(false);
+  useEffect(() => {
+    if (editId || draftPromptedRef.current) return;
+    let cancelled = false;
+    loadAdDraft<PartDraftData>('peca', user?.uid ?? null).then((draft) => {
+      if (cancelled || !draft || draftPromptedRef.current) return;
+      draftPromptedRef.current = true;
+      if (retomar === '1') {
+        restaurarRascunho(draft.data);
+        return;
+      }
+      Alert.alert(
+        'Continuar rascunho?',
+        'Tem um anúncio de peça por terminar. Quer continuar onde parou?',
+        [
+          { text: 'Descartar', style: 'destructive', onPress: () => void clearAdDraft('peca') },
+          { text: 'Continuar', onPress: () => restaurarRascunho(draft.data) },
+        ],
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, user?.uid]);
+
+  // Autosave the draft (debounced) so progress survives even an app kill.
+  useEffect(() => {
+    if (editId || enviando || finalizado || !hasDraftContent) return;
+    const timer = setTimeout(() => {
+      saveAdDraft('peca', draftData, user?.uid ?? null);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [draftData, editId, enviando, finalizado, hasDraftContent, user?.uid]);
+
+  // Leaving with unpublished work: ask to keep the draft, discard, or stay.
+  usePreventRemove(!editId && hasDraftContent && !enviando && !finalizado, ({ data }) => {
+    Alert.alert('Sair do anúncio?', 'Tem um anúncio por terminar.', [
+      { text: 'Continuar a editar', style: 'cancel' },
+      {
+        text: 'Descartar',
+        style: 'destructive',
+        onPress: () => {
+          clearAdDraft('peca').finally(() => navigation.dispatch(data.action));
+        },
+      },
+      {
+        text: 'Guardar rascunho',
+        onPress: () => {
+          saveAdDraft('peca', draftData, user?.uid ?? null).finally(() =>
+            navigation.dispatch(data.action),
+          );
+        },
+      },
+    ]);
+  });
 
   useEffect(() => {
     if (!editId) return;
@@ -127,7 +213,9 @@ export default function AnunciarPecaScreen() {
           criadorUid: user.uid,
           vendedorEmail: user.email,
         });
+        clearAdDraft('peca');
       }
+      setFinalizado(true);
 
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',

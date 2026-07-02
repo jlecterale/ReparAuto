@@ -21,11 +21,12 @@ import {
   getPecasByCreator,
 } from '@/lib/db';
 import { deleteIntencao, getIntencoesByUser } from '@/lib/trust';
+import { clearAdDraft, loadAdDraft, type CarDraftData, type PartDraftData } from '@/lib/draft';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 
 type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
-type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'outro';
+type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'rascunho' | 'outro';
 
 interface ItemStats {
   visualizacoes?: number;
@@ -41,6 +42,8 @@ interface Item {
   subtitulo: string;
   status: EstadoItem;
   stats?: ItemStats;
+  /** Local unpublished draft (lives on this device, not in Firestore). */
+  draft?: boolean;
 }
 
 const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
@@ -48,6 +51,7 @@ const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
   aprovado: { label: 'Aprovado', bg: 'bg-success-100', fg: 'text-success-700' },
   ativa: { label: 'Ativa', bg: 'bg-success-100', fg: 'text-success-700' },
   rejeitado: { label: 'Rejeitado', bg: 'bg-danger-100', fg: 'text-danger-700' },
+  rascunho: { label: 'Rascunho', bg: 'bg-primary-50', fg: 'text-primary-700' },
   outro: { label: '—', bg: 'bg-neutral-100', fg: 'text-fg-muted' },
 };
 
@@ -72,13 +76,35 @@ export default function MeusAnunciosScreen() {
 
   const carregar = useCallback(async () => {
     if (!user?.email || !user?.uid) return;
-    const [carros, pecas, oficinas, intencoes] = await Promise.all([
+    const [carros, pecas, oficinas, intencoes, carDraft, partDraft] = await Promise.all([
       getCarrosByCreator(user.email),
       getPecasByCreator(user.email),
       getOficinasByCreator(user.email),
       getIntencoesByUser(user.uid),
+      loadAdDraft<CarDraftData>('carro', user.uid),
+      loadAdDraft<PartDraftData>('peca', user.uid),
     ]);
     const lista: Item[] = [
+      ...(carDraft
+        ? [{
+            kind: 'carro' as const,
+            id: 'draft',
+            draft: true,
+            titulo: `${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro',
+            subtitulo: 'Por terminar — toque para continuar',
+            status: 'rascunho' as const,
+          }]
+        : []),
+      ...(partDraft
+        ? [{
+            kind: 'peca' as const,
+            id: 'draft',
+            draft: true,
+            titulo: partDraft.data.titulo || 'Anúncio de peça',
+            subtitulo: 'Por terminar — toque para continuar',
+            status: 'rascunho' as const,
+          }]
+        : []),
       ...carros.map((c) => ({
         kind: 'carro' as const,
         id: c.id,
@@ -133,8 +159,15 @@ export default function MeusAnunciosScreen() {
     setRefreshing(false);
   }
 
+  /** A draft has no detail page — opening it resumes the creation form. */
+  function retomarRascunho(item: Item) {
+    const pathname = item.kind === 'carro' ? '/anunciar/carro' : '/anunciar/peca';
+    router.push({ pathname, params: { retomar: '1' } });
+  }
+
   function abrir(item: Item) {
-    if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
+    if (item.draft) retomarRascunho(item);
+    else if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
     else if (item.kind === 'peca') router.push(`/pecas/${item.id}`);
     else if (item.kind === 'oficina') router.push(`/oficinas/${item.id}`);
     else router.push(`/intencoes/${item.id}`);
@@ -142,12 +175,27 @@ export default function MeusAnunciosScreen() {
 
   /** carro / peca / oficina have an edit form; intencao isn't editable here. */
   function editar(item: Item) {
-    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
+    if (item.draft) retomarRascunho(item);
+    else if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
     else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: { id: item.id } });
     else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: { id: item.id } });
   }
 
   function confirmarRemover(item: Item) {
+    if (item.draft) {
+      Alert.alert('Descartar rascunho', `Descartar "${item.titulo}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Descartar',
+          style: 'destructive',
+          onPress: async () => {
+            await clearAdDraft(item.kind as 'carro' | 'peca');
+            setItens((atual) => atual.filter((x) => !(x.draft && x.kind === item.kind)));
+          },
+        },
+      ]);
+      return;
+    }
     Alert.alert('Eliminar anúncio', `Remover "${item.titulo}"?`, [
       { text: 'Cancelar', style: 'cancel' },
       {
