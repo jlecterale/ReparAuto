@@ -136,6 +136,7 @@ export default function HomeScreen() {
       <CarFiltersSheet
         visible={filtersOpen}
         onClose={() => setFiltersOpen(false)}
+        busca={busca}
         filters={filters}
         update={update}
         onClear={limpar}
