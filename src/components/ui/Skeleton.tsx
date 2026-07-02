@@ -30,6 +30,27 @@ export function CarCardSkeleton() {
   );
 }
 
+// Placeholder for the detail routes' loading.tsx — mirrors the detail-card
+// layout (back button, title, hero photo, description lines).
+export function ListingDetailSkeleton() {
+  return (
+    <div className="page-enter">
+      <Skeleton className="h-8 w-24 mb-3" />
+      <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+        <Skeleton className="h-8 w-2/3 mb-2" />
+        <Skeleton className="h-4 w-1/3 mb-1" />
+        <Skeleton className="h-7 w-28 mb-6" />
+        <Skeleton className="w-full aspect-[4/3] sm:aspect-auto sm:h-80 rounded-xl mb-6" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PecaCardSkeleton() {
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden flex flex-col">

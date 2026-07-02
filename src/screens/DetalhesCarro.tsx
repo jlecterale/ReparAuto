@@ -19,9 +19,13 @@ import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import EditarCarroModal from '@/components/admin/EditarCarroModal';
+import { deserializeCarro, type SerializedCarro } from '@/lib/serializeCarro';
 import type { Carro } from '@/types/carro';
 
-export default function DetalhesCarro() {
+// The server component already fetched (and approval-checked) the listing for
+// metadata/JSON-LD; it hands it down as `initialCarro` so the screen renders
+// instantly instead of spinning on a second, client-side Firestore fetch.
+export default function DetalhesCarro({ initialCarro }: { initialCarro?: SerializedCarro | null }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
@@ -29,8 +33,8 @@ export default function DetalhesCarro() {
   const { user, isAdmin } = auth;
   const { toggleFavorito, isFavorito } = favoritos;
 
-  const [carro, setCarro] = useState<Carro | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [carro, setCarro] = useState<Carro | null>(() => (initialCarro ? deserializeCarro(initialCarro) : null));
+  const [loading, setLoading] = useState(!initialCarro);
   const [bloqueado, setBloqueado] = useState(false);
   const [galeriaAberta, setGaleriaAberta] = useState(false);
   const [indiceGaleria, setIndiceGaleria] = useState(0);
@@ -38,7 +42,17 @@ export default function DetalhesCarro() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Client-side navigations between two listings reuse this component
+  // instance — resync when the server hands over a different listing.
   useEffect(() => {
+    if (!initialCarro) return;
+    setCarro(deserializeCarro(initialCarro));
+    setBloqueado(false);
+    setLoading(false);
+  }, [initialCarro]);
+
+  useEffect(() => {
+    if (initialCarro) return;
     async function fetchCarro() {
       if (!id) { setLoading(false); return; }
       const data = await getCarroPorIdDb(id);
@@ -53,14 +67,18 @@ export default function DetalhesCarro() {
       }
       setCarro(data);
       setLoading(false);
-      const key = `viewed_car_${id}`;
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, '1');
-        incrementCampo('cars', id, 'visualizacoes');
-      }
     }
     fetchCarro();
-  }, [id, user, isAdmin]);
+  }, [id, user, isAdmin, initialCarro]);
+
+  useEffect(() => {
+    if (!id || !carro) return;
+    const key = `viewed_car_${id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      incrementCampo('cars', id, 'visualizacoes');
+    }
+  }, [id, carro]);
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
     await updateCarro(id, { ...dados, status: 'pendente' });
