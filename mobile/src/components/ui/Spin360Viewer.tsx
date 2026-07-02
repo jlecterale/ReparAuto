@@ -20,7 +20,11 @@ interface Spin360ViewerProps {
  * tagged angle photos in circular order (mirror of the web Spin360Viewer).
  */
 /** Auto-play intervals offered by the speed selector (UI copy stays Portuguese). */
-const PLAY_SPEEDS_MS = [100, 1000, 2000] as const;
+const PLAY_SPEEDS_MS = [500, 1000, 2000] as const;
+const DEFAULT_SPEED_MS = 1000;
+
+/** "0,5s" / "1s" / "2s" — decimal comma, per the Portuguese UI copy. */
+const speedLabel = (ms: number) => `${(ms / 1000).toString().replace('.', ',')}s`;
 
 export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360ViewerProps) {
   const { width } = useWindowDimensions();
@@ -28,7 +32,7 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
   const [frame, setFrame] = useState(0);
   const [interacted, setInteracted] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [speedMs, setSpeedMs] = useState<number>(PLAY_SPEEDS_MS[0]);
+  const [speedMs, setSpeedMs] = useState<number>(DEFAULT_SPEED_MS);
   // Refs so the gesture callbacks never read a stale frame mid-drag.
   const frameRef = useRef(0);
   const startFrameRef = useRef(0);
@@ -156,11 +160,11 @@ export function Spin360Viewer({ visible, onClose, frames, angles }: Spin360Viewe
                       onPress={() => setSpeedMs(ms)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: speedMs === ms }}
-                      accessibilityLabel={`Velocidade: ${ms / 1000} segundos`}
+                      accessibilityLabel={`Velocidade: ${speedLabel(ms)}`}
                       className={`px-3 py-2 active:bg-white/25 ${speedMs === ms ? 'bg-white/30' : ''}`}
                     >
                       <Text className={`text-xs font-bold ${speedMs === ms ? 'text-white' : 'text-white/60'}`}>
-                        {ms / 1000}s
+                        {speedLabel(ms)}
                       </Text>
                     </Pressable>
                   ))}

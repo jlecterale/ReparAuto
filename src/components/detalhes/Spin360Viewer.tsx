@@ -18,13 +18,17 @@ interface Spin360ViewerProps {
  * scrubs through the tagged angle photos in circular order.
  */
 /** Auto-play intervals offered by the speed selector (UI copy stays Portuguese). */
-const PLAY_SPEEDS_MS = [100, 1000, 2000] as const;
+const PLAY_SPEEDS_MS = [500, 1000, 2000] as const;
+const DEFAULT_SPEED_MS = 1000;
+
+/** "0,5s" / "1s" / "2s" — decimal comma, per the Portuguese UI copy. */
+const speedLabel = (ms: number) => `${(ms / 1000).toString().replace('.', ',')}s`;
 
 export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360ViewerProps) {
   const [frame, setFrame] = useState(0);
   const [interacted, setInteracted] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [speedMs, setSpeedMs] = useState<number>(PLAY_SPEEDS_MS[0]);
+  const [speedMs, setSpeedMs] = useState<number>(DEFAULT_SPEED_MS);
   // Drag session: frame when the drag started + pointer origin.
   const dragRef = useRef<{ startX: number; startFrame: number } | null>(null);
 
@@ -184,11 +188,13 @@ export default function Spin360Viewer({ show, onClose, frames, angles }: Spin360
               value={speedMs}
               onChange={(e) => setSpeedMs(Number(e.target.value))}
               aria-label="Velocidade da rotação automática"
+              // color-scheme keeps the native option popup dark, matching the viewer.
+              style={{ colorScheme: 'dark' }}
               className="h-9 rounded-full bg-white/10 hover:bg-white/20 text-fg-inverse text-xs font-semibold pl-3 pr-8 appearance-none transition cursor-pointer"
             >
               {PLAY_SPEEDS_MS.map((ms) => (
-                <option key={ms} value={ms} className="text-fg bg-white">
-                  {ms / 1000}s
+                <option key={ms} value={ms} className="bg-neutral-900 text-white">
+                  {speedLabel(ms)}
                 </option>
               ))}
             </select>
