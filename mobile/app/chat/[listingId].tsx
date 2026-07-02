@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { FlatList, Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { formatMessageTime } from '@/lib/format';
 import type { ListingType, Mensagem } from '@/types';
 import { colors } from '@/theme/colors';
 
@@ -117,7 +118,8 @@ export default function ChatScreen() {
   );
 }
 
-function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
+const Bolha = memo(function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
+  const time = formatMessageTime(mensagem.dataCriacao);
   return (
     <View className={`mb-2 max-w-[80%] ${meu ? 'self-end' : 'self-start'}`}>
       <View
@@ -128,7 +130,12 @@ function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
         <Text className={meu ? 'text-base text-white' : 'text-base text-fg'}>
           {mensagem.mensagem}
         </Text>
+        {!!time && (
+          <Text className={`mt-0.5 self-end text-[11px] ${meu ? 'text-white/70' : 'text-fg-subtle'}`}>
+            {time}
+          </Text>
+        )}
       </View>
     </View>
   );
-}
+});

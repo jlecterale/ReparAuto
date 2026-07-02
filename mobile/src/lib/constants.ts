@@ -1,4 +1,4 @@
-import type { Cambio, Combustivel, EstadoVeiculo } from '@/types';
+import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
 
 export const COMBUSTIVEIS: Combustivel[] = [
   'Gasolina',
@@ -16,8 +16,50 @@ export const ESTADOS_VEICULO: { value: EstadoVeiculo; label: string }[] = [
   { value: 'manutencao', label: 'Para reparar' },
 ];
 
+// Body type / category (carroçaria) — mirrors the web `TIPOS_CARROCERIA`. A
+// single Portuguese enum serves both the PT and BR markets.
+export const TIPOS_CARROCERIA: BodyType[] = [
+  'Citadino',
+  'Utilitário',
+  'Sedan',
+  'Carrinha',
+  'SUV',
+  'Monovolume',
+  'Coupé',
+  'Cabrio',
+  'Pick-up',
+];
+
+// Vehicle condition — "Para peças" bridges the car and parts marketplaces.
+export const CONDICOES_VEICULO: Condition[] = ['Novo', 'Usado', 'Para peças'];
+
+// Drivetrain / traction.
+export const TIPOS_TRACAO: Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
+
+// Equipment / extras checklist (multi-select) — mirrors web `EQUIPAMENTOS_CARRO`.
+export const EQUIPAMENTOS_CARRO = [
+  'Ar condicionado',
+  'Climatização automática',
+  'Direção assistida',
+  'Vidros elétricos',
+  'Fecho centralizado',
+  'Sensores de estacionamento',
+  'Câmara de marcha-atrás',
+  'GPS / Navegação',
+  'Bluetooth',
+  'Cruise control',
+  'Bancos em pele',
+  'Bancos aquecidos',
+  'Teto de abrir',
+  'Jantes de liga leve',
+  'Faróis LED/Xénon',
+  'Isofix',
+  'Apple CarPlay / Android Auto',
+  'Start/Stop',
+];
+
 /** Hard limits mirrored from the web app. */
-export const MAX_FOTOS_CARRO = 7;
+export const MAX_FOTOS_CARRO = 20;
 
 /**
  * Every listing photo is cropped to this aspect ratio (width / height) so cards
@@ -25,6 +67,34 @@ export const MAX_FOTOS_CARRO = 7;
  * Mirrors the web `LISTING_PHOTO_ASPECT`.
  */
 export const LISTING_PHOTO_ASPECT = 4 / 3;
+
+/**
+ * Numeric bounds for car-listing inputs — mirrored from the web `carSpec.ts`.
+ * Feed both the `<Input maxLength>` first line of defence and `validar()` so a
+ * listing can't carry absurd specs (year 99999, 500 doors, unbounded km/price).
+ */
+export const CAR_YEAR_MIN = 1900;
+/** Upper year bound: the next model year (dealers list the coming year early). */
+export const carYearMax = () => new Date().getFullYear() + 1;
+export const CAR_KM_MAX = 999_999;
+export const CAR_DOORS_MIN = 2;
+export const CAR_DOORS_MAX = 7;
+export const CAR_SEATS_MIN = 1;
+// Passenger cars cap at 9; only van/minibus-style body types go higher.
+export const CAR_SEATS_MAX = 9;
+export const CAR_SEATS_MAX_LARGE = 99;
+/** Body types that ship in van/minibus configurations with more than 9 seats. */
+export const LARGE_SEAT_BODY_TYPES = ['Carrinha', 'Monovolume'] as const;
+
+/** Max allowed seats for a given body type (99 for vans/minibuses, else 9). */
+export function maxSeatsForBodyType(bodyType?: string): number {
+  return bodyType && (LARGE_SEAT_BODY_TYPES as readonly string[]).includes(bodyType)
+    ? CAR_SEATS_MAX_LARGE
+    : CAR_SEATS_MAX;
+}
+export const CAR_POWER_MAX = 2000; // cv
+export const CAR_DISPLACEMENT_MAX = 10_000; // cc
+export const CAR_PRICE_MAX = 10_000_000; // €
 
 /** Firestore collection that is the source of truth for brands/models. */
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';

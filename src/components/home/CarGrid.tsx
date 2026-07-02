@@ -11,10 +11,13 @@ import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
-import { formatarPreco, obterWhatsApp } from '@/lib/utils';
+import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
+import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
+import type { SearchFilters } from '@/types/busca';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
@@ -25,6 +28,36 @@ const quickChips = [
   { label: 'Até 500€', value: '500' },
   { label: 'Até 1.000€', value: '1000' },
 ] as const;
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+  anyLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+  anyLabel: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-fg-subtle mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent"
+      >
+        <option value="">{anyLabel}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export default function CarGrid() {
   const { carros, auth, chat, loginModal } = useApp();
@@ -53,9 +86,27 @@ export default function CarGrid() {
     setAdvRaioCentro,
     advRaioKm,
     setAdvRaioKm,
+    advBodyType,
+    setAdvBodyType,
+    advCondition,
+    setAdvCondition,
+    advCombustivel,
+    setAdvCombustivel,
+    advCambio,
+    setAdvCambio,
+    advSeatsMin,
+    setAdvSeatsMin,
+    advTraction,
+    setAdvTraction,
+    advFeatures,
+    setAdvFeatures,
     sortOrdem,
     setSortOrdem,
   } = carros;
+
+  const toggleFeature = (feature: string) => {
+    setAdvFeatures(toggleInList(advFeatures, feature));
+  };
 
   const { distritos, getConcelhos } = useDistritosConcelhos();
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -72,6 +123,13 @@ export default function CarGrid() {
     setAdvConcelho('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
+    setAdvBodyType('');
+    setAdvCondition('');
+    setAdvCombustivel('');
+    setAdvCambio('');
+    setAdvSeatsMin(null);
+    setAdvTraction('');
+    setAdvFeatures([]);
     setSortOrdem(null);
     setRaioMode(false);
     setRaioDist('');
@@ -216,6 +274,14 @@ export default function CarGrid() {
             </div>
           )}
 
+          {/* Category & condition — common filters, always visible */}
+          {tipo === 'carros' && (
+            <div className="grid grid-cols-2 gap-3">
+              <FilterSelect label="Categoria" value={advBodyType} onChange={setAdvBodyType} options={TIPOS_CARROCERIA} anyLabel="Todas" />
+              <FilterSelect label="Condição" value={advCondition} onChange={setAdvCondition} options={CONDICOES_VEICULO} anyLabel="Qualquer" />
+            </div>
+          )}
+
           {/* Advanced filters toggle (mobile only) */}
           <Button
             tipo="secundario"
@@ -251,6 +317,39 @@ export default function CarGrid() {
                   />
                 </div>
               </div>
+            )}
+
+            {tipo === 'carros' && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <FilterSelect label="Combustível" value={advCombustivel} onChange={setAdvCombustivel} options={TIPOS_COMBUSTIVEL} anyLabel="Todos" />
+                  <FilterSelect label="Câmbio" value={advCambio} onChange={setAdvCambio} options={TIPOS_CAMBIO} anyLabel="Todos" />
+                  <div>
+                    <label className="block text-xs font-bold text-fg-subtle mb-1">Lugares (mín.)</label>
+                    <input type="number" min={1} max={9} placeholder="Ex: 5"
+                      value={advSeatsMin ?? ''}
+                      onChange={(e) => setAdvSeatsMin(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent" />
+                  </div>
+                  <FilterSelect label="Tração" value={advTraction} onChange={setAdvTraction} options={TIPOS_TRACAO} anyLabel="Todas" />
+                </div>
+
+                <div>
+                  <span className="block text-xs font-bold text-fg-subtle mb-2">Equipamento</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {EQUIPAMENTOS_CARRO.map((feature) => (
+                      <ToggleChip
+                        key={feature}
+                        tamanho="sm"
+                        active={advFeatures.includes(feature)}
+                        onClick={() => toggleFeature(feature)}
+                      >
+                        {feature}
+                      </ToggleChip>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             <div>
@@ -338,6 +437,8 @@ export default function CarGrid() {
                   precoMax: advPriceMax ?? undefined,
                   distrito: advDistrito || undefined,
                   concelho: advConcelho || undefined,
+                  combustivel: (advCombustivel || undefined) as SearchFilters['combustivel'],
+                  cambio: (advCambio || undefined) as SearchFilters['cambio'],
                 }}
                 onRequireLogin={() => loginModal.openLoginModal('/')}
               />

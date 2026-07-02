@@ -16,6 +16,11 @@ export interface CarAdvFilters {
   anoMax: string;
   combustiveis: Combustivel[];
   estado: '' | EstadoVeiculo;
+  bodyType: string;
+  condition: string;
+  seatsMin: string;
+  traction: string;
+  features: string[];
   /** false → filter by distrito/concelho; true → filter by radius. */
   raioMode: boolean;
   distrito: string;
@@ -36,6 +41,11 @@ const INITIAL: CarAdvFilters = {
   anoMax: '',
   combustiveis: [],
   estado: '',
+  bodyType: '',
+  condition: '',
+  seatsMin: '',
+  traction: '',
+  features: [],
   raioMode: false,
   distrito: '',
   concelho: '',
@@ -95,6 +105,11 @@ export function useCarFilters(carros: Carro[]) {
       f.anoMin || f.anoMax,
       f.combustiveis.length > 0,
       f.estado,
+      f.bodyType,
+      f.condition,
+      f.seatsMin,
+      f.traction,
+      f.features.length > 0,
       localizacaoActive,
     ].filter(Boolean).length;
   }, [f]);
@@ -107,6 +122,7 @@ export function useCarFilters(carros: Carro[]) {
     const kmMax = num(f.kmMax);
     const anoMin = num(f.anoMin);
     const anoMax = num(f.anoMax);
+    const seatsMin = num(f.seatsMin);
     const raioKm = num(f.raioKm);
     const centro = f.raioMode && f.raioCentro ? getCoordenadas(f.raioCentro) : null;
 
@@ -123,6 +139,14 @@ export function useCarFilters(carros: Carro[]) {
       if (anoMax !== null && c.anoFabricacao > anoMax) return false;
       if (f.combustiveis.length > 0 && !f.combustiveis.includes(c.combustivel)) return false;
       if (f.estado && c.estadoVeiculo !== f.estado) return false;
+      if (f.bodyType && c.bodyType !== f.bodyType) return false;
+      if (f.condition && c.condition !== f.condition) return false;
+      if (seatsMin !== null && (c.seats == null || c.seats < seatsMin)) return false;
+      if (f.traction && c.traction !== f.traction) return false;
+      if (f.features.length > 0) {
+        const owned = c.features ?? [];
+        if (!f.features.every((feat) => owned.includes(feat))) return false;
+      }
 
       // Location: radius takes precedence, then concelho, then distrito.
       if (centro && raioKm && raioKm > 0) {

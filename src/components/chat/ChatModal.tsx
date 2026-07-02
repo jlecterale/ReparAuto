@@ -3,6 +3,7 @@
 import { ChatCircleDots, CircleNotch, PaperPlaneTilt, X } from '@phosphor-icons/react';
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '@/providers/AppProvider';
+import { formatMessageTime } from '@/lib/utils';
 
 export default function ChatModal() {
   const { auth, chat } = useApp();
@@ -73,6 +74,7 @@ export default function ChatModal() {
           ) : (
             conversa.map((msg) => {
               const minha = msg.fromUid === user.uid;
+              const time = formatMessageTime(msg.dataCriacao);
               return (
                 <div key={msg.id} className={`flex ${minha ? 'justify-end' : 'justify-start'}`}>
                   <div
@@ -88,6 +90,7 @@ export default function ChatModal() {
                         minha ? 'text-white/70' : 'text-fg-subtle'
                       }`}
                     >
+                      {time && `${time} · `}
                       {msg.lida ? '✓✓ Lida' : '✓ Enviada'}
                     </p>
                   </div>

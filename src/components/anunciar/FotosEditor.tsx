@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { CaretLeft, CaretRight, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
+import { CaretLeft, CaretRight, LinkSimple, PencilSimple, UploadSimple, X } from '@phosphor-icons/react';
 import { EMOJIS_CARRO, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
+import { parseExternalImageUrl } from '@/lib/utils';
+import { savePhotoFile, deletePhotoFiles } from '@/lib/draftPhotoStore';
+import Button from '@/components/ui/Button';
 import ImageCropper from '@/components/ui/ImageCropper';
 
 interface FotosEditorProps {
@@ -16,6 +19,12 @@ interface FotosEditorProps {
   aspect?: number;
   /** Ref to collect pending File objects keyed by blob URL (for deferred upload). */
   filesRef?: React.MutableRefObject<Map<string, File>>;
+  /**
+   * Also persist picked files to IndexedDB so a saved draft can restore them
+   * after a reload. Only draft-backed flows opt in — the admin edit modals
+   * upload immediately and must not leave persisted copies behind.
+   */
+  persistFiles?: boolean;
 }
 
 const reordenar = (fotos: string[], from: number, to: number): string[] => {
@@ -36,6 +45,7 @@ export default function FotosEditor({
   mostrarCapa,
   aspect = LISTING_PHOTO_ASPECT,
   filesRef,
+  persistFiles = false,
 }: FotosEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -46,6 +56,10 @@ export default function FotosEditor({
   const [batchTotal, setBatchTotal] = useState(0);
   // Index of an already-added photo being re-cropped, or null.
   const [editIndex, setEditIndex] = useState<number | null>(null);
+  // "Add photo by URL" row.
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
+  const [urlChecking, setUrlChecking] = useState(false);
 
   const exibirCapa = mostrarCapa ?? max > 1;
   const podeReordenar = max > 1 && fotos.length > 1;
@@ -94,6 +108,7 @@ export default function FotosEditor({
     const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
     const url = URL.createObjectURL(file);
     filesRef?.current.set(url, file);
+    if (persistFiles) void savePhotoFile(url, file);
     return { file, url };
   };
 
@@ -124,10 +139,54 @@ export default function FotosEditor({
     if (antiga?.startsWith('blob:')) {
       URL.revokeObjectURL(antiga);
       filesRef?.current.delete(antiga);
+      if (persistFiles) void deletePhotoFiles([antiga]);
     }
     const { url } = blobToFile(blob);
     setFotos(fotos.map((f, i) => (i === editIndex ? url : f)));
     setEditIndex(null);
+  };
+
+  // Confirms the pasted URL actually serves a renderable image before adding it.
+  const loadsAsImage = (src: string) =>
+    new Promise<boolean>((resolve) => {
+      const img = new Image();
+      const timer = setTimeout(() => resolve(false), 12000);
+      img.onload = () => {
+        clearTimeout(timer);
+        resolve(true);
+      };
+      img.onerror = () => {
+        clearTimeout(timer);
+        resolve(false);
+      };
+      img.src = src;
+    });
+
+  const addByUrl = async () => {
+    if (urlChecking) return;
+    const url = parseExternalImageUrl(urlValue);
+    if (!url) {
+      setErro('Insira um URL de imagem válido (começado por https://).');
+      return;
+    }
+    if (fotos.includes(url)) {
+      setErro('Essa imagem já está no anúncio.');
+      return;
+    }
+    if (fotos.length >= max) {
+      setErro(`Só pode adicionar até ${max} fotos no total.`);
+      return;
+    }
+    setUrlChecking(true);
+    const ok = await loadsAsImage(url);
+    setUrlChecking(false);
+    if (!ok) {
+      setErro('Não foi possível carregar uma imagem a partir desse URL.');
+      return;
+    }
+    setErro(null);
+    setFotos([...fotos, url]);
+    setUrlValue('');
   };
 
   const adicionarEmoji = () => {
@@ -141,6 +200,7 @@ export default function FotosEditor({
     if (removed?.startsWith('blob:')) {
       URL.revokeObjectURL(removed);
       filesRef?.current.delete(removed);
+      if (persistFiles) void deletePhotoFiles([removed]);
     }
     setFotos(fotos.filter((_, i) => i !== index));
     setErro(null);
@@ -200,6 +260,18 @@ export default function FotosEditor({
             onChange={selecionarFicheiros}
           />
         </label>
+        <button
+          type="button"
+          onClick={() => {
+            setShowUrlInput((v) => !v);
+            setErro(null);
+          }}
+          disabled={!podeAdicionar}
+          className="bg-white hover:bg-neutral-50 text-fg-subtle font-medium px-4 py-3 rounded-xl text-xs transition border border-neutral-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <LinkSimple />
+          Adicionar por URL
+        </button>
         {mostrarEmoji && (
           <button
             type="button"
@@ -211,6 +283,29 @@ export default function FotosEditor({
           </button>
         )}
       </div>
+
+      {showUrlInput && podeAdicionar && (
+        <div className="flex gap-2 mb-3">
+          <input
+            type="url"
+            inputMode="url"
+            value={urlValue}
+            onChange={(e) => setUrlValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addByUrl();
+              }
+            }}
+            placeholder="https://exemplo.com/foto.jpg"
+            aria-label="URL da imagem"
+            className="flex-1 min-w-0 rounded-xl border border-slate-300 px-3 py-2 text-xs focus:border-accent focus:ring-2 focus:ring-accent/30 focus:outline-none"
+          />
+          <Button tamanho="sm" onClick={addByUrl} disabled={!urlValue.trim()} carregando={urlChecking}>
+            Adicionar
+          </Button>
+        </div>
+      )}
 
       <p className="text-[11px] text-fg-muted mb-3">
         Máximo {max} {max === 1 ? 'foto' : 'fotos'} · até {MAX_FOTO_SIZE_MB} MB cada. As fotos são recortadas para a mesma proporção.
@@ -307,7 +402,9 @@ export default function FotosEditor({
             </div>
           );
         })}
-        {Array.from({ length: Math.max(0, max - fotos.length) }).map((_, i) => (
+        {/* Cap the empty add slots at one desktop row — with a 20-photo limit,
+            rendering every remaining slot would flood the grid. */}
+        {Array.from({ length: Math.min(Math.max(0, max - fotos.length), 6) }).map((_, i) => (
           <button
             type="button"
             key={`empty-${i}`}

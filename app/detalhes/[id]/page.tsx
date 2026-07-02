@@ -46,6 +46,13 @@ export default async function Page({ params }: PageProps) {
   const fotoData = carro.fotos?.[0] ? renderFoto(carro.fotos[0]) : null;
   const imageUrl = fotoData?.type === 'img' ? fotoData.src : undefined;
 
+  const itemCondition =
+    carro.condition === 'Novo'
+      ? 'https://schema.org/NewCondition'
+      : carro.condition === 'Para peças'
+        ? 'https://schema.org/DamagedCondition'
+        : 'https://schema.org/UsedCondition';
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Vehicle',
@@ -59,6 +66,23 @@ export default async function Page({ params }: PageProps) {
     vehicleTransmission: carro.cambio,
     color: carro.cor,
     numberOfDoors: carro.portas,
+    ...(carro.bodyType ? { bodyType: carro.bodyType } : {}),
+    ...(carro.seats ? { seatingCapacity: carro.seats } : {}),
+    ...(carro.traction ? { driveWheelConfiguration: carro.traction } : {}),
+    ...(carro.displacement || carro.power
+      ? {
+          vehicleEngine: {
+            '@type': 'EngineSpecification',
+            ...(carro.displacement
+              ? { engineDisplacement: { '@type': 'QuantitativeValue', value: carro.displacement, unitCode: 'CMQ' } }
+              : {}),
+            ...(carro.power
+              ? { enginePower: { '@type': 'QuantitativeValue', value: carro.power, unitText: 'cv' } }
+              : {}),
+          },
+        }
+      : {}),
+    ...(carro.features && carro.features.length > 0 ? { vehicleConfiguration: carro.features.join(', ') } : {}),
     image: imageUrl,
     description: (carro.descricao || '').slice(0, 500),
     offers: {
@@ -66,6 +90,7 @@ export default async function Page({ params }: PageProps) {
       price: carro.preco,
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
+      itemCondition,
       url: `${SITE_URL}/detalhes/${id}`,
       areaServed: carro.local,
     },

@@ -17,6 +17,7 @@ import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { VideoPreview } from '@/components/ui/VideoPreview';
+import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
@@ -116,7 +117,7 @@ export default function DetalhesCarroScreen() {
               >
                 <Image
                   source={url}
-                  style={{ width, height: width * 0.72 }}
+                  style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                   contentFit="cover"
                   transition={200}
                 />
@@ -124,7 +125,7 @@ export default function DetalhesCarroScreen() {
             ))}
             {fotos.length === 0 && (
               <View
-                style={{ width, height: width * 0.72 }}
+                style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                 className="items-center justify-center bg-neutral-200"
               >
                 <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />
@@ -165,9 +166,28 @@ export default function DetalhesCarroScreen() {
             <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
             <Spec icon="water-outline" label="Combustível" value={carro.combustivel} />
             <Spec icon="cog-outline" label="Caixa" value={carro.cambio} />
+            {!!carro.bodyType && <Spec icon="car-sport-outline" label="Categoria" value={carro.bodyType} />}
+            {!!carro.condition && <Spec icon="pricetag-outline" label="Condição" value={carro.condition} />}
+            {carro.seats != null && <Spec icon="people-outline" label="Lugares" value={String(carro.seats)} />}
+            {carro.power != null && <Spec icon="flash-outline" label="Potência" value={`${carro.power} cv`} />}
+            {carro.displacement != null && <Spec icon="build-outline" label="Cilindrada" value={`${carro.displacement} cc`} />}
+            {!!carro.traction && <Spec icon="git-network-outline" label="Tração" value={carro.traction} />}
             <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
             <Spec icon="location-outline" label="Local" value={carro.local} />
           </View>
+
+          {!!carro.features?.length && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Equipamento & Extras</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {carro.features.map((f) => (
+                  <View key={f} className="rounded-full bg-primary-50 px-3 py-1.5">
+                    <Text className="text-sm font-semibold text-primary-700">{f}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {!!carro.descricao && (
             <View className="mt-5">

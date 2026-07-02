@@ -62,7 +62,7 @@ src/
 ## Data Layer
 
 Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`, `intencoes_compra`, `contatos_intencao`, `denuncias_intencao`.
-Firebase Storage for images (1MB limit, 7 max for cars/services, 3 max for parts).
+Firebase Storage for images (10MB limit, 20 max for cars, 1 for parts). Listing photos can also be external https URLs pasted by the user (stored as-is, no upload).
 localStorage fallback for anonymous favorites only (`favs_reparauto` key).
 
 Public listing queries filter `where('status' == 'aprovado')` server-side and sort by `dataCriacao` in memory (no composite index needed). Realtime car/part subscriptions are route-gated in `AppProvider` (`needsCarros`/`needsPecas`) — add the route there if a new screen reads those lists from context.

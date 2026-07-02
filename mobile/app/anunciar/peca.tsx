@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -13,6 +14,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
+import { clearAdDraft, type PartDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { colors } from '@/theme/colors';
 import { TIPO_PECA_LABELS, type TipoPeca } from '@/types';
 
@@ -24,7 +27,7 @@ const TIPOS = (Object.keys(TIPO_PECA_LABELS) as TipoPeca[]).map((t) => ({
 const ESTADOS = ['Novo', 'Usado', 'Recondicionado'].map((e) => ({ value: e, label: e }));
 
 export default function AnunciarPecaScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { showToast } = useToast();
@@ -46,9 +49,45 @@ export default function AnunciarPecaScreen() {
   const [whatsapp, setWhatsapp] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  // Set once the listing is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   const precisaPreco = tipo !== 'procura';
+
+  const draftData = useMemo<PartDraftData>(
+    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp }),
+    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp],
+  );
+  // Prefilled contacts don't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(titulo || marca || preco || descricao || foto.length);
+
+  function restoreDraft(d: PartDraftData) {
+    setFoto(d.foto ?? []);
+    setTipo(d.tipo ?? 'venda');
+    setTitulo(d.titulo ?? '');
+    setCategoria(d.categoria ?? '');
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setPreco(d.preco ?? '');
+    setEstado(d.estado ?? 'Usado');
+    setLocal(d.local ?? '');
+    setDescricao(d.descricao ?? '');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+  }
+
+  useAdDraft<PartDraftData>({
+    kind: 'peca',
+    enabled: !editId,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'um anúncio de peça',
+    onRestore: restoreDraft,
+  });
 
   useEffect(() => {
     if (!editId) return;
@@ -127,7 +166,9 @@ export default function AnunciarPecaScreen() {
           criadorUid: user.uid,
           vendedorEmail: user.email,
         });
+        clearAdDraft('peca');
       }
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',
@@ -229,6 +270,7 @@ export default function AnunciarPecaScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O anúncio fica visível após aprovação da equipa.
         </Text>
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

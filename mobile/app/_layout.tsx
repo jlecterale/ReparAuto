@@ -18,6 +18,7 @@ import {
   requestPermissionOnFirstLaunch,
   setupPushHandlers,
   unregisterPush,
+  watchTokenRefresh,
 } from '@/lib/push';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
@@ -54,6 +55,8 @@ function RootNavigator() {
   useEffect(() => {
     if (!uid || !pushEnabled) return;
     registerForPush(uid).catch(() => {});
+    // Keep the stored token fresh if FCM rotates it while signed in.
+    const unsubTokenRefresh = watchTokenRefresh(uid);
     const unsub = setupPushHandlers((data) => {
       const link = data?.link;
       if (typeof link === 'string' && link.startsWith('/')) {
@@ -64,6 +67,7 @@ function RootNavigator() {
     });
     return () => {
       unsub();
+      unsubTokenRefresh();
       unregisterPush(uid).catch(() => {});
     };
   }, [uid, pushEnabled]);
@@ -80,7 +84,16 @@ function RootNavigator() {
   // is fully readable without an account. Login is only required for actions
   // (favourite, announce, contact), which push the (auth) modal on demand.
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.neutral[50] } }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        // iOS labels the back button with the previous route's title; screens
+        // pushed from the tab bar would otherwise show the literal "(tabs)"
+        // group name, so show only the chevron.
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: colors.neutral[50] },
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="pecas/[id]" options={{ headerShown: true, title: '' }} />
