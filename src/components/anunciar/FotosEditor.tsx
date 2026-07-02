@@ -14,6 +14,7 @@ import {
   withPhotoRenamed,
   type SpinAngle,
 } from '@/lib/spin360';
+import { savePhotoFile, deletePhotoFiles } from '@/lib/draftPhotoStore';
 import Button from '@/components/ui/Button';
 import ImageCropper from '@/components/ui/ImageCropper';
 import GuidedSpinCapture from '@/components/anunciar/GuidedSpinCapture';
@@ -36,6 +37,12 @@ interface FotosEditorProps {
    */
   angleByPhoto?: Record<string, SpinAngle>;
   onAngleByPhotoChange?: (angleByPhoto: Record<string, SpinAngle>) => void;
+  /**
+   * Also persist picked files to IndexedDB so a saved draft can restore them
+   * after a reload. Only draft-backed flows opt in — the admin edit modals
+   * upload immediately and must not leave persisted copies behind.
+   */
+  persistFiles?: boolean;
 }
 
 const reordenar = (fotos: string[], from: number, to: number): string[] => {
@@ -58,6 +65,7 @@ export default function FotosEditor({
   filesRef,
   angleByPhoto,
   onAngleByPhotoChange,
+  persistFiles = false,
 }: FotosEditorProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -147,6 +155,7 @@ export default function FotosEditor({
     const file = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
     const url = URL.createObjectURL(file);
     filesRef?.current.set(url, file);
+    if (persistFiles) void savePhotoFile(url, file);
     return { file, url };
   };
 
@@ -177,6 +186,7 @@ export default function FotosEditor({
     if (antiga?.startsWith('blob:')) {
       URL.revokeObjectURL(antiga);
       filesRef?.current.delete(antiga);
+      if (persistFiles) void deletePhotoFiles([antiga]);
     }
     const { url } = blobToFile(blob);
     if (antiga) movePhotoAngle(antiga, url);
@@ -238,6 +248,7 @@ export default function FotosEditor({
     if (removed?.startsWith('blob:')) {
       URL.revokeObjectURL(removed);
       filesRef?.current.delete(removed);
+      if (persistFiles) void deletePhotoFiles([removed]);
     }
     if (removed) dropPhotoAngle(removed);
     setFotos(fotos.filter((_, i) => i !== index));

@@ -3,6 +3,7 @@
   "version": "4.0.0",
   "private": true,
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || exit 0",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -38,6 +39,7 @@
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",
+    "fake-indexeddb": "^6.2.5",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "tailwindcss": "^4.3.0",

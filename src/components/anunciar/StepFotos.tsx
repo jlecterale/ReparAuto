@@ -14,6 +14,8 @@ interface StepFotosProps {
   filesRef?: MutableRefObject<Map<string, File>>;
   angleByPhoto?: Record<string, SpinAngle>;
   onAngleByPhotoChange?: (angleByPhoto: Record<string, SpinAngle>) => void;
+  /** Persist picked files to IndexedDB for draft recovery (see FotosEditor). */
+  persistFiles?: boolean;
 }
 
 export default function StepFotos({
@@ -24,6 +26,7 @@ export default function StepFotos({
   filesRef,
   angleByPhoto,
   onAngleByPhotoChange,
+  persistFiles,
 }: StepFotosProps) {
   return (
     <div>
@@ -40,6 +43,7 @@ export default function StepFotos({
         filesRef={filesRef}
         angleByPhoto={angleByPhoto}
         onAngleByPhotoChange={onAngleByPhotoChange}
+        persistFiles={persistFiles}
       />
 
       {fotos.length === 0 && (

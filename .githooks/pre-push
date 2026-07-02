@@ -1,0 +1,7 @@
+#!/bin/sh
+echo "Running tests before push..."
+npm test || {
+  echo ""
+  echo "Tests failed — push aborted. Fix the tests or push with --no-verify to skip."
+  exit 1
+}

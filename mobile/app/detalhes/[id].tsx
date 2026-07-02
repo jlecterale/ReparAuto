@@ -19,6 +19,7 @@ import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import { VideoPreview } from '@/components/ui/VideoPreview';
+import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
@@ -121,7 +122,7 @@ export default function DetalhesCarroScreen() {
               >
                 <Image
                   source={url}
-                  style={{ width, height: width * 0.72 }}
+                  style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                   contentFit="cover"
                   transition={200}
                 />
@@ -129,7 +130,7 @@ export default function DetalhesCarroScreen() {
             ))}
             {fotos.length === 0 && (
               <View
-                style={{ width, height: width * 0.72 }}
+                style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                 className="items-center justify-center bg-neutral-200"
               >
                 <Ionicons name="image-outline" size={48} color={colors.neutral[400]} />

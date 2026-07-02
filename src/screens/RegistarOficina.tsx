@@ -1,17 +1,39 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
+import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
+import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
+
+/** Serializable snapshot persisted as the workshop draft. */
+export interface OficinaFormDraft {
+  nome: string;
+  descricao: string;
+  responsavel: string;
+  telefone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  distrito: string;
+  localidade: string;
+  morada: string;
+  coordenadas: { latitude: number; longitude: number };
+  especialidades: EspecialidadeOficina[];
+  logoUrl: string;
+  videoUrl: string;
+}
 
 // Dynamically import MapSelector to prevent SSR/window errors
 const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
@@ -21,9 +43,12 @@ const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
 
 export default function RegistarOficina() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { auth } = useApp();
   const { user } = auth;
   const toast = useToast();
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1.
+  const resumeParam = searchParams.get('retomar') === '1';
 
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -46,6 +71,47 @@ export default function RegistarOficina() {
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+
+  // Remounts the map when a draft restores saved coordinates.
+  const [mapKey, setMapKey] = useState(0);
+
+  const draftSnapshot = useMemo<OficinaFormDraft>(
+    () => ({
+      nome, descricao, responsavel, telefone, whatsapp, email, website,
+      distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl,
+    }),
+    [nome, descricao, responsavel, telefone, whatsapp, email, website,
+     distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl],
+  );
+
+  const applyDraft = (d: OficinaFormDraft) => {
+    setNome(d.nome ?? '');
+    setDescricao(d.descricao ?? '');
+    setResponsavel(d.responsavel ?? '');
+    setTelefone(d.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+    setEmail(d.email ?? user?.email ?? '');
+    setWebsite(d.website ?? '');
+    setDistrito(d.distrito ?? '');
+    setLocalidade(d.localidade ?? '');
+    setMorada(d.morada ?? '');
+    if (d.coordenadas) {
+      setCoordenadas(d.coordenadas);
+      setMapKey((k) => k + 1);
+    }
+    setEspecialidades(d.especialidades ?? []);
+    setLogoUrl(d.logoUrl ?? '');
+    setVideoUrl(d.videoUrl ?? '');
+  };
+
+  const workshopDraft = useAdDraft<OficinaFormDraft>({
+    kind: 'oficina',
+    suspended: publicado || loading,
+    data: draftSnapshot,
+    hasContent: hasWorkshopDraftContent({ nome, descricao, responsavel, morada }, especialidades),
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => applyDraft(draft.data),
+  });
 
   const handleToggleEspecialidade = (esp: EspecialidadeOficina) => {
     if (especialidades.includes(esp)) {
@@ -102,6 +168,7 @@ export default function RegistarOficina() {
         totalAvaliacoes: 0,
       });
 
+      clearAdDraft('oficina');
       setPublicado(true);
       toast?.sucesso('Oficina registada com sucesso! A aguardar aprovação.');
 
@@ -389,6 +456,7 @@ export default function RegistarOficina() {
                 Localização Geográfica (Coordenadas)
               </label>
               <MapSelector
+                key={mapKey}
                 initialLat={coordenadas.latitude}
                 initialLng={coordenadas.longitude}
                 onChange={(lat, lng) => setCoordenadas({ latitude: lat, longitude: lng })}
@@ -402,6 +470,7 @@ export default function RegistarOficina() {
 
           {/* Submit */}
           <div className="pt-4">
+            <DraftSavedNote className="mb-3" />
             <Button
               type="submit"
               tipo="primario"
@@ -413,6 +482,15 @@ export default function RegistarOficina() {
           </div>
         </form>
       </div>
+
+      {workshopDraft.prompt && (
+        <DraftResumePrompt
+          itemLabel="um registo de oficina"
+          savedAt={workshopDraft.prompt.savedAt}
+          onDiscard={workshopDraft.discard}
+          onResume={workshopDraft.resume}
+        />
+      )}
     </div>
   );
 }
