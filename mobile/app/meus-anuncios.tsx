@@ -33,7 +33,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 
-type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
+type Kind = AdDraftKind;
 type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'rascunho' | 'outro';
 
 interface ItemStats {
@@ -165,16 +165,16 @@ export default function MeusAnunciosScreen() {
   }
 
   /** A draft has no detail page — opening it resumes the creation form. */
-  function retomarRascunho(item: Item) {
-    const retomar = { retomar: '1' };
-    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: retomar });
-    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: retomar });
-    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: retomar });
-    else router.push({ pathname: '/anunciar/intencao', params: retomar });
+  function resumeDraft(item: Item) {
+    const params = { retomar: '1' };
+    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params });
+    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params });
+    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params });
+    else router.push({ pathname: '/anunciar/intencao', params });
   }
 
   function abrir(item: Item) {
-    if (item.draft) retomarRascunho(item);
+    if (item.draft) resumeDraft(item);
     else if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
     else if (item.kind === 'peca') router.push(`/pecas/${item.id}`);
     else if (item.kind === 'oficina') router.push(`/oficinas/${item.id}`);
@@ -183,7 +183,7 @@ export default function MeusAnunciosScreen() {
 
   /** carro / peca / oficina have an edit form; intencao isn't editable here. */
   function editar(item: Item) {
-    if (item.draft) retomarRascunho(item);
+    if (item.draft) resumeDraft(item);
     else if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
     else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: { id: item.id } });
     else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: { id: item.id } });
@@ -197,7 +197,7 @@ export default function MeusAnunciosScreen() {
           text: 'Descartar',
           style: 'destructive',
           onPress: async () => {
-            await clearAdDraft(item.kind as AdDraftKind);
+            await clearAdDraft(item.kind);
             setItens((atual) => atual.filter((x) => !(x.draft && x.kind === item.kind)));
           },
         },

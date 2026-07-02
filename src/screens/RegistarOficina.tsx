@@ -1,22 +1,24 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
-import { saveAdDraft, loadAdDraft, clearAdDraft, hasWorkshopDraftContent, type AdDraft } from '@/lib/adDraft';
+import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 
 /** Serializable snapshot persisted as the workshop draft. */
-interface OficinaFormDraft {
+export interface OficinaFormDraft {
   nome: string;
   descricao: string;
   responsavel: string;
@@ -41,9 +43,12 @@ const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
 
 export default function RegistarOficina() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { auth } = useApp();
   const { user } = auth;
   const toast = useToast();
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1.
+  const resumeParam = searchParams.get('retomar') === '1';
 
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -67,16 +72,17 @@ export default function RegistarOficina() {
   const [logoUrl, setLogoUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
-  const [draftPrompt, setDraftPrompt] = useState<AdDraft<OficinaFormDraft> | null>(null);
-  const draftHandledRef = useRef(false);
   // Remounts the map when a draft restores saved coordinates.
   const [mapKey, setMapKey] = useState(0);
 
-  const draftData: OficinaFormDraft = {
-    nome, descricao, responsavel, telefone, whatsapp, email, website,
-    distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl,
-  };
-  const hasDraftContent = hasWorkshopDraftContent({ nome, descricao, responsavel, morada }, especialidades);
+  const draftSnapshot = useMemo<OficinaFormDraft>(
+    () => ({
+      nome, descricao, responsavel, telefone, whatsapp, email, website,
+      distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl,
+    }),
+    [nome, descricao, responsavel, telefone, whatsapp, email, website,
+     distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl],
+  );
 
   const applyDraft = (d: OficinaFormDraft) => {
     setNome(d.nome ?? '');
@@ -98,32 +104,14 @@ export default function RegistarOficina() {
     setVideoUrl(d.videoUrl ?? '');
   };
 
-  // Offer to resume a saved draft. Re-runs when auth resolves, because an
-  // owned draft is invisible until the uid is known.
-  useEffect(() => {
-    if (publicado || draftHandledRef.current) return;
-    const draft = loadAdDraft<OficinaFormDraft>('oficina', user?.uid ?? null);
-    if (!draft) return;
-    // Never clobber progress the user already made in this visit.
-    if (hasDraftContent) return;
-    draftHandledRef.current = true;
-    setDraftPrompt(draft);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, publicado]);
-
-  // Autosave the draft (debounced) whenever the form holds real progress.
-  useEffect(() => {
-    if (publicado || loading || draftPrompt || !hasDraftContent) return;
-    const timer = setTimeout(() => {
-      saveAdDraft<OficinaFormDraft>('oficina', draftData, { uid: user?.uid ?? null });
-    }, 500);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    nome, descricao, responsavel, telefone, whatsapp, email, website,
-    distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl,
-    publicado, loading, draftPrompt, user?.uid,
-  ]);
+  const workshopDraft = useAdDraft<OficinaFormDraft>({
+    kind: 'oficina',
+    suspended: publicado || loading,
+    data: draftSnapshot,
+    hasContent: hasWorkshopDraftContent({ nome, descricao, responsavel, morada }, especialidades),
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => applyDraft(draft.data),
+  });
 
   const handleToggleEspecialidade = (esp: EspecialidadeOficina) => {
     if (especialidades.includes(esp)) {
@@ -482,9 +470,7 @@ export default function RegistarOficina() {
 
           {/* Submit */}
           <div className="pt-4">
-            <p className="text-[11px] text-fg-muted mb-3">
-              💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
-            </p>
+            <DraftSavedNote className="mb-3" />
             <Button
               type="submit"
               tipo="primario"
@@ -497,18 +483,12 @@ export default function RegistarOficina() {
         </form>
       </div>
 
-      {draftPrompt && (
+      {workshopDraft.prompt && (
         <DraftResumePrompt
           itemLabel="um registo de oficina"
-          savedAt={draftPrompt.savedAt}
-          onDiscard={() => {
-            clearAdDraft('oficina');
-            setDraftPrompt(null);
-          }}
-          onResume={() => {
-            applyDraft(draftPrompt.data);
-            setDraftPrompt(null);
-          }}
+          savedAt={workshopDraft.prompt.savedAt}
+          onDiscard={workshopDraft.discard}
+          onResume={workshopDraft.resume}
         />
       )}
     </div>

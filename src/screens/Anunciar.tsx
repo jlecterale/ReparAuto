@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle } from '@phosphor-icons/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -10,7 +10,8 @@ import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt } from '@/lib/utils';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
-import pendingUploadFiles, { isRestorableFoto } from '@/lib/pendingUploadFiles';
+import pendingUploadFiles, { isRestorableFoto, releasePendingFiles } from '@/lib/pendingUploadFiles';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
@@ -18,6 +19,7 @@ import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
 import PecaForm, { type PecaFormDraft } from '@/components/pecas/PecaForm';
 import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import type { CarroFormData } from '@/types/carro';
 
 type CategoriaAnuncio = 'carro' | 'peca';
@@ -72,7 +74,7 @@ export default function Anunciar() {
     tipoParam === 'carro' || tipoParam === 'peca' ? tipoParam : null;
   // The profile's "Continuar rascunho" button deep-links with ?retomar=1 to
   // resume the saved draft directly, without re-asking.
-  const retomarParam = searchParams.get('retomar') === '1';
+  const resumeParam = searchParams.get('retomar') === '1';
 
   const [categoria, setCategoria] = useState<CategoriaAnuncio | null>(categoriaInicial);
   const [passo, setPasso] = useState(categoriaInicial ? 1 : 0);
@@ -89,59 +91,51 @@ export default function Anunciar() {
     vendedorEmail: user?.email || '',
   }));
 
-  // Draft recovery: prompt shown when a saved draft exists for the chosen kind.
-  const [draftPrompt, setDraftPrompt] = useState<{ kind: CategoriaAnuncio; draft: AdDraft } | null>(null);
-  // Part draft handed to PecaForm once the user chooses to resume it.
+  // Part draft handed to PecaForm when a saved draft is resumed.
   const [pecaDraft, setPecaDraft] = useState<PecaFormDraft | null>(null);
-  // Kinds already offered/resumed this visit, so the prompt never re-appears.
-  const draftsHandledRef = useRef<Set<CategoriaAnuncio>>(new Set());
 
-  const applyDraft = (kind: CategoriaAnuncio, draft: AdDraft) => {
-    if (kind === 'carro') {
-      const data = draft.data as Partial<CarAdDraftData>;
-      setDados({ ...initialDados, ...data.dados });
-      // Blob photo URLs only survive within the same page session; drop the
-      // ones whose backing file is gone (e.g. after a reload).
-      const savedFotos = data.fotos ?? [];
-      const restoredFotos = savedFotos.filter(isRestorableFoto);
-      setFotos(restoredFotos);
-      if (restoredFotos.length < savedFotos.length) {
-        setPasso(1);
-        toast?.info('Rascunho recuperado. Algumas fotos expiraram — adicione-as novamente.');
-      } else {
-        setPasso(Math.min(Math.max(draft.step ?? 1, 1), restoredFotos.length ? 3 : 1));
-      }
+  const applyCarDraft = (draft: AdDraft<CarAdDraftData>) => {
+    const dadosRestaurados = { ...initialDados, ...draft.data.dados };
+    setDados(dadosRestaurados);
+    // Blob photo URLs only survive within the same page session; drop the
+    // ones whose backing file is gone (e.g. after a reload).
+    const savedFotos = draft.data.fotos ?? [];
+    const restoredFotos = savedFotos.filter(isRestorableFoto);
+    setFotos(restoredFotos);
+    if (restoredFotos.length < savedFotos.length) {
+      // Persist the filtered list right away so the dead entries (and this
+      // notice) don't repeat on the next visit.
+      saveAdDraft<CarAdDraftData>('carro', { dados: dadosRestaurados, fotos: restoredFotos, step: 1 }, { uid: user?.uid ?? null });
+      setPasso(1);
+      toast?.info('Rascunho recuperado. Algumas fotos expiraram — adicione-as novamente.');
     } else {
-      setPecaDraft(draft.data as PecaFormDraft);
+      setPasso(restoredFotos.length ? Math.min(Math.max(draft.data.step ?? 1, 1), 3) : 1);
     }
   };
 
-  // Offer to resume a saved draft when a creation flow starts. Re-runs when
-  // auth resolves, because an owned draft is invisible until the uid is known.
-  useEffect(() => {
-    if (!categoria || publicado || draftsHandledRef.current.has(categoria)) return;
-    const draft = loadAdDraft(categoria, user?.uid ?? null);
-    if (!draft) return;
-    // Never clobber progress the user already made in this visit.
-    if (categoria === 'carro' && (hasCarDraftContent(dados) || fotos.length)) return;
-    draftsHandledRef.current.add(categoria);
-    if (retomarParam) {
-      applyDraft(categoria, draft);
-    } else {
-      setDraftPrompt({ kind: categoria, draft });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoria, user?.uid, publicado]);
+  const carSnapshot = useMemo<CarAdDraftData>(() => ({ dados, fotos, step: passo }), [dados, fotos, passo]);
+  const carDraft = useAdDraft<CarAdDraftData>({
+    kind: 'carro',
+    enabled: categoria === 'carro',
+    suspended: publicado || uploading,
+    data: carSnapshot,
+    hasContent: hasCarDraftContent(dados) || fotos.length > 0,
+    resumeImmediately: resumeParam,
+    onRestore: applyCarDraft,
+    onDiscard: (draft) => releasePendingFiles(draft.data.fotos ?? []),
+  });
 
-  // Autosave the car wizard (debounced) whenever it holds real progress.
-  useEffect(() => {
-    if (categoria !== 'carro' || passo < 1 || publicado || draftPrompt) return;
-    if (!hasCarDraftContent(dados) && !fotos.length) return;
-    const timer = setTimeout(() => {
-      saveAdDraft<CarAdDraftData>('carro', { dados, fotos }, { uid: user?.uid ?? null, step: passo });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [dados, fotos, passo, categoria, publicado, draftPrompt, user?.uid]);
+  // Prompt-only instance: PecaForm owns (and autosaves) the part form state.
+  const pecaResume = useAdDraft<PecaFormDraft>({
+    kind: 'peca',
+    enabled: categoria === 'peca',
+    suspended: publicado,
+    data: null,
+    hasContent: false,
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => setPecaDraft(draft.data),
+    onDiscard: (draft) => releasePendingFiles([draft.data.foto]),
+  });
 
   const handlePublicar = async () => {
     if (!user) {
@@ -240,7 +234,13 @@ export default function Anunciar() {
     setCategoria(null);
     setPasso(0);
     setFotos([]);
-    setDados((prev) => ({ ...prev, preco: '', descricao: '', videoUrl: '', tiposManutencao: [], features: [] }));
+    setPecaDraft(null);
+    const nextDados: CarroFormData = { ...dados, preco: '', descricao: '', videoUrl: '', tiposManutencao: [], features: [] };
+    setDados(nextDados);
+    // The kept fields (marca/modelo/…) are a convenience prefill, not user
+    // progress — re-anchor the baseline so they don't autosave as a ghost
+    // draft of the listing that was just published.
+    carDraft.resetBaseline({ dados: nextDados, fotos: [], step: 0 });
   };
 
   if (publicado) {
@@ -294,11 +294,7 @@ export default function Anunciar() {
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
         <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
         <p className={`text-fg-subtle text-sm ${categoria === 'carro' && passo >= 1 ? 'mb-1' : 'mb-5'}`}>{subtitulo}</p>
-        {categoria === 'carro' && passo >= 1 && (
-          <p className="text-[11px] text-fg-muted mb-5">
-            💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
-          </p>
-        )}
+        {categoria === 'carro' && passo >= 1 && <DraftSavedNote className="mb-5" />}
 
         {passo === 0 && (
           <StepCategoria onSelect={(cat) => { setCategoria(cat); setPasso(1); }} />
@@ -342,24 +338,32 @@ export default function Anunciar() {
             // Remount when a draft is resumed so its lazy state re-initializes.
             key={pecaDraft ? 'draft' : 'blank'}
             draft={pecaDraft}
-            onCancel={() => { setCategoria(null); setPasso(0); }}
+            onCancel={() => {
+              setCategoria(null);
+              setPasso(0);
+              // Snapshot the freshest autosaved state so re-entering the part
+              // form continues from it instead of a stale resume snapshot.
+              setPecaDraft(loadAdDraft<PecaFormDraft>('peca', user?.uid ?? null)?.data ?? null);
+            }}
             onSuccess={() => setPublicado(true)}
           />
         )}
       </div>
 
-      {draftPrompt && (
+      {carDraft.prompt && (
         <DraftResumePrompt
-          itemLabel={draftPrompt.kind === 'carro' ? 'um anúncio de carro' : 'um anúncio de peça'}
-          savedAt={draftPrompt.draft.savedAt}
-          onDiscard={() => {
-            clearAdDraft(draftPrompt.kind);
-            setDraftPrompt(null);
-          }}
-          onResume={() => {
-            applyDraft(draftPrompt.kind, draftPrompt.draft);
-            setDraftPrompt(null);
-          }}
+          itemLabel="um anúncio de carro"
+          savedAt={carDraft.prompt.savedAt}
+          onDiscard={carDraft.discard}
+          onResume={carDraft.resume}
+        />
+      )}
+      {pecaResume.prompt && (
+        <DraftResumePrompt
+          itemLabel="um anúncio de peça"
+          savedAt={pecaResume.prompt.savedAt}
+          onDiscard={pecaResume.discard}
+          onResume={pecaResume.resume}
         />
       )}
     </div>

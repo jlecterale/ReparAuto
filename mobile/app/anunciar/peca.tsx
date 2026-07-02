@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -49,7 +50,7 @@ export default function AnunciarPecaScreen() {
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
   // Set once the listing is submitted, so the leave guard steps aside.
-  const [finalizado, setFinalizado] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   const precisaPreco = tipo !== 'procura';
@@ -61,7 +62,7 @@ export default function AnunciarPecaScreen() {
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(titulo || marca || preco || descricao || foto.length);
 
-  function restaurarRascunho(d: PartDraftData) {
+  function restoreDraft(d: PartDraftData) {
     setFoto(d.foto ?? []);
     setTipo(d.tipo ?? 'venda');
     setTitulo(d.titulo ?? '');
@@ -82,10 +83,10 @@ export default function AnunciarPecaScreen() {
     data: draftData,
     hasContent: hasDraftContent,
     submitting: enviando,
-    submitted: finalizado,
+    submitted,
     resumeImmediately: retomar === '1',
     itemLabel: 'um anúncio de peça',
-    onRestore: restaurarRascunho,
+    onRestore: restoreDraft,
   });
 
   useEffect(() => {
@@ -167,7 +168,7 @@ export default function AnunciarPecaScreen() {
         });
         clearAdDraft('peca');
       }
-      setFinalizado(true);
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',
@@ -269,11 +270,7 @@ export default function AnunciarPecaScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O anúncio fica visível após aprovação da equipa.
         </Text>
-        {!editId && (
-          <Text className="text-center text-xs text-fg-subtle">
-            💾 O progresso é guardado como rascunho apenas neste dispositivo.
-          </Text>
-        )}
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

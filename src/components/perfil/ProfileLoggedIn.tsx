@@ -5,8 +5,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
 import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
+import { releasePendingFiles } from '@/lib/pendingUploadFiles';
 import type { PecaFormDraft } from '@/components/pecas/PecaForm';
 import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompra';
+import type { OficinaFormDraft } from '@/screens/RegistarOficina';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -35,7 +37,7 @@ function DraftCard({ titulo, savedAt, onContinue, onDiscard }: {
   onDiscard: () => void;
 }) {
   return (
-    <div className="bg-slate-50 rounded-xl p-3 border border-dashed border-slate-300 mb-3">
+    <div className="bg-neutral-50 rounded-xl p-3 border border-dashed border-neutral-300 mb-3">
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -79,6 +81,7 @@ export default function ProfileLoggedIn() {
   const [carDraft, setCarDraft] = useState<AdDraft<CarAdDraftData> | null>(null);
   const [partDraft, setPartDraft] = useState<AdDraft<PecaFormDraft> | null>(null);
   const [intentDraft, setIntentDraft] = useState<AdDraft<IntencaoFormDraft> | null>(null);
+  const [workshopDraft, setWorkshopDraft] = useState<AdDraft<OficinaFormDraft> | null>(null);
   const { reviews, loading: reviewsLoading, media, total } = useReviews(user?.email);
   const { verification, loading: verificationLoading, pedir: pedirVerificacao } = useVerification(user?.uid);
   
@@ -193,13 +196,18 @@ export default function ProfileLoggedIn() {
     setCarDraft(loadAdDraft<CarAdDraftData>('carro', user.uid));
     setPartDraft(loadAdDraft<PecaFormDraft>('peca', user.uid));
     setIntentDraft(loadAdDraft<IntencaoFormDraft>('intencao', user.uid));
+    setWorkshopDraft(loadAdDraft<OficinaFormDraft>('oficina', user.uid));
   }, [user?.uid]);
 
   const discardDraft = (kind: AdDraftKind) => {
+    // Free any photo Files the discarded draft kept alive in this session.
+    if (kind === 'carro') releasePendingFiles(carDraft?.data.fotos ?? []);
+    else if (kind === 'peca') releasePendingFiles([partDraft?.data.foto]);
     clearAdDraft(kind);
     if (kind === 'carro') setCarDraft(null);
     else if (kind === 'peca') setPartDraft(null);
     else if (kind === 'intencao') setIntentDraft(null);
+    else if (kind === 'oficina') setWorkshopDraft(null);
   };
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
@@ -534,6 +542,22 @@ export default function ProfileLoggedIn() {
           </div>
         )}
       </div>
+
+      {/* Workshop draft (the profile has no workshop section, so the pending
+          registration surfaces as its own card) */}
+      {workshopDraft && (
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
+            <Storefront className="text-accent" /> A Sua Oficina
+          </h4>
+          <DraftCard
+            titulo={workshopDraft.data.nome || 'Registo de oficina'}
+            savedAt={workshopDraft.savedAt}
+            onContinue={() => router.push('/oficinas/registar?retomar=1')}
+            onDiscard={() => discardDraft('oficina')}
+          />
+        </div>
+      )}
 
       {/* My Purchase Intentions */}
       <div className="bg-white rounded-2xl shadow-lg p-6">

@@ -18,11 +18,11 @@ describe('ad draft persistence', () => {
     expect(loadAdDraft('carro', 'uid1')).toBeNull();
   });
 
-  it('round-trips a car draft with its wizard step', () => {
-    saveAdDraft('carro', carData, { uid: 'uid1', step: 2 });
-    const draft = loadAdDraft<typeof carData>('carro', 'uid1');
-    expect(draft?.data).toEqual(carData);
-    expect(draft?.step).toBe(2);
+  it('round-trips a car draft payload including its wizard step', () => {
+    saveAdDraft('carro', { dados: carData, fotos: [], step: 2 }, { uid: 'uid1' });
+    const draft = loadAdDraft<{ dados: typeof carData; fotos: string[]; step: number }>('carro', 'uid1');
+    expect(draft?.data.dados).toEqual(carData);
+    expect(draft?.data.step).toBe(2);
   });
 
   it('stamps the draft with the save time', () => {

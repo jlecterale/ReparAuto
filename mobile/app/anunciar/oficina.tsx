@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
@@ -45,7 +46,7 @@ export default function RegistarOficinaScreen() {
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
   // Set once the registration is submitted, so the leave guard steps aside.
-  const [finalizado, setFinalizado] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const draftData = useMemo<WorkshopDraftData>(
     () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades }),
@@ -54,7 +55,7 @@ export default function RegistarOficinaScreen() {
   // Prefilled contacts (responsável/telefone/email) don't count as progress.
   const hasDraftContent = !!(nome || descricao || morada || especialidades.length || logo.length);
 
-  function restaurarRascunho(d: WorkshopDraftData) {
+  function restoreDraft(d: WorkshopDraftData) {
     setLogo(d.logo ?? []);
     setNome(d.nome ?? '');
     setResponsavel(d.responsavel ?? user?.nome ?? '');
@@ -76,10 +77,10 @@ export default function RegistarOficinaScreen() {
     data: draftData,
     hasContent: hasDraftContent,
     submitting: enviando,
-    submitted: finalizado,
+    submitted,
     resumeImmediately: retomar === '1',
     itemLabel: 'um registo de oficina',
-    onRestore: restaurarRascunho,
+    onRestore: restoreDraft,
   });
 
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function RegistarOficinaScreen() {
         await addOficina({ ...dados, criador: user.email });
         clearAdDraft('oficina');
       }
-      setFinalizado(true);
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
@@ -251,11 +252,7 @@ export default function RegistarOficinaScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O registo fica visível após aprovação da equipa.
         </Text>
-        {!editId && (
-          <Text className="text-center text-xs text-fg-subtle">
-            💾 O progresso é guardado como rascunho apenas neste dispositivo.
-          </Text>
-        )}
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

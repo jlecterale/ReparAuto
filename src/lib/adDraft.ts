@@ -20,34 +20,24 @@ import type { CarroFormData } from '@/types/carro';
 
 export type AdDraftKind = 'carro' | 'peca' | 'oficina' | 'intencao';
 
-/** Draft payload of the car wizard: form data plus the photo URL list. */
+/** Draft payload of the car wizard: form data, photo URLs and wizard step. */
 export interface CarAdDraftData {
   dados: CarroFormData;
   fotos: string[];
+  step?: number;
 }
 
 export interface AdDraft<T = unknown> {
   uid: string | null;
   data: T;
-  /** Wizard step to resume at (car flow only). */
-  step?: number;
   savedAt: number;
 }
 
 const keyFor = (kind: AdDraftKind) => `reparauto_ad_draft_${kind}`;
 
-export function saveAdDraft<T>(
-  kind: AdDraftKind,
-  data: T,
-  opts: { uid: string | null; step?: number },
-): void {
+export function saveAdDraft<T>(kind: AdDraftKind, data: T, opts: { uid: string | null }): void {
   try {
-    const draft: AdDraft<T> = {
-      uid: opts.uid,
-      data,
-      step: opts.step,
-      savedAt: Date.now(),
-    };
+    const draft: AdDraft<T> = { uid: opts.uid, data, savedAt: Date.now() };
     localStorage.setItem(keyFor(kind), JSON.stringify(draft));
   } catch {
     /* ignore — storage unavailable */

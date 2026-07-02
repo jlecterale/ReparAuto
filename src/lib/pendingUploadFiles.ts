@@ -12,4 +12,17 @@ export function isRestorableFoto(uri: string): boolean {
   return !uri.startsWith('blob:') || pendingUploadFiles.has(uri);
 }
 
+/**
+ * Free the Files (and revoke the object URLs) behind a discarded draft's
+ * photos, so abandoning a draft doesn't pin megabytes until page reload.
+ */
+export function releasePendingFiles(uris: Array<string | null | undefined>): void {
+  for (const uri of uris) {
+    if (uri && pendingUploadFiles.has(uri)) {
+      URL.revokeObjectURL(uri);
+      pendingUploadFiles.delete(uri);
+    }
+  }
+}
+
 export default pendingUploadFiles;

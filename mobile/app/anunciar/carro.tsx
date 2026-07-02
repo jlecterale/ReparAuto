@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -65,7 +66,7 @@ export default function AnunciarCarroScreen() {
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
   // Set once the listing is submitted, so the leave guard steps aside.
-  const [finalizado, setFinalizado] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
 
   const draftData = useMemo<CarDraftData>(
@@ -79,9 +80,9 @@ export default function AnunciarCarroScreen() {
      descricao, videoUrl, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
-  const hasDraftContent = !!(marca || modelo || preco || descricao || fotos.length);
+  const hasDraftContent = !!(marca || modelo || km || preco || descricao || fotos.length);
 
-  function restaurarRascunho(d: CarDraftData) {
+  function restoreDraft(d: CarDraftData) {
     setFotos(d.fotos ?? []);
     setMarca(d.marca ?? '');
     setModelo(d.modelo ?? '');
@@ -113,10 +114,10 @@ export default function AnunciarCarroScreen() {
     data: draftData,
     hasContent: hasDraftContent,
     submitting: enviando,
-    submitted: finalizado,
+    submitted,
     resumeImmediately: retomar === '1',
     itemLabel: 'um anúncio de carro',
-    onRestore: restaurarRascunho,
+    onRestore: restoreDraft,
   });
 
   // Edit mode: load the existing listing and prefill the form.
@@ -230,7 +231,7 @@ export default function AnunciarCarroScreen() {
         });
         clearAdDraft('carro');
       }
-      setFinalizado(true);
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
@@ -459,11 +460,7 @@ export default function AnunciarCarroScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O anúncio fica visível após aprovação da equipa.
         </Text>
-        {!editId && (
-          <Text className="text-center text-xs text-fg-subtle">
-            💾 O progresso é guardado como rascunho apenas neste dispositivo.
-          </Text>
-        )}
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

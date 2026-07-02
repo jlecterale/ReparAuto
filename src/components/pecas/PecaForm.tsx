@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, PencilSimple, UploadSimple, X, type Icon } from '@phosphor-icons/react';
 import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
@@ -12,8 +12,10 @@ import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
-import { saveAdDraft, clearAdDraft, hasPartDraftContent } from '@/lib/adDraft';
+import { clearAdDraft, hasPartDraftContent } from '@/lib/adDraft';
 import pendingUploadFiles, { isRestorableFoto } from '@/lib/pendingUploadFiles';
+import { useAdDraft } from '@/hooks/useAdDraft';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import type { CompatibilityEntry } from '@/types/peca';
 
 type PecaFormState = {
@@ -91,15 +93,18 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
   // The preview URL is deliberately NOT revoked on unmount: the draft keeps it
   // alive in pendingUploadFiles so the photo survives leaving the page.
 
-  // Autosave the draft (debounced) whenever the form holds real progress, so
-  // leaving the page never loses what was typed. Cleared on publish.
-  useEffect(() => {
-    if (fotoUploading || !hasPartDraftContent(form, compatibilidades)) return;
-    const timer = setTimeout(() => {
-      saveAdDraft<PecaFormDraft>('peca', { form, compatibilidades, foto: fotoPreview }, { uid: user?.uid ?? null });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [form, compatibilidades, fotoPreview, fotoUploading, user?.uid]);
+  // Autosave-only draft instance: the resume prompt is handled by the parent
+  // (Anunciar / CriarPecaModal), which passes the resumed draft as a prop.
+  const draftSnapshot = useMemo<PecaFormDraft>(
+    () => ({ form, compatibilidades, foto: fotoPreview }),
+    [form, compatibilidades, fotoPreview],
+  );
+  useAdDraft<PecaFormDraft>({
+    kind: 'peca',
+    suspended: fotoUploading,
+    data: draftSnapshot,
+    hasContent: hasPartDraftContent(form, compatibilidades) || !!fotoPreview,
+  });
 
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
@@ -508,9 +513,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         <p className="text-xs text-red-500 font-semibold">{erro}</p>
       )}
 
-      <p className="text-[11px] text-fg-muted">
-        💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
-      </p>
+      <DraftSavedNote />
 
       <div className="flex gap-3">
         {onCancel && (

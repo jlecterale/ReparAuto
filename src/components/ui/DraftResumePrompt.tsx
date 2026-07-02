@@ -17,8 +17,8 @@ export default function DraftResumePrompt({ itemLabel, savedAt, onResume, onDisc
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl page-enter">
         <h4 className="font-bold text-fg-heading mb-2">Continuar rascunho?</h4>
         <p className="text-sm text-fg-muted mb-2">
-          Tem {itemLabel} por terminar, guardado em {new Date(savedAt).toLocaleDateString('pt-PT')}.
-          Quer continuar onde parou?
+          Tem {itemLabel} por terminar, com rascunho guardado em{' '}
+          {new Date(savedAt).toLocaleDateString('pt-PT')}. Quer continuar onde parou?
         </p>
         <p className="text-xs text-fg-subtle mb-4">
           Os rascunhos ficam guardados apenas neste dispositivo/navegador.

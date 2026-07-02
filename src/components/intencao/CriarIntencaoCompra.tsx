@@ -1,16 +1,18 @@
 'use client';
 
 import { Check, CheckCircle } from '@phosphor-icons/react';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import { gerarTituloIntencao, validarIntencaoCompra } from '@/lib/utils';
 import { CATEGORIAS_INTENCAO } from '@/lib/constants';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
-import { saveAdDraft, loadAdDraft, clearAdDraft, hasIntentDraftContent, type AdDraft } from '@/lib/adDraft';
+import { clearAdDraft, hasIntentDraftContent } from '@/lib/adDraft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import type { CategoriaIntencao } from '@/types/intencao';
 import StepCategoria from './StepCategoria';
 import StepBasico from './StepBasico';
@@ -89,10 +91,7 @@ export default function CriarIntencaoCompra() {
   const toast = useToast();
   // The profile's "Continuar rascunho" button deep-links with ?retomar=1 to
   // resume the saved draft directly, without re-asking.
-  const retomarParam = searchParams.get('retomar') === '1';
-
-  const [draftPrompt, setDraftPrompt] = useState<AdDraft<IntencaoFormDraft> | null>(null);
-  const draftHandledRef = useRef(false);
+  const resumeParam = searchParams.get('retomar') === '1';
 
   const applyDraft = (d: IntencaoFormDraft) => {
     setForm({
@@ -107,31 +106,15 @@ export default function CriarIntencaoCompra() {
     setPasso(Math.min(Math.max(d.passo ?? 0, 0), STEPS.length - 1));
   };
 
-  // Offer to resume a saved draft. Re-runs when auth resolves, because an
-  // owned draft is invisible until the uid is known.
-  useEffect(() => {
-    if (sucesso || draftHandledRef.current) return;
-    const draft = loadAdDraft<IntencaoFormDraft>('intencao', auth.user?.uid ?? null);
-    if (!draft) return;
-    // Never clobber progress the user already made in this visit.
-    if (hasIntentDraftContent(form)) return;
-    draftHandledRef.current = true;
-    if (retomarParam) {
-      applyDraft(draft.data);
-    } else {
-      setDraftPrompt(draft);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.user?.uid, sucesso]);
-
-  // Autosave the draft (debounced) whenever the wizard holds real progress.
-  useEffect(() => {
-    if (sucesso || publicando || draftPrompt || !hasIntentDraftContent(form)) return;
-    const timer = setTimeout(() => {
-      saveAdDraft<IntencaoFormDraft>('intencao', { form, passo }, { uid: auth.user?.uid ?? null });
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [form, passo, sucesso, publicando, draftPrompt, auth.user?.uid]);
+  const draftSnapshot = useMemo<IntencaoFormDraft>(() => ({ form, passo }), [form, passo]);
+  const intentDraft = useAdDraft<IntencaoFormDraft>({
+    kind: 'intencao',
+    suspended: sucesso || publicando,
+    data: draftSnapshot,
+    hasContent: hasIntentDraftContent(form),
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => applyDraft(draft.data),
+  });
 
   const updateForm = (field: string, value: any) => {
     const keys = field.split('.');
@@ -426,11 +409,7 @@ export default function CriarIntencaoCompra() {
           </>
         )}
 
-        {passo > 0 && (
-          <p className="text-[11px] text-fg-muted mt-6">
-            💾 O progresso é guardado automaticamente como rascunho neste dispositivo.
-          </p>
-        )}
+        {passo > 0 && <DraftSavedNote className="mt-6" />}
         <div className={`flex justify-between pt-4 border-t border-slate-200 ${passo > 0 ? 'mt-2' : 'mt-6'}`}>
           <Button
             tipo="terciario"
@@ -461,18 +440,12 @@ export default function CriarIntencaoCompra() {
         </div>
       </div>
 
-      {draftPrompt && (
+      {intentDraft.prompt && (
         <DraftResumePrompt
           itemLabel="uma intenção de compra"
-          savedAt={draftPrompt.savedAt}
-          onDiscard={() => {
-            clearAdDraft('intencao');
-            setDraftPrompt(null);
-          }}
-          onResume={() => {
-            applyDraft(draftPrompt.data);
-            setDraftPrompt(null);
-          }}
+          savedAt={intentDraft.prompt.savedAt}
+          onDiscard={intentDraft.discard}
+          onResume={intentDraft.resume}
         />
       )}
     </div>

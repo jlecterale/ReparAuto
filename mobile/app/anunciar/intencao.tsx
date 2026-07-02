@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -53,7 +54,7 @@ export default function CriarIntencaoScreen() {
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [enviando, setEnviando] = useState(false);
   // Set once the intent is submitted, so the leave guard steps aside.
-  const [finalizado, setFinalizado] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const draftData = useMemo<IntentDraftData>(
     () => ({ categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone }),
@@ -62,7 +63,7 @@ export default function CriarIntencaoScreen() {
   // The prefilled phone doesn't count as progress worth drafting/guarding.
   const hasDraftContent = !!(titulo || descricao || marca || precoMax);
 
-  function restaurarRascunho(d: IntentDraftData) {
+  function restoreDraft(d: IntentDraftData) {
     setCategoria(d.categoria ?? 'carro');
     setTitulo(d.titulo ?? '');
     setDescricao(d.descricao ?? '');
@@ -83,10 +84,10 @@ export default function CriarIntencaoScreen() {
     data: draftData,
     hasContent: hasDraftContent,
     submitting: enviando,
-    submitted: finalizado,
+    submitted,
     resumeImmediately: retomar === '1',
     itemLabel: 'uma procura',
-    onRestore: restaurarRascunho,
+    onRestore: restoreDraft,
   });
 
   function validar(): string | null {
@@ -131,7 +132,7 @@ export default function CriarIntencaoScreen() {
         vendedorEmail: user.email,
       });
       clearAdDraft('intencao');
-      setFinalizado(true);
+      setSubmitted(true);
       Alert.alert(
         'Procura enviada',
         'A sua procura foi submetida e ficará visível após aprovação.',
@@ -216,9 +217,7 @@ export default function CriarIntencaoScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           A procura fica visível após aprovação da equipa.
         </Text>
-        <Text className="text-center text-xs text-fg-subtle">
-          💾 O progresso é guardado como rascunho apenas neste dispositivo.
-        </Text>
+        <DraftSavedNote />
       </ScrollView>
     </KeyboardAvoider>
   );
