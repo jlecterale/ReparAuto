@@ -1,0 +1,3 @@
+#!/bin/sh
+# Runs after `git pull` / `git merge`.
+"$(dirname "$0")/install-if-lockfile-changed.sh" ORIG_HEAD HEAD

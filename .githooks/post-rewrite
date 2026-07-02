@@ -1,0 +1,4 @@
+#!/bin/sh
+# Runs after `git rebase` / `git commit --amend` ($1 is "rebase" or "amend").
+[ "$1" = "rebase" ] || exit 0
+"$(dirname "$0")/install-if-lockfile-changed.sh" ORIG_HEAD HEAD
