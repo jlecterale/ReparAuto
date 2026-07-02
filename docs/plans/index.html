@@ -1037,7 +1037,7 @@
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-02" id="tab-02" onclick="switchTab('02')" tabindex="-1">
       <span class="tab-num">02</span> Precos <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03.1" id="tab-03.1" onclick="switchTab('03.1')" tabindex="-1">
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-03.1" id="tab-03.1" onclick="switchTab('03.1')" tabindex="-1">
       <span class="tab-num">3.1</span> Alertas <span class="priority-badge priority-alta">ALTA</span>
     </button></li>
     <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-03.2" id="tab-03.2" onclick="switchTab('03.2')" tabindex="-1">
@@ -1163,7 +1163,7 @@
         <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;">
           <div class="matrix-dot" data-priority="alta" onclick="switchTab('01')" title="Confianca (Implementado)" style="outline:2px solid #16a34a;outline-offset:2px;"><span class="dot-tooltip">01 — Confianca &#10003;</span>&#10003;</div>
           <div class="matrix-dot" data-priority="alta" onclick="switchTab('02')" title="Precos"><span class="dot-tooltip">02 — Precos</span>02</div>
-          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03.1')" title="Notificacoes e Alertas"><span class="dot-tooltip">3.1 — Alertas</span>3.1</div>
+          <div class="matrix-dot" data-priority="alta" onclick="switchTab('03.1')" title="Notificacoes e Alertas (Implementado)" style="outline:2px solid #16a34a;outline-offset:2px;"><span class="dot-tooltip">3.1 — Alertas &#10003;</span>&#10003;</div>
           <div class="matrix-dot" data-priority="alta" onclick="switchTab('03.2')" title="Busca e Descoberta"><span class="dot-tooltip">3.2 — Busca</span>3.2</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('07')" title="Profissional"><span class="dot-tooltip">07 — Profissional</span>07</div>
           <div class="matrix-dot" data-priority="media" onclick="switchTab('08')" title="Pecas"><span class="dot-tooltip">08 — Pecas</span>08</div>
@@ -1200,7 +1200,7 @@
       <li onclick="switchTab('12')"><div class="impl-item-content"><span class="impl-item-name">Internacionalizacao e SEO</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-11 dias &middot; Meta tags e Open Graph para compartilhamento social &middot; Essencial para trafego organico</div></div></li>
       <li class="implemented" onclick="switchTab('01')"><div class="impl-item-content"><span class="impl-item-name">Confianca e Seguranca</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; Verificacao de vendedores, avaliacoes, denuncias, badges, VIN check</div></div></li>
       <li onclick="switchTab('02')"><div class="impl-item-content"><span class="impl-item-name">Inteligencia de Precos</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">15-20 dias &middot; Indicador de preco justo, estimativa de valor &middot; Diferenciador unico em PT</div></div></li>
-      <li onclick="switchTab('03.1')"><div class="impl-item-content"><span class="impl-item-name">3.1 Notificacoes e Alertas</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">10-13 dias &middot; Queda de preco de favorito, palavra-chave, novos anuncios por criterios, filtros salvos &middot; Mecanismo #1 de retencao</div></div></li>
+      <li class="implemented" onclick="switchTab('03.1')"><div class="impl-item-content"><span class="impl-item-name">3.1 Notificacoes e Alertas</span> <span class="priority-badge priority-implementado">FEITO</span><div class="impl-item-meta">Implementado &middot; Queda de preco de favorito, palavra-chave, novos anuncios por criterios, filtros salvos, preferencias por tipo/canal</div></div></li>
       <li onclick="switchTab('03.2')"><div class="impl-item-content"><span class="impl-item-name">3.2 Busca Avancada e Descoberta</span> <span class="priority-badge priority-alta">ALTA</span><div class="impl-item-meta">13-16 dias &middot; Mapa, comparacao, filtros avancados, ordenacao, sugestoes &middot; Funcionalidade critica</div></div></li>
       <li onclick="switchTab('05')"><div class="impl-item-content"><span class="impl-item-name">Midia Aprimorada</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">8-12 dias &middot; Galeria com zoom/swipe, video, 360 graus &middot; Alto impacto na decisao de compra</div></div></li>
       <li onclick="switchTab('06')"><div class="impl-item-content"><span class="impl-item-name">Servicos Financeiros</span> <span class="priority-badge priority-media">MEDIA</span><div class="impl-item-meta">12-18 dias &middot; Calculadora de financiamento, custos totais, IMT &middot; 100% client-side</div></div></li>
@@ -1225,7 +1225,7 @@
         <tbody>
           <tr class="implemented"><td>01</td><td>Confianca e Seguranca</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>18-24 dias</td><td>Confianca, retencao, reducao de fraude</td></tr>
           <tr><td>02</td><td>Inteligencia de Precos</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Decisao de compra, diferenciacao</td></tr>
-          <tr><td>3.1</td><td>Notificacoes e Alertas</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>10-13 dias</td><td>Retencao, reengajamento, conversao</td></tr>
+          <tr class="implemented"><td>3.1</td><td>Notificacoes e Alertas</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>10-13 dias</td><td>Retencao, reengajamento, conversao</td></tr>
           <tr><td>3.2</td><td>Busca Avancada e Descoberta</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>13-16 dias</td><td>Experiencia, conversao, descoberta</td></tr>
           <tr><td>4.1</td><td>Anuncios com IA</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>14-16 dias</td><td>Qualidade de anuncios, diferenciacao</td></tr>
           <tr><td>4.2</td><td>Chatbot de Atendimento</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>8-9 dias</td><td>Suporte automatizado, retencao</td></tr>
@@ -1988,7 +1988,7 @@ for (let i = 2; i <= 12; i++) {
 // ============================================================
 const subPlans = [
   {
-    id: '3.1', panelId: '03.1', title: 'Notificacoes e Alertas', priority: 'ALTA',
+    id: '3.1', panelId: '03.1', title: 'Notificacoes e Alertas', priority: 'ALTA', implemented: true,
     effort: '~10-13 dias', value: 'Muito Alto', quadrant: 'Estrategico',
     impact: 'Retencao (mecanismo #1 de regresso), reengajamento, conversao',
     overview: `<h3>O Que Resolve</h3><p>Hoje o utilizador so recebe notificacoes reativas (aprovacao/rejeicao do proprio anuncio e mensagens de chat). Nao ha forma de ser avisado <strong>proativamente</strong> quando algo do seu interesse aparece ou muda. Num marketplace de veiculos, os alertas sao o mecanismo #1 de retencao: transformam visitantes unicos em utilizadores recorrentes.</p><h3>Parte do split do Plano 3</h3><p>Antigo Plano 3 dividido em <strong>3.1 Notificacoes e Alertas</strong> (esta parte) e <strong>3.2 Busca Avancada e Descoberta</strong>. Reutiliza a colecao <code>notifications</code> + <code>criarNotificacao()</code> ja existentes e o FCM do Plano 09 (enviado). O tipo <code>SearchFilters</code> que suporta os alertas por filtro salvo e partilhado com o Plano 3.2.</p>`,

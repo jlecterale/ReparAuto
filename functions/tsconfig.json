@@ -13,5 +13,7 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Tests run from the root Jest suite; keep them out of the deployed build.
+  "exclude": ["src/**/*.test.ts"]
 }

@@ -11,6 +11,8 @@ const ICON: Record<TipoNotificacao, keyof typeof Ionicons.glyphMap> = {
   rejeitado: 'close-circle',
   info: 'information-circle',
   mensagem: 'chatbubble-ellipses',
+  alerta: 'notifications-circle',
+  preco: 'pricetag',
 };
 
 const ICON_COLOR: Record<TipoNotificacao, string> = {
@@ -18,6 +20,8 @@ const ICON_COLOR: Record<TipoNotificacao, string> = {
   rejeitado: colors.danger[600],
   info: colors.primary[600],
   mensagem: colors.primary[600],
+  alerta: colors.primary[600],
+  preco: colors.success[600],
 };
 
 export default function NotificacoesScreen() {
