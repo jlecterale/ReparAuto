@@ -10,6 +10,8 @@ import {
   updateProfile,
   sendPasswordResetEmail,
   sendEmailVerification,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
   type User,
 } from 'firebase/auth';
 import { auth } from './firebase';
@@ -60,4 +62,13 @@ export function onAuthChange(callback: (user: User | null) => void): () => void 
 
 export async function enviarEmailReset(email: string): Promise<void> {
   await sendPasswordResetEmail(auth, email);
+}
+
+/** Validates a password-reset oobCode and returns the account's email. */
+export async function verifyResetCode(code: string): Promise<string> {
+  return verifyPasswordResetCode(auth, code);
+}
+
+export async function confirmNewPassword(code: string, newPassword: string): Promise<void> {
+  await confirmPasswordReset(auth, code, newPassword);
 }

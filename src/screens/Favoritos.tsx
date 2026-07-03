@@ -96,7 +96,7 @@ export default function Favoritos() {
                     <div className="flex items-start gap-3 mb-3">
                       <div className="w-10 h-10 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center font-bold text-sm shrink-0 border border-brand-100">
                         {oficina.logoUrl ? (
-                          <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-xl" />
+                          <img src={oficina.logoUrl} alt={oficina.nome} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-xl" />
                         ) : (
                           oficina.nome.substring(0, 2).toUpperCase()
                         )}
