@@ -24,6 +24,7 @@ function OficinaCardBase({ oficina, onPress }: OficinaCardProps) {
           source={capa}
           contentFit="cover"
           transition={200}
+          recyclingKey={oficina.id}
           style={{ width: 64, height: 64, borderRadius: 12 }}
         />
       ) : (

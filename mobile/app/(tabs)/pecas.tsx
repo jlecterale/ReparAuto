@@ -15,6 +15,10 @@ import { colors } from '@/theme/colors';
 
 type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
+// Module-scope so the memoized PecaCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const openPeca = (id: string) => router.push(`/pecas/${id}`);
+
 const FILTROS: ChipOption<FiltroTipoPeca>[] = [
   { value: 'todos', label: 'Todas' },
   { value: 'venda', label: 'Venda' },
@@ -113,9 +117,7 @@ export default function PecasScreen() {
           data={filtradas}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
-          renderItem={({ item }) => (
-            <PecaCard peca={item} onPress={(id) => router.push(`/pecas/${id}`)} />
-          )}
+          renderItem={({ item }) => <PecaCard peca={item} onPress={openPeca} />}
           ListEmptyComponent={
             busca || filtro !== 'todos' || filtersCount > 0 ? (
               <EmptyState icon="construct-outline" titulo="Sem peças" texto="Tente outros critérios." />
