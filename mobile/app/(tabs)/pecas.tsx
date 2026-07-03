@@ -10,6 +10,8 @@ import { PecaFiltersSheet } from '@/components/pecas/PecaFiltersSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PecaCard } from '@/components/PecaCard';
 import { usePecas } from '@/hooks/usePecas';
+import { useVerifiedSellers } from '@/hooks/useVerifiedSellers';
+import { prioritizeVerified } from '@/lib/sellers';
 import type { FiltroTipoPeca } from '@/types';
 import { colors } from '@/theme/colors';
 
@@ -30,6 +32,7 @@ const SORT_OPCOES: SortOption<Ordenar>[] = [
 
 export default function PecasScreen() {
   const { pecas, loading, error } = usePecas();
+  const verifiedUids = useVerifiedSellers(pecas);
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState<FiltroTipoPeca>('todos');
 
@@ -70,9 +73,13 @@ export default function PecasScreen() {
         const pb = b.preco ?? (ordenar === 'preco_asc' ? Infinity : -Infinity);
         return ordenar === 'preco_asc' ? pa - pb : pb - pa;
       });
+    } else {
+      // Default (recency) order: verified sellers surface first, keeping
+      // recency within each group. Explicit sorts respect the user's choice.
+      ps = prioritizeVerified(ps, verifiedUids);
     }
     return ps;
-  }, [pecas, busca, filtro, categoria, estado, distrito, marca, modelo, ordenar]);
+  }, [pecas, busca, filtro, categoria, estado, distrito, marca, modelo, ordenar, verifiedUids]);
 
   function limparFiltros() {
     setCategoria('');
@@ -114,7 +121,11 @@ export default function PecasScreen() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
           renderItem={({ item }) => (
-            <PecaCard peca={item} onPress={(id) => router.push(`/pecas/${id}`)} />
+            <PecaCard
+              peca={item}
+              onPress={(id) => router.push(`/pecas/${id}`)}
+              vendedorVerificado={!!item.criadorUid && verifiedUids.has(item.criadorUid)}
+            />
           )}
           ListEmptyComponent={
             busca || filtro !== 'todos' || filtersCount > 0 ? (

@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { getCoordenadas, getDistritoForConcelho, haversineKm } from '@/lib/geo';
+import { prioritizeVerified } from '@/lib/sellers';
+import { useVerifiedSellers } from '@/hooks/useVerifiedSellers';
 import type { Carro, Combustivel, EstadoVeiculo } from '@/types';
 
 export type QuickChip = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
@@ -77,6 +79,7 @@ export function useCarFilters(carros: Carro[]) {
   const [chip, setChip] = useState<QuickChip>('todos');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
   const [f, setF] = useState<CarAdvFilters>(INITIAL);
+  const verifiedUids = useVerifiedSellers(carros);
 
   const update = (partial: Partial<CarAdvFilters>) => setF((prev) => ({ ...prev, ...partial }));
   const limpar = () => setF(INITIAL);
@@ -164,8 +167,11 @@ export function useCarFilters(carros: Carro[]) {
 
     if (ordenar === 'preco_asc') cs = [...cs].sort((a, b) => a.preco - b.preco);
     else if (ordenar === 'preco_desc') cs = [...cs].sort((a, b) => b.preco - a.preco);
+    // Default (recency) order: verified sellers surface first, keeping
+    // recency within each group. Explicit sorts respect the user's choice.
+    else cs = prioritizeVerified(cs, verifiedUids);
     return cs;
-  }, [carros, busca, chip, ordenar, f]);
+  }, [carros, busca, chip, ordenar, f, verifiedUids]);
 
   return {
     busca,
@@ -179,6 +185,7 @@ export function useCarFilters(carros: Carro[]) {
     limpar,
     filtersCount,
     filtrados,
+    verifiedUids,
     marcaOpts,
     modeloOpts,
   };

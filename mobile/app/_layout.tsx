@@ -104,6 +104,7 @@ function RootNavigator() {
       <Stack.Screen name="avaliar" options={{ headerShown: true, title: 'Avaliar', presentation: 'modal' }} />
       <Stack.Screen name="chat/[listingId]" options={{ headerShown: true, title: 'Conversa' }} />
       <Stack.Screen name="favoritos" options={{ headerShown: true, title: 'Favoritos' }} />
+      <Stack.Screen name="comparar" options={{ headerShown: true, title: 'Comparar veículos' }} />
       <Stack.Screen name="notificacoes" options={{ headerShown: true, title: 'Notificações' }} />
       <Stack.Screen name="anunciar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="perfil/editar" options={{ headerShown: true, title: 'Editar perfil' }} />

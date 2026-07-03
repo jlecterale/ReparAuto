@@ -10,6 +10,7 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from './firebase';
+import { chunkArray } from './sellers';
 import type { Carro, Peca, Oficina, Usuario } from '@/types';
 
 /** Firestore rejects `undefined`; drop those keys before writing. */
@@ -238,6 +239,32 @@ export async function deleteOficina(id: string): Promise<void> {
 export async function getUserProfile(uid: string): Promise<Usuario | null> {
   const doc = await db.collection(USERS).doc(uid).get();
   return doc.exists() ? ({ uid: doc.id, ...doc.data() } as Usuario) : null;
+}
+
+// Firestore 'in' queries accept at most 30 values per disjunction.
+const VERIFIED_UIDS_CHUNK = 30;
+
+/**
+ * Of the given seller uids, returns the ones whose profile has
+ * `verificado: true`. Reads the public `users` collection in chunks
+ * (documentId 'in'), same shape as the web `getVerifiedUids`.
+ */
+export async function getVerifiedUids(uids: string[]): Promise<string[]> {
+  const verified: string[] = [];
+  try {
+    for (const chunk of chunkArray(uids, VERIFIED_UIDS_CHUNK)) {
+      const snap = await db
+        .collection(USERS)
+        .where(firestore.FieldPath.documentId(), 'in', chunk)
+        .get();
+      snap.docs.forEach((doc) => {
+        if (doc.data()?.verificado === true) verified.push(doc.id);
+      });
+    }
+  } catch (err) {
+    console.error('[DB] Erro ao buscar vendedores verificados:', err);
+  }
+  return verified;
 }
 
 export async function createUserProfile(

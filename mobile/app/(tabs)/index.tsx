@@ -10,6 +10,7 @@ import { CarFiltersSheet } from '@/components/home/CarFiltersSheet';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Logo } from '@/components/ui/Logo';
 import { CarCard } from '@/components/CarCard';
+import { CompareBar } from '@/components/CompareBar';
 import { useCarros } from '@/hooks/useCarros';
 import { useCarFilters, type QuickChip, type Ordenar } from '@/hooks/useCarFilters';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -45,6 +46,7 @@ export default function HomeScreen() {
     limpar,
     filtersCount,
     filtrados,
+    verifiedUids,
     marcaOpts,
     modeloOpts,
   } = useCarFilters(carros);
@@ -116,7 +118,11 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
           renderItem={({ item }) => (
-            <CarCard carro={item} onPress={(id) => router.push(`/detalhes/${id}`)} />
+            <CarCard
+              carro={item}
+              onPress={(id) => router.push(`/detalhes/${id}`)}
+              vendedorVerificado={!!item.criadorUid && verifiedUids.has(item.criadorUid)}
+            />
           )}
           ListEmptyComponent={
             <EmptyState
@@ -132,6 +138,8 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <CompareBar carros={carros} />
 
       <CarFiltersSheet
         visible={filtersOpen}

@@ -6,6 +6,7 @@ import type { Carro } from '@/types';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { formatKm, formatPreco } from '@/lib/format';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { CompareButton } from '@/components/ui/CompareButton';
 import { colors } from '@/theme/colors';
 
 const BLURHASH = 'L6PZfSjE.AyE_3t7t7R**0o#DgR4';
@@ -13,9 +14,11 @@ const BLURHASH = 'L6PZfSjE.AyE_3t7t7R**0o#DgR4';
 interface CarCardProps {
   carro: Carro;
   onPress: (id: string) => void;
+  /** Seller has a verified profile — shows the trust badge. */
+  vendedorVerificado?: boolean;
 }
 
-function CarCardBase({ carro, onPress }: CarCardProps) {
+function CarCardBase({ carro, onPress, vendedorVerificado = false }: CarCardProps) {
   return (
     <Pressable
       onPress={() => onPress(carro.id)}
@@ -43,6 +46,9 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
         <View className="absolute right-2 top-2">
           <FavoriteButton id={carro.id} floating />
         </View>
+        <View className="absolute right-2 top-12">
+          <CompareButton id={carro.id} />
+        </View>
       </View>
 
       <View className="p-3">
@@ -59,6 +65,17 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
             <Ionicons name="location-outline" size={14} color={colors.fg.subtle} />
             <Text className="ml-1 text-sm text-fg-subtle" numberOfLines={1}>
               {carro.local}
+            </Text>
+          </View>
+        )}
+        {vendedorVerificado && (
+          <View
+            accessibilityLabel="Vendedor verificado"
+            className="mt-2 flex-row items-center self-start rounded-full bg-primary-50 px-2 py-0.5"
+          >
+            <Ionicons name="checkmark-circle" size={13} color={colors.primary[600]} />
+            <Text className="ml-1 text-[11px] font-bold text-primary-700">
+              Vendedor verificado
             </Text>
           </View>
         )}
