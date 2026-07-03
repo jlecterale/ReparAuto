@@ -172,6 +172,14 @@ Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for ful
 - **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
 - `docs/plans/index.html` is the **canonical roadmap** (shipped vs. queued) — keep it the source of truth, trust it over prose scattered elsewhere.
 
+### User guides for new features (`docs/guias` → `/guias`)
+
+For every new user-facing feature, **if relevant, write a companion guide** in the `/guias` section (`src/data/guias.ts`, rendered by `app/guias/page.tsx` and `app/guias/[slug]/page.tsx`). A guide is relevant when the feature adds a new user workflow, decision point, or "how do I…" moment (e.g., comparing vehicles, checking a seller's verification, using a new filter, a new financing/insurance flow). Skip it for internal/admin-only tooling, infra/i18n plumbing, or minor UI tweaks with no new behavior to explain.
+
+- Add an entry to the `GUIDES` array following the existing `Guide` shape (`slug`, `title`, `description`, `category`, `readingMinutes`, `updatedAt`, `intro`, `sections`) — PT-PT content, English identifiers, no mention of "ReparAuto".
+- It must pass `src/data/guias.test.ts` (unique url-safe slug, description within SEO bounds, valid category, non-empty sections, no internal brand name leakage).
+- The index page, per-guide `generateMetadata`/JSON-LD, and `app/sitemap.ts` pick up new entries automatically — no extra wiring needed.
+
 ### Closing out a plan (after it ships)
 
 A plan isn't done until the roadmap says so. **When the work implementing a plan lands, mark it shipped in the same pass:** flip its `implemented` flag (and any status badge) in the `docs/plans/index.html` `plans` registry, and note anything deliberately deferred. Commit the roadmap update alongside (or right after) the feature, e.g. `docs: mark plan NN (<feature>) as shipped`.
