@@ -149,8 +149,4 @@ export async function deleteAccount(): Promise<void> {
   await current.delete();
 }
 
-export async function enviarEmailReset(email: string): Promise<void> {
-  await auth.sendPasswordResetEmail(email);
-}
-
 export { statusCodes };
