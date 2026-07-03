@@ -46,11 +46,14 @@ export default function AudioAdAssistant(props: AudioAdAssistantProps) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pendingUrlRef = useRef<string | null>(null);
+  const unmountedRef = useRef(false);
 
-  const canRecord =
-    typeof window !== 'undefined' &&
-    typeof MediaRecorder !== 'undefined' &&
-    !!navigator.mediaDevices?.getUserMedia;
+  // Decided after mount: browser-API branches during SSR cause hydration
+  // mismatches (the form pages are client components but still pre-rendered).
+  const [canRecord, setCanRecord] = useState(false);
+  useEffect(() => {
+    setCanRecord(typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia);
+  }, []);
 
   const clearTimer = () => {
     if (timerRef.current) {
@@ -66,7 +69,9 @@ export default function AudioAdAssistant(props: AudioAdAssistantProps) {
   };
 
   useEffect(() => {
+    unmountedRef.current = false;
     return () => {
+      unmountedRef.current = true;
       clearTimer();
       recorderRef.current?.stream.getTracks().forEach((track) => track.stop());
       if (pendingUrlRef.current) URL.revokeObjectURL(pendingUrlRef.current);
@@ -94,7 +99,8 @@ export default function AudioAdAssistant(props: AudioAdAssistantProps) {
       clearTimer();
       setRecording(false);
       const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-      if (blob.size === 0) return;
+      // A stop fired by unmount cleanup must not create an orphan object URL.
+      if (blob.size === 0 || unmountedRef.current) return;
       replacePending({
         blob,
         fileName: 'gravacao.webm',
