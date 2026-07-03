@@ -31,13 +31,6 @@ const CATEGORIA_LABELS: Record<CategoriaAlerta, string> = {
   oficinas: 'Oficinas',
 };
 
-export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  mensagem: { inApp: true, push: true },
-  conta: { inApp: true, push: true },
-  alerta: { inApp: true, push: true },
-  preco: { inApp: true, push: true },
-};
-
 /** Collapses whitespace, strips control characters/angle brackets and caps the length. */
 export function sanitizeAlertText(text: string, maxLength: number): string {
   return text

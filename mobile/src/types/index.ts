@@ -348,7 +348,6 @@ export interface Notificacao {
 }
 
 // ---------- Alertas (mirrors web src/types/alertas.ts + busca.ts) ----------
-export type TipoAlerta = 'filtro_salvo' | 'palavra_chave' | 'criterio';
 export type CategoriaAlerta = 'carros' | 'pecas' | 'oficinas';
 
 /**

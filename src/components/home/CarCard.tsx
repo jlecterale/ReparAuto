@@ -2,7 +2,7 @@
 
 import { Car, Heart, MapPin, Scales, User, Wrench } from '@phosphor-icons/react';
 import { memo } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -16,7 +16,6 @@ import type { Carro } from '@/types/carro';
 // memo: grids re-render on every filter/search keystroke; favourites still
 // update because the heart state comes from context, not props.
 function CarCard({ carro }: { carro: Carro }) {
-  const router = useRouter();
   const { favoritos, carros } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
   const toast = useToast();
@@ -28,9 +27,11 @@ function CarCard({ carro }: { carro: Carro }) {
   const isNovo = carro.dataAprovacao && (Date.now() - carro.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
 
   return (
-    <div
+    // A real link (not onClick+router.push) so Next prefetches the detail
+    // page when the card scrolls into view and crawlers can follow it.
+    <Link
+      href={`/detalhes/${carro.id}`}
       className="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
-      onClick={() => router.push(`/detalhes/${carro.id}`)}
     >
       {/* aspect-[4/3] matches LISTING_PHOTO_ASPECT so cropped photos render uncropped */}
       <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
@@ -51,9 +52,12 @@ function CarCard({ carro }: { carro: Carro }) {
         </div>
         <button
           onClick={(e) => {
+            // Inside a <Link>: block the anchor navigation, not just bubbling.
+            e.preventDefault();
             e.stopPropagation();
             toggleFavorito(carro.id);
           }}
+          aria-label={isFavorito(carro.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition shadow ${
             isFavorito(carro.id)
               ? 'bg-red-500 text-white'
@@ -64,6 +68,8 @@ function CarCard({ carro }: { carro: Carro }) {
         </button>
         <button
           onClick={(e) => {
+            // Inside a <Link>: block the anchor navigation, not just bubbling.
+            e.preventDefault();
             e.stopPropagation();
             if (!compare.toggle(carro.id)) {
               toast?.info('Máximo de 3 veículos na comparação.');
@@ -117,7 +123,7 @@ function CarCard({ carro }: { carro: Carro }) {
           </Alert>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 

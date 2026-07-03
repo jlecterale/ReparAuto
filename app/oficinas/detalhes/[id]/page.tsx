@@ -6,9 +6,16 @@ import { renderFoto } from '@/lib/utils';
 
 export const revalidate = 60;
 
+// No workshop-list server fetcher exists, so nothing is pre-rendered at build
+// time — but registering (empty) static params still opts the route into ISR:
+// each workshop page renders once on demand and is then served from cache.
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  return [];
+}
+
 type PageProps = { params: Promise<{ id: string }> };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://reparauto-site.web.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
