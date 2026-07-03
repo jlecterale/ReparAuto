@@ -6,6 +6,7 @@ import {
   parsePositiveInt,
   parseExternalImageUrl,
   formatMessageTime,
+  canOptimizeImage,
 } from '@/lib/utils';
 
 // The car-ad / workshop YouTube feature: accept the link forms a user is likely
@@ -211,5 +212,30 @@ describe('formatMessageTime', () => {
   it('returns empty for a missing timestamp (pending server write)', () => {
     expect(formatMessageTime(null)).toBe('');
     expect(formatMessageTime(undefined)).toBe('');
+  });
+});
+
+describe('canOptimizeImage', () => {
+  it('accepts local public assets', () => {
+    expect(canOptimizeImage('/logo.svg')).toBe(true);
+  });
+
+  it('accepts the hosts whitelisted in next.config.ts remotePatterns', () => {
+    expect(canOptimizeImage('https://firebasestorage.googleapis.com/v0/b/x/o/foto.jpg')).toBe(true);
+    expect(canOptimizeImage('https://lh3.googleusercontent.com/a/avatar')).toBe(true);
+  });
+
+  it('rejects pasted external hosts so next/image never throws on them', () => {
+    expect(canOptimizeImage('https://example.com/foto.jpg')).toBe(false);
+  });
+
+  it('rejects data:/blob: previews and malformed values', () => {
+    expect(canOptimizeImage('data:image/png;base64,abc')).toBe(false);
+    expect(canOptimizeImage('blob:https://recargarage.com/123')).toBe(false);
+    expect(canOptimizeImage('https://')).toBe(false);
+  });
+
+  it('rejects lookalike hosts that merely end with the whitelisted name', () => {
+    expect(canOptimizeImage('https://evilgoogleusercontent.com/a')).toBe(false);
   });
 });

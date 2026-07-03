@@ -221,7 +221,7 @@ export default function Oficinas() {
                     <div className="flex items-start gap-4 mb-3">
                       <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 border border-brand-100">
                         {oficina.logoUrl ? (
-                          <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-xl" />
+                          <img src={oficina.logoUrl} alt={oficina.nome} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-xl" />
                         ) : (
                           oficina.nome.substring(0, 2).toUpperCase()
                         )}
