@@ -13,8 +13,11 @@ import { defineString } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import { HttpsError } from "firebase-functions/v2/https";
 
-// Swappable without a release (§3.1): override via env/params in the console.
-const AI_MODEL = defineString("AI_MODEL", { default: "gemini-2.0-flash" });
+// Rolling alias (§3.1): `*-latest` auto-upgrades to the current Flash without a
+// release, so we never ship a pinned/deprecated version string. Swap to a
+// pinned id (or gemini-flash-lite-latest for cheaper text) via env in the
+// console if a specific version is ever needed.
+const AI_MODEL = defineString("AI_MODEL", { default: "gemini-flash-latest" });
 const AI_LOCATION = defineString("AI_LOCATION", { default: "europe-west1" });
 
 let vertexClient: VertexAI | null = null;
