@@ -123,9 +123,6 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/lib/fcm.ts` — FCM token request + foreground message listener
 - `src/lib/lqip.ts` — LQIP blur-up placeholder generation + cache
 - `src/lib/offlineQueue.ts` — localStorage action queue for offline writes
-- `src/hooks/useInstallPrompt.ts` — PWA install prompt (engagement-based)
-- `src/hooks/useOnlineStatus.ts` — online/offline detection
-- `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
 - `src/hooks/useSwipe.ts` — touch swipe with drag feedback
 - `src/hooks/useImageZoom.ts` — fullscreen gallery lightbox controller (pinch/wheel/double-tap zoom, pan, swipe-to-navigate, drag-down-to-close)
 - `public/firebase-messaging-sw.js` — FCM background message service worker
