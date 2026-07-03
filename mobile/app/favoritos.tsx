@@ -9,6 +9,9 @@ import { useVerifiedSellers } from '@/hooks/useVerifiedSellers';
 import { useFavoritos } from '@/context/FavoritosContext';
 import { colors } from '@/theme/colors';
 
+// Module-scope so the memoized CarCard rows keep a stable onPress identity.
+const openDetalhes = (id: string) => router.push(`/detalhes/${id}`);
+
 export default function FavoritosScreen() {
   const { carros, loading } = useCarros();
   const { favoritos } = useFavoritos();
@@ -37,7 +40,7 @@ export default function FavoritosScreen() {
         renderItem={({ item }) => (
           <CarCard
             carro={item}
-            onPress={(id) => router.push(`/detalhes/${id}`)}
+            onPress={openDetalhes}
             vendedorVerificado={!!item.criadorUid && verifiedUids.has(item.criadorUid)}
           />
         )}

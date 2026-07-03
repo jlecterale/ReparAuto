@@ -54,11 +54,6 @@ function byDataCriacaoDesc<T extends { dataCriacao?: FirebaseFirestoreTypes.Time
 }
 
 // ---------- Carros ----------
-export async function getCarros(): Promise<Carro[]> {
-  const snap = await db.collection(CARROS).where('status', '==', 'aprovado').get();
-  return mapDocs<Carro>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribeCarros(
   onData: (carros: Carro[]) => void,
   onError?: (err: Error) => void,
@@ -119,11 +114,6 @@ export async function addCarro(dados: Record<string, unknown>): Promise<string> 
 }
 
 // ---------- Peças ----------
-export async function getPecas(): Promise<Peca[]> {
-  const snap = await db.collection(PECAS).where('status', '==', 'aprovado').get();
-  return mapDocs<Peca>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribePecas(
   onData: (pecas: Peca[]) => void,
   onError?: (err: Error) => void,
@@ -143,11 +133,6 @@ export async function getPecaById(id: string): Promise<Peca | null> {
 }
 
 // ---------- Oficinas ----------
-export async function getOficinas(): Promise<Oficina[]> {
-  const snap = await db.collection(OFICINAS).where('status', '==', 'aprovado').get();
-  return mapDocs<Oficina>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribeOficinas(
   onData: (oficinas: Oficina[]) => void,
   onError?: (err: Error) => void,

@@ -2,7 +2,7 @@
 
 import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
 import { memo } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
@@ -13,7 +13,6 @@ import type { Carro } from '@/types/carro';
 // memo: grids re-render on every filter/search keystroke; favourites still
 // update because the heart state comes from context, not props.
 function CarCard({ carro }: { carro: Carro }) {
-  const router = useRouter();
   const { favoritos } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
 
@@ -21,9 +20,11 @@ function CarCard({ carro }: { carro: Carro }) {
   const isNovo = carro.dataAprovacao && (Date.now() - carro.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
 
   return (
-    <div
+    // A real link (not onClick+router.push) so Next prefetches the detail
+    // page when the card scrolls into view and crawlers can follow it.
+    <Link
+      href={`/detalhes/${carro.id}`}
       className="card-car bg-white rounded-2xl shadow-md overflow-hidden flex flex-col"
-      onClick={() => router.push(`/detalhes/${carro.id}`)}
     >
       {/* aspect-[4/3] matches LISTING_PHOTO_ASPECT so cropped photos render uncropped */}
       <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
@@ -44,6 +45,8 @@ function CarCard({ carro }: { carro: Carro }) {
         </div>
         <button
           onClick={(e) => {
+            // Inside a <Link>: block the anchor navigation, not just bubbling.
+            e.preventDefault();
             e.stopPropagation();
             toggleFavorito(carro.id);
           }}
@@ -93,7 +96,7 @@ function CarCard({ carro }: { carro: Carro }) {
           </Alert>
         )}
       </div>
-    </div>
+    </Link>
   );
 }
 

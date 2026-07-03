@@ -5,6 +5,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { trackPositiveAction } from '@/lib/appReview';
 import { formatMessageTime } from '@/lib/format';
 import type { ListingType, Mensagem } from '@/types';
 import { colors } from '@/theme/colors';
@@ -45,6 +46,10 @@ export default function ChatScreen() {
     [getConversa, listingId, outroUid],
   );
 
+  // Newest-first copy for the inverted list, memoized so typing in the
+  // composer doesn't hand the FlatList a fresh array every keystroke.
+  const conversaInvertida = useMemo(() => [...conversa].reverse(), [conversa]);
+
   // Mark incoming messages as read whenever the thread updates.
   useEffect(() => {
     if (conversa.length) marcarLidas(conversa);
@@ -64,6 +69,7 @@ export default function ChatScreen() {
         listingTitle,
         texto: t,
       });
+      trackPositiveAction('send-message');
     } catch {
       setTexto(t); // restore on failure
     } finally {
@@ -76,7 +82,7 @@ export default function ChatScreen() {
       <Stack.Screen options={{ title: outroNome || 'Conversa' }} />
 
       <FlatList
-        data={[...conversa].reverse()}
+        data={conversaInvertida}
         inverted
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 py-3"

@@ -31,6 +31,7 @@ function CarCardBase({ carro, onPress, vendedorVerificado = false }: CarCardProp
           placeholder={{ blurhash: BLURHASH }}
           contentFit="cover"
           transition={200}
+          recyclingKey={carro.id}
           style={{ width: '100%', aspectRatio: LISTING_PHOTO_ASPECT }}
         />
         <View className="absolute bottom-2 right-2 rounded-lg bg-primary-900/90 px-3 py-1.5">

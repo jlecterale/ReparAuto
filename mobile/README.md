@@ -80,6 +80,11 @@ assets/                   # ícones e splash gerados a partir do logo da marca
       ecrã **Definições** (versão + Termos/Privacidade/Cookies/Segurança/FAQ via
       browser), rodapé legal no login, feedback háptico nos favoritos. Pronta
       para submissão via EAS (ver `PUBLICACAO.md`).
+- [x] **Avaliação nas lojas**: pedido nativo de review in-app
+      (`expo-store-review`) disparado após momentos positivos — publicar
+      anúncio/procura, avaliar vendedor, enviar mensagens, favoritar — com
+      salvaguardas (pontuação mínima, cooldown de 90 dias, máx. 3 pedidos/ano).
+      Lógica em `src/lib/appReview.ts`.
 
 ## Conformidade com as lojas (já tratado)
 

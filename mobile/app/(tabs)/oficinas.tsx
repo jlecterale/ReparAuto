@@ -22,6 +22,10 @@ const SORT_OPCOES: SortOption<Ordenar>[] = [
   { value: 'avaliacao', label: 'Melhor avaliadas', icon: 'star-outline' },
 ];
 
+// Module-scope so the memoized OficinaCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const abrir = (id: string) => router.push(`/oficinas/${id}`);
+
 export default function OficinasScreen() {
   const { oficinas, loading, error } = useOficinas();
   const [busca, setBusca] = useState('');
@@ -48,10 +52,6 @@ export default function OficinasScreen() {
     }
     return os;
   }, [oficinas, busca, distrito, especialidade, ordenar]);
-
-  function abrir(id: string) {
-    router.push(`/oficinas/${id}`);
-  }
 
   function limparFiltros() {
     setDistrito('');

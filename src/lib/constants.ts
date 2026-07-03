@@ -21,6 +21,10 @@ export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
 
+// Native app store listings
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.recargarage';
+export const APP_STORE_URL = 'https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533';
+
 export const CATEGORIAS_INTENCAO: { value: CategoriaIntencao; label: string; emoji: string }[] = [
   { value: 'carro', label: 'Carro', emoji: '🚗' },
   { value: 'moto', label: 'Moto', emoji: '🏍️' },

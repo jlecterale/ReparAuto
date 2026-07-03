@@ -1,14 +1,22 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPecaPorIdServer } from '@/lib/db.server';
+import { getPecaPorIdServer, getPecasServer } from '@/lib/db.server';
 import Pecas from '@/screens/Pecas';
 import { renderFoto } from '@/lib/utils';
 
 export const revalidate = 60;
 
+// Registering static params opts this route into ISR (without it Next treats
+// the route as fully dynamic and re-renders on every request); parts published
+// later are rendered on demand (dynamicParams) and cached.
+export async function generateStaticParams() {
+  const pecas = await getPecasServer().catch(() => []);
+  return pecas.map((peca) => ({ id: peca.id }));
+}
+
 type PageProps = { params: Promise<{ id: string }> };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://reparauto-site.web.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;

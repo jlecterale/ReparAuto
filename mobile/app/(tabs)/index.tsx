@@ -17,6 +17,10 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useNotificacoes } from '@/context/NotificacoesContext';
 import { colors } from '@/theme/colors';
 
+// Module-scope so the memoized CarCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const openDetalhes = (id: string) => router.push(`/detalhes/${id}`);
+
 const FILTROS: ChipOption<QuickChip>[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'ate1000', label: 'Até €1.000' },
@@ -120,7 +124,7 @@ export default function HomeScreen() {
           renderItem={({ item }) => (
             <CarCard
               carro={item}
-              onPress={(id) => router.push(`/detalhes/${id}`)}
+              onPress={openDetalhes}
               vendedorVerificado={!!item.criadorUid && verifiedUids.has(item.criadorUid)}
             />
           )}
