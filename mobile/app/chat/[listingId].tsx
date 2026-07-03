@@ -5,6 +5,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { trackPositiveAction } from '@/lib/appReview';
 import { formatMessageTime } from '@/lib/format';
 import type { ListingType, Mensagem } from '@/types';
 import { colors } from '@/theme/colors';
@@ -64,6 +65,7 @@ export default function ChatScreen() {
         listingTitle,
         texto: t,
       });
+      trackPositiveAction('send-message');
     } catch {
       setTexto(t); // restore on failure
     } finally {
