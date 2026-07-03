@@ -1109,6 +1109,9 @@
     <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-23" id="tab-23" onclick="switchTab('23')" tabindex="-1">
       <span class="tab-num">&#10003;</span> Vista 360&deg; <span class="priority-badge priority-implementado">FEITO</span>
     </button></li>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-24" id="tab-24" onclick="switchTab('24')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Anuncio por Audio <span class="priority-badge priority-implementado">FEITO</span>
+    </button></li>
   </ul>
 </nav>
 
@@ -1249,6 +1252,7 @@
           <tr class="implemented"><td>21</td><td>Recorte de Fotos nos Anuncios</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Fotos uniformes (4:3) em cards e galerias</td></tr>
           <tr class="implemented"><td>22</td><td>Campos e Filtros Adicionais (Carros)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~4-6 dias</td><td>Anuncios mais completos e busca mais precisa</td></tr>
           <tr class="implemented"><td>23</td><td>Vista 360&deg; dos Veiculos</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Rotacao interativa do veiculo, confianca do comprador</td></tr>
+          <tr class="implemented"><td>24</td><td>Anuncio por Audio (voz + ficheiro, IA Gemini)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Formulario preenchido a falar; so faltam as fotos</td></tr>
         </tbody>
       </table>
     </div>
@@ -1282,6 +1286,7 @@
 <div class="tab-panel" id="panel-21" role="tabpanel" aria-labelledby="tab-21"></div>
 <div class="tab-panel" id="panel-22" role="tabpanel" aria-labelledby="tab-22"></div>
 <div class="tab-panel" id="panel-23" role="tabpanel" aria-labelledby="tab-23"></div>
+<div class="tab-panel" id="panel-24" role="tabpanel" aria-labelledby="tab-24"></div>
 
 </main>
 
@@ -2279,6 +2284,13 @@ const extraPlans = [
     impact: 'Rotacao interativa do veiculo, mais confianca na compra a distancia',
     summary: 'O vendedor marca o angulo de cada foto (frente, tras, laterais, diagonais); com os 4 angulos cardeais marcados, o anuncio ganha um viewer de arrastar-para-rodar (pointer events na web, gesture-handler no mobile), sem fotos extra nem dependencias novas.',
     evidence: 'Entregue — src/lib/spin360.ts (+20 testes TDD), campo photoAngles em cars, seletor de angulo no FotosEditor/PhotoPicker, captura guiada com moldura (GuidedSpinCapture; expo-camera no mobile) e Spin360Viewer em ambas as plataformas.'
+  },
+  {
+    id: '24', title: 'Anuncio por Audio — gravar ou enviar audio e preencher com IA (Web + Mobile)', priority: 'ALTA', effort: '~3-4 dias',
+    implemented: true, file: '24-anuncio-por-audio.md',
+    impact: 'Anunciar em menos de 1 minuto: descrever o carro por voz preenche o formulario; so faltam as fotos',
+    summary: 'Assistente de audio na criacao de anuncios (carro e peca): gravar no momento ou enviar um ficheiro de audio (mp3, voice note); o Gemini multimodal transcreve e extrai marca, modelo, ano, cor, km, preco, combustivel, caixa, extras, localidade e descricao numa unica chamada com structured output, via nova API route autenticada /api/listing-from-audio.',
+    evidence: 'Entregue — src/lib/audioListing.ts (sanitizers TDD) + encoder WAV cliente, AudioAdAssistant no StepDados/PecaForm (web) e nos formularios carro/peca do mobile (expo-audio + expo-document-picker). Requer GEMINI_API_KEY no servidor e novo build nativo mobile.'
   }
 ];
 

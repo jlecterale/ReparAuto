@@ -25,3 +25,16 @@ env:
     availability:
       - BUILD
       - RUNTIME
+  # Audio-ad assistant (plan 24): Gemini API key for /api/listing-from-audio.
+  # Uncomment AFTER creating the secret in Cloud Secret Manager, otherwise the
+  # rollout fails:  firebase apphosting:secrets:set GEMINI_API_KEY
+  # Without the key the endpoint answers 503 and the UI hides the assistant.
+  # - variable: GEMINI_API_KEY
+  #   secret: GEMINI_API_KEY
+  #   availability:
+  #     - RUNTIME
+  # Optional override of the Gemini model (default: gemini-2.5-flash).
+  # - variable: GEMINI_MODEL
+  #   value: gemini-2.5-flash
+  #   availability:
+  #     - RUNTIME

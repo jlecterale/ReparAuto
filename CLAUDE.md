@@ -118,6 +118,20 @@ Push notifications require a VAPID key. To obtain it:
 
 Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` returns `null` gracefully — the app works fine, just without push notifications.
 
+### Gemini — audio-ad assistant (plan 24)
+
+`POST /api/listing-from-audio` (the project's only API route) turns a spoken description
+into listing fields via Gemini multimodal + structured output. Server-only env vars:
+
+- `GEMINI_API_KEY` — required; without it the route returns 503 and the UI hides the
+  assistant. Dev: put it in `.env.local`. Prod: Cloud Secret Manager
+  (`firebase apphosting:secrets:set GEMINI_API_KEY`), then uncomment the block in
+  `apphosting.yaml`.
+- `GEMINI_MODEL` — optional model override (default `gemini-2.5-flash`).
+
+Core logic (schemas, prompts, sanitizers) lives in `src/lib/audioListing.ts` (tested);
+the WAV re-encode of browser recordings in `src/lib/audioWav.ts`.
+
 ### PWA Files
 
 - `src/lib/fcm.ts` — FCM token request + foreground message listener
