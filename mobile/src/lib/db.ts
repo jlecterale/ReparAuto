@@ -9,6 +9,7 @@ import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logPublishListing } from './analytics';
 import { db, storage } from './firebase';
 import type { Carro, Peca, Oficina, Usuario } from '@/types';
 
@@ -113,6 +114,7 @@ export async function addCarro(dados: Record<string, unknown>): Promise<string> 
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('carro', docRef.id);
   return docRef.id;
 }
 
@@ -173,6 +175,7 @@ export async function addPeca(dados: Record<string, unknown>): Promise<string> {
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('peca', docRef.id);
   return docRef.id;
 }
 
@@ -185,6 +188,7 @@ export async function addOficina(dados: Record<string, unknown>): Promise<string
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('oficina', docRef.id);
   return docRef.id;
 }
 

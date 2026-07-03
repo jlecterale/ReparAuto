@@ -9,10 +9,12 @@
  * (wired in app.config.ts). So there is no JS config object here — the default
  * app is auto-initialized natively.
  */
+import analyticsModule from '@react-native-firebase/analytics';
 import authModule from '@react-native-firebase/auth';
 import firestoreModule from '@react-native-firebase/firestore';
 import storageModule from '@react-native-firebase/storage';
 
+export const analytics = analyticsModule();
 export const auth = authModule();
 export const db = firestoreModule();
 export const storage = storageModule();
@@ -28,4 +30,4 @@ db.settings({
   // settings can only be set before the first operation; ignore if already used.
 });
 
-export { firestoreModule, authModule, storageModule };
+export { firestoreModule, authModule, storageModule, analyticsModule };

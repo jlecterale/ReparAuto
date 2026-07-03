@@ -7,6 +7,7 @@ import React, {
   useState,
 } from 'react';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import { logLogin, logSignUp, setAnalyticsUser } from '@/lib/analytics';
 import {
   appleSignInDisponivel,
   configureGoogleSignIn,
@@ -118,11 +119,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsub;
   }, [mergeProfile]);
 
+  // Keep the Analytics user association in sync with the session: events are
+  // attributed to the signed-in user and cleared on sign-out.
+  const uid = user?.uid ?? null;
+  const tipoConta = user?.tipoConta;
+  const role = user?.role;
+  useEffect(() => {
+    setAnalyticsUser(uid ? { uid, tipoConta, role } : null);
+  }, [uid, tipoConta, role]);
+
   const login = useCallback(
     async (email: string, password: string) => {
       const fb = await loginComEmail(email, password);
       const merged = await mergeProfile(fb);
       setUser(merged);
+      logLogin('password');
       return merged;
     },
     [mergeProfile],
@@ -133,6 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const fb = await criarConta(email, password, nome);
       const merged = { ...(await mergeProfile(fb)), nome };
       setUser(merged);
+      logSignUp('password');
       return merged;
     },
     [mergeProfile],
@@ -142,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fb = await loginComGoogle();
     const merged = await mergeProfile(fb);
     setUser(merged);
+    logLogin('google');
     return merged;
   }, [mergeProfile]);
 
@@ -149,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const fb = await loginComApple();
     const merged = await mergeProfile(fb);
     setUser(merged);
+    logLogin('apple');
     return merged;
   }, [mergeProfile]);
 
