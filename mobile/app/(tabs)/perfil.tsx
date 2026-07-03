@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useNotificacoes } from '@/context/NotificacoesContext';
 import { useAdminPendencias } from '@/hooks/useAdminPendencias';
+import { useAlertSubscriptions } from '@/hooks/useAlertSubscriptions';
 import { REQUIRES_RECENT_LOGIN } from '@/lib/auth';
 import { colors } from '@/theme/colors';
 
@@ -17,6 +18,7 @@ export default function PerfilScreen() {
   const { showToast } = useToast();
   const { total: pendenciasAdmin } = useAdminPendencias(isAdmin);
   const { naoLidas } = useNotificacoes();
+  const { novosResultados } = useAlertSubscriptions(user?.uid);
 
   function confirmarLogout() {
     Alert.alert('Terminar sessão', 'Tem a certeza que quer sair?', [
@@ -137,6 +139,12 @@ export default function PerfilScreen() {
             label="Notificações"
             badge={naoLidas}
             onPress={() => router.push('/notificacoes')}
+          />
+          <Row
+            icon="bookmark-outline"
+            label="Meus Alertas"
+            badge={novosResultados}
+            onPress={() => router.push('/meus-alertas')}
           />
           <Row
             icon="create-outline"

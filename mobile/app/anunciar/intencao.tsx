@@ -12,6 +12,7 @@ import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { criarIntencao } from '@/lib/trust';
+import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import { COMBUSTIVEIS } from '@/lib/constants';
@@ -136,7 +137,15 @@ export default function CriarIntencaoScreen() {
       Alert.alert(
         'Procura enviada',
         'A sua procura foi submetida e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível publicar. Tente novamente.', 'error');

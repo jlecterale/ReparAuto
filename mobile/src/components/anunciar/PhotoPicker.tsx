@@ -7,18 +7,40 @@ import DraggableFlatList, {
   ScaleDecorator,
   type RenderItemParams,
 } from 'react-native-draggable-flatlist';
+import { GuidedSpinCapture } from '@/components/anunciar/GuidedSpinCapture';
 import { ImageCropper } from '@/components/anunciar/ImageCropper';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { parseExternalImageUrl } from '@/lib/images';
+import {
+  getCaptureSequence,
+  getSpinAngles,
+  getSpinFrames,
+  REQUIRED_SPIN_ANGLES,
+  SPIN_ANGLE_LABELS,
+  SPIN_ANGLE_ORDER,
+  toPhotoAngles,
+  withoutPhoto,
+  withPhotoAngle,
+  withPhotoRenamed,
+  type SpinAngle,
+} from '@/lib/spin360';
 import { colors } from '@/theme/colors';
 
 interface PhotoPickerProps {
   fotos: string[];
   onChange: (fotos: string[]) => void;
   max: number;
+  /**
+   * Photo URI → tagged vehicle angle. Providing both props turns on the
+   * 360-mode tagging UI (an angle chip per photo). Keys follow the photo
+   * strings so tags survive reorder; convert with toPhotoAngles on save.
+   */
+  angleByPhoto?: Record<string, SpinAngle>;
+  onAngleByPhotoChange?: (angleByPhoto: Record<string, SpinAngle>) => void;
 }
 
 interface PendingCrop {
@@ -27,10 +49,45 @@ interface PendingCrop {
   height?: number;
 }
 
-export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
+export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhotoChange }: PhotoPickerProps) {
   const restantes = max - fotos.length;
   // Long-press drag to reorder only makes sense with 2+ photos.
   const reordenavel = max > 1 && fotos.length > 1;
+  const tagAngles = !!(angleByPhoto && onAngleByPhotoChange);
+  const taggedAngles = new Set(Object.values(angleByPhoto ?? {}));
+  const missingRequired = REQUIRED_SPIN_ANGLES.filter((a) => !taggedAngles.has(a));
+  // Photo whose angle is being picked in the bottom sheet, or null.
+  const [anglePickerUri, setAnglePickerUri] = useState<string | null>(null);
+  // Guided 360 capture (camera with angle frame overlay).
+  const [guidedOpen, setGuidedOpen] = useState(false);
+  // Drag-to-rotate preview of the tagged angles (same viewer as the detail screen).
+  const [spinPreviewOpen, setSpinPreviewOpen] = useState(false);
+  // Freeze the form tags exactly as publish does, so the preview shows what
+  // buyers will get (empty until the required angles are tagged).
+  const previewPhotoAngles = tagAngles ? toPhotoAngles(fotos, angleByPhoto ?? {}) : null;
+  const spinFrames = getSpinFrames(fotos, previewPhotoAngles);
+  const spinAngles = getSpinAngles(fotos, previewPhotoAngles);
+
+  function setPhotoAngle(foto: string, angle: SpinAngle | null) {
+    if (!angleByPhoto || !onAngleByPhotoChange) return;
+    onAngleByPhotoChange(withPhotoAngle(angleByPhoto, foto, angle));
+  }
+
+  function dropPhotoAngle(foto: string) {
+    if (!angleByPhoto || !onAngleByPhotoChange) return;
+    onAngleByPhotoChange(withoutPhoto(angleByPhoto, foto));
+  }
+
+  function movePhotoAngle(from: string, to: string) {
+    if (!angleByPhoto || !onAngleByPhotoChange) return;
+    onAngleByPhotoChange(withPhotoRenamed(angleByPhoto, from, to));
+  }
+
+  function handleGuidedCapture(uri: string, angle: SpinAngle) {
+    if (fotos.length >= max) return;
+    onChange([...fotos, uri]);
+    setPhotoAngle(uri, angle);
+  }
 
   // Freshly-picked images awaiting crop, processed one at a time.
   const [queue, setQueue] = useState<PendingCrop[]>([]);
@@ -146,17 +203,22 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
 
   function confirmarEdicao(uri: string) {
     if (editIndex === null) return;
+    const antiga = fotos[editIndex];
+    // Angle tags follow the photo across a re-crop (the URI changes).
+    if (antiga) movePhotoAngle(antiga, uri);
     onChange(fotos.map((f, i) => (i === editIndex ? uri : f)));
     setEditIndex(null);
   }
 
   function remover(uri: string) {
+    dropPhotoAngle(uri);
     onChange(fotos.filter((f) => f !== uri));
   }
 
   function renderItem({ item: uri, getIndex, drag, isActive }: RenderItemParams<string>) {
     const index = getIndex();
     const isCapa = index === 0;
+    const angle = angleByPhoto?.[uri];
     return (
       <ScaleDecorator>
         <Pressable
@@ -191,6 +253,24 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
           >
             <Ionicons name="close" size={14} color="#fff" />
           </Pressable>
+          {tagAngles && (
+            <Pressable
+              onPress={() => setAnglePickerUri(uri)}
+              hitSlop={4}
+              accessibilityRole="button"
+              accessibilityLabel={angle ? `Ângulo: ${SPIN_ANGLE_LABELS[angle]}` : 'Definir ângulo da foto'}
+              className={`mt-1 w-24 flex-row items-center justify-center rounded-lg border px-1 py-1 ${
+                angle ? 'border-success-300 bg-success-50' : 'border-neutral-300 bg-white'
+              }`}
+            >
+              <Text
+                numberOfLines={1}
+                className={`text-[10px] ${angle ? 'font-bold text-success-700' : 'text-fg-subtle'}`}
+              >
+                {angle ? SPIN_ANGLE_LABELS[angle] : 'Ângulo…'}
+              </Text>
+            </Pressable>
+          )}
         </Pressable>
       </ScaleDecorator>
     );
@@ -232,6 +312,56 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
         As fotos são recortadas para a mesma proporção.
         {reordenavel ? ' Mantenha premida uma foto para reordenar; a primeira é a capa.' : ''}
       </Text>
+
+      {tagAngles && (
+        <View
+          className={`mt-2 rounded-xl border px-3 py-2 ${
+            missingRequired.length === 0
+              ? 'border-success-200 bg-success-50'
+              : 'border-neutral-200 bg-neutral-50'
+          }`}
+        >
+          {missingRequired.length === 0 ? (
+            <>
+              <Text className="text-[11px] font-bold text-success-700">
+                ✓ Vista 360° ativa — os compradores vão poder rodar o veículo no anúncio.
+              </Text>
+              {spinFrames.length > 0 && (
+                <Pressable
+                  onPress={() => setSpinPreviewOpen(true)}
+                  accessibilityRole="button"
+                  className="mt-1.5 flex-row items-center gap-1.5 active:opacity-70"
+                >
+                  <Ionicons name="sync-outline" size={14} color={colors.secondary[600]} />
+                  <Text className="text-[11px] font-bold text-secondary-600">
+                    Pré-visualizar a vista 360°
+                  </Text>
+                </Pressable>
+              )}
+            </>
+          ) : (
+            <Text className="text-[11px] text-fg-muted">
+              <Text className="font-bold text-fg">
+                Vista 360° ({REQUIRED_SPIN_ANGLES.length - missingRequired.length}/{REQUIRED_SPIN_ANGLES.length})
+              </Text>
+              {' — indique o ângulo de cada foto. Falta marcar: '}
+              {missingRequired.map((a) => SPIN_ANGLE_LABELS[a]).join(', ')}.
+            </Text>
+          )}
+          {restantes > 0 && getCaptureSequence(angleByPhoto ?? {}).length > 0 && (
+            <Pressable
+              onPress={() => setGuidedOpen(true)}
+              accessibilityRole="button"
+              className="mt-1.5 flex-row items-center gap-1.5 active:opacity-70"
+            >
+              <Ionicons name="camera-outline" size={14} color={colors.secondary[600]} />
+              <Text className="text-[11px] font-bold text-secondary-600">
+                Captura guiada 360° — fotografe cada ângulo com moldura
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
 
       <BottomSheet visible={addSheetOpen} onClose={() => setAddSheetOpen(false)} title="Adicionar foto">
         <View className="gap-1">
@@ -296,6 +426,81 @@ export function PhotoPicker({ fotos, onChange, max }: PhotoPickerProps) {
           </Pressable>
         </KeyboardAvoider>
       </Modal>
+
+      <BottomSheet
+        visible={anglePickerUri !== null}
+        onClose={() => setAnglePickerUri(null)}
+        title="Ângulo da foto"
+      >
+        <View className="gap-1">
+          {anglePickerUri && (
+            <View className="mb-2 flex-row items-center gap-3">
+              <Image
+                source={anglePickerUri}
+                style={{ width: 56, height: 56, borderRadius: 10 }}
+                contentFit="cover"
+              />
+              <Text className="flex-1 text-xs text-fg-muted">
+                Marque a frente, a traseira e as duas laterais para ativar a vista 360°.
+              </Text>
+            </View>
+          )}
+          {SPIN_ANGLE_ORDER.map((angle) => {
+            const current = anglePickerUri ? angleByPhoto?.[anglePickerUri] === angle : false;
+            const takenElsewhere = !current && taggedAngles.has(angle);
+            return (
+              <Pressable
+                key={angle}
+                onPress={() => {
+                  if (anglePickerUri) setPhotoAngle(anglePickerUri, current ? null : angle);
+                  setAnglePickerUri(null);
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: current }}
+                className={`flex-row items-center rounded-xl px-3 py-2.5 active:bg-neutral-100 ${
+                  current ? 'bg-success-50' : ''
+                }`}
+              >
+                <Text className={`flex-1 text-base ${current ? 'font-bold text-success-700' : 'text-fg'}`}>
+                  {SPIN_ANGLE_LABELS[angle]}
+                </Text>
+                {current && <Ionicons name="checkmark" size={18} color={colors.success[600]} />}
+                {takenElsewhere && (
+                  <Text className="text-[10px] text-fg-subtle">noutra foto</Text>
+                )}
+              </Pressable>
+            );
+          })}
+          {anglePickerUri && angleByPhoto?.[anglePickerUri] && (
+            <Pressable
+              onPress={() => {
+                setPhotoAngle(anglePickerUri, null);
+                setAnglePickerUri(null);
+              }}
+              accessibilityRole="button"
+              className="flex-row items-center rounded-xl px-3 py-2.5 active:bg-neutral-100"
+            >
+              <Text className="flex-1 text-base text-danger-600">Remover ângulo</Text>
+            </Pressable>
+          )}
+        </View>
+      </BottomSheet>
+
+      <Spin360Viewer
+        visible={spinPreviewOpen}
+        onClose={() => setSpinPreviewOpen(false)}
+        frames={spinFrames}
+        angles={spinAngles}
+      />
+
+      {tagAngles && guidedOpen && (
+        <GuidedSpinCapture
+          angleByPhoto={angleByPhoto ?? {}}
+          remainingSlots={restantes}
+          onCapture={handleGuidedCapture}
+          onClose={() => setGuidedOpen(false)}
+        />
+      )}
 
       {editIndex !== null && (
         <ImageCropper

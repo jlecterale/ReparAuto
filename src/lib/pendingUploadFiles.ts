@@ -51,15 +51,17 @@ export async function releasePendingFiles(uris: Array<string | null | undefined>
  * (https URLs, emojis) and blob URLs still alive in the Map pass through;
  * dead blob URLs are recovered from IndexedDB and re-keyed under fresh
  * object URLs. Unrecoverable photos are dropped and counted in lostCount so
- * callers can tell the user what was lost.
+ * callers can tell the user what was lost. Each re-key is reported in
+ * renames so photo-keyed state (the vista 360 angle tags) can follow.
  */
 export async function restoreDraftPhotos(
   saved: string[],
-): Promise<{ fotos: string[]; lostCount: number }> {
+): Promise<{ fotos: string[]; lostCount: number; renames: Array<{ from: string; to: string }> }> {
   const deadUrls = saved.filter((foto) => foto.startsWith('blob:') && !pendingUploadFiles.has(foto));
   const recovered = deadUrls.length > 0 ? await loadPhotoFiles(deadUrls) : new Map<string, File>();
 
   const fotos: string[] = [];
+  const renames: Array<{ from: string; to: string }> = [];
   const rekeys: Promise<void>[] = [];
   let lostCount = 0;
   for (const foto of saved) {
@@ -76,11 +78,12 @@ export async function restoreDraftPhotos(
     pendingUploadFiles.set(url, file);
     rekeys.push(savePhotoFile(url, file));
     fotos.push(url);
+    renames.push({ from: foto, to: url });
   }
   await Promise.all(rekeys);
   // Old keys are dead URLs — their persisted copies were just re-keyed (or lost).
   await deletePhotoFiles(deadUrls);
-  return { fotos, lostCount };
+  return { fotos, lostCount, renames };
 }
 
 export default pendingUploadFiles;

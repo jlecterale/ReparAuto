@@ -1,5 +1,6 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { DamageDetectionResult } from './ia';
+import type { PhotoAngles } from '@/lib/spin360';
 
 export type EstadoVeiculo = 'pronto' | 'manutencao';
 export type Combustivel = 'Gasolina' | 'Etanol' | 'Flex' | 'Diesel' | 'Elétrico' | 'Híbrido';
@@ -55,6 +56,8 @@ export interface Carro {
   incluirMecanicoTelefone?: boolean;
   mecanicoTelefone?: string;
   fotos: string[];
+  /** Vehicle angle → index into `fotos`; enables the 360 spin viewer (see src/lib/spin360.ts). */
+  photoAngles?: PhotoAngles | null;
   criador: string;
   criadorUid?: string;
   vendedorNome?: string;

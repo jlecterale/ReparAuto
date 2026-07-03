@@ -174,6 +174,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
     ],
     [
+      // Guided 360 capture renders its own camera preview (with the angle
+      // frame overlay), which the system camera can't do.
+      'expo-camera',
+      {
+        cameraPermission:
+          'A RecarGarage usa a câmara apenas quando tira uma foto para o seu anúncio.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+      },
+    ],
+    [
       'expo-image-picker',
       {
         // Gallery uses the system Photo Picker → no photo-library permission

@@ -84,8 +84,10 @@ export default function NotificationInbox({ show, onClose }: NotificationInboxPr
               >
                 <span
                   className={`mt-1.5 w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm ${
-                    n.tipo === 'aprovado' ? 'bg-green-500' :
-                    n.tipo === 'rejeitado' ? 'bg-red-500' : 'bg-blue-500'
+                    n.tipo === 'aprovado' ? 'bg-success-500' :
+                    n.tipo === 'rejeitado' ? 'bg-danger-500' :
+                    n.tipo === 'alerta' ? 'bg-accent' :
+                    n.tipo === 'preco' ? 'bg-warning-500' : 'bg-primary-500'
                   } ${n.lida ? 'opacity-0' : ''}`}
                 />
                 <div className="flex-1 min-w-0">

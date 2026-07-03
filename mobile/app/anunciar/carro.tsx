@@ -15,9 +15,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
+import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type CarDraftData } from '@/lib/draft';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import { isValidYoutubeUrl } from '@/lib/youtube';
+import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import {
   CAMBIOS,
   CAR_DISPLACEMENT_MAX,
@@ -51,6 +53,7 @@ export default function AnunciarCarroScreen() {
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
 
   const [fotos, setFotos] = useState<string[]>([]);
+  const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>({});
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [ano, setAno] = useState('');
@@ -139,6 +142,7 @@ export default function AnunciarCarroScreen() {
       .then((c) => {
         if (cancelled || !c) return;
         setFotos(c.fotos ?? []);
+        setAngleByPhoto(toAngleByPhoto(c.fotos ?? [], c.photoAngles));
         setMarca(c.marca ?? '');
         setModelo(c.modelo ?? '');
         setAno(c.anoFabricacao ? String(c.anoFabricacao) : '');
@@ -228,6 +232,13 @@ export default function AnunciarCarroScreen() {
       // Keep already-uploaded photos (https URLs); upload only new local files.
       const urls = await Promise.all(fotos.map((uri, i) => uploadFotoIfLocal(user.uid, uri, i)));
 
+      // Angle tags are keyed by the local URI — follow each photo to its
+      // uploaded URL (same index) before freezing them into indices.
+      const photoAngles = buildPhotoAngles(
+        fotos.map((uri, i) => ({ original: uri, final: urls[i] })),
+        angleByPhoto,
+      );
+
       const dados = {
         marca: marca.trim(),
         modelo: modelo.trim(),
@@ -250,6 +261,8 @@ export default function AnunciarCarroScreen() {
         descricao: descricao.trim(),
         videoUrl: videoUrl.trim() || undefined,
         fotos: urls,
+        // null (not undefined) so an edit that untags all angles clears the field.
+        photoAngles,
         vendedorNome: user.nome,
         vendedorTelefone: telefone.trim() || undefined,
         vendedorWhatsApp: whatsapp.trim() || undefined,
@@ -273,7 +286,15 @@ export default function AnunciarCarroScreen() {
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
         'O seu anúncio foi submetido e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              if (!editId) trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível guardar. Tente novamente.', 'error');
@@ -298,7 +319,13 @@ export default function AnunciarCarroScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         keyboardShouldPersistTaps="handled"
       >
-        <PhotoPicker fotos={fotos} onChange={setFotos} max={MAX_FOTOS_CARRO} />
+        <PhotoPicker
+          fotos={fotos}
+          onChange={setFotos}
+          max={MAX_FOTOS_CARRO}
+          angleByPhoto={angleByPhoto}
+          onAngleByPhotoChange={setAngleByPhoto}
+        />
 
         <SelectField
           label="Marca *"

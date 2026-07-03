@@ -32,6 +32,14 @@ import type { Proposta, PropostaInput, StatusProposta } from '@/types/proposal';
 import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { Banner, BannerInput } from '@/types/banner';
+import type { AlertSubscription, AlertSubscriptionInput, NotificationPreferences } from '@/types/alertas';
+import {
+  MAX_ALERT_SUBSCRIPTIONS,
+  MAX_ALERT_TEXT_LENGTH,
+  normalizeNotificationPreferences,
+  sanitizeAlertSubscriptionInput,
+  sanitizeAlertText,
+} from './alerts';
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
@@ -1854,3 +1862,96 @@ export async function deleteBanner(id: string): Promise<void> {
 }
 
 
+
+// ============ ALERT SUBSCRIPTIONS (plan 3.1) ============
+
+const ALERT_SUBSCRIPTIONS_COLLECTION = 'alertSubscriptions';
+
+/** Error codes surfaced to the UI as typed failures (never raw messages). */
+export const ALERT_INVALID_ERROR = 'alert/invalid';
+export const ALERT_LIMIT_ERROR = 'alert/limit-reached';
+
+/**
+ * Creates an alert subscription for the signed-in user. Input is sanitized
+ * locally (first defense layer) and re-validated by the Firestore rules;
+ * the per-user cap is a UX quota — the authoritative matching runs in
+ * Cloud Functions, which only reads `ativo == true` docs.
+ */
+export async function addAlertSubscription(
+  uid: string,
+  input: AlertSubscriptionInput,
+): Promise<AlertSubscription> {
+  const sanitized = sanitizeAlertSubscriptionInput(input);
+  if (!sanitized) throw new Error(ALERT_INVALID_ERROR);
+
+  const existing = await getDocs(
+    query(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), where('uid', '==', uid)),
+  );
+  if (existing.size >= MAX_ALERT_SUBSCRIPTIONS) throw new Error(ALERT_LIMIT_ERROR);
+
+  const data = {
+    ...sanitized,
+    uid,
+    novosResultados: 0,
+    dataCriacao: Timestamp.now(),
+  };
+  const docRef = await addDoc(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), cleanUndefined(data));
+  return { id: docRef.id, ...data } as AlertSubscription;
+}
+
+export function subscribeAlertSubscriptions(
+  uid: string,
+  onData: (subscriptions: AlertSubscription[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), where('uid', '==', uid));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const subscriptions = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AlertSubscription));
+      onData(sortByDataCriacaoDesc(subscriptions));
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de alertas:', err);
+      onError?.(err);
+    },
+  );
+}
+
+export async function updateAlertSubscription(
+  id: string,
+  updates: Partial<Pick<AlertSubscription, 'nome' | 'ativo' | 'novosResultados'>>,
+): Promise<void> {
+  const safe: Record<string, unknown> = {};
+  if (typeof updates.nome === 'string') {
+    const nome = sanitizeAlertText(updates.nome, MAX_ALERT_TEXT_LENGTH);
+    if (nome) safe.nome = nome;
+  }
+  if (typeof updates.ativo === 'boolean') safe.ativo = updates.ativo;
+  if (updates.novosResultados === 0) safe.novosResultados = 0;
+  if (Object.keys(safe).length === 0) return;
+  await updateDoc(doc(db, ALERT_SUBSCRIPTIONS_COLLECTION, id), safe);
+}
+
+export async function deleteAlertSubscription(id: string): Promise<void> {
+  await deleteDoc(doc(db, ALERT_SUBSCRIPTIONS_COLLECTION, id));
+}
+
+// ============ NOTIFICATION PREFERENCES (plan 3.1) ============
+
+export async function getNotificationPreferences(uid: string): Promise<NotificationPreferences> {
+  try {
+    const snap = await getDoc(doc(db, USERS_COLLECTION, uid));
+    return normalizeNotificationPreferences(snap.data()?.notifPrefs);
+  } catch (err) {
+    console.error('[DB] Erro ao ler preferências de notificação:', err);
+    return normalizeNotificationPreferences(undefined);
+  }
+}
+
+export async function updateNotificationPreferences(
+  uid: string,
+  prefs: NotificationPreferences,
+): Promise<void> {
+  await setDoc(doc(db, USERS_COLLECTION, uid), { notifPrefs: prefs }, { merge: true });
+}

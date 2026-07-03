@@ -86,6 +86,25 @@ describe('restoreDraftPhotos', () => {
     expect(pendingUploadFiles.has(fotos[1])).toBe(true);
   });
 
+  // Angle tags (vista 360) are keyed by photo string; the draft restore needs
+  // the old → new pairing to move tags onto the re-keyed blob URLs.
+  it('reports each re-keyed photo as a rename pair', async () => {
+    await registerPendingFile('blob:morta', makeFile('recuperada'));
+    simulateReload();
+    const { fotos, renames } = await restoreDraftPhotos(['blob:morta', '🚗']);
+    expect(renames).toEqual([{ from: 'blob:morta', to: fotos[0] }]);
+  });
+
+  it('reports no renames for pass-through and lost photos', async () => {
+    await registerPendingFile('blob:viva', makeFile('viva'));
+    const { renames } = await restoreDraftPhotos([
+      'blob:viva',
+      'blob:desconhecida',
+      'https://exemplo.com/a.jpg',
+    ]);
+    expect(renames).toEqual([]);
+  });
+
   it('counts photos it cannot recover and drops them', async () => {
     const { fotos, lostCount } = await restoreDraftPhotos(['blob:desconhecida', '🚗']);
     expect(fotos).toEqual(['🚗']);

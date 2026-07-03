@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { CriarAlertaButton } from '@/components/home/CriarAlertaButton';
 import {
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
@@ -42,6 +43,7 @@ const RAIO_OPTS = [
 interface CarFiltersSheetProps {
   visible: boolean;
   onClose: () => void;
+  busca: string;
   filters: CarAdvFilters;
   update: (partial: Partial<CarAdvFilters>) => void;
   onClear: () => void;
@@ -53,6 +55,7 @@ interface CarFiltersSheetProps {
 export function CarFiltersSheet({
   visible,
   onClose,
+  busca,
   filters: f,
   update,
   onClear,
@@ -260,6 +263,8 @@ export function CarFiltersSheet({
           </SheetSection>
         </>
       )}
+
+      <CriarAlertaButton busca={busca} filters={f} />
     </BottomSheet>
   );
 }
