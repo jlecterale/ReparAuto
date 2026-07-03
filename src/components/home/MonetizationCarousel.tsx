@@ -11,6 +11,7 @@ import {
   CaretRight,
   X,
   Lightning,
+  Microphone,
 } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -48,6 +49,18 @@ export default function MonetizationCarousel() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const fallbackSlides: Slide[] = [
+    {
+      id: 'fb-audio',
+      title: 'Novidade: crie o seu anúncio só a falar',
+      description: 'Grave um áudio a descrever o carro — marca, ano, quilómetros, cor, preço — e a nossa IA preenche o anúncio por si. Só lhe faltam as fotos.',
+      badge: 'Novo • IA',
+      badgeCor: 'accent',
+      price: 'Grátis',
+      ctaText: 'Anunciar por voz',
+      icon: <Microphone size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
+      gradient: 'from-violet-600 via-purple-700 to-indigo-900',
+      link: '/anunciar',
+    },
     {
       id: 'fb-1',
       title: 'Destaque a sua Oficina e Receba Mais Clientes',
