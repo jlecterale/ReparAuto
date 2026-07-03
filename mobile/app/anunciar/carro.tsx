@@ -11,6 +11,8 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
+import { AIDescriptionButton } from '@/components/anunciar/AIDescriptionButton';
+import { AIPriceSuggestion } from '@/components/anunciar/AIPriceSuggestion';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
@@ -41,7 +43,7 @@ import {
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { colors } from '@/theme/colors';
-import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
+import type { AIVehicleFacts, BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
 
 export default function AnunciarCarroScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
@@ -73,6 +75,7 @@ export default function AnunciarCarroScreen() {
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
   const [local, setLocal] = useState('');
   const [descricao, setDescricao] = useState('');
+  const [descricaoGeradaIA, setDescricaoGeradaIA] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   // The profile has no separate WhatsApp; the phone is the best default for it.
@@ -162,6 +165,7 @@ export default function AnunciarCarroScreen() {
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
         setDescricao(c.descricao ?? '');
+        setDescricaoGeradaIA(c.descricaoGeradaIA ?? false);
         setVideoUrl(c.videoUrl ?? '');
         setTelefone(c.vendedorTelefone ?? user?.telefone ?? '');
         setWhatsapp(c.vendedorWhatsApp ?? '');
@@ -259,6 +263,7 @@ export default function AnunciarCarroScreen() {
         estadoVeiculo: estado,
         local: local.trim(),
         descricao: descricao.trim(),
+        descricaoGeradaIA: descricaoGeradaIA || undefined,
         videoUrl: videoUrl.trim() || undefined,
         fotos: urls,
         // null (not undefined) so an edit that untags all angles clears the field.
@@ -310,6 +315,27 @@ export default function AnunciarCarroScreen() {
       </View>
     );
   }
+
+  // Sanitized on the server; only send what the user actually filled in.
+  const aiFacts: AIVehicleFacts = {
+    marca: marca.trim(),
+    modelo: modelo.trim(),
+    anoFabricacao: Number(ano) || 0,
+    km: km ? Number(km) : undefined,
+    combustivel: combustivel ?? undefined,
+    cambio: cambio ?? undefined,
+    cor: cor.trim() || undefined,
+    portas: portas ? Number(portas) : undefined,
+    bodyType: bodyType ?? undefined,
+    condition: condition ?? undefined,
+    power: power ? Number(power) : undefined,
+    displacement: displacement ? Number(displacement) : undefined,
+    traction: traction ?? undefined,
+    features: features.length ? features : undefined,
+    local: local.trim() || undefined,
+    estadoVeiculo: estado,
+  };
+  const aiReady = !!(marca.trim() && modelo.trim() && Number(ano) > 1900);
 
   return (
     <KeyboardAvoider offset={headerHeight} className="flex-1 bg-neutral-50">
@@ -397,6 +423,13 @@ export default function AnunciarCarroScreen() {
           </View>
         </View>
 
+        <AIPriceSuggestion
+          facts={{ ...aiFacts, preco: preco ? Number(preco) : undefined }}
+          ready={aiReady}
+          uid={user?.uid}
+          onUsePrice={(p) => setPreco(String(p))}
+        />
+
         <Input label="Cor" value={cor} onChangeText={setCor} placeholder="Preto" />
 
         <ChipSelect
@@ -475,16 +508,41 @@ export default function AnunciarCarroScreen() {
 
         <Input label="Localidade *" value={local} onChangeText={setLocal} placeholder="Lisboa" />
 
-        <Input
-          label="Descrição"
-          value={descricao}
-          onChangeText={setDescricao}
-          placeholder="Estado, extras, histórico de manutenção…"
-          multiline
-          numberOfLines={4}
-          className="h-28"
-          style={{ textAlignVertical: 'top' }}
-        />
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <Text className="text-sm font-bold text-fg-heading">Descrição</Text>
+              {descricaoGeradaIA && (
+                <View className="rounded-full bg-primary-100 px-2 py-0.5">
+                  <Text className="text-[10px] font-semibold text-primary-700">Gerada com IA</Text>
+                </View>
+              )}
+            </View>
+            <AIDescriptionButton
+              facts={aiFacts}
+              ready={aiReady}
+              uid={user?.uid}
+              onGenerated={(text) => {
+                setDescricao(text);
+                setDescricaoGeradaIA(true);
+              }}
+            />
+          </View>
+          <Input
+            value={descricao}
+            onChangeText={setDescricao}
+            placeholder="Estado, extras, histórico de manutenção…"
+            multiline
+            numberOfLines={4}
+            className="h-28"
+            style={{ textAlignVertical: 'top' }}
+          />
+          {descricaoGeradaIA && (
+            <Text className="text-xs text-fg-subtle">
+              Resultado gerado por IA — verifique e ajuste antes de publicar.
+            </Text>
+          )}
+        </View>
 
         <Input
           label="Vídeo do YouTube (opcional)"

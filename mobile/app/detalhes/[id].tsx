@@ -17,6 +17,7 @@ import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
+import { DamageAnalysis } from '@/components/detalhes/DamageAnalysis';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
@@ -217,6 +218,10 @@ export default function DetalhesCarroScreen() {
               <Text className="mb-2 text-lg font-bold text-fg-heading">Vídeo</Text>
               <VideoPreview url={carro.videoUrl} />
             </View>
+          )}
+
+          {carro.estadoVeiculo === 'manutencao' && (
+            <DamageAnalysis carro={carro} isAuthenticated={!!user} />
           )}
         </View>
       </ScrollView>
