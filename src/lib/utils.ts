@@ -107,6 +107,22 @@ export function renderFoto(foto: string, classes = 'w-full h-full object-cover')
   return { type: 'emoji', emoji };
 }
 
+// Hosts whitelisted in next.config.ts images.remotePatterns. Anything else
+// (data:/blob: previews, pasted external hosts) must fall back to a plain
+// <img> so the next/image optimizer never throws on unconfigured domains.
+const OPTIMIZABLE_IMAGE_HOSTS = ['firebasestorage.googleapis.com', 'googleusercontent.com'];
+
+export function canOptimizeImage(src: string): boolean {
+  if (src.startsWith('/')) return true;
+  if (!src.startsWith('https://')) return false;
+  try {
+    const host = new URL(src).hostname;
+    return OPTIMIZABLE_IMAGE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
 // Normalizes an image URL pasted by the user (listing photos can be added by
 // URL): trims, defaults the scheme to https, upgrades http and rejects anything
 // that is not a plain https web address. Returns null for invalid input.
