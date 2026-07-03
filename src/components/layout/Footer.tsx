@@ -22,6 +22,7 @@ export default function Footer() {
             Definições de Cookies
           </button>
           <Link href="/seguranca" className="hover:text-white transition">Segurança</Link>
+          <Link href="/guias" className="hover:text-white transition">Guias</Link>
           <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
           <a href="mailto:suporte@recargarage.com" className="hover:text-white transition">Fale Conosco (suporte@recargarage.com)</a>
         </div>
