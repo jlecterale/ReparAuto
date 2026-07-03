@@ -6,8 +6,8 @@
  */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import { SchemaType } from "@google-cloud/vertexai";
-import { generateStructured } from "./lib/aiClient";
+import { Type } from "@google/genai";
+import { GEMINI_API_KEY, generateStructured } from "./lib/aiClient";
 import { clampInt, repairPriceSuggestion, MAX_PRICE_EUR } from "./lib/aiValidate";
 import { requireVerifiedUser } from "./lib/guards";
 import { PRICE_SUGGESTION_SYSTEM_PROMPT, userDataBlock } from "./lib/prompts";
@@ -15,12 +15,12 @@ import { consumeAiQuota } from "./lib/quota";
 import { buildVehicleFacts } from "./lib/vehicleFacts";
 
 const PRICE_SCHEMA = {
-  type: SchemaType.OBJECT,
+  type: Type.OBJECT,
   properties: {
-    priceMin: { type: SchemaType.INTEGER },
-    priceRecommended: { type: SchemaType.INTEGER },
-    priceMax: { type: SchemaType.INTEGER },
-    reasoning: { type: SchemaType.STRING },
+    priceMin: { type: Type.INTEGER },
+    priceRecommended: { type: Type.INTEGER },
+    priceMax: { type: Type.INTEGER },
+    reasoning: { type: Type.STRING },
   },
   required: ["priceMin", "priceRecommended", "priceMax", "reasoning"],
 };
@@ -56,7 +56,7 @@ async function getMarketStats(marca: string, modelo: string): Promise<MarketStat
 }
 
 export const suggestPrice = onCall(
-  { enforceAppCheck: false },
+  { enforceAppCheck: false, secrets: [GEMINI_API_KEY] },
   async (request) => {
     const uid = requireVerifiedUser(request);
     const facts = buildVehicleFacts(request.data);

@@ -3,8 +3,8 @@
  *
  * Layers: local UX counter (client) → THIS transaction → Firestore rules deny
  * all client access to `aiUsage` → App Check attestation → per-day hard cap
- * on the Vertex quota page (the only layer that survives a compromised
- * client — keep it configured low in the Cloud console).
+ * on the Generative Language API quota page (the only layer that survives a
+ * compromised client — keep it configured low in the AI Studio / Cloud console).
  */
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";

@@ -7,9 +7,9 @@
  */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { getFirestore } from "firebase-admin/firestore";
-import { SchemaType } from "@google-cloud/vertexai";
+import { Type } from "@google/genai";
 import { createHash } from "node:crypto";
-import { generateStructured } from "./lib/aiClient";
+import { GEMINI_API_KEY, generateStructured } from "./lib/aiClient";
 import { clampInt, repairDamageResult } from "./lib/aiValidate";
 import { requireVerifiedUser } from "./lib/guards";
 import { moderateImage } from "./lib/moderation";
@@ -20,20 +20,20 @@ const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const MAX_PHOTO_INDEX = 19; // cars carry at most 20 photos (see firestore.rules)
 
 const DAMAGE_SCHEMA = {
-  type: SchemaType.OBJECT,
+  type: Type.OBJECT,
   properties: {
-    summary: { type: SchemaType.STRING },
+    summary: { type: Type.STRING },
     damages: {
-      type: SchemaType.ARRAY,
+      type: Type.ARRAY,
       items: {
-        type: SchemaType.OBJECT,
+        type: Type.OBJECT,
         properties: {
-          label: { type: SchemaType.STRING },
-          severity: { type: SchemaType.STRING, enum: ["minor", "moderate", "severe"] },
-          x: { type: SchemaType.NUMBER },
-          y: { type: SchemaType.NUMBER },
-          width: { type: SchemaType.NUMBER },
-          height: { type: SchemaType.NUMBER },
+          label: { type: Type.STRING },
+          severity: { type: Type.STRING, enum: ["minor", "moderate", "severe"] },
+          x: { type: Type.NUMBER },
+          y: { type: Type.NUMBER },
+          width: { type: Type.NUMBER },
+          height: { type: Type.NUMBER },
         },
         required: ["label", "severity", "x", "y", "width", "height"],
       },
@@ -72,7 +72,7 @@ async function fetchImage(url: string): Promise<{ base64: string; mimeType: stri
 }
 
 export const analyzeDamage = onCall(
-  { enforceAppCheck: false, timeoutSeconds: 120 },
+  { enforceAppCheck: false, timeoutSeconds: 120, secrets: [GEMINI_API_KEY] },
   async (request) => {
     const uid = requireVerifiedUser(request);
     const data = (request.data ?? {}) as Record<string, unknown>;

@@ -6,17 +6,17 @@
  */
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
-import { SchemaType } from "@google-cloud/vertexai";
+import { Type } from "@google/genai";
 import { logger } from "firebase-functions";
 import { generateStructured } from "./aiClient";
 import { IMAGE_MODERATION_SYSTEM_PROMPT } from "./prompts";
 import { toPlainText } from "./aiValidate";
 
 const MODERATION_SCHEMA = {
-  type: SchemaType.OBJECT,
+  type: Type.OBJECT,
   properties: {
-    allowed: { type: SchemaType.BOOLEAN },
-    category: { type: SchemaType.STRING },
+    allowed: { type: Type.BOOLEAN },
+    category: { type: Type.STRING },
   },
   required: ["allowed", "category"],
 };

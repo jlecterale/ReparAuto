@@ -4,8 +4,8 @@
  * owns auth, quota, prompt assembly and the output repair pass.
  */
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { SchemaType } from "@google-cloud/vertexai";
-import { generateStructured } from "./lib/aiClient";
+import { Type } from "@google/genai";
+import { GEMINI_API_KEY, generateStructured } from "./lib/aiClient";
 import { repairDescription } from "./lib/aiValidate";
 import { requireVerifiedUser } from "./lib/guards";
 import { DESCRIPTION_SYSTEM_PROMPT, userDataBlock } from "./lib/prompts";
@@ -13,14 +13,14 @@ import { consumeAiQuota } from "./lib/quota";
 import { buildVehicleFacts } from "./lib/vehicleFacts";
 
 const DESCRIPTION_SCHEMA = {
-  type: SchemaType.OBJECT,
-  properties: { description: { type: SchemaType.STRING } },
+  type: Type.OBJECT,
+  properties: { description: { type: Type.STRING } },
   required: ["description"],
 };
 
 export const generateDescription = onCall(
   // enforceAppCheck stays false during the gradual rollout — see guards.ts.
-  { enforceAppCheck: false },
+  { enforceAppCheck: false, secrets: [GEMINI_API_KEY] },
   async (request) => {
     const uid = requireVerifiedUser(request);
     const facts = buildVehicleFacts(request.data);

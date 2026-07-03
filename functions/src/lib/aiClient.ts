@@ -1,51 +1,57 @@
 /**
- * Lazy singleton Vertex AI (Gemini) client — the ONLY place that talks to the
- * model. The API surface is structured-output only (§2.5): every call forces
- * `application/json` + a response schema at low temperature, and callers must
- * still run a repair pass over the parsed result.
+ * Lazy singleton Gemini (Developer API) client — the ONLY place that talks to
+ * the model. The API surface is structured-output only (§2.5): every call
+ * forces `application/json` + a response schema at low temperature, and callers
+ * must still run a repair pass over the parsed result.
  *
- * Cost containment lives outside this module (quota, moderation, caching);
- * the last line of defense is the per-day hard cap configured on the
- * Generative Language / Vertex quota page in the Cloud console — set it low.
+ * Provider: Gemini Developer API via `@google/genai` (apiKey), NOT Vertex.
+ * The key is a server-only secret — it must never reach a web/RN bundle (§2.6).
+ * Set it once with: `firebase functions:secrets:set GEMINI_API_KEY`.
+ * Note: unlike Vertex europe-west1, the Developer API has no region pinning —
+ * requests may be processed outside the EU (a deliberate, accepted trade-off).
+ *
+ * Cost containment lives outside this module (quota, moderation, caching); the
+ * last line of defense is the per-day hard cap on the Generative Language API
+ * quota page in the Google Cloud / AI Studio console — set it low.
  */
-import { VertexAI, type Part, type ResponseSchema } from "@google-cloud/vertexai";
-import { defineString } from "firebase-functions/params";
+import { GoogleGenAI, type Part, type Schema } from "@google/genai";
+import { defineSecret, defineString } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import { HttpsError } from "firebase-functions/v2/https";
+
+// Server-only API key. Every AI callable must bind it via `secrets:
+// [GEMINI_API_KEY]` in its onCall options, or `.value()` throws at runtime.
+export const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
 // Rolling alias (§3.1): `*-latest` auto-upgrades to the current Flash without a
 // release, so we never ship a pinned/deprecated version string. Swap to a
 // pinned id (or gemini-flash-lite-latest for cheaper text) via env in the
 // console if a specific version is ever needed.
 const AI_MODEL = defineString("AI_MODEL", { default: "gemini-flash-latest" });
-const AI_LOCATION = defineString("AI_LOCATION", { default: "europe-west1" });
 
-let vertexClient: VertexAI | null = null;
+let client: GoogleGenAI | null = null;
 
-function getVertex(): VertexAI {
-  if (!vertexClient) {
-    vertexClient = new VertexAI({
-      project:
-        process.env.GCLOUD_PROJECT ?? process.env.GOOGLE_CLOUD_PROJECT ?? "",
-      location: AI_LOCATION.value(),
-    });
+function getClient(): GoogleGenAI {
+  if (!client) {
+    client = new GoogleGenAI({ apiKey: GEMINI_API_KEY.value() });
   }
-  return vertexClient;
+  return client;
 }
 
 export interface StructuredCallOptions {
   systemInstruction: string;
   /** User content: sanitized text and/or inline image parts. Variable data last. */
   parts: Part[];
-  schema: ResponseSchema;
+  schema: Schema;
   /** Safety ceiling — high enough not to truncate the JSON mid-object (§3.3). */
   maxOutputTokens: number;
 }
 
 function isRetryable(error: unknown): boolean {
-  const code = (error as { code?: number } | null)?.code;
+  const err = error as { code?: number; status?: number } | null;
+  const status = err?.status ?? err?.code;
   const message = error instanceof Error ? error.message : "";
-  return code === 429 || code === 503 || /\b(429|503)\b/.test(message);
+  return status === 429 || status === 503 || /\b(429|503)\b/.test(message);
 }
 
 const RETRY_DELAYS_MS = [2000, 4000];
@@ -54,38 +60,32 @@ const RETRY_DELAYS_MS = [2000, 4000];
 export async function generateStructured(
   options: StructuredCallOptions,
 ): Promise<unknown> {
-  const model = getVertex().getGenerativeModel({
-    model: AI_MODEL.value(),
-    systemInstruction: {
-      role: "system",
-      parts: [{ text: options.systemInstruction }],
-    },
-    generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: options.maxOutputTokens,
-      responseMimeType: "application/json",
-      responseSchema: options.schema,
-    },
-  });
+  const ai = getClient();
+  const model = AI_MODEL.value();
 
   let lastError: unknown;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
-      const result = await model.generateContent({
+      const result = await ai.models.generateContent({
+        model,
         contents: [{ role: "user", parts: options.parts }],
+        config: {
+          systemInstruction: options.systemInstruction,
+          temperature: 0.4,
+          maxOutputTokens: options.maxOutputTokens,
+          responseMimeType: "application/json",
+          responseSchema: options.schema,
+        },
       });
-      const usage = result.response.usageMetadata;
+      const usage = result.usageMetadata;
       // Token observability (§3.8) — debug level only, to calibrate context size.
       logger.debug("ai token usage", {
-        model: AI_MODEL.value(),
+        model,
         in: usage?.promptTokenCount,
         out: usage?.candidatesTokenCount,
         total: usage?.totalTokenCount,
       });
-      const text =
-        result.response.candidates?.[0]?.content?.parts
-          ?.map((part) => part.text ?? "")
-          .join("") ?? "";
+      const text = result.text ?? "";
       try {
         return JSON.parse(text);
       } catch {
