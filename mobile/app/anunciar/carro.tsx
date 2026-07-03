@@ -11,6 +11,8 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
+import AudioAdAssistant from '@/components/anunciar/AudioAdAssistant';
+import type { CarAudioFields } from '@/lib/audioListing';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
@@ -174,6 +176,38 @@ export default function AnunciarCarroScreen() {
     };
   }, [editId, user?.telefone]);
 
+  // Merge policy: never overwrite what the user typed; fields still at their
+  // initial default (portas '5', condição 'Usado', estado 'pronto', chips por
+  // selecionar) accept the spoken value. The server already sanitized
+  // everything against the domain.
+  function applyAudioFields(f: CarAudioFields) {
+    if (f.marca && !marca) {
+      setMarca(f.marca);
+      if (f.modelo) setModelo(f.modelo);
+    } else if (f.modelo && !modelo) {
+      setModelo(f.modelo);
+    }
+    if (f.anoFabricacao && !ano) setAno(String(f.anoFabricacao));
+    if (f.km !== undefined && !km) setKm(String(f.km));
+    if (f.preco !== undefined && !preco) setPreco(String(f.preco));
+    if (f.cor && !cor) setCor(f.cor);
+    if (f.portas && (!portas || portas === '5')) setPortas(String(f.portas));
+    if (f.seats && !seats) setSeats(String(f.seats));
+    if (f.power && !power) setPower(String(f.power));
+    if (f.displacement && !displacement) setDisplacement(String(f.displacement));
+    if (f.combustivel) setCombustivel((prev) => prev ?? f.combustivel ?? null);
+    if (f.cambio) setCambio((prev) => prev ?? f.cambio ?? null);
+    if (f.bodyType) setBodyType((prev) => prev ?? f.bodyType ?? null);
+    if (f.traction) setTraction((prev) => prev ?? f.traction ?? null);
+    if (f.condition) setCondition(f.condition);
+    if (f.estadoVeiculo) setEstado(f.estadoVeiculo);
+    if (f.features?.length) {
+      setFeatures((prev) => [...prev, ...f.features!.filter((feat) => !prev.includes(feat))]);
+    }
+    if (f.local && !local) setLocal(f.local);
+    if (f.descricao && !descricao) setDescricao(f.descricao);
+  }
+
   function validar(): string | null {
     if (fotos.length === 0) return 'Adicione pelo menos uma foto.';
     if (!marca.trim() || !modelo.trim()) return 'Indique a marca e o modelo.';
@@ -319,6 +353,8 @@ export default function AnunciarCarroScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         keyboardShouldPersistTaps="handled"
       >
+        {!editId && <AudioAdAssistant kind="carro" onFields={applyAudioFields} />}
+
         <PhotoPicker
           fotos={fotos}
           onChange={setFotos}

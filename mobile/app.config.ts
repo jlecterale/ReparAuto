@@ -56,6 +56,14 @@ if (!GOOGLE_IOS_URL_SCHEME) {
 // dev builds fall back to `development`.
 const APS_ENVIRONMENT =
   process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
+
+// Microphone usage string shared by every plugin that can touch the mic. The
+// audio-ad assistant (plan 24) records spoken listing descriptions, so the
+// permission must exist — plugins must NOT pass `microphonePermission: false`,
+// which would delete NSMicrophoneUsageDescription (iOS) and block
+// RECORD_AUDIO at manifest merge (Android), breaking expo-audio.
+const MICROPHONE_PERMISSION =
+  'A RecarGarage usa o microfone apenas quando grava um áudio para descrever o seu anúncio.';
 const VERSION = '1.6.0';
 const BUILD_NUMBER = 60;
 
@@ -121,8 +129,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       googleMaps: { apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY ?? '' },
     },
     // No location/media permissions. Notifications (POST_NOTIFICATIONS on
-    // Android 13+) are contributed by expo-notifications below. Location
-    // (Fase 5) arrives with its feature.
+    // Android 13+) are contributed by expo-notifications below; RECORD_AUDIO
+    // by expo-audio (audio-ad assistant). Location (Fase 5) arrives with its
+    // feature.
     permissions: [],
   },
   plugins: [
@@ -174,13 +183,22 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
     ],
     [
+      // Recording for the audio-ad assistant ("Preencher por voz", plan 24).
+      'expo-audio',
+      {
+        microphonePermission: MICROPHONE_PERMISSION,
+      },
+    ],
+    [
       // Guided 360 capture renders its own camera preview (with the angle
       // frame overlay), which the system camera can't do.
       'expo-camera',
       {
         cameraPermission:
           'A RecarGarage usa a câmara apenas quando tira uma foto para o seu anúncio.',
-        microphonePermission: false,
+        // Camera video capture stays unused, but `false` here would delete the
+        // mic usage string expo-audio needs (see MICROPHONE_PERMISSION above).
+        microphonePermission: MICROPHONE_PERMISSION,
         recordAudioAndroid: false,
       },
     ],
@@ -189,9 +207,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         // Gallery uses the system Photo Picker → no photo-library permission
         // (avoids the Google Play "Photo & Video Permissions" declaration).
-        // We never record audio, so block the microphone permission too.
         photosPermission: false,
-        microphonePermission: false,
+        // `false` would add RECORD_AUDIO to blockedPermissions and strip the
+        // permission expo-audio declares — keep the real usage string instead.
+        microphonePermission: MICROPHONE_PERMISSION,
         cameraPermission:
           'A RecarGarage usa a câmara apenas quando tira uma foto para o seu anúncio.',
       },

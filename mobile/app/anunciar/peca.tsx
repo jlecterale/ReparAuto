@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
+import AudioAdAssistant from '@/components/anunciar/AudioAdAssistant';
+import { partEstadoFromAudio, type PartAudioFields } from '@/lib/audioListing';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
@@ -117,6 +119,25 @@ export default function AnunciarPecaScreen() {
     };
   }, [editId, user?.telefone]);
 
+  // Merge policy: never overwrite what the user typed; selects still at their
+  // default accept the spoken value. The server already sanitized everything.
+  function applyAudioFields(f: PartAudioFields) {
+    if (f.tipo) setTipo(f.tipo);
+    if (f.titulo && !titulo) setTitulo(f.titulo);
+    if (f.categoria && !categoria) setCategoria(f.categoria);
+    if (f.marcaCarro && !marca) {
+      setMarca(f.marcaCarro);
+      if (f.modeloCarro) setModelo(f.modeloCarro);
+    } else if (f.modeloCarro && !modelo) {
+      setModelo(f.modeloCarro);
+    }
+    if (f.preco !== undefined && !preco) setPreco(String(f.preco));
+    const estadoMapeado = partEstadoFromAudio(f.estado);
+    if (estadoMapeado) setEstado(estadoMapeado);
+    if (f.local && !local) setLocal(f.local);
+    if (f.descricao && !descricao) setDescricao(f.descricao);
+  }
+
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título.';
     if (!categoria.trim()) return 'Indique a categoria (ex.: Motor, Travões).';
@@ -207,6 +228,8 @@ export default function AnunciarPecaScreen() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         keyboardShouldPersistTaps="handled"
       >
+        {!editId && <AudioAdAssistant kind="peca" onFields={applyAudioFields} />}
+
         <ChipSelect label="Tipo de anúncio" options={TIPOS} value={tipo} onChange={setTipo} />
         <PhotoPicker fotos={foto} onChange={setFoto} max={1} />
 
