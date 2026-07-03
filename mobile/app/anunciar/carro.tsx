@@ -15,6 +15,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
+import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type CarDraftData } from '@/lib/draft';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import { isValidYoutubeUrl } from '@/lib/youtube';
@@ -285,7 +286,15 @@ export default function AnunciarCarroScreen() {
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
         'O seu anúncio foi submetido e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              if (!editId) trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível guardar. Tente novamente.', 'error');

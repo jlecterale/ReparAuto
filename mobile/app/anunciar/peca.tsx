@@ -14,6 +14,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
+import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type PartDraftData } from '@/lib/draft';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import { colors } from '@/theme/colors';
@@ -173,7 +174,15 @@ export default function AnunciarPecaScreen() {
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',
         'A sua peça foi submetida e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              if (!editId) trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível guardar. Tente novamente.', 'error');
