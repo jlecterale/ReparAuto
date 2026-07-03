@@ -23,6 +23,31 @@ Os mesmos formatos, sem código duplicado (as cenas adaptam-se via `useFormat()`
 |---|---|
 | ![16:9](docs/preview/format-16x9.png) | ![1:1](docs/preview/format-1x1.png) |
 
+## 📱 Série Instagram — Reels para profissionais (oficinas & stands)
+
+Dez Reels 9:16 (~20–22 s cada) focados em **oficinas** e **stands**, cada um a
+destacar um diferencial do RecarGarage. Estrutura comum: gancho (3 s) → duas
+cenas de produto (mock da UI real) → CTA final. Renderiza todos com
+`npm run render:reels` (saem para `out/reels/`), ou um de cada vez com
+`npx remotion render <Composition> out/<ficheiro>.mp4`.
+
+| # | Composition | Público | Diferencial destacado |
+|---|---|---|---|
+| 01 | `ReelProDashboard` | Stands + oficinas | Painel Profissional: KPIs e gráfico em tempo real |
+| 02 | `ReelCrm` | Oficinas | CRM de clientes + importação CSV |
+| 03 | `ReelLeads` | Stands | Intenções de compra → leads qualificados |
+| 04 | `ReelVerifiedSeller` | Stands | Selo Verificado + prioridade nos resultados |
+| 05 | `ReelAiListing` | Stands | Anúncios com IA: descrição + sugestão de preço |
+| 06 | `ReelPricing` | Stands | Price intelligence: badge de 5 níveis + mercado |
+| 07 | `ReelWorkshop` | Oficinas | Visibilidade no mapa + avaliações |
+| 08 | `ReelChat` | Ambos | Chat integrado + notificações push |
+| 09 | `ReelParts` | Oficinas | Vender peças paradas (stock → receita) |
+| 10 | `ReelEcosystem` | Ambos | Ecossistema completo, grátis para começar |
+
+> Nota: os Reels 01/02 (painel + CRM), 04, 05 e 06 apresentam funcionalidades
+> das PRs #33, #58, #54 e #9 — publica os vídeos apenas depois de esses
+> recursos estarem em produção.
+
 ## Começar
 
 ```sh
@@ -34,7 +59,9 @@ npm run render:all # exporta os três formatos para out/
 ## Estrutura
 
 - `src/scenes/` — uma cena por ficheiro (Hook, Carros, Peças, Oficinas, Segurança, Chat, CTA)
-- `src/components/` — peças **reutilizáveis** (Background, SceneShell, SceneHeading, Logo, ListingCard, StoreBadge)
+- `src/reels/` — um Reel do Instagram por ficheiro (série para profissionais)
+- `public/fonts/` — Libre Franklin local (o render não depende da rede)
+- `src/components/` — peças **reutilizáveis** (Background, SceneShell, SceneHeading, Logo, ListingCard, StoreBadge, Reel, HookScene, EndCard, UiCard, Soundtrack)
 - `src/format.ts` — `useFormat()` para layout responsivo por aspeto
 - `src/theme.ts` — cores da marca, fps e durações
 - `public/brand/` — ícone, logótipo e fotos
