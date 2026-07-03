@@ -1,10 +1,12 @@
 'use client';
 
-import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
+import { Car, Heart, MapPin, Scales, User, Wrench } from '@phosphor-icons/react';
 import { memo } from 'react';
 import Link from 'next/link';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
+import { useToast } from '@/components/ui/Toast';
+import useCompare from '@/hooks/useCompare';
 import LazyImage from '@/components/ui/LazyImage';
 import Badge from '@/components/ui/Badge';
 import Alert from '@/components/ui/Alert';
@@ -16,6 +18,9 @@ import type { Carro } from '@/types/carro';
 function CarCard({ carro }: { carro: Carro }) {
   const { favoritos, carros } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
+  const toast = useToast();
+  const compare = useCompare();
+  const emComparacao = compare.ids.includes(carro.id);
 
   const vendedorVerificado = !!carro.criadorUid && carros.verifiedUids.has(carro.criadorUid);
   const isLowCost = carro.preco <= 2000;
@@ -52,6 +57,7 @@ function CarCard({ carro }: { carro: Carro }) {
             e.stopPropagation();
             toggleFavorito(carro.id);
           }}
+          aria-label={isFavorito(carro.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition shadow ${
             isFavorito(carro.id)
               ? 'bg-red-500 text-white'
@@ -59,6 +65,24 @@ function CarCard({ carro }: { carro: Carro }) {
           }`}
         >
           <Heart weight={isFavorito(carro.id) ? 'fill' : 'regular'} className={isFavorito(carro.id) ? '' : 'text-slate-400'} />
+        </button>
+        <button
+          onClick={(e) => {
+            // Inside a <Link>: block the anchor navigation, not just bubbling.
+            e.preventDefault();
+            e.stopPropagation();
+            if (!compare.toggle(carro.id)) {
+              toast?.info('Máximo de 3 veículos na comparação.');
+            }
+          }}
+          aria-pressed={emComparacao}
+          aria-label={emComparacao ? 'Remover da comparação' : 'Adicionar à comparação'}
+          title={emComparacao ? 'Remover da comparação' : 'Comparar'}
+          className={`absolute top-12 right-2 w-8 h-8 rounded-full flex items-center justify-center transition shadow ${
+            emComparacao ? 'bg-accent text-white' : 'bg-white/80 text-fg-muted hover:bg-white'
+          }`}
+        >
+          <Scales weight={emComparacao ? 'fill' : 'regular'} className={emComparacao ? '' : 'text-slate-400'} />
         </button>
       </div>
 

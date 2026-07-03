@@ -5,6 +5,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useRouter } from 'next/navigation';
 import CarCard from '@/components/home/CarCard';
 import PecasCard from '@/components/pecas/PecasCard';
+import CompareBar from '@/components/busca/CompareBar';
 import { CarCardSkeleton, PecaCardSkeleton } from '@/components/ui/Skeleton';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -129,6 +130,7 @@ export default function Favoritos() {
           )}
         </div>
       )}
+      <CompareBar />
     </div>
   );
 }

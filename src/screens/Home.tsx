@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import MonetizationCarousel from '@/components/home/MonetizationCarousel';
 import CarGrid from '@/components/home/CarGrid';
+import CompareBar from '@/components/busca/CompareBar';
 import { deserializeCarro, type SerializedCarro } from '@/lib/serializeCarro';
 
 // `initialCarros` is the approved-listing snapshot fetched by the server
@@ -15,6 +16,7 @@ export default function Home({ initialCarros }: { initialCarros?: SerializedCarr
     <div className="page-enter">
       <MonetizationCarousel />
       <CarGrid initialCarros={decodedInitialCarros} />
+      <CompareBar />
     </div>
   );
 }
