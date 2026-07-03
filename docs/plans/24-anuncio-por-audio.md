@@ -66,7 +66,7 @@ diretamente.
      só para utilizadores autenticados. Sem ADC local, o dev configura `GOOGLE_APPLICATION_CREDENTIALS`
      ou aceita 401 (o recurso fica desativado em dev sem credenciais).
   2. Valida MIME (wav/mp3/ogg/aac/m4a/flac) e tamanho (≤ 12 MB; base64 +33% < limite de 20 MB).
-  3. Chama o Gemini (`@google/genai`, modelo `GEMINI_MODEL` ∈ env, default `gemini-2.5-flash`)
+  3. Chama o Gemini (`@google/genai`, modelo `GEMINI_MODEL` ∈ env, default `gemini-flash-latest`)
      com `responseMimeType: application/json` + `responseSchema` (enums do domínio).
   4. Sanitiza o resultado (`src/lib/audioListing.ts`) e responde `{ fields, transcript }`.
 - `src/lib/audioListing.ts` — **lógica pura, TDD**: schemas Gemini, prompts, e

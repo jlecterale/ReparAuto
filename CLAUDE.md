@@ -127,7 +127,9 @@ into listing fields via Gemini multimodal + structured output. Server-only env v
   assistant. Dev: put it in `.env.local`. Prod: Cloud Secret Manager
   (`firebase apphosting:secrets:set GEMINI_API_KEY`), then uncomment the block in
   `apphosting.yaml`.
-- `GEMINI_MODEL` — optional model override (default `gemini-2.5-flash`).
+- `GEMINI_MODEL` — optional override to pin an exact model. Default is the floating
+  alias `gemini-flash-latest` (always the current stable Flash), so the model tracks
+  Google's latest without a code change.
 
 Core logic (schemas, prompts, sanitizers) lives in `src/lib/audioListing.ts` (tested);
 the WAV re-encode of browser recordings in `src/lib/audioWav.ts`.

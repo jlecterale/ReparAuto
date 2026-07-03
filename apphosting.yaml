@@ -33,8 +33,9 @@ env:
   #   secret: GEMINI_API_KEY
   #   availability:
   #     - RUNTIME
-  # Optional override of the Gemini model (default: gemini-2.5-flash).
+  # Optional override to pin an exact Gemini model. The code default is the
+  # floating alias `gemini-flash-latest` (always the current stable Flash).
   # - variable: GEMINI_MODEL
-  #   value: gemini-2.5-flash
+  #   value: gemini-flash-latest
   #   availability:
   #     - RUNTIME

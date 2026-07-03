@@ -22,7 +22,10 @@ import {
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+// Floating alias: always resolves to the current stable Gemini Flash model, so
+// the default tracks Google's latest without pinning a version here. Override
+// with GEMINI_MODEL to pin an exact model when a specific one is needed.
+const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 
 const jsonError = (status: number, error: string) => NextResponse.json({ error }, { status });
 
