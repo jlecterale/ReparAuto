@@ -7,6 +7,7 @@
  */
 import firestore, {
   FirebaseFirestoreTypes,
+  documentId,
 } from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { db, storage } from './firebase';
@@ -253,9 +254,11 @@ export async function getVerifiedUids(uids: string[]): Promise<string[]> {
   const verified: string[] = [];
   try {
     for (const chunk of chunkArray(uids, VERIFIED_UIDS_CHUNK)) {
+      // documentId() comes from the modular API — the namespaced static
+      // (firestore.FieldPath.documentId) is undefined in RNFirebase v24.
       const snap = await db
         .collection(USERS)
-        .where(firestore.FieldPath.documentId(), 'in', chunk)
+        .where(documentId(), 'in', chunk)
         .get();
       snap.docs.forEach((doc) => {
         if (doc.data()?.verificado === true) verified.push(doc.id);
