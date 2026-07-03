@@ -12,6 +12,8 @@ import {
 } from '@/lib/constants';
 import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList } from '@/lib/utils';
+import { applyCarAudioFieldsToForm } from '@/lib/audioListingForm';
+import AudioAdAssistant from '@/components/anunciar/AudioAdAssistant';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import ToggleChip from '@/components/ui/ToggleChip';
@@ -116,6 +118,14 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   return (
     <div>
       <h3 className="font-bold text-lg mb-3">📋 Dados do Veículo</h3>
+      <AudioAdAssistant
+        kind="carro"
+        className="mb-4"
+        onFields={(fields) => {
+          setDados((prev) => applyCarAudioFieldsToForm(prev, fields));
+          setErros({});
+        }}
+      />
       <SeletorMarcaModelo
         marca={dados.marca}
         modelo={dados.modelo}

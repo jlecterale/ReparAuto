@@ -15,7 +15,7 @@ import {
   TIPOS_CARROCERIA,
   TIPOS_COMBUSTIVEL,
   TIPOS_TRACAO,
-} from '@/lib/constants';
+} from '@/lib/listingOptions';
 import { getAllConcelhos, getDistritoForConcelho } from '@/lib/geo';
 import marcasModelos from '@/data/marcas-modelos.json';
 import {

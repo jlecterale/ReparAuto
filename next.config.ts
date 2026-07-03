@@ -55,7 +55,9 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'no-referrer' },
-  { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(), camera=(self)' },
+  // Microphone: same-origin only — the audio-ad assistant records spoken
+  // listing descriptions (plan 24).
+  { key: 'Permissions-Policy', value: 'geolocation=(), microphone=(self), camera=(self)' },
   { key: 'Content-Security-Policy', value: cspDirectives.join('; ') },
 ];
 
