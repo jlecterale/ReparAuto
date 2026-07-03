@@ -11,6 +11,7 @@
  */
 import analyticsModule from '@react-native-firebase/analytics';
 import authModule from '@react-native-firebase/auth';
+import crashlyticsModule from '@react-native-firebase/crashlytics';
 import firestoreModule from '@react-native-firebase/firestore';
 import storageModule from '@react-native-firebase/storage';
 
@@ -39,6 +40,27 @@ export const analytics = (() => {
     return noopAnalytics;
   }
 })();
+
+// Same reasoning as analytics above: crash reporting must not itself be able
+// to crash the app. Collection is off in dev so local errors/hot-reloads
+// don't pollute Crashlytics with noise.
+const noopCrashlytics = {
+  recordError: async () => {},
+  setUserId: async () => {},
+  setAttributes: async () => {},
+  log: () => {},
+} as ReturnType<typeof crashlyticsModule>;
+
+export const crashlytics = (() => {
+  try {
+    const instance = crashlyticsModule();
+    instance.setCrashlyticsCollectionEnabled(!__DEV__).catch(() => {});
+    return instance;
+  } catch {
+    return noopCrashlytics;
+  }
+})();
+
 export const auth = authModule();
 export const db = firestoreModule();
 export const storage = storageModule();
@@ -54,4 +76,10 @@ db.settings({
   // settings can only be set before the first operation; ignore if already used.
 });
 
-export { firestoreModule, authModule, storageModule, analyticsModule };
+export {
+  firestoreModule,
+  authModule,
+  storageModule,
+  analyticsModule,
+  crashlyticsModule,
+};

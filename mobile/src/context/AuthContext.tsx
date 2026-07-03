@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { logLogin, logSignUp, setAnalyticsUser } from '@/lib/analytics';
+import { setCrashlyticsUser } from '@/lib/crashReporting';
 import {
   appleSignInDisponivel,
   configureGoogleSignIn,
@@ -126,6 +127,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const role = user?.role;
   useEffect(() => {
     setAnalyticsUser(uid ? { uid, tipoConta, role } : null);
+    setCrashlyticsUser(uid);
   }, [uid, tipoConta, role]);
 
   const login = useCallback(
