@@ -43,10 +43,13 @@ cenas de produto (mock da UI real) → CTA final. Renderiza todos com
 | 08 | `ReelChat` | Ambos | Chat integrado + notificações push |
 | 09 | `ReelParts` | Oficinas | Vender peças paradas (stock → receita) |
 | 10 | `ReelEcosystem` | Ambos | Ecossistema completo, grátis para começar |
+| 11 | `ReelSpin360` | Stands | Vista 360° por fotos + captura guiada (plano 23) |
+| 12 | `ReelPartsFinder` | Oficinas | Encontrar peças compatíveis + confirmar no chat |
+| 13 | `ReelRepairFlip` | Oficinas | Carros para restaurar: estado real + análise de danos IA |
 
 > Nota: os Reels 01/02 (painel + CRM), 04, 05 e 06 apresentam funcionalidades
-> das PRs #33, #58, #54 e #9 — publica os vídeos apenas depois de esses
-> recursos estarem em produção.
+> das PRs #33, #58, #54 e #9, e o Reel 13 usa a análise de danos da PR #54 —
+> publica esses vídeos apenas depois de os recursos estarem em produção.
 
 ## Começar
 
