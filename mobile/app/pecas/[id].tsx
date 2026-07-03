@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { logViewListing } from '@/lib/analytics';
 import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
@@ -39,6 +40,7 @@ export default function DetalhesPecaScreen() {
       .then((p) => {
         if (!active) return;
         setPeca(p);
+        if (p) logViewListing('peca', p.id, p.titulo);
         // Count the view for everyone except the owner.
         if (p && p.criadorUid !== user?.uid) registarVisualizacao('parts', id);
       })

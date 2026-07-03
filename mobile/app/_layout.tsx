@@ -2,7 +2,7 @@ import '../global.css';
 
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import {
   unregisterPush,
   watchTokenRefresh,
 } from '@/lib/push';
+import { logScreenView } from '@/lib/analytics';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
@@ -39,6 +40,16 @@ function RootNavigator() {
 
   // Silently check for and download OTA updates (applied on next launch).
   useOTAUpdates();
+
+  // Log a GA4 screen_view on every navigation. screen_name is the route
+  // *pattern* (e.g. "/detalhes/[id]"), keeping it low-cardinality; pathname is
+  // in the deps so navigating between two ids of the same route still logs.
+  const pathname = usePathname();
+  const segments = useSegments();
+  const screenName = segments.length ? `/${segments.join('/')}` : '/';
+  useEffect(() => {
+    logScreenView(screenName);
+  }, [screenName, pathname]);
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
