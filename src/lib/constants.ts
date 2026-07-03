@@ -21,6 +21,10 @@ export const STORAGE_KEY_PECAS = 'pecas_reparauto';
 export const STORAGE_KEY_FAVORITOS = 'favs_reparauto';
 export const STORAGE_KEY_USER = 'loggedUser_reparauto';
 
+// Native app store listings
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.recargarage';
+export const APP_STORE_URL = 'https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533';
+
 export const CATEGORIAS_INTENCAO: { value: CategoriaIntencao; label: string; emoji: string }[] = [
   { value: 'carro', label: 'Carro', emoji: '🚗' },
   { value: 'moto', label: 'Moto', emoji: '🏍️' },
@@ -148,6 +152,7 @@ export const TEXTOS_POLITICAS = {
 
       <p class='font-bold text-slate-800 mb-2'>2. Objeto e Natureza do Serviço</p>
       <p class='mb-4'>A RecarGarage é um marketplace que atua exclusivamente como intermediário tecnológico. Disponibilizamos uma plataforma online para que Vendedores e Compradores possam interagir com vista à compra e venda de veículos e peças automóveis em território português. A RecarGarage não é proprietária dos itens anunciados, não intervém nas negociações nem nas transações celebradas entre as partes, e não assume qualquer responsabilidade pela qualidade, segurança ou legalidade dos itens anunciados ou das transações deles decorrentes.</p>
+      <p class='mb-4'>O serviço é disponibilizado através do website <strong>recargarage.com</strong> e da <strong>aplicação móvel RecarGarage</strong> (iOS e Android). Os presentes Termos aplicam-se de igual forma a todos estes canais. Durante a utilização da aplicação móvel são recolhidos dados estatísticos de utilização (de forma pseudonimizada) para melhoria do serviço, nos termos descritos na Política de Privacidade.</p>
 
       <p class='font-bold text-slate-800 mb-2'>3. Condições de Acesso e Registo</p>
       <ul class='list-disc pl-5 mb-4 space-y-1'>
@@ -230,6 +235,7 @@ export const TEXTOS_POLITICAS = {
         <li><strong>Dados de Identificação e Contacto:</strong> Nome, endereço de email, número de telefone (quando fornecido pelo utilizador).</li>
         <li><strong>Dados de Localização:</strong> Indicação geográfica geral (concelho) fornecida pelo utilizador para associar aos anúncios. Não são recolhidas coordenadas GPS exatas.</li>
         <li><strong>Dados de Navegação e Dispositivo:</strong> Endereço IP, tipo e versão do browser, sistema operativo, páginas visitadas e timestamps. Estes dados são tratados de forma anonimizada para fins de segurança e diagnóstico.</li>
+        <li><strong>Dados de Utilização da Aplicação Móvel:</strong> Na app RecarGarage (iOS/Android) são recolhidos, através do Google Analytics for Firebase, eventos de utilização pseudonimizados — ecrãs visitados, interações com anúncios (visualização, favorito, publicação, envio de mensagem), modelo do dispositivo, sistema operativo, idioma e país aproximado — associados a um identificador de instância da aplicação e, para utilizadores autenticados, ao UID da conta. <strong>Não é recolhido o identificador de publicidade (Advertising ID / IDFA)</strong> e o conteúdo dos anúncios e das mensagens nunca é enviado como parâmetro de evento.</li>
         <li><strong>Dados de Autenticação:</strong> UID (identificador único) gerado pelo Firebase Authentication, método de autenticação selecionado (email/password ou Google OAuth), fotografia de perfil do Google (apenas se o utilizador autenticar via Google).</li>
         <li><strong>Dados de Anúncios:</strong> Informações sobre veículos ou peças publicadas, incluindo fotografias, descrições, preços e estado de conservação.</li>
         <li><strong>Favoritos:</strong> Lista de anúncios favoritos, armazenada no Firestore para utilizadores autenticados ou em localStorage para visitantes não autenticados.</li>
@@ -247,6 +253,7 @@ export const TEXTOS_POLITICAS = {
           <tr><td class='border border-slate-300 p-2'>Gestão de favoritos (autenticados)</td><td class='border border-slate-300 p-2'>Art. 6.º, n.º 1, al. b) — Execução de contrato</td><td class='border border-slate-300 p-2'>UID, IDs dos anúncios</td></tr>
           <tr><td class='border border-slate-300 p-2'>Favoritos (não autenticados)</td><td class='border border-slate-300 p-2'>Art. 6.º, n.º 1, al. a) — Consentimento (implícito pelo uso)</td><td class='border border-slate-300 p-2'>localStorage (dados locais)</td></tr>
           <tr><td class='border border-slate-300 p-2'>Comunicação de alterações aos Termos</td><td class='border border-slate-300 p-2'>Art. 6.º, n.º 1, al. c) — Obrigação legal</td><td class='border border-slate-300 p-2'>Email</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Estatísticas de utilização e melhoria do serviço (app móvel)</td><td class='border border-slate-300 p-2'>Art. 6.º, n.º 1, al. f) — Interesse legítimo</td><td class='border border-slate-300 p-2'>Eventos de utilização, identificador de instância da app, dados do dispositivo, UID</td></tr>
         </tbody>
       </table>
 
@@ -257,8 +264,9 @@ export const TEXTOS_POLITICAS = {
         <li><strong>Firestore (Cloud Firestore)</strong> — base de dados NoSQL para armazenamento de anúncios, perfis, notificações e favoritos.</li>
         <li><strong>Firebase Storage</strong> — armazenamento de fotografias dos anúncios.</li>
         <li><strong>Firebase Hosting</strong> — alojamento da aplicação estática (SPA).</li>
+        <li><strong>Google Analytics for Firebase</strong> — estatísticas de utilização da aplicação móvel (eventos de utilização pseudonimizados; ver ponto 2). Configurado <strong>sem recolha do identificador de publicidade</strong> e sem qualquer utilização para publicidade personalizada.</li>
       </ul>
-      <p class='mb-4'>Os dados são armazenados em servidores localizados na <strong>União Europeia</strong> (europe-west1 ou europe-west3, consoante o serviço). O Google LLC dispõe de Certified SCCs (Standard Contractual Clauses) aprovadas pela Comissão Europeia (Decisão de Execução (UE) 2021/914) como garantia adequada para transferências internacionais de dados para os Estados Unidos, nos termos do art. 46.º do RGPD.</p>
+      <p class='mb-4'>Os dados são armazenados em servidores localizados na <strong>União Europeia</strong> (europe-west1 ou europe-west3, consoante o serviço). Os dados de utilização tratados pelo Google Analytics for Firebase podem ser processados em servidores do Google fora da União Europeia, nomeadamente nos Estados Unidos. O Google LLC dispõe de Certified SCCs (Standard Contractual Clauses) aprovadas pela Comissão Europeia (Decisão de Execução (UE) 2021/914) como garantia adequada para transferências internacionais de dados para os Estados Unidos, nos termos do art. 46.º do RGPD.</p>
 
       <p class='font-bold text-slate-800 mb-2'>5. Prazos de Conservação dos Dados</p>
       <ul class='list-disc pl-5 mb-4 space-y-1'>
@@ -266,6 +274,7 @@ export const TEXTOS_POLITICAS = {
         <li><strong>Logs de acesso e dados de navegação:</strong> 6 meses, exceto se necessário para investigação de incidentes de segurança.</li>
         <li><strong>Dados de favoritos (Firestore):</strong> Até remoção pelo utilizador ou eliminação da conta.</li>
         <li><strong>Favoritos (localStorage):</strong> Permanecem no dispositivo do utilizador até remoção manual ou limpeza dos dados de navegação.</li>
+        <li><strong>Dados de utilização da app móvel (Google Analytics for Firebase):</strong> Máximo de 14 meses para dados associados a identificadores; os relatórios agregados (sem identificadores) podem ser conservados por períodos superiores.</li>
         <li><strong>Dados de faturação fiscal:</strong> Caso aplicável, 10 anos por imposição legal (art. 40.º do Código do IRC e art. 123.º do CIVA).</li>
       </ul>
 

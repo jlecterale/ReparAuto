@@ -20,6 +20,7 @@ import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { logViewListing } from '@/lib/analytics';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { useAuth } from '@/context/AuthContext';
@@ -45,6 +46,7 @@ export default function DetalhesCarroScreen() {
       .then((c) => {
         if (!active) return;
         setCarro(c);
+        if (c) logViewListing('carro', c.id, `${c.marca} ${c.modelo}`);
         // Count the view for everyone except the owner.
         if (c && c.criadorUid !== user?.uid) registarVisualizacao('cars', id);
       })

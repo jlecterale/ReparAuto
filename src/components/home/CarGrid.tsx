@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import KeywordAlertInput from '@/components/alertas/KeywordAlertInput';
 import SaveAlertButton from '@/components/alertas/SaveAlertButton';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
@@ -15,6 +15,7 @@ import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
 import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { SearchFilters } from '@/types/busca';
@@ -59,7 +60,9 @@ function FilterSelect({
   );
 }
 
-export default function CarGrid() {
+// `initialCarros` (server-fetched, ISR) replaces the skeletons while the
+// realtime subscription is still loading; the live list takes over after.
+export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
@@ -186,15 +189,18 @@ export default function CarGrid() {
     }
   }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
 
-  const oficinasFiltradas = oficinas.filter((o) => {
-    const correspondeBusca = !searchQuery ||
-      (o.nome && o.nome.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (o.descricao && o.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+  const oficinasFiltradas = useMemo(() => {
+    const busca = searchQuery.toLowerCase();
+    return oficinas.filter((o) => {
+      const correspondeBusca = !busca ||
+        (o.nome && o.nome.toLowerCase().includes(busca)) ||
+        (o.descricao && o.descricao.toLowerCase().includes(busca));
 
-    return correspondeBusca && correspondeDistrito;
-  });
+      const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+
+      return correspondeBusca && correspondeDistrito;
+    });
+  }, [oficinas, searchQuery, advDistrito]);
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -474,7 +480,9 @@ export default function CarGrid() {
 
             {carros.loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-                {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
+                {initialCarros.length > 0
+                  ? initialCarros.map((carro) => <CarCard key={carro.id} carro={carro} />)
+                  : Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">

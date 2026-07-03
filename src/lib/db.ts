@@ -28,7 +28,6 @@ import type { Review, ReviewInput, StatusReview } from '@/types/review';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
-import type { Proposta, PropostaInput, StatusProposta } from '@/types/proposal';
 import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { Banner, BannerInput } from '@/types/banner';
@@ -53,18 +52,6 @@ function sortByDataCriacaoDesc<T extends { dataCriacao?: { toMillis?: () => numb
   return items.sort((a, b) => (b.dataCriacao?.toMillis?.() || 0) - (a.dataCriacao?.toMillis?.() || 0));
 }
 
-
-export async function getCarros(): Promise<Carro[]> {
-  try {
-    const q = query(collection(db, CARROS_COLLECTION), where('status', '==', 'aprovado'));
-    const snap = await getDocs(q);
-    const todos = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Carro));
-    return sortByDataCriacaoDesc(todos);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar carros:', err);
-    return [];
-  }
-}
 
 export function subscribeCarros(
   onData: (carros: Carro[]) => void,
@@ -129,18 +116,6 @@ export async function deleteCarro(id: string): Promise<void> {
   } catch (err) {
     console.error('[DB] Erro ao eliminar carro:', err);
     throw err;
-  }
-}
-
-export async function getPecas(): Promise<Peca[]> {
-  try {
-    const q = query(collection(db, PECAS_COLLECTION), where('status', '==', 'aprovado'));
-    const snap = await getDocs(q);
-    const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    return sortByDataCriacaoDesc(todas);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar peças:', err);
-    return [];
   }
 }
 
@@ -419,44 +394,6 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
   }
 }
 
-export async function matchAndNotifyForPeca(peca: Peca): Promise<number> {
-  try {
-    if (peca.tipo === 'procura') return 0;
-    const { pecasShareCompatibility } = await import('./compatibility');
-    const constraints = [
-      where('status', '==', 'aprovado'),
-      where('tipo', '==', 'procura'),
-    ];
-    if (peca.categoria) {
-      constraints.push(where('categoria', '==', peca.categoria));
-    }
-    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
-    const snap = await getDocs(qProcuras);
-    const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    const matches = procuras.filter(
-      (p) => p.criadorUid && p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
-    );
-    const seen = new Set<string>();
-    let notified = 0;
-    for (const procura of matches) {
-      if (!procura.criadorUid || seen.has(procura.criadorUid)) continue;
-      seen.add(procura.criadorUid);
-      await criarNotificacao(
-        procura.criadorUid,
-        'info',
-        'Peça encontrada para o seu pedido!',
-        `"${peca.titulo}" corresponde ao seu pedido "${procura.titulo}".`,
-        `/pecas?peca=${peca.id}`,
-      );
-      notified++;
-    }
-    return notified;
-  } catch (err) {
-    console.error('[DB] Erro em matchAndNotifyForPeca:', err);
-    return 0;
-  }
-}
-
 export async function countProcurasForPeca(peca: Peca): Promise<number> {
   try {
     const { pecasShareCompatibility } = await import('./compatibility');
@@ -524,21 +461,6 @@ export async function criarNotificacao(
     });
   } catch (err) {
     console.error('[DB] Erro ao criar notificação:', err);
-  }
-}
-
-export async function getNotificacoes(uid: string): Promise<Notificacao[]> {
-  try {
-    const q = query(
-      collection(db, NOTIFICACOES_COLLECTION),
-      where('uid', '==', uid),
-    );
-    const snap = await getDocs(q);
-    const notificacoes = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
-    return sortByDataCriacaoDesc(notificacoes);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar notificações:', err);
-    return [];
   }
 }
 
@@ -674,22 +596,6 @@ export function subscribeReviewsOficina(
 }
 
 
-export async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
-  try {
-    const q = query(
-      collection(db, REVIEWS_COLLECTION),
-      where('vendedorEmail', '==', vendedorEmail),
-      orderBy('dataCriacao', 'desc'),
-    );
-    const snap = await getDocs(q);
-    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-    return all.filter((r) => r.status === 'aprovado');
-  } catch (err) {
-    console.error('[DB] Erro ao buscar avaliações:', err);
-    return [];
-  }
-}
-
 export async function getAllReviewsAdmin(): Promise<Review[]> {
   try {
     const q = query(collection(db, REVIEWS_COLLECTION), orderBy('dataCriacao', 'desc'));
@@ -716,6 +622,22 @@ export async function deleteReview(id: string): Promise<void> {
   } catch (err) {
     console.error('[DB] Erro ao eliminar avaliação:', err);
     throw err;
+  }
+}
+
+async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
+  try {
+    const q = query(
+      collection(db, REVIEWS_COLLECTION),
+      where('vendedorEmail', '==', vendedorEmail),
+      orderBy('dataCriacao', 'desc'),
+    );
+    const snap = await getDocs(q);
+    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
+    return all.filter((r) => r.status === 'aprovado');
+  } catch (err) {
+    console.error('[DB] Erro ao buscar avaliações:', err);
+    return [];
   }
 }
 
@@ -1176,25 +1098,6 @@ export async function rejeitarContato(contatoId: string, userId: string): Promis
 
 // ============ DENUNCIAS INTENCAO ============
 
-export async function addDenunciaIntencao(data: {
-  intencaoId: string;
-  denunciantId: string;
-  motivo: string;
-  descricao: string;
-}): Promise<string> {
-  try {
-    const docRef = await addDoc(collection(db, DENUNCIAS_INTENCAO_COLLECTION), {
-      ...data,
-      status: 'aberta',
-      criadaEm: Timestamp.now(),
-    });
-    return docRef.id;
-  } catch (err) {
-    console.error('[DB] Erro ao criar denúncia de intenção:', err);
-    throw err;
-  }
-}
-
 export async function getDenunciasIntencao(): Promise<DenunciaIntencao[]> {
   try {
     const q = query(collection(db, DENUNCIAS_INTENCAO_COLLECTION), orderBy('criadaEm', 'desc'));
@@ -1270,18 +1173,6 @@ export async function updateIntencaoStatus(id: string, status: string): Promise<
 
 // ============ OFICINAS E MECÂNICOS ============
 
-export async function getOficinas(): Promise<OficinaMecanico[]> {
-  try {
-    const q = query(collection(db, OFICINAS_COLLECTION), where('status', '==', 'aprovado'));
-    const snap = await getDocs(q);
-    const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
-    return sortByDataCriacaoDesc(todas);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar oficinas:', err);
-    return [];
-  }
-}
-
 export function subscribeOficinas(
   onData: (oficinas: OficinaMecanico[]) => void,
   onError?: (err: Error) => void,
@@ -1328,32 +1219,12 @@ export async function addOficina(dados: Record<string, unknown>): Promise<Oficin
   }
 }
 
-export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
-  try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id), dados);
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar oficina:', err);
-    throw err;
-  }
-}
-
 export async function updateOficinaStatus(id: string, status: 'pendente' | 'aprovado' | 'rejeitado'): Promise<void> {
   try {
     await updateDoc(doc(db, OFICINAS_COLLECTION, id), { status });
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da oficina:', err);
     throw err;
-  }
-}
-
-export async function getOficinasByCreator(email: string): Promise<OficinaMecanico[]> {
-  try {
-    const q = query(collection(db, OFICINAS_COLLECTION), where('criador', '==', email));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar oficinas do criador:', err);
-    return [];
   }
 }
 
@@ -1381,86 +1252,9 @@ export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
 // Propostas / Contra-propostas (seller → interested buyer negotiation)
 // ---------------------------------------------------------------------------
 
+// The propostas UI was removed as dead code, but the collection may still
+// hold documents, so GDPR cleanup below keeps deleting them.
 const PROPOSTAS_COLLECTION = 'propostas';
-
-function ordenarPorCriacao<T extends { criadaEm?: { toDate?: () => Date } }>(items: T[]): T[] {
-  return items.sort(
-    (a, b) => (b.criadaEm?.toDate?.()?.getTime() || 0) - (a.criadaEm?.toDate?.()?.getTime() || 0),
-  );
-}
-
-export async function criarProposta(dados: PropostaInput): Promise<Proposta> {
-  try {
-    const id = doc(collection(db, PROPOSTAS_COLLECTION)).id;
-    const agora = Timestamp.now();
-    const proposta: Proposta = { id, ...dados, criadaEm: agora, atualizadaEm: agora };
-    await setDoc(doc(db, PROPOSTAS_COLLECTION, id), cleanUndefined({ ...proposta }));
-
-    // Criar notificação para o vendedor
-    await criarNotificacao(
-      dados.vendedorUid,
-      'info',
-      'Nova Proposta Recebida 💰',
-      `${dados.compradorNome} enviou uma proposta de ${dados.valor}€ para o seu anúncio: ${dados.anuncioTitulo}`,
-      '/perfil',
-    );
-
-    return proposta;
-  } catch (err) {
-    console.error('[DB] Erro ao criar proposta:', err);
-    throw err;
-  }
-}
-
-export async function getPropostasPorVendedor(vendedorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', vendedorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (vendedor):', err);
-    return [];
-  }
-}
-
-export async function getPropostasPorComprador(compradorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', compradorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (comprador):', err);
-    return [];
-  }
-}
-
-export async function atualizarProposta(id: string, status: StatusProposta): Promise<void> {
-  try {
-    const docRef = doc(db, PROPOSTAS_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const prop = docSnap.data() as Proposta;
-      const updates: Record<string, unknown> = { status, atualizadaEm: Timestamp.now() };
-      if (status === 'aceita' || status === 'rejeitada') {
-        updates.respostaCompradorEm = Timestamp.now();
-      }
-      await updateDoc(docRef as any, updates as any);
-
-      // Notificar o comprador sobre a resposta
-      const statusStr = status === 'aceita' ? 'aceitou' : status === 'rejeitada' ? 'rejeitou' : status;
-      await criarNotificacao(
-        prop.compradorUid,
-        'info',
-        `Proposta de Compra ${status === 'aceita' ? 'Aceite' : 'Rejeitada'} 💰`,
-        `O vendedor ${statusStr} a sua proposta de ${prop.valor}€ no anúncio: ${prop.anuncioTitulo}`,
-        '/perfil',
-      );
-    }
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar proposta:', err);
-    throw err;
-  }
-}
 
 export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
   try {
@@ -1569,47 +1363,6 @@ export async function getLeadsParceriaAdmin(): Promise<LeadParceria[]> {
 
 const CONFIG_COLLECTION = 'config';
 const PREMIUM_DOC = 'premium';
-
-export async function getPremiumConfig(): Promise<PremiumConfig> {
-  try {
-    const docRef = doc(db, CONFIG_COLLECTION, PREMIUM_DOC);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      return {
-        masterActive: data.masterActive !== false,
-        impulsionamento: data.impulsionamento !== false,
-        oficinas: data.oficinas !== false,
-        leads: data.leads !== false,
-        parceriasActive: data.parceriasActive !== false,
-        financiamento: data.financiamento !== false,
-        seguro: data.seguro !== false,
-        atualizadoEm: data.atualizadoEm,
-        atualizadoPor: data.atualizadoPor,
-      } as PremiumConfig;
-    }
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  } catch (err) {
-    console.error('[DB] Erro ao buscar premium config:', err);
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  }
-}
 
 export async function updatePremiumConfig(
   features: Partial<PremiumConfig>,
@@ -1813,21 +1566,6 @@ export function subscribeBanners(
       onError?.(err);
     },
   );
-}
-
-export async function getBanners(): Promise<Banner[]> {
-  try {
-    const q = query(
-      collection(db, BANNERS_COLLECTION),
-      where('ativo', '==', true),
-      orderBy('ordem', 'asc')
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Banner));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar banners ativos:', err);
-    return [];
-  }
 }
 
 export async function addBanner(banner: BannerInput): Promise<string> {

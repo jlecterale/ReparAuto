@@ -169,7 +169,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center font-bold text-2xl border border-brand-100 shrink-0">
                   {oficina.logoUrl ? (
-                    <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-2xl" />
+                    <img src={oficina.logoUrl} alt={oficina.nome} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-2xl" />
                   ) : (
                     oficina.nome.substring(0, 2).toUpperCase()
                   )}
