@@ -97,6 +97,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClose}
       className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold no-underline text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200"
     >
       <Icon
