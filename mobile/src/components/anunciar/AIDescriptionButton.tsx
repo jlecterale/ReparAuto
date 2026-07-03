@@ -49,7 +49,7 @@ export function AIDescriptionButton({ facts, ready, uid, onGenerated }: AIDescri
         </Text>
       )}
       {exhausted && (
-        <Text className="mt-1 text-xs text-warning-500">
+        <Text className="mt-1 text-xs text-warning-600">
           Limite semanal de gerações com IA atingido.
         </Text>
       )}

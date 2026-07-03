@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { useDamageDetection } from '@/hooks/useDamageDetection';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { colors } from '@/theme/colors';
 import type { Carro, DamageArea, DamageSeverity } from '@/types';
 
 interface DamageAnalysisProps {
@@ -20,11 +21,12 @@ const SEVERITY_LABEL: Record<DamageSeverity, string> = {
   severe: 'Grave',
 };
 
-// warning has only a 500 shade in the mobile theme; accent/danger cover the rest.
+// RN color props can't take a NativeWind class, so pull raw values from the
+// shared `colors` constant (mirrors the web severity palette: warning / secondary / danger).
 const SEVERITY_COLOR: Record<DamageSeverity, string> = {
-  minor: '#d4ae12',
-  moderate: '#db6418',
-  severe: '#e11f28',
+  minor: colors.warning[500],
+  moderate: colors.secondary[500],
+  severe: colors.danger[600],
 };
 
 /**
@@ -53,7 +55,7 @@ export function DamageAnalysis({ carro, isAuthenticated }: DamageAnalysisProps) 
   return (
     <View className="mt-5 rounded-2xl border border-neutral-200 bg-white p-4">
       <View className="mb-1 flex-row items-center gap-2">
-        <Ionicons name="sparkles" size={16} color="#db6418" />
+        <Ionicons name="sparkles" size={16} color={colors.accent} />
         <Text className="text-lg font-bold text-fg-heading">Análise de danos (IA)</Text>
       </View>
       <Text className="mb-3 text-xs text-fg-muted">

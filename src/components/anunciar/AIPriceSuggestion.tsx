@@ -92,7 +92,7 @@ export default function AIPriceSuggestion({ dados, uid, onUsePrice }: AIPriceSug
           )}
           <p className="text-[11px] text-fg-subtle mb-3">
             {suggestion.marketSampleSize > 0
-              ? `Baseado em ${suggestion.marketSampleSize} anúncio${suggestion.marketSampleSize === 1 ? '' : 's'} comparável${suggestion.marketSampleSize === 1 ? '' : 'is'} no RecarGarage.`
+              ? `Baseado em ${suggestion.marketSampleSize} ${suggestion.marketSampleSize === 1 ? 'anúncio comparável' : 'anúncios comparáveis'} no RecarGarage.`
               : 'Sem anúncios comparáveis publicados — estimativa do modelo para o mercado português.'}
           </p>
           <div className="flex items-center justify-between gap-2">

@@ -2,6 +2,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAIPriceSuggestion } from '@/hooks/useAIPriceSuggestion';
 import { formatPreco } from '@/lib/format';
+import { colors } from '@/theme/colors';
 import type { AIPriceSuggestionRequest } from '@/types';
 
 interface AIPriceSuggestionProps {
@@ -34,9 +35,9 @@ export function AIPriceSuggestion({ facts, ready, uid, onUsePrice }: AIPriceSugg
         }`}
       >
         {loading ? (
-          <ActivityIndicator size="small" color="#db6418" />
+          <ActivityIndicator size="small" color={colors.accent} />
         ) : (
-          <Ionicons name="sparkles" size={14} color="#db6418" />
+          <Ionicons name="sparkles" size={14} color={colors.accent} />
         )}
         <Text className="text-sm font-bold text-primary-700">
           {loading ? 'A analisar o mercado…' : 'Sugerir preço com IA'}
@@ -44,7 +45,7 @@ export function AIPriceSuggestion({ facts, ready, uid, onUsePrice }: AIPriceSugg
       </Pressable>
 
       {exhausted && (
-        <Text className="mt-1 text-xs text-warning-500">
+        <Text className="mt-1 text-xs text-warning-600">
           Limite semanal de gerações com IA atingido.
         </Text>
       )}
