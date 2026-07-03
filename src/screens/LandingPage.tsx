@@ -29,6 +29,7 @@ import {
   Target,
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
+import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
 
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -396,7 +397,7 @@ export default function LandingPage() {
                 Explorar Plataforma
               </Link>
               <a
-                href="https://play.google.com/store/apps/details?id=com.recargarage"
+                href={PLAY_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-base font-bold border border-white/20 transition-all hover:-translate-y-0.5"
@@ -405,7 +406,7 @@ export default function LandingPage() {
                 Google Play
               </a>
               <a
-                href="https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533"
+                href={APP_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white text-base font-bold border border-white/20 transition-all hover:-translate-y-0.5"
@@ -790,7 +791,7 @@ export default function LandingPage() {
 
                 {/* Google Play */}
                 <a
-                  href="https://play.google.com/store/apps/details?id=com.recargarage"
+                  href={PLAY_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
@@ -804,7 +805,7 @@ export default function LandingPage() {
 
                 {/* App Store */}
                 <a
-                  href="https://apps.apple.com/pt/app/recargarage-carros-e-pe%C3%A7as/id6784377533"
+                  href={APP_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
