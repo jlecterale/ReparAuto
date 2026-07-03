@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -23,8 +23,12 @@ export function OficinasMapa({ oficinas, onSelect }: OficinasMapaProps) {
   const mapRef = useRef<MapView>(null);
   const [locating, setLocating] = useState(false);
 
-  const comCoords = oficinas.filter(
-    (o) => o.coordenadas?.latitude != null && o.coordenadas?.longitude != null,
+  const comCoords = useMemo(
+    () =>
+      oficinas.filter(
+        (o) => o.coordenadas?.latitude != null && o.coordenadas?.longitude != null,
+      ),
+    [oficinas],
   );
 
   async function irParaMim() {
