@@ -128,13 +128,24 @@ function DamageOverlay({
   summary: string;
 }) {
   const [showBoxes, setShowBoxes] = useState(true);
+  // The model returns box coords as fractions of the FULL photo, so the wrapper
+  // must match the photo's natural aspect ratio — otherwise a cover-crop of a
+  // non-4:3 image (URL photos skip the cropper) would misalign every box.
+  const [aspect, setAspect] = useState(LISTING_PHOTO_ASPECT);
   const hasDamages = damages.length > 0;
 
   return (
     <View>
-      {/* Fractional boxes are positioned as % of this fixed-aspect wrapper. */}
-      <View className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: LISTING_PHOTO_ASPECT }}>
-        <Image source={fotoUrl} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+      <View className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: aspect }}>
+        <Image
+          source={fotoUrl}
+          style={{ width: '100%', height: '100%' }}
+          contentFit="cover"
+          onLoad={(e) => {
+            const { width, height } = e.source ?? {};
+            if (width && height) setAspect(width / height);
+          }}
+        />
         {showBoxes &&
           damages.map((area, i) => (
             <View

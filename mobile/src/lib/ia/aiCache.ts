@@ -48,18 +48,28 @@ export async function getCachedAiResult<T = unknown>(key: string): Promise<T | n
   return key in cache ? (cache[key] as T) : null;
 }
 
-export async function setCachedAiResult(key: string, value: unknown): Promise<void> {
-  const cache = await readCache();
-  delete cache[key];
-  cache[key] = value;
-  // Object insertion order doubles as recency — drop the oldest keys first.
-  const keys = Object.keys(cache);
-  for (let i = 0; i < keys.length - MAX_ENTRIES; i++) {
-    delete cache[keys[i]];
-  }
-  try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
-  } catch {
-    // Storage full/unavailable — cache is best-effort only.
-  }
+// Serialize the read-modify-write so two AI calls resolving at once (e.g.
+// description + price) don't each write back their own snapshot and clobber
+// the other's entry — which would waste a generation on the next identical tap.
+let writeChain: Promise<void> = Promise.resolve();
+
+export function setCachedAiResult(key: string, value: unknown): Promise<void> {
+  writeChain = writeChain.then(async () => {
+    const cache = await readCache();
+    delete cache[key];
+    cache[key] = value;
+    // Object insertion order doubles as recency — drop the oldest keys first.
+    const keys = Object.keys(cache);
+    for (let i = 0; i < keys.length - MAX_ENTRIES; i++) {
+      delete cache[keys[i]];
+    }
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(cache));
+    } catch {
+      // Storage full/unavailable — cache is best-effort only.
+    }
+  });
+  // Never let one failed write reject the shared chain and block later writes.
+  writeChain = writeChain.catch(() => {});
+  return writeChain;
 }
