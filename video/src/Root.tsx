@@ -17,6 +17,7 @@ import { EcosystemReel, ecosystemScenes } from "./reels/EcosystemReel";
 import { Spin360Reel, spin360Scenes } from "./reels/Spin360Reel";
 import { PartsFinderReel, partsFinderScenes } from "./reels/PartsFinderReel";
 import { RepairFlipReel, repairFlipScenes } from "./reels/RepairFlipReel";
+import { AudioListingReel, audioListingScenes } from "./reels/AudioListingReel";
 
 // Six cross-fades join the seven scenes; the length is derived from `theme.ts`.
 const sceneFrames = Object.values(scenes).reduce((a, b) => a + b, 0);
@@ -57,6 +58,7 @@ const REELS: ReadonlyArray<{
   { id: "ReelSpin360", component: Spin360Reel, scenes: spin360Scenes },
   { id: "ReelPartsFinder", component: PartsFinderReel, scenes: partsFinderScenes },
   { id: "ReelRepairFlip", component: RepairFlipReel, scenes: repairFlipScenes },
+  { id: "ReelAudioListing", component: AudioListingReel, scenes: audioListingScenes },
 ];
 
 export const RemotionRoot: React.FC = () => {
