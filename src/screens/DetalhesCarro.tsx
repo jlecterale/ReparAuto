@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
+import { statusAfterOwnerEdit } from '@/lib/listingModeration';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
@@ -84,7 +85,14 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
   }, [id, carro]);
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
-    await updateCarro(id, { ...dados, status: 'pendente' });
+    // Only a photo change re-queues the ad for approval; other edits keep the
+    // listing's current status so an approved ad stays live.
+    const status = statusAfterOwnerEdit(
+      carro?.status ?? 'pendente',
+      carro?.fotos ?? [],
+      (dados.fotos as string[] | undefined) ?? [],
+    );
+    await updateCarro(id, { ...dados, status });
     setEditModalOpen(false);
     const data = await getCarroPorIdDb(id);
     if (data) setCarro(data);

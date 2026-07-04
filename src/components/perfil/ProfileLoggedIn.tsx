@@ -4,6 +4,7 @@ import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Hea
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
+import { statusAfterOwnerEdit } from '@/lib/listingModeration';
 import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
 import { releasePendingFiles } from '@/lib/pendingUploadFiles';
 import type { PecaFormDraft } from '@/components/pecas/PecaForm';
@@ -212,13 +213,25 @@ export default function ProfileLoggedIn() {
   };
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
-    await updateCarro(id, { ...dados, status: 'pendente' });
+    // Only a photo change re-queues the ad for approval; other edits keep the
+    // listing's current status so an approved ad stays live.
+    const status = statusAfterOwnerEdit(
+      editCarro?.status ?? 'pendente',
+      editCarro?.fotos ?? [],
+      (dados.fotos as string[] | undefined) ?? [],
+    );
+    await updateCarro(id, { ...dados, status });
     setEditCarro(null);
     await carregar();
   };
 
   const handleSavePeca = async (id: string, dados: Record<string, unknown>) => {
-    await updatePeca(id, { ...dados, status: 'pendente' });
+    const status = statusAfterOwnerEdit(
+      editPeca?.status ?? 'pendente',
+      editPeca?.foto ? [editPeca.foto] : [],
+      dados.foto ? [dados.foto as string] : [],
+    );
+    await updatePeca(id, { ...dados, status });
     setEditPeca(null);
     await carregar();
   };
