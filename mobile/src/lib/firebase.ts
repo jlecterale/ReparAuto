@@ -14,7 +14,31 @@ import authModule from '@react-native-firebase/auth';
 import firestoreModule from '@react-native-firebase/firestore';
 import storageModule from '@react-native-firebase/storage';
 
-export const analytics = analyticsModule();
+// Analytics must never break app launch (see src/lib/analytics.ts). Unlike the
+// other Firebase modules below, its native init previously ran unguarded at
+// module load — a throw there (before any UI or error boundary exists) is
+// exactly the kind of early crash expo-updates' ON_ERROR_RECOVERY can fail to
+// recover from on a fresh install (no cached update to fall back to), which
+// then force-aborts the app. Fall back to a no-op so a broken native module
+// never takes the whole app down with it.
+const noopAnalytics = {
+  setUserId: async () => {},
+  setUserProperties: async () => {},
+  logScreenView: async () => {},
+  logLogin: async () => {},
+  logSignUp: async () => {},
+  logViewItem: async () => {},
+  logAddToWishlist: async () => {},
+  logEvent: async () => {},
+} as ReturnType<typeof analyticsModule>;
+
+export const analytics = (() => {
+  try {
+    return analyticsModule();
+  } catch {
+    return noopAnalytics;
+  }
+})();
 export const auth = authModule();
 export const db = firestoreModule();
 export const storage = storageModule();
