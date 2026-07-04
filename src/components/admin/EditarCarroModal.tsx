@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { Info } from '@phosphor-icons/react';
 import Modal from '@/components/ui/Modal';
+import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import {
   TIPOS_COMBUSTIVEL,
@@ -255,6 +257,11 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
 
       <div className="mb-4">
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Fotos</label>
+        {carro.status === 'aprovado' && (
+          <Alert tipo="info" icone={<Info weight="fill" />} titulo="Alterar as fotos exige nova aprovação" className="mb-3">
+            Adicionar ou substituir fotos volta a colocar o anúncio em aprovação. Remover fotos ou alterar outros dados mantém-no publicado.
+          </Alert>
+        )}
         <FotosEditor
           fotos={fotos}
           setFotos={setFotos}

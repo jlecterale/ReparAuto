@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { Info } from '@phosphor-icons/react';
 import Modal from '@/components/ui/Modal';
+import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import { CATEGORIAS_PECAS } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
@@ -193,6 +195,11 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
 
         <div>
           <label className="block text-xs font-bold text-fg-subtle mb-2">Foto</label>
+          {peca.status === 'aprovado' && (
+            <Alert tipo="info" icone={<Info weight="fill" />} titulo="Alterar a foto exige nova aprovação" className="mb-3">
+              Adicionar ou substituir a foto volta a colocar o anúncio em aprovação. Remover a foto ou alterar outros dados mantém-no publicado.
+            </Alert>
+          )}
           <FotosEditor fotos={fotos} setFotos={setFotos} max={1} filesRef={pendingFilesRef} mostrarEmoji={false} />
         </div>
 
