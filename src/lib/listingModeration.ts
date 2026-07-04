@@ -4,37 +4,38 @@ import type { StatusAnuncio } from '@/types/carro';
  * Moderation policy for owner edits of a listing (car or part).
  *
  * Photos are the moderation-sensitive part of a listing (inappropriate or
- * misleading images are what admins police), so only a photo change re-queues
- * the ad for approval. Any other edit — price, description, specs — keeps the
- * current status, so an already-approved ad stays live instead of disappearing
- * from the marketplace until an admin re-approves it.
+ * misleading images are what admins police), so only a *new* image re-queues
+ * the ad for approval. Adding or replacing a photo brings in unreviewed content;
+ * removing a photo, reordering, or editing price/description/specs does not, so
+ * an already-approved ad stays live instead of disappearing until re-approval.
  */
 
 type Photo = string | null | undefined;
 
 /**
- * True when the set of photos differs (a photo was added, removed, or
- * replaced). Comparison is order-independent — reordering the same approved
- * images introduces no new content to moderate — and empty entries are ignored.
+ * True when the edit introduces a photo that wasn't there before — a photo was
+ * added or an existing one replaced. Removing photos or reordering them does not
+ * count: no new image means nothing new to moderate. Empty entries are ignored.
  */
-export function listingPhotosChanged(previous: readonly Photo[], next: readonly Photo[]): boolean {
+export function listingPhotosAddedOrReplaced(
+  previous: readonly Photo[],
+  next: readonly Photo[],
+): boolean {
   const before = new Set(previous.filter(Boolean));
-  const after = new Set(next.filter(Boolean));
-  if (before.size !== after.size) return true;
-  for (const photo of after) {
-    if (!before.has(photo)) return true;
+  for (const photo of next) {
+    if (photo && !before.has(photo)) return true;
   }
   return false;
 }
 
 /**
- * Status to persist when an owner saves an edit: `'pendente'` (re-review) if the
- * photos changed, otherwise the listing's current status unchanged.
+ * Status to persist when an owner saves an edit: `'pendente'` (re-review) if a
+ * photo was added or replaced, otherwise the listing's current status unchanged.
  */
 export function statusAfterOwnerEdit(
   currentStatus: StatusAnuncio,
   previousPhotos: readonly Photo[],
   nextPhotos: readonly Photo[],
 ): StatusAnuncio {
-  return listingPhotosChanged(previousPhotos, nextPhotos) ? 'pendente' : currentStatus;
+  return listingPhotosAddedOrReplaced(previousPhotos, nextPhotos) ? 'pendente' : currentStatus;
 }
