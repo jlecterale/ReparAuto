@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importação de Anúncios do Standvirtual — ReparAuto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: { 50:'#fff7ed',100:'#ffedd5',500:'#f97316',600:'#ea580c',700:'#c2410c',900:'#7c2d12' },
+            dark: { 800:'#1e293b',900:'#0f172a',950:'#020617' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.07) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(249, 115, 22, 0.06) 0%, transparent 42%);
+    }
+    h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-sky { box-shadow: 0 0 22px rgba(56, 189, 248, 0.15); }
+    .glow-amber { box-shadow: 0 0 20px rgba(250, 204, 21, 0.15); }
+    code { font-size: 0.82em; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-sky relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🔌 Investigação — Ferramenta só para Perfis Profissionais
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-sky-400 via-orange-200 to-orange-400 bg-clip-text text-transparent">
+          Importar Anúncios do Standvirtual
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Um stand liga a sua conta (ou cola o URL do anúncio) e o RecarGarage importa os <strong>seus próprios</strong> anúncios do Standvirtual — marca, modelo, ficha técnica, preço, descrição e fotos — como rascunhos pendentes, prontos a rever e publicar. Ataca o maior travão à aquisição de stands: o custo de reescrever tudo à mão.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-sky-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Nunca republica no Standvirtual</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-sky-400">API oficial</span>
+        <span class="text-xs text-slate-400">REST do Grupo OLX/Standvirtual — <strong>gratuita</strong>, mantida (v2.0.0)</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">3 vias</span>
+        <span class="text-xs text-slate-400">API oficial · <code>__NEXT_DATA__</code> por URL · integradores</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">Rascunho</span>
+        <span class="text-xs text-slate-400">Importa como <code>pendente</code>; passa pela moderação normal</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">~5-7 d</span>
+        <span class="text-xs text-slate-400">MVP (paste-URL); ~12-18 d total em 2 ondas</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">01.</span> O que resolve &amp; porquê ALTA prioridade
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            Um stand com 30-80 viaturas já as tem publicadas no Standvirtual (o portal dominante em PT), com fotos tratadas e ficha técnica preenchida. Pedir-lhe que reescreva tudo, viatura a viatura, no fluxo de 4 passos de <code>app/anunciar</code> é a barreira que o faz desistir antes de experimentar. Esta funcionalidade elimina esse atrito. O campo <code class="text-sky-400">tipoConta: 'particular' | 'profissional'</code> já existe em <code>src/types/usuario.ts</code> — a ferramenta é exclusiva de contas profissionais, alinhada com os planos 07 e 17.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">📈</span>
+              <h3 class="font-bold text-sky-400 text-sm">Aquisição de oferta</h3>
+              <p class="text-xs text-slate-400 mt-1">Importar um stand médio adiciona 30-80 anúncios de qualidade num clique — o inverso de crescer anúncio a anúncio.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">✨</span>
+              <h3 class="font-bold text-orange-400 text-sm">Diferenciador</h3>
+              <p class="text-xs text-slate-400 mt-1">Nenhum portal PT oferece isto como funcionalidade self-serve nativa; só uma ferramenta de gestão de stands (Auto Connect) o faz, como plugin pago.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🛡️</span>
+              <h3 class="font-bold text-emerald-400 text-sm">Risco técnico baixo</h3>
+              <p class="text-xs text-slate-400 mt-1">Existe API oficial documentada que devolve exatamente os dados necessários. Não é um projeto de scraping frágil.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 - As três vias -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">02.</span> As três vias de importação
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Recomendação: construir para a <strong class="text-sky-300">Via A (API oficial)</strong>; usar a <strong class="text-orange-300">Via B (paste-URL)</strong> como conveniência de baixo volume; a <strong class="text-emerald-300">Via C</strong> é uma jogada de negócio paralela.</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[560px]">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3">Critério</th>
+                  <th class="py-2 pr-3 text-sky-300">A — API oficial</th>
+                  <th class="py-2 pr-3 text-orange-300">B — <code>__NEXT_DATA__</code></th>
+                  <th class="py-2 text-emerald-300">C — Integrador</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Legalidade / ToS</td><td class="py-2 pr-3">✅ Canal sancionado</td><td class="py-2 pr-3">⚠️ Tolerado em baixo volume</td><td class="py-2">✅ Via parceiro</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Cobertura de dados</td><td class="py-2 pr-3">✅ Completa + taxonomia</td><td class="py-2 pr-3">✅ Completa (menos telefone)</td><td class="py-2">Depende do parceiro</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Lote (stand inteiro)</td><td class="py-2 pr-3">✅ Nativo, paginado</td><td class="py-2 pr-3">⚠️ Sujeito a anti-bot</td><td class="py-2">✅ Nativo</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Custódia de credenciais</td><td class="py-2 pr-3">⚠️ Password do stand / partner keys</td><td class="py-2 pr-3">✅ Nenhuma</td><td class="py-2">✅ Nenhuma</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Esforço de engenharia</td><td class="py-2 pr-3">Médio (OAuth + mapa)</td><td class="py-2 pr-3">Baixo (parser + mapa)</td><td class="py-2">Baixo + negócio</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Dependência externa</td><td class="py-2 pr-3">Aprovação OLX (grátis)</td><td class="py-2 pr-3">Anti-bot DataDome</td><td class="py-2">Acordos comerciais</td></tr>
+                <tr><td class="py-2 pr-3 font-semibold text-white">Fragilidade</td><td class="py-2 pr-3">Baixa (contrato/v2.0.0)</td><td class="py-2 pr-3">Média (blob muda)</td><td class="py-2">Baixa</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 03 - API oficial -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">03.</span> Via A — API oficial (recomendada)
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            API REST de primeira parte, <strong>documentada e ativamente mantida</strong> (a referência <code>api_data.json</code> foi regenerada em 2026-07-03, versão 2.0.0). Mesma base FixeAds/OLX do Otomoto. Verificada por <em>probes</em> live: <code>GET /account/adverts</code> devolveu <code>401 invalid_token</code> — existe, só falta credencial.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-sky-400 text-sm mb-1">Base &amp; docs</h3>
+              <p class="text-xs text-slate-400"><code>https://www.standvirtual.com/api/open</code><br>Ref: <code>/api/doc/</code> · Registo: <code>developer.olxgroup.com/register?market=motors</code> · <code>api@standvirtual.com</code></p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-emerald-400 text-sm mb-1">Custo &amp; pré-requisito</h3>
+              <p class="text-xs text-slate-400"><strong>A API é gratuita</strong> (o stand paga as taxas normais do portal). Aprovação discricionária; requer conta profissional do lado do stand.</p>
+            </div>
+          </div>
+          <h3 class="font-bold text-white text-sm mb-2">Autenticação — OAuth2 (<code>POST /oauth/token/</code>)</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-1 list-disc list-inside mb-4">
+            <li><strong class="text-slate-200"><code>password</code> grant</strong> — <code>client_id</code>+<code>client_secret</code> (RecarGarage) + <code>username</code>/<code>password</code> (stand). Age em nome do stand — o nosso caso de uso.</li>
+            <li><strong class="text-slate-200"><code>partner</code> grant</strong> — <code>partner_code</code>/<code>partner_secret</code>. Sem passwords de stands; alvo desejável a médio prazo.</li>
+            <li>Token de 12 h (<code>expires_in: 43200</code>) + <code>refresh_token</code>; header <code>User-Agent</code> <strong>obrigatório</strong>.</li>
+          </ul>
+          <h3 class="font-bold text-white text-sm mb-2">Endpoints de leitura (o caminho de importação)</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[520px]">
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">GET /account/adverts</td><td class="py-2">Lista todos os anúncios do stand, paginado (<code>total_pages</code>, <code>is_last_page</code>).</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">GET /account/adverts/:id</td><td class="py-2">Anúncio completo: <code>params</code> (make, model, fuel_type, mileage, power, price…) + <code>photos</code> em CDN (1080×720).</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">GET /account/adverts/:id/stats</td><td class="py-2">Estatísticas de visualizações.</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">GET /imageCollections/:id</td><td class="py-2">Coleções de imagens.</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-sky-400">GET /categories · /makes · /models</td><td class="py-2">Taxonomia para traduzir slugs → enums do RecarGarage; <code>/regions</code>·<code>/cities</code> para localização.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-orange-300">Via B (fallback leve):</strong> o site é Next.js SSR — cada anúncio traz o objeto completo em <code>__NEXT_DATA__.props.pageProps.advert</code> (incl. <code>parametersDict</code> com VIN e ~60 flags de equipamento). Serve para «cola o URL → formulário pré-preenchido», sem credenciais. Telefone vem tokenizado; anti-bot DataDome é passivo em baixo volume. Manter <strong>iniciado pelo utilizador, um anúncio de cada vez</strong>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 04 - Mapeamento -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">04.</span> Mapeamento de campos (Standvirtual → <code>Carro</code>)
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Núcleo testável (TDD). Vive em <code>src/lib/importers/standvirtual.map.ts</code> como função pura. Valor não mapeável não bloqueia — o campo fica vazio e é sinalizado ao stand («precisa de revisão»).</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[520px]">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3">Campo RecarGarage</th>
+                  <th class="py-2 pr-3">Origem (<code>params.*</code>)</th>
+                  <th class="py-2">Nota</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">marca / modelo</td><td class="py-2 pr-3"><code>make</code> / <code>model</code></td><td class="py-2">Traduzir slug→label via <code>/makes</code>·<code>/models</code>; casar com <code>marcas-modelos.json</code></td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">anoFabricacao / km</td><td class="py-2 pr-3"><code>first_registration_year</code> / <code>mileage</code></td><td class="py-2">Inteiros</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">combustivel</td><td class="py-2 pr-3"><code>fuel_type</code></td><td class="py-2"><strong>Tabela de tradução</strong> → enum <code>Combustivel</code></td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">cambio</td><td class="py-2 pr-3"><code>gearbox_type</code></td><td class="py-2"><code>manual</code>→Manual, <code>automatic</code>→Automático</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">cor / portas / seats</td><td class="py-2 pr-3"><code>color</code>/<code>number_doors</code>/<code>nr_seats</code></td><td class="py-2">Traduzir cor para PT</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">bodyType / power / displacement</td><td class="py-2 pr-3"><code>body_type</code>/<code>power</code>/<code>engine_capacity</code></td><td class="py-2">Enum <code>BodyType</code>; cv; cm³</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">preco / descricao</td><td class="py-2 pr-3"><code>price.value</code> / <code>description</code></td><td class="py-2">EUR; sanitizar HTML/links</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">fotos</td><td class="py-2 pr-3"><code>photos[].url</code></td><td class="py-2">Descarregar + <strong>re-hospedar no Storage</strong></td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">vendedorTelefone / Email</td><td class="py-2 pr-3">— (perfil RecarGarage)</td><td class="py-2"><strong>Não</strong> vem do SV (telefone tokenizado)</td></tr>
+                <tr><td class="py-2 pr-3 font-semibold text-white">status</td><td class="py-2 pr-3">— (forçado)</td><td class="py-2">Sempre <code class="text-emerald-400">pendente</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-sky-300">Novos campos em <code>Carro</code> (rastreabilidade, opcionais/não-breaking):</strong> <code>origem?: 'manual'|'standvirtual'</code>, <code>origemId?</code>, <code>origemUrl?</code>, <code>importadoEm?: Timestamp</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- 05 - Arquitetura -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">05.</span> Arquitetura &amp; custódia de credenciais
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            O fetch <strong>tem de ser server-side</strong> (CORS, custódia do <code>client_secret</code>, <code>User-Agent</code> obrigatório). O projeto ainda não tem <code>app/api/</code> — esta funcionalidade introduz as <strong>primeiras Route Handlers</strong> do App Router.
+          </p>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mb-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
+            app/api/import/standvirtual/<br>
+            &nbsp;├── connect/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST — password grant → refresh_token cifrado</span><br>
+            &nbsp;├── adverts/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># GET — lista paginada dos anúncios do stand</span><br>
+            &nbsp;├── advert/[id]/route.ts <span class="text-slate-500"># GET — 1 anúncio já mapeado (preview)</span><br>
+            &nbsp;└── import/route.ts&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST — cria cars (pendente) + copia fotos</span><br>
+            src/lib/importers/ standvirtual.client.ts · .nextdata.ts · <span class="text-sky-400">.map.ts (TDD)</span> · photos.ts
+          </div>
+          <div class="space-y-3 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">1</div>
+              <div><h4 class="font-bold text-white text-sm">Nunca guardar a password</h4><p class="text-xs text-slate-400 mt-1">Trocar por token → guardar só o <code>refresh_token</code> cifrado (KMS/segredo) num doc server-only <code>integrations/{uid}</code>, descartar a password. MVP pode usar sessão efémera (não persiste nada).</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">2</div>
+              <div><h4 class="font-bold text-white text-sm">Regras fechadas ao cliente</h4><p class="text-xs text-slate-400 mt-1"><code>match /integrations/{uid} { allow read, write: if false; }</code> — só acessível via Admin SDK. Segredos <code>STANDVIRTUAL_CLIENT_ID/SECRET</code> nunca em <code>NEXT_PUBLIC_</code>.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">3</div>
+              <div><h4 class="font-bold text-white text-sm">Fotos re-hospedadas</h4><p class="text-xs text-slate-400 mt-1">Descarregar do CDN OLX e re-hospedar no Firebase Storage (o <code>next/image</code> só permite <code>firebasestorage</code>/Google em <code>remotePatterns</code>). Reutiliza <code>addCarro</code> e <code>uploadFileToStorage</code> — sem duplicar lógica.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 06 - Legal -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">06.</span> Legal &amp; confiança
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            A distinção-chave: um stand a importar os <strong>seus próprios</strong> anúncios, por sua iniciativa e consentimento, é material e eticamente distinto de raspar dados de concorrentes. É esse o padrão a construir — nunca oferecer «importa os anúncios do stand X».
+          </p>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-slate-200">ToS Standvirtual (Prof., Mai 2025):</strong> restringe acesso automatizado e extração da base de dados. Rever o texto integral antes de construir.</li>
+            <li><strong class="text-slate-200">Ryanair v PR Aviation (C-30/14):</strong> os ToS podem proibir scraping por contrato → manter iniciado pelo stand, autenticado, baixo volume.</li>
+            <li><strong class="text-slate-200">RGPD:</strong> telefone é dado pessoal (tokenizado de propósito). Não reconstruir — usar o número do perfil RecarGarage.</li>
+            <li><strong class="text-slate-200">Direitos de imagem (maior risco):</strong> <em>CarGurus v. Trader</em> — fotos têm copyright do autor. Importar só com atestação do stand; guardar trilho de auditoria (URL + consentimento + timestamp); oferecer «importar só dados».</li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Benchmark -->
+        <section class="glass rounded-2xl p-6 glow-amber relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🏁 Benchmark</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-emerald-300">Auto Connect (PT)</strong> — já importa diretamente do Standvirtual. Precedente direto.</li>
+            <li><strong class="text-slate-300">MyStand · 4Stand · OfficeGest · BETACODE</strong> — hub-and-spoke: empurram stock para os portais via API.</li>
+            <li><strong class="text-slate-300">OLX Brasil</strong> — Autoupload API pública (JSON, OAuth2, fotos obrigatórias máx. 20).</li>
+            <li><strong class="text-slate-300">mobile.de / AutoScout24 / CarGurus</strong> — feeds CSV/XML padrão; ingestão tolerante.</li>
+            <li><strong class="text-slate-300">O próprio Standvirtual</strong> — prefill por matrícula/VIN + IA de criação em massa.</li>
+          </ul>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed"><strong>Aviso (Facebook):</strong> descontinuou os anúncios grátis de viaturas — canais de importação grátis acabam monetizados ou fechados.</p>
+        </section>
+
+        <!-- Escopo -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📦 Escopo de Mudanças</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Reaproveita</span><span class="text-slate-400"><code>addCarro</code> · Storage · rascunhos · moderação</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:55%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Adapta</span><span class="text-slate-400"><code>Carro</code> (origem) · dashboard prof. · <code>anunciar</code></span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:25%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-sky-400 font-bold">Novo</span><span class="text-slate-400"><code>app/api/</code> · cliente OAuth · mapa · regras</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-sky-500" style="width:20%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Riscos -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Casos de Borda</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Duplicados:</strong> detetar por <code>origemId</code> — atualizar ou saltar (dor nº 1 dos integradores).</li>
+            <li><strong>Valor não mapeável:</strong> não bloquear — importar vazio e sinalizar revisão.</li>
+            <li><strong>Foto falha download:</strong> importar na mesma, marcar em falta, permitir re-upload.</li>
+            <li><strong>Token expira a meio:</strong> refrescar e continuar; se falhar, parar com estado parcial claro.</li>
+            <li><strong>DataDome desafia (Via B):</strong> degradar com graça → empurrar para a Via A.</li>
+            <li><strong>Só <code>active</code> por defeito:</strong> não importar carros já vendidos sem opt-in.</li>
+          </ul>
+        </section>
+
+        <!-- Decisões em aberto -->
+        <section class="glass rounded-2xl p-6 bg-rose-500/5 border-rose-500/20">
+          <h3 class="text-rose-400 font-bold text-base flex items-center gap-2 mb-2">🔓 Decisões em Aberto</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Credenciais API</strong> — registar no Grupo OLX (grátis, discricionária). <strong>Bloqueia a Via A</strong>; contornável começando pela Via B.</li>
+            <li><strong><code>password</code> vs <code>partner</code> grant</strong> — MVP com sessão efémera; migrar para partner (sem passwords).</li>
+            <li><strong>Fotos:</strong> re-hospedar (recomendado) vs URLs externos.</li>
+            <li><strong>ToS Mai 2025</strong> — validação jurídica antes do lançamento.</li>
+          </ul>
+        </section>
+
+        <!-- Ondas -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Execução em 2 Ondas</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li><strong class="text-slate-200">Onda 1 (~5-7 d):</strong> paste-URL de 1 anúncio (Via B) + campos de origem, TDD-first, sem credenciais. Valor imediato.</li>
+            <li><strong class="text-slate-200">Onda 2 (~7-11 d):</strong> ligação de conta + import em lote via API oficial (Via A), quando as credenciais forem aprovadas.</li>
+            <li><strong class="text-slate-200">Paralelo:</strong> Via C (parceria com integradores) como jogada de negócio para stock multi-stand.</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 24 — Importação de Anúncios do Standvirtual 🔌 • Verificação: <code>npm test</code> · <code>tsc --noEmit</code> · <code>build</code>
+    </footer>
+  </div>
+</body>
+</html>
