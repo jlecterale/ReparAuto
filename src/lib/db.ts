@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
   setDoc,
   writeBatch,
   Timestamp,
@@ -465,6 +466,12 @@ export async function criarNotificacao(
   }
 }
 
+// Notifications accumulate forever, so the stream is capped to the most
+// recent page instead of downloading the user's whole history on every
+// session. Requires the (uid ASC, dataCriacao DESC) composite index —
+// deploy indexes before shipping this code.
+const NOTIFICATIONS_PAGE_SIZE = 50;
+
 export function subscribeNotificacoes(
   uid: string,
   onData: (notificacoes: Notificacao[]) => void,
@@ -473,6 +480,8 @@ export function subscribeNotificacoes(
   const q = query(
     collection(db, NOTIFICACOES_COLLECTION),
     where('uid', '==', uid),
+    orderBy('dataCriacao', 'desc'),
+    limit(NOTIFICATIONS_PAGE_SIZE),
   );
   return onSnapshot(
     q,
@@ -549,6 +558,9 @@ export async function addReview(data: ReviewInput): Promise<Review> {
   }
 }
 
+// Review queries filter status server-side with equality-only constraints
+// (served by merging single-field indexes — no composite index needed) and
+// sort in memory, so pending/rejected reviews never come down the wire.
 export function subscribeReviews(
   vendedorEmail: string,
   onData: (reviews: Review[]) => void,
@@ -557,13 +569,13 @@ export function subscribeReviews(
   const q = query(
     collection(db, REVIEWS_COLLECTION),
     where('vendedorEmail', '==', vendedorEmail),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações:', err);
@@ -581,13 +593,13 @@ export function subscribeReviewsOficina(
     collection(db, REVIEWS_COLLECTION),
     where('anuncioId', '==', oficinaId),
     where('anuncioTipo', '==', 'oficina'),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações de oficina:', err);
@@ -631,11 +643,11 @@ async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
     const q = query(
       collection(db, REVIEWS_COLLECTION),
       where('vendedorEmail', '==', vendedorEmail),
-      orderBy('dataCriacao', 'desc'),
+      where('status', '==', 'aprovado'),
     );
     const snap = await getDocs(q);
     const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-    return all.filter((r) => r.status === 'aprovado');
+    return sortByDataCriacaoDesc(all);
   } catch (err) {
     console.error('[DB] Erro ao buscar avaliações:', err);
     return [];
