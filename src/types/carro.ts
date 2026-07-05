@@ -20,6 +20,7 @@ export type FiltroAtivo = 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer' | 
 export type SortOrdem = 'crescente' | 'decrescente' | null;
 export type FiltroChip = { label: string; value: string };
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
+export type OrigemAnuncio = 'manual' | 'standvirtual';
 
 export interface Carro {
   id: string;
@@ -76,6 +77,13 @@ export interface Carro {
   visualizacoes?: number;
   contagemMensagens?: number;
   contagemFavoritos?: number;
+  /** Where the listing came from (plan 24). Absent means created manually. */
+  origem?: OrigemAnuncio;
+  /** Source advert id (the URL ID token) — duplicate-import detection key. */
+  origemId?: string;
+  /** Canonical source advert URL (audit trail). */
+  origemUrl?: string;
+  importadoEm?: Timestamp;
 }
 
 export type CarroInput = Omit<Carro, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };
