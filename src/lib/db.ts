@@ -15,6 +15,7 @@ import {
   onSnapshot,
   increment,
   type DocumentData,
+  type DocumentReference,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
@@ -1256,71 +1257,42 @@ export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
 // hold documents, so GDPR cleanup below keeps deleting them.
 const PROPOSTAS_COLLECTION = 'propostas';
 
+// Firestore batches cap at 500 operations.
+const DELETE_BATCH_LIMIT = 500;
+
 export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
   try {
-    // 1. Eliminar anúncios de carros
-    const qCars = query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid));
-    const snapCars = await getDocs(qCars);
-    for (const docSnap of snapCars.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    // Everything the user owns: listings, propostas (as buyer or seller),
+    // notifications, purchase intents, identity verifications, reviews
+    // authored, and chat messages they participate in.
+    const ownershipQueries = [
+      query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid)),
+      query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, INTENCOES_COLLECTION), where('userId', '==', uid)),
+      query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid)),
+      query(collection(db, 'messages'), where('participants', 'array-contains', uid)),
+    ];
+    const snaps = await Promise.all(ownershipQueries.map((q) => getDocs(q)));
 
-    // 2. Eliminar anúncios de peças
-    const qParts = query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid));
-    const snapParts = await getDocs(qParts);
-    for (const docSnap of snapParts.docs) {
-      await deleteDoc(docSnap.ref);
+    // Dedupe by path — the two propostas queries can match the same doc, and
+    // a batch must not touch a document twice.
+    const refsByPath = new Map<string, DocumentReference>();
+    for (const snap of snaps) {
+      for (const docSnap of snap.docs) refsByPath.set(docSnap.ref.path, docSnap.ref);
     }
+    const profileRef = doc(db, USERS_COLLECTION, uid);
+    refsByPath.set(profileRef.path, profileRef);
 
-    // 3. Eliminar propostas (onde o utilizador é comprador OU vendedor)
-    const qPropComp = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid));
-    const snapPropComp = await getDocs(qPropComp);
-    for (const docSnap of snapPropComp.docs) {
-      await deleteDoc(docSnap.ref);
+    const refs = Array.from(refsByPath.values());
+    for (let i = 0; i < refs.length; i += DELETE_BATCH_LIMIT) {
+      const batch = writeBatch(db);
+      for (const ref of refs.slice(i, i + DELETE_BATCH_LIMIT)) batch.delete(ref);
+      await batch.commit();
     }
-    const qPropVend = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid));
-    const snapPropVend = await getDocs(qPropVend);
-    for (const docSnap of snapPropVend.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 4. Eliminar notificações do utilizador
-    const qNotif = query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid));
-    const snapNotif = await getDocs(qNotif);
-    for (const docSnap of snapNotif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 5. Eliminar intenções de compra do utilizador
-    const qInten = query(collection(db, INTENCOES_COLLECTION), where('uid', '==', uid));
-    const snapInten = await getDocs(qInten);
-    for (const docSnap of snapInten.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 6. Eliminar verificação de identidade
-    const qVerif = query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid));
-    const snapVerif = await getDocs(qVerif);
-    for (const docSnap of snapVerif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 7. Eliminar reviews escritas pelo utilizador
-    const qRev = query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid));
-    const snapRev = await getDocs(qRev);
-    for (const docSnap of snapRev.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 8. Eliminar mensagens de chats do utilizador
-    const qMessages = query(collection(db, 'messages'), where('participants', 'array-contains', uid));
-    const snapMessages = await getDocs(qMessages);
-    for (const docSnap of snapMessages.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 9. Eliminar perfil do utilizador
-    await deleteDoc(doc(db, USERS_COLLECTION, uid));
   } catch (err) {
     console.error('[DB] Erro ao eliminar dados do utilizador:', err);
     throw err;
