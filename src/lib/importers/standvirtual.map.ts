@@ -6,8 +6,10 @@
  */
 
 import marcasModelos from '@/data/marcas-modelos.json';
-import { CONCELHOS, EQUIPAMENTOS_CARRO, TIPOS_CARROCERIA } from '@/lib/constants';
-import { DISTRITOS, getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+// listingOptions/geo (not constants.ts) so the server routes can import this
+// module without dragging icon components into the route bundle.
+import { EQUIPAMENTOS_CARRO, TIPOS_CARROCERIA } from '@/lib/listingOptions';
+import { DISTRITOS, getAllConcelhos, getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
 import type { NormalizedAdvert } from '@/lib/importers/standvirtual.nextdata';
 import type { CarroFormData } from '@/types/carro';
 
@@ -139,6 +141,7 @@ interface MarcaEntry {
 }
 
 const CATALOG = marcasModelos as MarcaEntry[];
+const CONCELHOS = getAllConcelhos();
 
 function decodeEntities(text: string): string {
   return text

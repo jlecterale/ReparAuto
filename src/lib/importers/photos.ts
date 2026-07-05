@@ -1,7 +1,7 @@
 import 'server-only';
 import { randomUUID } from 'crypto';
 import { getAdminBucket } from '@/lib/firebase.admin';
-import { MAX_FOTOS_CARRO, MAX_FOTO_SIZE_BYTES } from '@/lib/constants';
+import { MAX_FOTOS_CARRO, MAX_FOTO_SIZE_BYTES } from '@/lib/listingOptions';
 import { isAllowedPhotoUrl } from '@/lib/importers/photoUrl';
 
 const DOWNLOAD_TIMEOUT_MS = 20_000;
