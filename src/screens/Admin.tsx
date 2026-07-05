@@ -32,6 +32,7 @@ import {
   type PlanInfo,
   type AdminDashboardStats,
 } from '@/lib/db';
+import { pickChangedFields } from '@/lib/changedFields';
 import Button from '@/components/ui/Button';
 import UserTable from '@/components/admin/UserTable';
 import ListingsTable from '@/components/admin/ListingsTable';
@@ -229,8 +230,12 @@ export default function Admin() {
 
   const handleUpdateCarro = async (id: string, dados: Record<string, unknown>) => {
     try {
-      await updateCarro(id, dados);
-      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, ...dados } as Carro : c)));
+      const original = carros.find((c) => c.id === id);
+      const changed = original ? pickChangedFields(original, dados) : dados;
+      if (Object.keys(changed).length > 0) {
+        await updateCarro(id, changed);
+      }
+      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, ...changed } as Carro : c)));
       toast?.sucesso('Carro atualizado.');
     } catch {
       toast?.erro('Erro ao atualizar carro.');
@@ -239,8 +244,12 @@ export default function Admin() {
 
   const handleUpdatePeca = async (id: string, dados: Record<string, unknown>) => {
     try {
-      await updatePeca(id, dados);
-      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, ...dados } as Peca : p)));
+      const original = pecas.find((p) => p.id === id);
+      const changed = original ? pickChangedFields(original, dados) : dados;
+      if (Object.keys(changed).length > 0) {
+        await updatePeca(id, changed);
+      }
+      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, ...changed } as Peca : p)));
       toast?.sucesso('Peça atualizada.');
     } catch {
       toast?.erro('Erro ao atualizar peça.');
