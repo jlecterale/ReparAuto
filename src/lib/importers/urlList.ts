@@ -66,6 +66,55 @@ export function validateStandvirtualUrl(input: string): ParsedImportUrl {
   };
 }
 
+export interface ParsedInventoryUrl {
+  raw: string;
+  valid: boolean;
+  reason?: string;
+  /** Canonical https://<slug>.standvirtual.com/inventory URL. */
+  normalizedUrl?: string;
+  /** The dealer's subdomain slug (e.g. "nicolacar"). */
+  standSlug?: string;
+}
+
+// One label + the standvirtual.com apex — dealer pages live on subdomains.
+const STAND_SLUG_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
+
+/**
+ * Validates a dealer stand-page URL ("<slug>.standvirtual.com"), the source
+ * for whole-inventory discovery. Any path is tolerated (users paste the stand
+ * homepage as often as /inventory) and normalized to the inventory page.
+ */
+export function validateStandvirtualInventoryUrl(input: string): ParsedInventoryUrl {
+  const raw = input.trim();
+  const invalid = (reason: string): ParsedInventoryUrl => ({ raw, valid: false, reason });
+  if (!raw) return invalid('URL vazio.');
+
+  const withProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+  let url: URL;
+  try {
+    url = new URL(withProtocol);
+  } catch {
+    return invalid('Não é um URL válido.');
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    return invalid('Não é um URL válido.');
+  }
+  const host = url.hostname.toLowerCase();
+  if (!host.endsWith('.standvirtual.com')) {
+    return invalid('O URL não é a página de um stand no Standvirtual.');
+  }
+  const slug = host.slice(0, -'.standvirtual.com'.length);
+  if (slug === 'www' || !STAND_SLUG_PATTERN.test(slug)) {
+    return invalid('Use o endereço do seu stand (ex.: omeustand.standvirtual.com).');
+  }
+  return {
+    raw,
+    valid: true,
+    standSlug: slug,
+    normalizedUrl: `https://${slug}.standvirtual.com/inventory`,
+  };
+}
+
 /**
  * Pulls URL-looking tokens out of free text — pasted lists (newline / comma /
  * space separated) and .txt/.csv file contents alike. Tolerant by design:

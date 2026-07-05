@@ -100,6 +100,58 @@ function normalizeLocation(seller: UnknownRecord | null): NormalizedAdvertLocati
   };
 }
 
+export interface InventoryPage {
+  /** Canonical advert URLs listed on this inventory page. */
+  adUrls: string[];
+  /** Total adverts the stand has published (all pages). */
+  total: number | null;
+  /** Page size Standvirtual used (drives pagination). */
+  pageSize: number | null;
+}
+
+/**
+ * Dealer /inventory pages keep their ads in a urql GraphQL cache
+ * (props.pageProps.urqlState), where each entry's `data` is a JSON *string*;
+ * the one that matters carries `publishedAds { pageInfo, total, ads[].url }`.
+ */
+export function normalizeInventoryPage(nextData: unknown): InventoryPage | null {
+  const props = asRecord(asRecord(nextData)?.props);
+  const urqlState = asRecord(asRecord(props?.pageProps)?.urqlState);
+  if (!urqlState) return null;
+
+  for (const entry of Object.values(urqlState)) {
+    const rawData = asRecord(entry)?.data;
+    if (typeof rawData !== 'string') continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(rawData);
+    } catch {
+      continue;
+    }
+    const publishedAds = asRecord(asRecord(parsed)?.publishedAds);
+    if (!publishedAds) continue;
+
+    const adUrls = (Array.isArray(publishedAds.ads) ? publishedAds.ads : [])
+      .map((ad) => asString(asRecord(ad)?.url))
+      .filter((url): url is string => url !== undefined);
+    const total = Number(publishedAds.total);
+    const pageSize = Number(asRecord(publishedAds.pageInfo)?.limit);
+    return {
+      adUrls,
+      total: Number.isFinite(total) ? total : null,
+      pageSize: Number.isFinite(pageSize) && pageSize > 0 ? pageSize : null,
+    };
+  }
+  return null;
+}
+
+const ADVERT_URL_RE = /https:\/\/www\.standvirtual\.com\/carros\/anuncio\/[a-z0-9-]+-ID[A-Za-z0-9]+\.html/g;
+
+/** Fallback discovery: scrape advert links out of raw HTML, deduplicated. */
+export function extractAdvertUrlsFromHtml(html: string): string[] {
+  return [...new Set(html.match(ADVERT_URL_RE) ?? [])];
+}
+
 export function normalizeStandvirtualAdvert(
   nextData: unknown,
   requestedUrl: string,
