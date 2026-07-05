@@ -19,7 +19,7 @@ import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import { VideoPreview } from '@/components/ui/VideoPreview';
-import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { LISTING_PHOTO_ASPECT, MESES } from '@/lib/constants';
 import { logViewListing } from '@/lib/analytics';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
@@ -78,6 +78,13 @@ export default function DetalhesCarroScreen() {
   const spinAngles = getSpinAngles(fotos, carro.photoAngles);
   const ehDono = !!carro.criadorUid && carro.criadorUid === user?.uid;
   const podeMensagem = !!carro.criadorUid && carro.criadorUid !== user?.uid;
+  // Manual comma decimal keeps consumption readable without relying on Intl.
+  const lp100 = (v: number) => `${String(v).replace('.', ',')} l/100km`;
+  const comercial = [
+    carro.acceptsFinancing && 'Aceita financiamento',
+    carro.vatDeductible && 'IVA dedutível',
+    carro.acceptsExchange && 'Aceita retoma',
+  ].filter(Boolean) as string[];
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -180,19 +187,49 @@ export default function DetalhesCarroScreen() {
 
           {/* Specs */}
           <View className="mt-5 flex-row flex-wrap">
+            {!!carro.version && <Spec icon="card-outline" label="Versão" value={carro.version} />}
             <Spec icon="calendar-outline" label="Ano" value={String(carro.anoFabricacao)} />
+            {carro.firstRegistrationMonth != null && (
+              <Spec icon="calendar-number-outline" label="1ª matrícula" value={MESES[carro.firstRegistrationMonth - 1]} />
+            )}
             <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
+            {carro.previousOwners != null && (
+              <Spec icon="person-outline" label="Proprietários" value={String(carro.previousOwners)} />
+            )}
+            {!!carro.origin && <Spec icon="flag-outline" label="Origem" value={carro.origin} />}
             <Spec icon="water-outline" label="Combustível" value={carro.combustivel} />
             <Spec icon="cog-outline" label="Caixa" value={carro.cambio} />
+            {carro.gears != null && <Spec icon="options-outline" label="Mudanças" value={String(carro.gears)} />}
             {!!carro.bodyType && <Spec icon="car-sport-outline" label="Categoria" value={carro.bodyType} />}
             {!!carro.condition && <Spec icon="pricetag-outline" label="Condição" value={carro.condition} />}
             {carro.seats != null && <Spec icon="people-outline" label="Lugares" value={String(carro.seats)} />}
             {carro.power != null && <Spec icon="flash-outline" label="Potência" value={`${carro.power} cv`} />}
             {carro.displacement != null && <Spec icon="build-outline" label="Cilindrada" value={`${carro.displacement} cc`} />}
             {!!carro.traction && <Spec icon="git-network-outline" label="Tração" value={carro.traction} />}
+            {carro.co2Emissions != null && <Spec icon="cloud-outline" label="CO₂" value={`${carro.co2Emissions} g/km`} />}
+            {carro.maxFuelRange != null && <Spec icon="battery-charging-outline" label="Autonomia" value={`${carro.maxFuelRange} km`} />}
+            {carro.consumptionCombined != null && <Spec icon="pulse-outline" label="Consumo comb." value={lp100(carro.consumptionCombined)} />}
+            {carro.consumptionUrban != null && <Spec icon="pulse-outline" label="Consumo urb." value={lp100(carro.consumptionUrban)} />}
+            {carro.consumptionExtraUrban != null && <Spec icon="pulse-outline" label="Consumo extra." value={lp100(carro.consumptionExtraUrban)} />}
+            {!!carro.upholstery && <Spec icon="grid-outline" label="Estofos" value={carro.upholstery} />}
+            {carro.numberOfAirbags != null && <Spec icon="shield-checkmark-outline" label="Airbags" value={String(carro.numberOfAirbags)} />}
+            {carro.warrantyMonths != null && <Spec icon="shield-outline" label="Garantia" value={`${carro.warrantyMonths} meses`} />}
             <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
             <Spec icon="location-outline" label="Local" value={carro.local} />
           </View>
+
+          {comercial.length > 0 && (
+            <View className="mt-5">
+              <Text className="mb-2 text-lg font-bold text-fg-heading">Condições comerciais</Text>
+              <View className="flex-row flex-wrap gap-2">
+                {comercial.map((c) => (
+                  <View key={c} className="rounded-full bg-primary-50 px-3 py-1.5">
+                    <Text className="text-sm font-semibold text-primary-700">{c}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {!!carro.features?.length && (
             <View className="mt-5">
