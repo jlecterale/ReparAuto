@@ -56,6 +56,8 @@ export type BodyType =
   | 'Pick-up';
 export type Condition = 'Novo' | 'Usado' | 'Para peças';
 export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
+export type VehicleOrigin = 'Nacional' | 'Importado';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {
@@ -77,6 +79,32 @@ export interface Carro {
   displacement?: number;
   traction?: Traction;
   features?: string[];
+  /** Trim / variant, e.g. "CDi Avantgarde" (Standvirtual "version"). */
+  version?: string;
+  /** Month of first registration (1–12), pairs with anoFabricacao as the year. */
+  firstRegistrationMonth?: number;
+  origin?: VehicleOrigin;
+  /** Number of previous owners (0 = seller is the first owner). */
+  previousOwners?: number;
+  /** Number of forward gears. */
+  gears?: number;
+  /** Combined CO₂ emissions, g/km. */
+  co2Emissions?: number;
+  /** Max fuel/electric range, km. */
+  maxFuelRange?: number;
+  /** Fuel consumption, l/100 km. */
+  consumptionUrban?: number;
+  consumptionExtraUrban?: number;
+  consumptionCombined?: number;
+  upholstery?: Upholstery;
+  numberOfAirbags?: number;
+  /** Remaining vendor warranty, in months. */
+  warrantyMonths?: number;
+  acceptsFinancing?: boolean;
+  /** VAT-deductible invoice available (IVA dedutível). */
+  vatDeductible?: boolean;
+  /** Seller accepts a trade-in / part-exchange (retoma). */
+  acceptsExchange?: boolean;
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };

@@ -1,7 +1,7 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
 import type { CategoriaIntencao } from '@/types/intencao';
-import type { BodyType, Condition, Traction } from '@/types/carro';
+import type { BodyType, Condition, Traction, VehicleOrigin, Upholstery } from '@/types/carro';
 
 // ============ CONSTANTES REPARAUTO ============
 
@@ -71,6 +71,18 @@ export const CONDICOES_VEICULO: readonly Condition[] = ['Novo', 'Usado', 'Para p
 
 // Drivetrain / traction.
 export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
+
+// Vehicle origin — national vs. imported (Standvirtual "origin").
+export const ORIGENS_VEICULO: readonly VehicleOrigin[] = ['Nacional', 'Importado'];
+
+// Upholstery / interior material (Standvirtual "upholstery").
+export const TIPOS_ESTOFO: readonly Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+
+// Month labels for the first-registration selector — index + 1 is the stored value.
+export const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
 
 // Equipment / extras checklist (multi-select). Covers the most searched options
 // across PT + BR marketplaces.

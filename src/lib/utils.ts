@@ -354,3 +354,31 @@ export function parsePositiveInt(value: string): number | null {
   const n = Math.trunc(Number(value.trim()));
   return value.trim() && Number.isFinite(n) && n > 0 ? n : null;
 }
+
+/**
+ * Like parsePositiveInt but allows 0 as a valid value — for fields where zero is
+ * meaningful (previous owners, airbags, CO₂ emissions, warranty months, range).
+ */
+export function parseNonNegativeInt(value: string): number | null {
+  const n = Math.trunc(Number(value.trim()));
+  return value.trim() && Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/**
+ * Keeps a decimal input to digits plus a single (comma) separator, so a user
+ * can type "5,6" for l/100 km without stray characters. Mirrors the digit-only
+ * sanitising the numeric fields already do.
+ */
+export function sanitizeDecimalInput(value: string): string {
+  const cleaned = value.replace(/[^0-9.,]/g, '');
+  const sep = cleaned.search(/[.,]/);
+  if (sep === -1) return cleaned;
+  return `${cleaned.slice(0, sep)},${cleaned.slice(sep + 1).replace(/[.,]/g, '')}`;
+}
+
+/** Parses a PT-style decimal form field (l/100 km…) into a number ≥ 0, or null. */
+export function parseDecimalOrNull(value: string): number | null {
+  if (!value.trim()) return null;
+  const n = Number(value.trim().replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}

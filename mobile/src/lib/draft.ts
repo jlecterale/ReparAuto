@@ -10,6 +10,8 @@ import type {
   EstadoVeiculo,
   TipoPeca,
   Traction,
+  Upholstery,
+  VehicleOrigin,
 } from '@/types';
 
 /**
@@ -47,6 +49,22 @@ export interface CarDraftData {
   displacement: string;
   traction: Traction | null;
   features: string[];
+  version: string;
+  firstRegistrationMonth: string;
+  origin: VehicleOrigin | null;
+  previousOwners: string;
+  gears: string;
+  co2Emissions: string;
+  maxFuelRange: string;
+  consumptionUrban: string;
+  consumptionExtraUrban: string;
+  consumptionCombined: string;
+  upholstery: Upholstery | null;
+  numberOfAirbags: string;
+  warrantyMonths: string;
+  acceptsFinancing: boolean;
+  vatDeductible: boolean;
+  acceptsExchange: boolean;
   estado: EstadoVeiculo;
   local: string;
   descricao: string;
