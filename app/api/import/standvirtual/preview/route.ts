@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser } from '@/lib/server/requireUser';
+import { internalErrorResponse } from '@/lib/server/routeError';
 import { checkImportRateLimit, fetchAndMapAdvert } from '@/lib/importers/standvirtual.server';
 import { validateStandvirtualUrl } from '@/lib/importers/urlList';
 
@@ -12,6 +13,14 @@ export const dynamic = 'force-dynamic';
  * Writes nothing.
  */
 export async function POST(request: Request) {
+  try {
+    return await handlePreview(request);
+  } catch (err) {
+    return internalErrorResponse('api/import/standvirtual/preview', err);
+  }
+}
+
+async function handlePreview(request: Request) {
   const auth = await requireUser(request);
   if (!auth.user) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

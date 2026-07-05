@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/lib/firebase.admin';
 import { requireUser } from '@/lib/server/requireUser';
+import { internalErrorResponse } from '@/lib/server/routeError';
 import { checkImportRateLimit, fetchAndMapAdvert } from '@/lib/importers/standvirtual.server';
 import { buildCarroPayload } from '@/lib/importers/standvirtual.map';
 import { rehostAdvertPhotos } from '@/lib/importers/photos';
@@ -55,6 +56,14 @@ async function notifyAdminsOfPendingCar(titulo: string, carId: string): Promise<
  * client batch flow calls it serially, URL by URL.
  */
 export async function POST(request: Request) {
+  try {
+    return await handleImport(request);
+  } catch (err) {
+    return internalErrorResponse('api/import/standvirtual/import', err);
+  }
+}
+
+async function handleImport(request: Request) {
   const auth = await requireUser(request);
   if (!auth.user) {
     return NextResponse.json({ error: auth.error }, { status: auth.status });

@@ -40,7 +40,11 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   email_not_verified: 'Confirme o seu email antes de importar anúncios.',
   attestation_required: 'Confirme que os anúncios são seus antes de importar.',
   unauthorized: 'Sessão expirada. Inicie sessão novamente.',
-  server_unavailable: 'Serviço temporariamente indisponível. Tente mais tarde.',
+  server_unavailable:
+    'Servidor sem acesso ao Firebase (em local: configure as credenciais Admin/ADC). Veja o log do servidor.',
+  internal: 'Erro inesperado no servidor. Veja o log do servidor para o detalhe.',
+  professional_verification_required:
+    'Disponível apenas para contas profissionais com documentação validada (Perfil → Verificação).',
 };
 
 export function importErrorMessage(code: string): string {
