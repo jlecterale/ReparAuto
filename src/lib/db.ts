@@ -1272,11 +1272,32 @@ const PROPOSTAS_COLLECTION = 'propostas';
 // Firestore batches cap at 500 operations.
 const DELETE_BATCH_LIMIT = 500;
 
+async function deleteRefsInBatches(refs: DocumentReference[]): Promise<void> {
+  for (let i = 0; i < refs.length; i += DELETE_BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    for (const ref of refs.slice(i, i + DELETE_BATCH_LIMIT)) batch.delete(ref);
+    await batch.commit();
+  }
+}
+
 export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
   try {
+    // Chat messages are co-owned by the other participant and deleting them
+    // is admin-only in the rules — attempt it in its own batch and never let
+    // a denial abort the rest of the erasure (it used to stop the whole flow
+    // before the profile was deleted).
+    try {
+      const snapMessages = await getDocs(
+        query(collection(db, 'messages'), where('participants', 'array-contains', uid)),
+      );
+      await deleteRefsInBatches(snapMessages.docs.map((d) => d.ref));
+    } catch (err) {
+      console.warn('[DB] Mensagens não eliminadas (limpeza requer admin):', err);
+    }
+
     // Everything the user owns: listings, propostas (as buyer or seller),
-    // notifications, purchase intents, identity verifications, reviews
-    // authored, and chat messages they participate in.
+    // notifications, purchase intents, identity verifications and reviews
+    // authored.
     const ownershipQueries = [
       query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid)),
       query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid)),
@@ -1286,7 +1307,6 @@ export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
       query(collection(db, INTENCOES_COLLECTION), where('userId', '==', uid)),
       query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid)),
       query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid)),
-      query(collection(db, 'messages'), where('participants', 'array-contains', uid)),
     ];
     const snaps = await Promise.all(ownershipQueries.map((q) => getDocs(q)));
 
@@ -1299,12 +1319,7 @@ export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
     const profileRef = doc(db, USERS_COLLECTION, uid);
     refsByPath.set(profileRef.path, profileRef);
 
-    const refs = Array.from(refsByPath.values());
-    for (let i = 0; i < refs.length; i += DELETE_BATCH_LIMIT) {
-      const batch = writeBatch(db);
-      for (const ref of refs.slice(i, i + DELETE_BATCH_LIMIT)) batch.delete(ref);
-      await batch.commit();
-    }
+    await deleteRefsInBatches(Array.from(refsByPath.values()));
   } catch (err) {
     console.error('[DB] Erro ao eliminar dados do utilizador:', err);
     throw err;

@@ -9,6 +9,7 @@ type FakeBatch = { delete: jest.Mock; commit: jest.Mock };
 
 const getDocsMock = jest.fn();
 const batches: FakeBatch[] = [];
+let rejectMessageBatches = false;
 
 jest.mock('firebase/firestore', () => ({
   collection: (_db: unknown, name: string) => ({ path: name }),
@@ -30,7 +31,14 @@ jest.mock('firebase/firestore', () => ({
   writeBatch: () => {
     const batch: FakeBatch = {
       delete: jest.fn(),
-      commit: jest.fn().mockResolvedValue(undefined),
+      commit: jest.fn().mockImplementation(() =>
+        // Mirrors production rules: message deletes are admin-only, so any
+        // batch touching messages/* is rejected when the suite flags it.
+        rejectMessageBatches &&
+        batch.delete.mock.calls.some(([ref]: [FakeRef]) => ref.path.startsWith('messages/'))
+          ? Promise.reject(new Error('permission-denied'))
+          : Promise.resolve(),
+      ),
     };
     batches.push(batch);
     return batch;
@@ -66,10 +74,11 @@ function deletedPaths(): string[] {
 beforeEach(() => {
   jest.clearAllMocks();
   batches.length = 0;
+  rejectMessageBatches = false;
 });
 
 describe('eliminarDadosDoUtilizador', () => {
-  it('apaga anúncios, mensagens, intenções (por userId) e o perfil num único batch', async () => {
+  it('apaga anúncios, mensagens, intenções (por userId) e o perfil em batches', async () => {
     mockQueryResults({
       'cars|criadorUid': refs('cars', ['c1', 'c2']),
       'parts|criadorUid': refs('parts', ['p1']),
@@ -87,8 +96,9 @@ describe('eliminarDadosDoUtilizador', () => {
       'parts/p1',
       'users/u1',
     ]);
-    expect(batches).toHaveLength(1);
-    expect(batches[0].commit).toHaveBeenCalledTimes(1);
+    // One batch for the messages attempt, one for everything the user owns.
+    expect(batches).toHaveLength(2);
+    batches.forEach((b) => expect(b.commit).toHaveBeenCalledTimes(1));
   });
 
   it('divide em vários batches quando há mais de 500 documentos', async () => {
@@ -101,6 +111,23 @@ describe('eliminarDadosDoUtilizador', () => {
     expect(batches).toHaveLength(2);
     expect(deletedPaths()).toHaveLength(502);
     batches.forEach((b) => expect(b.commit).toHaveBeenCalledTimes(1));
+  });
+
+  it('conclui a eliminação (incluindo o perfil) mesmo quando apagar mensagens é negado pelas rules', async () => {
+    rejectMessageBatches = true;
+    mockQueryResults({
+      'messages|participants': refs('messages', ['m1']),
+      'cars|criadorUid': refs('cars', ['c1']),
+    });
+
+    await expect(eliminarDadosDoUtilizador('u1')).resolves.toBeUndefined();
+
+    // The denied messages batch must not abort the rest of the erasure.
+    const committed = batches
+      .filter((b) => b.commit.mock.results.every((r) => r.type === 'return'))
+      .flatMap((b) => b.delete.mock.calls.map(([ref]: [FakeRef]) => ref.path));
+    expect(committed).toContain('users/u1');
+    expect(committed).toContain('cars/c1');
   });
 
   it('não apaga duas vezes um documento devolvido por mais de uma query', async () => {
