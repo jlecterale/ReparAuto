@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notificação "O seu carro está com muita procura" — ReparAuto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: { 50:'#fff7ed',100:'#ffedd5',500:'#f97316',600:'#ea580c',700:'#c2410c',900:'#7c2d12' },
+            dark: { 800:'#1e293b',900:'#0f172a',950:'#020617' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.08) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(56, 189, 248, 0.06) 0%, transparent 42%);
+    }
+    h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-amber { box-shadow: 0 0 22px rgba(249, 115, 22, 0.15); }
+    .glow-sky { box-shadow: 0 0 20px rgba(56, 189, 248, 0.15); }
+    code { font-size: 0.82em; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-amber relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🔥 Retenção do Vendedor — Sinal de Procura
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-orange-400 via-amber-200 to-sky-400 bg-clip-text text-transparent">
+          "O seu carro está com muita procura"
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Uma notificação que diz ao vendedor que o seu modelo é desejado — <em>«No último mês, o Mercedes-Benz C 220 apareceu em pesquisas mais de N vezes»</em>. Prende o vendedor à plataforma, aumenta a probabilidade de manter o anúncio ativo e responder rápido, e abre a porta ao <strong>Destaque pago</strong>. O RecarGarage <strong>ainda não regista pesquisas</strong> — este plano constrói esse sinal de raiz, com <strong>números reais</strong> e sem <em>dark patterns</em>.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-orange-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Só procura real · nunca inventada</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-rose-400">0 tracking</span>
+        <span class="text-xs text-slate-400">Hoje a pesquisa é <strong>100% client-side</strong> e nada é registado — a lacuna a preencher</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">4 sinais</span>
+        <span class="text-xs text-slate-400">Já existem: <code>visualizacoes</code> · <code>contagemFavoritos</code> · <code>contagemMensagens</code> · <code>intencoes_compra</code></span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-sky-400">Reutiliza push</span>
+        <span class="text-xs text-slate-400">Qualquer doc em <code>notifications</code> vira in-app + FCM via <code>pushOnNotification</code></span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">~4-6 d</span>
+        <span class="text-xs text-slate-400">MVP (Onda 1, sem Cloud Function); +3-5 d para push proativo (Onda 2)</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">01.</span> O que resolve &amp; porque é valioso
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            O maior risco de um marketplace de usados é o vendedor <strong>publicar e desaparecer</strong>: não volta, não baixa o preço, não responde a leads, e o anúncio apodrece. O Standvirtual combate isto com uma mensagem de <strong>reforço positivo</strong> — «o teu carro é desejado» — que traz o vendedor de volta ao produto. É simultaneamente um mecanismo de <strong>retenção</strong> e a rampa natural para o <strong>upsell de Destaque</strong> (o objetivo comercial real por trás da mensagem). O RecarGarage já tem a peça de monetização pronta: o campo <code class="text-orange-400">impulso</code> em <code>Carro</code> (boost com <code>dataInicio</code>/<code>dataFim</code>). Falta o gatilho emocional que a justifica.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🔁</span>
+              <h3 class="font-bold text-orange-400 text-sm">Retenção do vendedor</h3>
+              <p class="text-xs text-slate-400 mt-1">Uma razão para regressar: reabre o anúncio, revê o preço, responde a contactos. Combate o «publicar e esquecer».</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">💰</span>
+              <h3 class="font-bold text-emerald-400 text-sm">Rampa para o Destaque</h3>
+              <p class="text-xs text-slate-400 mt-1">«Está em alta procura → destaque-o para aparecer no topo». Momento perfeito para ativar <code>impulso</code>. É por isto que o Standvirtual o faz.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🛡️</span>
+              <h3 class="font-bold text-sky-400 text-sm">Confiança, se for honesto</h3>
+              <p class="text-xs text-slate-400 mt-1">Números reais reforçam a marca; números inflacionados são um <em>dark pattern</em> que destrói confiança (secção 05). A honestidade é o diferenciador.</p>
+            </div>
+          </div>
+          <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-orange-300">User stories.</strong>
+              (1) <em>Como vendedor</em>, quero saber que o meu modelo é procurado, para manter o anúncio ativo e responder depressa.
+              (2) <em>Como vendedor</em>, quero perceber <strong>quão</strong> procurado é, para decidir se vale a pena destacar ou ajustar o preço.
+              (3) <em>Como plataforma</em>, quero um gatilho honesto que traga o vendedor de volta sem prometer procura que não existe.
+              (4) <em>Como vendedor cético</em>, quero confiar que o número é verdadeiro — nunca ser manipulado por escassez falsa.
+            </p>
+          </div>
+        </section>
+
+        <!-- 02 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">02.</span> O que o número significa (e o que <em>não</em> significa)
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            A frase do Standvirtual — <em>«apareceu em pesquisas mais de 121 712 vezes»</em> — <strong>não</strong> são as visualizações <em>daquele</em> anúncio. É o <strong>volume agregado de pesquisas de toda a plataforma</strong> pela marca+modelo do carro, num período. É um número de <em>categoria</em>, não de <em>anúncio</em> — por isso é grande num portal com 6M de visitas/mês. Distinguir isto é crítico: define exatamente o que temos de medir.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[560px]">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3">Métrica</th>
+                  <th class="py-2 pr-3">Âmbito</th>
+                  <th class="py-2 pr-3">Já existe?</th>
+                  <th class="py-2">É o sinal do Standvirtual?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Pesquisas por marca+modelo</td><td class="py-2 pr-3">Categoria (toda a plataforma)</td><td class="py-2 pr-3 text-rose-400">❌ Não registado</td><td class="py-2 text-emerald-300">✅ É este — construir</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white"><code>visualizacoes</code></td><td class="py-2 pr-3">Anúncio individual</td><td class="py-2 pr-3 text-emerald-400">✅ <code>Carro.visualizacoes</code></td><td class="py-2 text-slate-400">Sinal complementar</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white"><code>contagemFavoritos</code> / <code>contagemMensagens</code></td><td class="py-2 pr-3">Anúncio individual</td><td class="py-2 pr-3 text-emerald-400">✅ Existem</td><td class="py-2 text-slate-400">Sinal complementar (intenção)</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-semibold text-white">Intenções de compra da marca</td><td class="py-2 pr-3">Categoria (procura explícita)</td><td class="py-2 pr-3 text-emerald-400">✅ <code>intencoes_compra</code> (índice <code>criterios.marca</code>)</td><td class="py-2 text-emerald-300">✅ Ótimo proxy inicial</td></tr>
+                <tr><td class="py-2 pr-3 font-semibold text-white">Alertas guardados na marca</td><td class="py-2 pr-3">Categoria (procura latente)</td><td class="py-2 pr-3 text-emerald-400">✅ <code>alertSubscriptions</code></td><td class="py-2 text-emerald-300">✅ Proxy secundário</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-sky-300">Decisão-chave.</strong> Num marketplace jovem, o volume de pesquisas puro será pequeno no início. Por isso o sinal de procura é <strong>composto</strong>: <code>searchAppearances</code> (novo) + <code>intencoes_compra</code> da marca + <code>alertSubscriptions</code> da marca, todos <strong>reais</strong>. Enquanto o volume não for significativo, mostramos enquadramento <strong>relativo</strong> («entre os mais procurados»); quando for, mostramos o <strong>número absoluto</strong> — como o Standvirtual. Nunca inventamos (secção 05).
+            </p>
+          </div>
+        </section>
+
+        <!-- 03 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">03.</span> Arquitetura — registar · agregar · notificar
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Três blocos. O <strong>registo</strong> e a <strong>agregação</strong> reutilizam o padrão de <em>counters</em> já provado em <code>intencoes_compra.stats</code> (incremento por <em>dotted-path</em> + exceção de regra <code>affectedKeys().hasOnly(['stats'])</code>). A <strong>notificação</strong> reutiliza <code>criarNotificacao</code> e o gatilho de push existente.
+          </p>
+
+          <div class="space-y-4">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-orange-400 text-sm mb-1">A) Registar a pesquisa <span class="text-slate-500 font-normal">(client-side, fire-and-forget)</span></h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                A pesquisa é filtrada em memória (<code>useCarros.ts</code>), logo instrumentamos no cliente. Quando o utilizador <strong>compromete</strong> uma pesquisa com marca (e, quando houver, modelo) — via caixa de texto em <code>CarGrid.tsx</code> ou do seletor <code>SeletorMarcaModelo</code> — chamamos um util novo <code>logSearch(marca, modelo?)</code> que faz <code>increment(1)</code> num contador agregado. <strong>Debounce</strong> (só ao parar de escrever) e <strong>dedupe por sessão/dia</strong> (evita inflação por refiltragem e <em>gaming</em>).
+              </p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-emerald-400 text-sm mb-1">B) Agregar <span class="text-slate-500 font-normal">(coleção nova <code>searchStats</code>)</span></h3>
+              <p class="text-xs text-slate-400 leading-relaxed mb-2">
+                Um doc por marca (ou marca+modelo), id normalizado (minúsculas, sem acentos): <code>searchStats/{make}</code> ou <code>{make__model}</code>. Espelha a forma de janela deslizante de <code>intencoes_compra.stats</code>, mas com <strong>baldes mensais</strong> para o «no último mês»:
+              </p>
+              <div class="bg-dark-950/70 border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-x-auto">
+                searchStats/mercedes-benz__c-220 = {<br>
+                &nbsp;&nbsp;make: "Mercedes-Benz", model: "C 220",<br>
+                &nbsp;&nbsp;months: { "2026-06": 1240, "2026-07": 318 },&nbsp;<span class="text-slate-500"># increment(1) por dotted-path</span><br>
+                &nbsp;&nbsp;total: 1558,<br>
+                &nbsp;&nbsp;updatedAt: Timestamp<br>
+                }
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed mt-2">
+                Leitura direta por doc-id (<strong>sem índice composto</strong>). Só guardamos <strong>contagens anónimas</strong> — nenhuma identidade de quem pesquisou → limpo do ponto de vista de RGPD/privacidade.
+              </p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-sky-400 text-sm mb-1">C) Notificar o vendedor <span class="text-slate-500 font-normal">(dois modos)</span></h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                <strong class="text-slate-200">Onda 1 (sem Cloud Function):</strong> quando o vendedor abre o painel (<code>ProfileLoggedIn.tsx</code>), para cada carro seu calculamos o sinal a partir de <code>searchStats</code> + intenções da marca; se cruzar o limiar, mostramos um <strong>badge «Em alta procura»</strong> no cartão (onde já aparece <code>visualizacoes</code>) e criamos uma notificação <strong>auto-dirigida</strong> (as regras já permitem <em>self-create</em>), com <em>dedupe</em> (uma por carro por período).
+                <br><br>
+                <strong class="text-slate-200">Onda 2 (proativa):</strong> uma <strong>Cloud Function agendada</strong> (semanal, à imagem de <code>onListingApproved.ts</code>) percorre os carros aprovados, calcula o sinal e escreve a notificação via Admin SDK (que <strong>ignora as regras</strong> e dispara push automaticamente por <code>pushOnNotification</code>). Assim o vendedor é avisado mesmo sem visitar o site.
+              </p>
+            </div>
+          </div>
+
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mt-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
+            <span class="text-emerald-400"># Núcleo testável (TDD) — funções puras em src/lib/</span><br>
+            src/lib/demand.ts<br>
+            &nbsp;├── normalizeMakeModelKey(make, model?) <span class="text-slate-500"># "Mercedes-Benz","C 220" → "mercedes-benz__c-220"</span><br>
+            &nbsp;├── computeDemandSignal(stats, intents, alerts, period) <span class="text-slate-500"># → { count, level, framing }</span><br>
+            &nbsp;└── demandCopy(signal, marca, modelo) <span class="text-slate-500"># → titulo + mensagem PT (absoluto vs. relativo)</span><br>
+            src/lib/db.ts &nbsp;<span class="text-slate-500"># + logSearch(marca, modelo?) · getSearchStats(key)</span>
+          </div>
+        </section>
+
+        <!-- 04 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">04.</span> Modelo de dados &amp; tipos
+          </h2>
+          <div class="space-y-3">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-white text-sm mb-1">Novo tipo de notificação</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">Adicionar <code class="text-orange-400">'demand'</code> a <code>TipoNotificacao</code> (<code>src/types/notificacao.ts</code>). <em>Nota de convenção:</em> os valores atuais são legado em PT (<code>preco</code>, <code>alerta</code>); o novo símbolo segue a regra «identificadores em inglês» → <code>'demand'</code>. Tratar a cor do ponto no <code>NotificationInbox.tsx</code> (switch por <code>tipo</code>).</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-white text-sm mb-1">Grupo de preferências</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">Adicionar <code>demand: { inApp, push }</code> a <code>NotificationPreferences</code> (<code>src/types/alertas.ts</code>) e mapear em <code>preferenceGroupForTipo</code> (<code>src/lib/alerts.ts</code>). Sem isto, cairia no grupo <code>conta</code> por omissão — funcional, mas o vendedor não conseguiria desligar só este. Expor o toggle no ecrã de preferências.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-white text-sm mb-1">Coleção <code>searchStats</code> + regras</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">Leitura pública (<code>allow read: if true</code>, como <code>marcas_modelos</code>). Escrita client-side <strong>só</strong> incrementos: <code>allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['months','total','updatedAt'])</code> — mesma técnica de <code>cars</code>/<code>intencoes_compra.stats</code>. <code>create</code> idem, com forma validada. Deploy de regras é <strong>ação do utilizador</strong> (<code>npm run deploy:rules</code>) — o plano não faz deploy.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <h3 class="font-bold text-white text-sm mb-1">Sem novos campos em <code>Carro</code></h3>
+              <p class="text-xs text-slate-400 leading-relaxed">O sinal é derivado (join <code>Carro.marca</code>+<code>modelo</code> → <code>searchStats</code>), não persistido no carro. Mapear vendedor→notificação exige <code>email → uid</code> via <code>getUserByEmail</code> (ownership é por <code>criador</code>/email; notificações são por <code>uid</code>). Saltar carros cujo dono não tem conta/uid.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 05 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">05.</span> Honestidade &amp; anti-<em>dark-pattern</em> <span class="text-rose-400 text-base">(o maior risco de produto)</span>
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            «Alta procura» é uma das três formas de <em>scarcity messaging</em> que a FTC e a investigação de <em>dark patterns</em> vigiam. Um número inflacionado ou vago («10 pessoas a ver agora») corrói confiança e é risco regulatório. Regra de ouro: <strong>só afirmamos o que conseguimos provar com dados reais</strong>. Isto é o que protege a marca e, ironicamente, o que a diferencia.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-emerald-500/5 border border-emerald-500/25 rounded-xl p-4">
+              <h3 class="font-bold text-emerald-300 text-sm mb-2">✅ Fazer</h3>
+              <ul class="text-xs text-slate-400 leading-relaxed space-y-1 list-disc list-inside">
+                <li><strong>Limiar mínimo</strong>: abaixo de X, <em>não</em> notificar (silêncio &gt; número embaraçoso).</li>
+                <li><strong>Números absolutos</strong> só quando significativos; senão, enquadramento <strong>relativo</strong> real («entre os 10% mais procurados»).</li>
+                <li><strong>Período honesto</strong> («nos últimos 30 dias») — o que a janela realmente cobre.</li>
+                <li>CTA construtivo (destacar / rever preço), não urgência falsa.</li>
+              </ul>
+            </div>
+            <div class="bg-rose-500/5 border border-rose-500/25 rounded-xl p-4">
+              <h3 class="font-bold text-rose-300 text-sm mb-2">🚫 Nunca</h3>
+              <ul class="text-xs text-slate-400 leading-relaxed space-y-1 list-disc list-inside">
+                <li>Inventar/arredondar para cima um número que não medimos.</li>
+                <li>Contar a mesma sessão N vezes para inflar (dedupe obrigatório).</li>
+                <li>Escassez falsa («o teu carro vai deixar de ter procura»).</li>
+                <li>Notificar carros vendidos/inativos ou fora do limiar.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-500 mb-2 font-semibold">Exemplos de copy (PT) por nível de volume:</p>
+            <p class="text-xs text-slate-300 leading-relaxed mb-1">🔥 <strong>Alto:</strong> «O seu Mercedes-Benz C 220 está com muita procura. No último mês apareceu em <strong>1 240 pesquisas</strong> no RecarGarage.»</p>
+            <p class="text-xs text-slate-300 leading-relaxed mb-1">📈 <strong>Médio:</strong> «O seu BMW Série 3 está entre os <strong>modelos mais procurados</strong> desta semana. Responda depressa aos contactos.»</p>
+            <p class="text-xs text-slate-300 leading-relaxed">🙋 <strong>Procura explícita:</strong> «<strong>7 compradores</strong> registaram procura por um carro como o seu nos últimos 30 dias.» <span class="text-slate-500">(contagem real de <code>intencoes_compra</code>)</span></p>
+          </div>
+        </section>
+
+        <!-- 06 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">06.</span> Sequência de commits (TDD) &amp; verificação
+          </h2>
+          <ol class="space-y-3 text-sm text-slate-300">
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-orange-500/10 border border-orange-500 text-orange-400 font-bold flex items-center justify-center shrink-0 text-xs">1</span><div><strong class="text-white text-sm">test+feat: <code>src/lib/demand.ts</code></strong><p class="text-xs text-slate-400">TDD do núcleo puro: <code>normalizeMakeModelKey</code>, <code>computeDemandSignal</code> (limiar, absoluto vs. relativo, composição de sinais), <code>demandCopy</code>. Sem Firebase — só funções puras.</p></div></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-orange-500/10 border border-orange-500 text-orange-400 font-bold flex items-center justify-center shrink-0 text-xs">2</span><div><strong class="text-white text-sm">feat: registo de pesquisa</strong><p class="text-xs text-slate-400"><code>logSearch</code>/<code>getSearchStats</code> em <code>db.ts</code>; instrumentar <code>CarGrid.tsx</code>/<code>useCarros.ts</code> com debounce + dedupe por sessão. Regras <code>searchStats</code> (leitura pública, update <code>hasOnly</code>).</p></div></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-orange-500/10 border border-orange-500 text-orange-400 font-bold flex items-center justify-center shrink-0 text-xs">3</span><div><strong class="text-white text-sm">feat: badge + notificação no painel</strong><p class="text-xs text-slate-400">Badge «Em alta procura» no cartão em <code>ProfileLoggedIn.tsx</code>; notificação auto-dirigida (<code>tipo: 'demand'</code>) com dedupe. Novo tipo + grupo de preferências + cor no inbox.</p></div></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0 text-xs">4</span><div><strong class="text-white text-sm">feat (Onda 2): Cloud Function agendada</strong><p class="text-xs text-slate-400">Em <code>functions/</code> (superfície separada): rollup semanal + escrita de notificações via Admin SDK (push automático). Só quando a Onda 1 estiver validada.</p></div></li>
+            <li class="flex gap-3"><span class="w-7 h-7 rounded-full bg-slate-600/20 border border-slate-600 text-slate-300 font-bold flex items-center justify-center shrink-0 text-xs">5</span><div><strong class="text-white text-sm">docs: guia + fecho do plano</strong><p class="text-xs text-slate-400">Guia em <code>/guias</code> («Como interpretar a procura pelo seu carro»); marcar plano 25 como <code>implemented</code> em <code>index.html</code>.</p></div></li>
+          </ol>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed"><strong class="text-emerald-300">Verificação:</strong> <code>npm test</code> (núcleo <code>demand.ts</code> + dedupe) · <code>npx tsc --noEmit</code> · <code>npm run build</code>. As regras do Firestore são <strong>revistas</strong> no plano mas o <code>deploy</code> é sempre <strong>iniciado pelo utilizador</strong>.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Benchmark -->
+        <section class="glass rounded-2xl p-6 glow-sky relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-sky-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🏁 Benchmark</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-orange-300">Standvirtual (PT)</strong> — «apareceu em pesquisas N vezes» + posição do anúncio nas pesquisas por marca/modelo/ano (conta Pro). É o padrão direto.</li>
+            <li><strong class="text-slate-300">OLX / CustoJusto</strong> — estatísticas de visitas por anúncio ao vendedor.</li>
+            <li><strong class="text-slate-300">Webmotors / iCarros / Mobiauto (BR)</strong> — painéis de desempenho do anúncio; comparação com o mercado.</li>
+            <li><strong class="text-slate-300">Autotrader / cars.com (US)</strong> — inventário «onde a procura é alta» ganha exposição; VDP views ao vendedor.</li>
+          </ul>
+          <p class="text-[11px] text-slate-500 mt-3 leading-relaxed"><strong>Padrão comum:</strong> o sinal de procura serve para vender <em>exposição paga</em>. Alinhar com <code>impulso</code>.</p>
+        </section>
+
+        <!-- Escopo -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📦 Escopo de Mudanças</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Reaproveita</span><span class="text-slate-400"><code>criarNotificacao</code> · counters · push · painel</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:50%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Adapta</span><span class="text-slate-400"><code>TipoNotificacao</code> · prefs · inbox · <code>CarGrid</code>/<code>useCarros</code> · rules</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:28%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-orange-400 font-bold">Novo</span><span class="text-slate-400"><code>demand.ts</code> · <code>searchStats</code> · badge · função (Onda 2)</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-orange-500" style="width:22%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Riscos -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Casos de Borda</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Números pequenos (marketplace jovem):</strong> limiar + enquadramento relativo; nunca inventar → secção 05.</li>
+            <li><strong>Gaming:</strong> vendedor pesquisa o próprio modelo — dedupe por sessão/dia, contar sessões distintas, caps.</li>
+            <li><strong>Spam de notificações:</strong> 1 por carro por período; respeitar preferências; só carros aprovados/ativos.</li>
+            <li><strong>email → uid:</strong> ownership por <code>criador</code>/email vs. notificação por <code>uid</code> → <code>getUserByEmail</code>; saltar sem conta.</li>
+            <li><strong>Normalização:</strong> marca/modelo com acentos e maiúsculas na chave do counter.</li>
+            <li><strong>Custo de leitura (Onda 2):</strong> agendar semanal, iterar em batches (padrão <code>onListingApproved.ts</code>).</li>
+          </ul>
+        </section>
+
+        <!-- Decisões em aberto -->
+        <section class="glass rounded-2xl p-6 bg-rose-500/5 border-rose-500/20">
+          <h3 class="text-rose-400 font-bold text-base flex items-center gap-2 mb-2">🔓 Decisões em Aberto</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Chave do counter:</strong> marca só, ou marca+modelo? Recomendado marca+modelo com <em>fallback</em> para marca (mais relevante, embora menor).</li>
+            <li><strong>Composição do sinal:</strong> só pesquisas, ou + intenções + alertas? Recomendado combinar cedo (mais robusto com pouco volume).</li>
+            <li><strong>Limiar &amp; períodos:</strong> valores concretos de X e da janela (30 d fixos vs. rolling) — calibrar com dados reais.</li>
+            <li><strong>Onda 1 chega?</strong> badge + notificação na visita pode bastar antes de investir na Cloud Function.</li>
+          </ul>
+        </section>
+
+        <!-- Ondas -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Execução em 2 Ondas</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li><strong class="text-slate-200">Onda 1 (~4-6 d):</strong> tracking + <code>searchStats</code> + núcleo TDD + badge no painel + notificação auto-dirigida. Sem tocar em <code>functions/</code>.</li>
+            <li><strong class="text-slate-200">Onda 2 (~3-5 d):</strong> Cloud Function agendada → push proativo + grupo de preferências dedicado.</li>
+            <li><strong class="text-slate-200">Depois:</strong> guia <code>/guias</code>; CTA de Destaque (<code>impulso</code>); A/B do enquadramento (absoluto vs. relativo).</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 25 — Notificação "O seu carro está com muita procura" 🔥 • Verificação: <code>npm test</code> · <code>tsc --noEmit</code> · <code>build</code>
+    </footer>
+  </div>
+</body>
+</html>
