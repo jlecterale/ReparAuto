@@ -116,6 +116,7 @@ export const CAR_RANGE_MAX = 2000; // km
 export const CAR_AIRBAGS_MAX = 20;
 export const CAR_WARRANTY_MONTHS_MAX = 120; // 10 years
 export const CAR_CONSUMPTION_MAX = 50; // l/100 km (decimals allowed)
+export const CAR_VERSION_MAX = 60; // characters (trim / variant text)
 
 /** Parses a PT-style decimal string ("5,6" or "5.6") to a number ≥ 0, or null. */
 export function parseDecimalPt(raw: string): number | null {

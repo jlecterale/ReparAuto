@@ -38,6 +38,7 @@ export const CAR_RANGE_MAX = 2000; // km (max fuel/electric range)
 export const CAR_AIRBAGS_MAX = 20;
 export const CAR_WARRANTY_MONTHS_MAX = 120; // 10 years
 export const CAR_CONSUMPTION_MAX = 50; // l/100 km (decimals allowed)
+export const CAR_VERSION_MAX = 60; // characters (trim / variant text)
 
 const REQUIRED = 'Este campo é obrigatório.';
 
@@ -63,6 +64,7 @@ export function validarDadosVeiculo(dados: {
   seats?: string;
   power?: string;
   displacement?: string;
+  version?: string;
   gears?: string;
   previousOwners?: string;
   co2Emissions?: string;
@@ -149,6 +151,12 @@ export function validarDadosVeiculo(dados: {
   validarConsumo('consumptionUrban', dados.consumptionUrban);
   validarConsumo('consumptionExtraUrban', dados.consumptionExtraUrban);
   validarConsumo('consumptionCombined', dados.consumptionCombined);
+
+  // Version is free text — cap its length (the enum-backed fields are already
+  // bounded by their <select>, and booleans are inherently bounded).
+  if (dados.version && dados.version.trim().length > CAR_VERSION_MAX) {
+    erros.version = `Versão deve ter no máximo ${CAR_VERSION_MAX} caracteres.`;
+  }
 
   return erros;
 }

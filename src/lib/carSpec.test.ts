@@ -10,6 +10,7 @@ import {
   CAR_WARRANTY_MONTHS_MAX,
   CAR_CONSUMPTION_MAX,
   CAR_PREVIOUS_OWNERS_MAX,
+  CAR_VERSION_MAX,
 } from '@/lib/carSpec';
 
 // The car-listing form lets users type free-form numbers; validation must keep a
@@ -168,5 +169,15 @@ describe('validarDadosVeiculo', () => {
     expect(validarDadosVeiculo({ ...valido, consumptionCombined: String(CAR_CONSUMPTION_MAX + 1) }).consumptionCombined).toBeTruthy();
     expect(validarDadosVeiculo({ ...valido, consumptionUrban: '-1' }).consumptionUrban).toBeTruthy();
     expect(validarDadosVeiculo({ ...valido, consumptionExtraUrban: 'abc' }).consumptionExtraUrban).toBeTruthy();
+  });
+
+  it('accepts a version within the length cap and leaves it alone when empty', () => {
+    expect(validarDadosVeiculo({ ...valido, version: 'CDi Avantgarde' }).version).toBeUndefined();
+    expect(validarDadosVeiculo(valido).version).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, version: 'x'.repeat(CAR_VERSION_MAX) }).version).toBeUndefined();
+  });
+
+  it('rejects a version longer than the cap', () => {
+    expect(validarDadosVeiculo({ ...valido, version: 'x'.repeat(CAR_VERSION_MAX + 1) }).version).toBeTruthy();
   });
 });

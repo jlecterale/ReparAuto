@@ -35,6 +35,7 @@ import {
   CAR_PRICE_MAX,
   CAR_RANGE_MAX,
   CAR_SEATS_MIN,
+  CAR_VERSION_MAX,
   CAR_WARRANTY_MONTHS_MAX,
   CAR_YEAR_MIN,
   carYearMax,
@@ -255,6 +256,8 @@ export default function AnunciarCarroScreen() {
   function validar(): string | null {
     if (fotos.length === 0) return 'Adicione pelo menos uma foto.';
     if (!marca.trim() || !modelo.trim()) return 'Indique a marca e o modelo.';
+    if (version.trim().length > CAR_VERSION_MAX)
+      return `A versão deve ter no máximo ${CAR_VERSION_MAX} caracteres.`;
     const anoMax = carYearMax();
     const anoNum = Number(ano);
     if (!Number.isInteger(anoNum) || anoNum < CAR_YEAR_MIN || anoNum > anoMax)
