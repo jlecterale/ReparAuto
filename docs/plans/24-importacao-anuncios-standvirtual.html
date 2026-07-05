@@ -57,7 +57,7 @@
       <div class="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
       <div class="relative z-10">
         <span class="bg-sky-500/10 border border-sky-500/30 text-sky-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-          🔌 Investigação — Ferramenta só para Perfis Profissionais
+          🔌 Investigação — Importação de Anúncios (Via B aberta a todas as contas · Via A profissional)
         </span>
         <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-sky-400 via-orange-200 to-orange-400 bg-clip-text text-transparent">
           Importar Anúncios do Standvirtual
@@ -87,8 +87,8 @@
         <span class="text-xs text-slate-400">Credenciais trocadas por token e <strong>descartadas</strong>; importa como <code>pendente</code></span>
       </div>
       <div class="glass rounded-xl p-4 text-center">
-        <span class="block text-3xl font-black text-indigo-400">~5-7 d</span>
-        <span class="text-xs text-slate-400">MVP (paste-URL); ~12-18 d total em 2 ondas</span>
+        <span class="block text-3xl font-black text-indigo-400">~6-9 d</span>
+        <span class="text-xs text-slate-400">MVP Via B (URL + lote, todas as contas); ~13-20 d em 2 ondas</span>
       </div>
     </div>
 
@@ -103,7 +103,7 @@
             <span class="text-sky-400 font-extrabold">01.</span> O que resolve &amp; porquê ALTA prioridade
           </h2>
           <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
-            Um stand com 30-80 viaturas já as tem publicadas no Standvirtual (o portal dominante em PT), com fotos tratadas e ficha técnica preenchida. Pedir-lhe que reescreva tudo, viatura a viatura, no fluxo de 4 passos de <code>app/anunciar</code> é a barreira que o faz desistir antes de experimentar. Esta funcionalidade elimina esse atrito. O campo <code class="text-sky-400">tipoConta: 'particular' | 'profissional'</code> já existe em <code>src/types/usuario.ts</code> — a ferramenta é exclusiva de contas profissionais, alinhada com os planos 07 e 17.
+            Um stand com 30-80 viaturas já as tem publicadas no Standvirtual (o portal dominante em PT), com fotos tratadas e ficha técnica preenchida. Pedir-lhe que reescreva tudo, viatura a viatura, no fluxo de 4 passos de <code>app/anunciar</code> é a barreira que o faz desistir antes de experimentar. Esta funcionalidade elimina esse atrito. <strong>Acesso:</strong> a <strong class="text-orange-300">Via B (importar por URL, incl. lote)</strong> fica aberta a <strong>qualquer conta autenticada</strong> — um particular também pode ter o seu carro no Standvirtual; a <strong class="text-sky-300">Via A (ligar conta / API oficial)</strong> exige conta profissional (limitação da própria API). O campo <code class="text-sky-400">tipoConta: 'particular' | 'profissional'</code> em <code>src/types/usuario.ts</code> continua a servir a Via A e os planos 07/17.
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
@@ -215,7 +215,10 @@
           </div>
           <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mt-4">
             <p class="text-xs text-slate-400 leading-relaxed">
-              <strong class="text-orange-300">Via B (fallback leve):</strong> o site é Next.js SSR — cada anúncio traz o objeto completo em <code>__NEXT_DATA__.props.pageProps.advert</code> (incl. <code>parametersDict</code> com VIN e ~60 flags de equipamento). Serve para «cola o URL → formulário pré-preenchido», sem credenciais. Telefone vem tokenizado; anti-bot DataDome é passivo em baixo volume. Manter <strong>iniciado pelo utilizador, um anúncio de cada vez</strong>.
+              <strong class="text-orange-300">Via B (MVP, sem credenciais, aberta a todas as contas):</strong> o site é Next.js SSR — cada anúncio traz o objeto completo em <code>__NEXT_DATA__.props.pageProps.advert</code> (incl. <code>parametersDict</code> com VIN e ~60 flags de equipamento). Telefone vem tokenizado (ignorar; usar o do perfil). Dois modos: <strong>1 URL → pré-preenche o formulário</strong>; <strong>vários URLs → cria rascunhos <code>pendente</code> em lote</strong>.
+            </p>
+            <p class="text-xs text-slate-400 leading-relaxed mt-2">
+              <strong class="text-orange-300">Lote (multi-URL):</strong> três entradas convergentes — linhas com botão «+», textarea «colar vários», e upload <code>.txt/.csv</code> (uma coluna de URLs, ingestão tolerante) → passo de validação (dedupe, host+padrão, marca duplicados já importados, teto por lote sem truncar em silêncio). Como o anti-bot <strong>DataDome</strong> escala com o volume, o lote é processado <strong>em série (concorrência 1) com delay+jitter</strong>, com progresso por item (✓ criado / ⚠ já existe / ✗ falhou / ⛔ bloqueado) orquestrado no cliente, e <strong>rate-limit por utilizador</strong> na rota. Se surgir um desafio, para com graça e reporta o parcial. Para lote a sério (stand com 80 carros) o canal certo continua a ser a Via A (<code>/account/adverts</code> paginado, sem tocar no HTML).
             </p>
           </div>
         </section>
@@ -266,11 +269,12 @@
           </p>
           <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mb-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
             app/api/import/standvirtual/<br>
-            &nbsp;├── connect/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST — password grant → refresh_token cifrado</span><br>
-            &nbsp;├── adverts/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># GET — lista paginada dos anúncios do stand</span><br>
-            &nbsp;├── advert/[id]/route.ts <span class="text-slate-500"># GET — 1 anúncio já mapeado (preview)</span><br>
-            &nbsp;└── import/route.ts&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST — cria cars (pendente) + copia fotos</span><br>
-            src/lib/importers/ standvirtual.client.ts · .nextdata.ts · <span class="text-sky-400">.map.ts (TDD)</span> · photos.ts
+            &nbsp;├── preview/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST {url} — Via B: 1 anúncio mapeado p/ prefill (não grava)</span><br>
+            &nbsp;├── import/route.ts&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST {url} — cria 1 car (pendente) + fotos; idempotente. Lote = cliente em série</span><br>
+            &nbsp;├── connect/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST — Via A: password grant (só profissional)</span><br>
+            &nbsp;└── adverts/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># GET — Via A: lista paginada dos anúncios do stand</span><br>
+            src/lib/importers/ <span class="text-sky-400">.map.ts (TDD)</span> · .nextdata.ts · <span class="text-sky-400">urlList.ts (TDD)</span> · photos.ts · standvirtual.client.ts (Via A)<br>
+            <span class="text-slate-500"># Guard: preview/import → qualquer utilizador autenticado; connect/adverts → tipoConta profissional</span>
           </div>
           <div class="space-y-3 text-sm text-slate-300">
             <div class="flex gap-4">
@@ -370,8 +374,8 @@
         <section class="glass rounded-2xl p-6">
           <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Execução em 2 Ondas</h3>
           <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
-            <li><strong class="text-slate-200">Onda 1 (~5-7 d):</strong> paste-URL de 1 anúncio (Via B) + campos de origem, TDD-first, sem credenciais. Valor imediato.</li>
-            <li><strong class="text-slate-200">Onda 2 (~7-11 d):</strong> ligação de conta + import em lote via API oficial (Via A), quando as credenciais forem aprovadas.</li>
+            <li><strong class="text-slate-200">Onda 1 (~6-9 d):</strong> Via B por URL — 1 anúncio (prefill) e <strong>lote</strong> (+/colar/CSV-TXT → rascunhos), <strong>aberta a todas as contas</strong>, TDD-first, sem credenciais. Valor imediato.</li>
+            <li><strong class="text-slate-200">Onda 2 (~7-11 d):</strong> Via A (só profissional) — ligar conta + import em lote via API oficial, quando as credenciais forem aprovadas.</li>
             <li><strong class="text-slate-200">Paralelo:</strong> Via C (parceria com integradores) como jogada de negócio para stock multi-stand.</li>
           </ol>
         </section>
