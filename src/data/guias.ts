@@ -397,6 +397,7 @@ export const GUIDES: Guide[] = [
         ],
         bullets: [
           'Adicione os links um a um, cole vários de uma vez (um por linha) ou arraste um ficheiro .txt/.csv — há modelos para descarregar.',
+          'Contas profissionais com documentação validada podem colar o endereço da página do stand (ex.: omeustand.standvirtual.com) e a lista de anúncios publicados é preenchida automaticamente.',
           'Cada link é validado na hora: inválidos aparecem a vermelho com o motivo, repetidos e já importados são assinalados.',
           'A importação é propositadamente um a um, com uma pequena pausa entre anúncios, para não sobrecarregar o Standvirtual. Pode cancelar os restantes a qualquer momento.',
           'No fim vê o resumo (criados, já existentes, falhados) e cada anúncio criado tem um atalho "Rever".',

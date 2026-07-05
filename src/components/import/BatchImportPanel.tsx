@@ -6,8 +6,10 @@ import {
   CircleNotch,
   DownloadSimple,
   FileArrowUp,
+  MagnifyingGlass,
   Plus,
   Prohibit,
+  Storefront,
   Trash,
   XCircle,
 } from '@phosphor-icons/react';
@@ -21,12 +23,14 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import { getCarrosByCreator } from '@/lib/db';
 import {
+  discoverStandvirtualInventory,
   importErrorMessage,
   importStandvirtualAdvert,
 } from '@/lib/importers/client';
 import {
   MAX_IMPORT_BATCH_SIZE,
   extractUrlsFromText,
+  validateStandvirtualInventoryUrl,
   validateStandvirtualUrl,
 } from '@/lib/importers/urlList';
 
@@ -85,6 +89,9 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
   const [fatalStop, setFatalStop] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [importedIds, setImportedIds] = useState<Map<string, string>>(new Map());
+  const [standUrl, setStandUrl] = useState('');
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverError, setDiscoverError] = useState('');
   const cancelRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -284,6 +291,37 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
   };
 
   const editing = phase === 'edit';
+  const isProfessional = user?.tipoConta === 'profissional';
+  const isVerifiedProfessional = isProfessional && user?.verificado === true;
+
+  const handleDiscoverInventory = async () => {
+    setDiscoverError('');
+    const parsed = validateStandvirtualInventoryUrl(standUrl);
+    if (!parsed.valid || !parsed.normalizedUrl) {
+      setDiscoverError(parsed.reason || 'URL inválido.');
+      return;
+    }
+    setDiscovering(true);
+    try {
+      const result = await discoverStandvirtualInventory(parsed.normalizedUrl);
+      if (!result.ok) {
+        setDiscoverError(result.message);
+        return;
+      }
+      if (result.urls.length === 0) {
+        setDiscoverError('Nenhum anúncio publicado encontrado nesta página de stand.');
+        return;
+      }
+      appendUrls(result.urls.join('\n'));
+      if (result.truncated) {
+        toast?.info(
+          'Lista parcial — o stand tem mais anúncios do que foi possível ler agora. Repita mais tarde para os restantes.',
+        );
+      }
+    } finally {
+      setDiscovering(false);
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -292,6 +330,65 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
         criado como <strong>rascunho pendente</strong> — revê-os depois em Perfil → Os Seus Carros
         Anunciados.
       </p>
+
+      {/* Whole-stand discovery — professionals with validated documentation */}
+      {editing && isProfessional && (
+        <div className="rounded-xl border border-primary-100 bg-primary-50/50 p-4">
+          <p className="text-sm font-bold text-fg-heading flex items-center gap-1.5 mb-1">
+            <Storefront className="text-primary-600" /> Importar o stand inteiro
+          </p>
+          {isVerifiedProfessional ? (
+            <>
+              <p className="text-xs text-fg-muted mb-2">
+                Cole o endereço da página do seu stand no Standvirtual (ex.:{' '}
+                <span className="font-mono">omeustand.standvirtual.com</span>) — os anúncios
+                publicados são adicionados à lista abaixo para rever e importar.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="url"
+                  value={standUrl}
+                  onChange={(e) => {
+                    setStandUrl(e.target.value);
+                    setDiscoverError('');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !discovering && standUrl.trim()) {
+                      void handleDiscoverInventory();
+                    }
+                  }}
+                  placeholder="https://omeustand.standvirtual.com/inventory"
+                  aria-label="URL da página do stand"
+                  disabled={discovering}
+                  className={`flex-1 min-w-0 rounded-xl border px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:bg-slate-100 disabled:text-fg-subtle ${
+                    discoverError ? 'border-danger-300' : 'border-slate-300 focus:border-accent'
+                  }`}
+                />
+                <Button
+                  tipo="azul"
+                  tamanho="sm"
+                  icone={<MagnifyingGlass weight="bold" />}
+                  carregando={discovering}
+                  disabled={discovering || !standUrl.trim()}
+                  onClick={handleDiscoverInventory}
+                  className="shrink-0"
+                >
+                  {discovering ? 'A procurar…' : 'Procurar anúncios'}
+                </Button>
+              </div>
+              {discoverError && <p className="text-xs text-danger-600 mt-1">{discoverError}</p>}
+            </>
+          ) : (
+            <p className="text-xs text-fg-muted">
+              Disponível para contas profissionais com <strong>documentação validada</strong>.{' '}
+              <Link href="/perfil" className="text-fg-link font-semibold hover:underline">
+                Peça a verificação no Perfil
+              </Link>{' '}
+              para desbloquear.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* URL rows */}
       <div className="space-y-2" aria-live="polite">

@@ -1,13 +1,15 @@
 import 'server-only';
 import {
+  extractAdvertUrlsFromHtml,
   extractNextData,
   isBlockedHtml,
+  normalizeInventoryPage,
   normalizeStandvirtualAdvert,
   type NormalizedAdvert,
 } from '@/lib/importers/standvirtual.nextdata';
 import { mapAdvertToCarroFormData, type MappedAdvert } from '@/lib/importers/standvirtual.map';
 import { createRateLimiter, type RateLimitResult } from '@/lib/importers/rateLimit';
-import { validateStandvirtualUrl } from '@/lib/importers/urlList';
+import { validateStandvirtualInventoryUrl, validateStandvirtualUrl } from '@/lib/importers/urlList';
 
 const FETCH_TIMEOUT_MS = 15_000;
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
@@ -67,14 +69,25 @@ async function paceAndFetch(url: string): Promise<Response> {
   }
 }
 
+type FetchKind = 'advert' | 'inventory';
+
+function isAllowedFetchUrl(url: string, kind: FetchKind): boolean {
+  return kind === 'advert'
+    ? validateStandvirtualUrl(url).valid
+    : validateStandvirtualInventoryUrl(url).valid;
+}
+
 /**
- * Fetches an advert page. The URL must already have passed
- * validateStandvirtualUrl (host + …-ID….html pattern) — this function
- * re-checks it and also verifies the post-redirect host, so no request can
- * ever leave for another origin.
+ * Fetches a Standvirtual page (advert or dealer inventory). The URL must
+ * already have passed the matching validator — this function re-checks it
+ * and also verifies the post-redirect host, so no request can ever leave
+ * for another origin.
  */
-export async function fetchStandvirtualHtml(url: string): Promise<StandvirtualFetchResult> {
-  if (!validateStandvirtualUrl(url).valid) return { outcome: 'error' };
+export async function fetchStandvirtualHtml(
+  url: string,
+  kind: FetchKind = 'advert',
+): Promise<StandvirtualFetchResult> {
+  if (!isAllowedFetchUrl(url, kind)) return { outcome: 'error' };
 
   const run = fetchChain.then(async (): Promise<StandvirtualFetchResult> => {
     let response: Response;
@@ -84,7 +97,7 @@ export async function fetchStandvirtualHtml(url: string): Promise<StandvirtualFe
       return { outcome: 'error' };
     }
     // fetch() follows redirects — never accept a hop off standvirtual.com.
-    if (response.url && !validateStandvirtualUrl(response.url).valid) {
+    if (response.url && !isAllowedFetchUrl(response.url, kind)) {
       return { outcome: 'error' };
     }
     if (response.status === 404 || response.status === 410) return { outcome: 'not_found' };
@@ -118,4 +131,59 @@ export async function fetchAndMapAdvert(url: string): Promise<AdvertPipelineResu
   if (!advert) return { outcome: 'parse_failed' };
 
   return { outcome: 'ok', advert, mapped: mapAdvertToCarroFormData(advert) };
+}
+
+/** Hard cap of inventory pages crawled per discovery request (30 ads/page). */
+const MAX_INVENTORY_PAGES = 10;
+
+export type InventoryDiscoveryResult =
+  | { outcome: 'ok'; adUrls: string[]; total: number | null; truncated: boolean }
+  | { outcome: 'blocked' }
+  | { outcome: 'not_found' }
+  | { outcome: 'parse_failed' }
+  | { outcome: 'error' };
+
+/**
+ * Whole-stand discovery (verified professionals): walks the dealer's
+ * /inventory pages — serialized and paced like every other Standvirtual
+ * fetch — and returns the advert URLs found. Writes nothing; the client
+ * feeds the list into the normal validated batch flow.
+ *
+ * `canFetchNextPage` is consulted before each extra page so the caller can
+ * charge pagination against its rate limit; a denied page (or a mid-crawl
+ * block) stops gracefully and reports the partial list as truncated.
+ */
+export async function discoverInventoryAdUrls(
+  inventoryUrl: string,
+  canFetchNextPage: () => boolean = () => true,
+): Promise<InventoryDiscoveryResult> {
+  const first = await fetchStandvirtualHtml(inventoryUrl, 'inventory');
+  if (first.outcome !== 'ok') return first;
+
+  const firstPage = normalizeInventoryPage(extractNextData(first.html));
+  const adUrls = new Set<string>(firstPage?.adUrls ?? extractAdvertUrlsFromHtml(first.html));
+  if (!firstPage && adUrls.size === 0) return { outcome: 'parse_failed' };
+
+  const total = firstPage?.total ?? null;
+  const pageSize = firstPage?.pageSize ?? null;
+  const pageCount = total && pageSize ? Math.ceil(total / pageSize) : 1;
+  let truncated = pageCount > MAX_INVENTORY_PAGES;
+
+  for (let page = 2; page <= Math.min(pageCount, MAX_INVENTORY_PAGES); page++) {
+    if (!canFetchNextPage()) {
+      truncated = true;
+      break;
+    }
+    const fetched = await fetchStandvirtualHtml(`${inventoryUrl}?page=${page}`, 'inventory');
+    if (fetched.outcome !== 'ok') {
+      truncated = true;
+      break;
+    }
+    const parsed = normalizeInventoryPage(extractNextData(fetched.html));
+    for (const url of parsed?.adUrls ?? extractAdvertUrlsFromHtml(fetched.html)) {
+      adUrls.add(url);
+    }
+  }
+
+  return { outcome: 'ok', adUrls: [...adUrls], total, truncated };
 }

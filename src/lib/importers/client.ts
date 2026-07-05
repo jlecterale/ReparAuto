@@ -77,6 +77,32 @@ export async function previewStandvirtualImport(url: string): Promise<ImportPrev
   }
 }
 
+export type InventoryDiscoveryClientResult =
+  | { ok: true; urls: string[]; total: number | null; truncated: boolean }
+  | { ok: false; errorCode: string; message: string };
+
+/** Whole-stand discovery — professionals with validated documentation only. */
+export async function discoverStandvirtualInventory(
+  url: string,
+): Promise<InventoryDiscoveryClientResult> {
+  try {
+    const response = await authorizedPost('/api/import/standvirtual/inventory', { url });
+    const data = (await response.json().catch(() => ({}))) as {
+      urls?: string[];
+      total?: number | null;
+      truncated?: boolean;
+      error?: string;
+    };
+    if (!response.ok || data.error || !Array.isArray(data.urls)) {
+      const code = data.error ?? 'fetch_failed';
+      return { ok: false, errorCode: code, message: importErrorMessage(code) };
+    }
+    return { ok: true, urls: data.urls, total: data.total ?? null, truncated: data.truncated === true };
+  } catch {
+    return { ok: false, errorCode: 'fetch_failed', message: importErrorMessage('fetch_failed') };
+  }
+}
+
 export async function importStandvirtualAdvert(url: string): Promise<ImportAdvertResult> {
   let response: Response;
   try {
