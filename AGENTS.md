@@ -103,7 +103,7 @@ When asked to investigate a feature, scope a change, or generate a plan, **do on
 
 ### 2. Plans
 
-Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), commit sequence, edge cases, and verification steps.
+Plans live in `docs/plans/` — **always authored as a self-contained interactive HTML page (`NN-<slug>.html`), never as a `.md` file.** The HTML page carries the full written analysis (not just a visual summary): it should cover context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), commit sequence, edge cases, and verification steps. Match the layout of the existing HTML plans (`docs/plans/20-expansao-brasil.html`, `24-importacao-anuncios-standvirtual.html`): Tailwind CDN + the dark glass theme, header, metrics strip, numbered sections, and a sidebar (benchmark / scope / risks / next steps). Legacy plans still exist as `.md` — leave them as-is, but every **new** plan is `.html`.
 
 - **Number new plans sequentially** (continue from the highest existing `NN`).
 - **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
