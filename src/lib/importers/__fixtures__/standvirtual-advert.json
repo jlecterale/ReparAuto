@@ -1,0 +1,730 @@
+{
+ "id": "8097574413",
+ "status": "ACTIVE",
+ "title": "Citroën C4 Cactus PureTech 110 Stop&Start EAT6 Shine",
+ "url": "https://www.standvirtual.com/carros/anuncio/citroen-c4-cactus-ver-puretech-110-stop-start-eat6-shine-ID8Q0B0W.html",
+ "images": {
+  "photos": [
+   {
+    "url": "https://ireland.apollo.olxcdn.com/v1/files/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmbiI6ImhmMG1ha3g4MDVxZjItU1REVlRMUFQiLCJ3IjpbeyJmbiI6IjZtZ2p3bHA3a2dkYjItU1REVlRMUFQiLCJzIjoiMTYiLCJhIjoiMCIsInAiOiIxMCwtMTAifV19.HgLqatQXwt2E1H8Ql8u1id6GDIQ_SsvGZytn7PV1fnY/image"
+   },
+   {
+    "url": "https://ireland.apollo.olxcdn.com/v1/files/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmbiI6InE1a3h4eHR0YnM4djEtU1REVlRMUFQiLCJ3IjpbeyJmbiI6IjZtZ2p3bHA3a2dkYjItU1REVlRMUFQiLCJzIjoiMTYiLCJhIjoiMCIsInAiOiIxMCwtMTAifV19.1XYV4LBQvS4gUApRODSsJIhhRgIdvvdAwCeIKWoSA9M/image"
+   },
+   {
+    "url": "https://ireland.apollo.olxcdn.com/v1/files/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmbiI6IjgwcWt4cHYzMmR5NzMtU1REVlRMUFQiLCJ3IjpbeyJmbiI6IjZtZ2p3bHA3a2dkYjItU1REVlRMUFQiLCJzIjoiMTYiLCJhIjoiMCIsInAiOiIxMCwtMTAifV19.fPq9I4ay3YOvQgmSE6yWfSv-5fFL5GZNg8WLQF8zxFc/image"
+   },
+   {
+    "url": "https://ireland.apollo.olxcdn.com/v1/files/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmbiI6IngxYnRhdDdidHhqMzItU1REVlRMUFQiLCJ3IjpbeyJmbiI6IjZtZ2p3bHA3a2dkYjItU1REVlRMUFQiLCJzIjoiMTYiLCJhIjoiMCIsInAiOiIxMCwtMTAifV19.-zLFc_7lufsPbn7dXflCkqWvx8u8Qh5VvF3bgx6fGFk/image"
+   }
+  ]
+ },
+ "price": {
+  "value": "10890",
+  "currency": "EUR",
+  "labels": [
+   "Valor Fixo",
+   "Aceita retoma"
+  ],
+  "isUnderBudget": false
+ },
+ "mainFeatures": [
+  "Gasolina",
+  "Agosto",
+  "2018",
+  "73 365 km",
+  "110 cv"
+ ],
+ "description": "<p>A Rocha Automóveis Braga, desde 2008, afirma-se como uma referência no setor automóvel, oferecendo uma vasta gama de veículos, desde modelos de combustão a elétricos. Cada automóvel é submetido a uma rigorosa verificação de 100 itens de certificação, garantindo-lhe total segurança e transparência. Para sua tranquilidade, todas as viaturas incluem uma garantia mínima de 18 meses. Contacte-nos através do Ver telefone ou do e-mail braga@rochaautomoveis.pt e descubra a excelência que nos distingue.</p><p><br></p><p>Descubra o Citroën C4 Cactus Shine, uma proposta única onde o conforto se encont</p>",
+ "seller": {
+  "type": "STAND",
+  "name": "Stand Exemplo",
+  "location": {
+   "address": "Rua Exemplo 1",
+   "city": "Viatodos, Grimancelos, Minhotães e Monte de Fralães",
+   "cityId": 3148032,
+   "region": "Braga",
+   "regionId": 3,
+   "country": "Portugal",
+   "postalCode": "4775-177",
+   "shortAddress": "Rua Exemplo 1 - 4775-177 Viatodos, Grimancelos, Minhotães e Monte de Fralães, Barcelos (Portugal)",
+   "canonicals": {
+    "city": "grimancelos",
+    "region": "braga",
+    "subregion": "barcelos-braga"
+   },
+   "map": {
+    "latitude": 41.45682766,
+    "longitude": -8.56593202,
+    "zoom": 12,
+    "radius": 0
+   }
+  }
+ },
+ "equipment": [
+  {
+   "key": "audio_and_computing",
+   "label": "Áudio e Multimédia",
+   "values": [
+    {
+     "key": "android_auto",
+     "label": "Android Auto"
+    },
+    {
+     "key": "bluetooth_interface",
+     "label": "Bluetooth"
+    },
+    {
+     "key": "radio",
+     "label": "Rádio"
+    },
+    {
+     "key": "hands_free_system",
+     "label": "Sistema mãos livres"
+    },
+    {
+     "key": "usb_in",
+     "label": "Porta USB"
+    },
+    {
+     "key": "navigation_system",
+     "label": "Sistema de navegação"
+    }
+   ]
+  },
+  {
+   "key": "comfort_and_addons",
+   "label": "Conforto e Outros Equipamentos",
+   "values": [
+    {
+     "key": "air_conditioning_type",
+     "label": "AC automático"
+    },
+    {
+     "key": "independent_vehicle_heater",
+     "label": "AC independente"
+    },
+    {
+     "key": "automatic_heating_control",
+     "label": "AC automático"
+    },
+    {
+     "key": "rain_sensor",
+     "label": "Sensor de chuva"
+    },
+    {
+     "key": "power_windows_front",
+     "label": "Vidros eléctricos dianteiros"
+    }
+   ]
+  },
+  {
+   "key": "electronics_and_driver_assistance",
+   "label": "Electrónica e Assistência à Condução",
+   "values": [
+    {
+     "key": "park_distance_control_front",
+     "label": "Sensor de estacionamento dianteiro"
+    },
+    {
+     "key": "park_distance_control_rear",
+     "label": "Sensor de estacionamento traseiro"
+    }
+   ]
+  },
+  {
+   "key": "security",
+   "label": "Segurança",
+   "values": [
+    {
+     "key": "antilock_brake_system",
+     "label": "ABS"
+    },
+    {
+     "key": "esp",
+     "label": "Controlo de estabilidade (ESP)"
+    },
+    {
+     "key": "driver_airbag",
+     "label": "Airbag do condutor"
+    },
+    {
+     "key": "passenger_airbag",
+     "label": "Airbag do passageiro"
+    },
+    {
+     "key": "side_airbag_driver",
+     "label": "Airbag lateral do condutor"
+    },
+    {
+     "key": "side_airbag_driver_and_passenger",
+     "label": "Airbag lateral do condutor e passageiro"
+    },
+    {
+     "key": "side_airbags_rear",
+     "label": "Airbags laterais traseiros"
+    },
+    {
+     "key": "child_seat_fixation",
+     "label": "ISOFIX"
+    }
+   ]
+  }
+ ],
+ "createdAt": "2026-07-05T12:00:31Z",
+ "details": [
+  {
+   "key": "make",
+   "label": "Marca",
+   "value": "Citroën",
+   "href": "https://www.standvirtual.com/carros/citroen",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "model",
+   "label": "Modelo",
+   "value": "C4 Cactus",
+   "href": "https://www.standvirtual.com/carros/citroen/c4-cactus",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "version",
+   "label": "Versão",
+   "value": "PureTech 110 Stop&Start EAT6 Shine",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "color",
+   "label": "Cor",
+   "value": "Cinzento",
+   "href": "https://www.standvirtual.com/carros/citroen/c4-cactus?search%5Bfilter_enum_color%5D%5B0%5D=gray",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "door_count",
+   "label": "Nº de portas",
+   "value": "5",
+   "href": "https://www.standvirtual.com/carros/citroen/c4-cactus?search%5Bfilter_enum_door_count%5D%5B0%5D=5",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "nr_seats",
+   "label": "Lotação",
+   "value": "5",
+   "href": "https://www.standvirtual.com/carros/citroen/c4-cactus?search%5Bfilter_enum_nr_seats%5D%5B0%5D=5",
+   "group": "basic_information",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "fuel_type",
+   "label": "Combustível",
+   "value": "Gasolina",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": 1,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "engine_capacity",
+   "label": "Cilindrada",
+   "value": "1 199 cm3",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": 4,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "engine_power",
+   "label": "Potência",
+   "value": "110 cv",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": 5,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "body_type",
+   "label": "Segmento",
+   "value": "SUV / TT",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": 3,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "gearbox",
+   "label": "Tipo de Caixa",
+   "value": "Automática",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": 2,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "transmission",
+   "label": "Tracção",
+   "value": "Tracção dianteira",
+   "href": null,
+   "group": "technical_specs",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "first_registration_month",
+   "label": "Mês de Registo",
+   "value": "Agosto",
+   "href": null,
+   "group": "condition_history",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  },
+  {
+   "key": "first_registration_year",
+   "label": "Ano",
+   "value": "2018",
+   "href": null,
+   "group": "condition_history",
+   "overviewOrder": null,
+   "overviewEVOrder": null,
+   "description": null
+  }
+ ],
+ "parametersDict": {
+  "catalog_urn": {
+   "label": "catalog_urn",
+   "values": [
+    {
+     "value": "orn:standvirtualcom:catalog:eurotax_de-10142167",
+     "label": "orn:standvirtualcom:catalog:eurotax_de-10142167"
+    }
+   ]
+  },
+  "is_imported_car": {
+   "label": "is_imported_car",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "android_auto": {
+   "label": "android_auto",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "bluetooth_interface": {
+   "label": "bluetooth_interface",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "radio": {
+   "label": "radio",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "hands_free_system": {
+   "label": "hands_free_system",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "usb_in": {
+   "label": "usb_in",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "navigation_system": {
+   "label": "navigation_system",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "air_conditioning_type": {
+   "label": "air_conditioning_type",
+   "values": [
+    {
+     "value": "automatic-climate-control",
+     "label": "AC automático"
+    }
+   ]
+  },
+  "make": {
+   "label": "make",
+   "values": [
+    {
+     "value": "citroen",
+     "label": "Citroën"
+    }
+   ]
+  },
+  "model": {
+   "label": "model",
+   "values": [
+    {
+     "value": "c4-cactus",
+     "label": "C4 Cactus"
+    }
+   ]
+  },
+  "version": {
+   "label": "version",
+   "values": [
+    {
+     "value": "ver-puretech-110-stop-start-eat6-shine",
+     "label": "PureTech 110 Stop&Start EAT6 Shine"
+    }
+   ]
+  },
+  "fuel_type": {
+   "label": "fuel_type",
+   "values": [
+    {
+     "value": "gaz",
+     "label": "Gasolina"
+    }
+   ]
+  },
+  "first_registration_month": {
+   "label": "first_registration_month",
+   "values": [
+    {
+     "value": "8",
+     "label": "Agosto"
+    }
+   ]
+  },
+  "first_registration_year": {
+   "label": "first_registration_year",
+   "values": [
+    {
+     "value": "2018",
+     "label": "2018"
+    }
+   ]
+  },
+  "mileage": {
+   "label": "mileage",
+   "values": [
+    {
+     "value": "73365",
+     "label": "73 365 km"
+    }
+   ]
+  },
+  "engine_capacity": {
+   "label": "engine_capacity",
+   "values": [
+    {
+     "value": "1199",
+     "label": "1 199 cm3"
+    }
+   ]
+  },
+  "engine_power": {
+   "label": "engine_power",
+   "values": [
+    {
+     "value": "110",
+     "label": "110 cv"
+    }
+   ]
+  },
+  "fixed_value": {
+   "label": "fixed_value",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "accept_returns": {
+   "label": "accept_returns",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "accept_funding": {
+   "label": "accept_funding",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "independent_vehicle_heater": {
+   "label": "independent_vehicle_heater",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "automatic_heating_control": {
+   "label": "automatic_heating_control",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "rain_sensor": {
+   "label": "rain_sensor",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "power_windows_front": {
+   "label": "power_windows_front",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "body_type": {
+   "label": "body_type",
+   "values": [
+    {
+     "value": "suv",
+     "label": "SUV / TT"
+    }
+   ]
+  },
+  "color": {
+   "label": "color",
+   "values": [
+    {
+     "value": "gray",
+     "label": "Cinzento"
+    }
+   ]
+  },
+  "park_distance_control_front": {
+   "label": "park_distance_control_front",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "park_distance_control_rear": {
+   "label": "park_distance_control_rear",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "gearbox": {
+   "label": "gearbox",
+   "values": [
+    {
+     "value": "automatic",
+     "label": "Automática"
+    }
+   ]
+  },
+  "door_count": {
+   "label": "door_count",
+   "values": [
+    {
+     "value": "5",
+     "label": "5"
+    }
+   ]
+  },
+  "nr_seats": {
+   "label": "nr_seats",
+   "values": [
+    {
+     "value": "5",
+     "label": "5"
+    }
+   ]
+  },
+  "transmission": {
+   "label": "transmission",
+   "values": [
+    {
+     "value": "front-wheel-drive",
+     "label": "Tracção dianteira"
+    }
+   ]
+  },
+  "vendors_warranty_valid_until_date": {
+   "label": "vendors_warranty_valid_until_date",
+   "values": [
+    {
+     "value": "18",
+     "label": "18 Meses"
+    }
+   ]
+  },
+  "antilock_brake_system": {
+   "label": "antilock_brake_system",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "esp": {
+   "label": "esp",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "driver_airbag": {
+   "label": "driver_airbag",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "passenger_airbag": {
+   "label": "passenger_airbag",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "side_airbag_driver": {
+   "label": "side_airbag_driver",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "side_airbag_driver_and_passenger": {
+   "label": "side_airbag_driver_and_passenger",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "side_airbags_rear": {
+   "label": "side_airbags_rear",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "child_seat_fixation": {
+   "label": "child_seat_fixation",
+   "values": [
+    {
+     "value": "1",
+     "label": "Sim"
+    }
+   ]
+  },
+  "version_label": {
+   "label": "version_label",
+   "values": [
+    {
+     "value": "PureTech 110 Stop&Start EAT6 Shine",
+     "label": "PureTech 110 Stop&Start EAT6 Shine"
+    }
+   ]
+  },
+  "autorenew": {
+   "label": "autorenew",
+   "values": [
+    {
+     "value": "0",
+     "label": "Não"
+    }
+   ]
+  },
+  "new_used": {
+   "label": "new_used",
+   "values": [
+    {
+     "value": "used",
+     "label": "Usado"
+    }
+   ]
+  }
+ },
+ "category": {
+  "code": "carros",
+  "id": 29,
+  "name": "Carros",
+  "uriPath": "carros"
+ },
+ "isParts": false
+}
