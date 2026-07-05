@@ -135,12 +135,14 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
       toast?.erro('Não foi encontrado nenhum URL do Standvirtual.');
       return;
     }
-    setRows((prev) => {
-      const existing = new Set(prev.map((row) => row.trim()).filter(Boolean));
-      const fresh = found.filter((url) => !existing.has(url));
-      return [...prev.filter((row) => row.trim()), ...(fresh.length ? fresh : [])];
-    });
-    toast?.info(`${found.length} URL${found.length === 1 ? '' : 's'} adicionado${found.length === 1 ? '' : 's'} à lista.`);
+    const existing = new Set(rows.map((row) => row.trim()).filter(Boolean));
+    const fresh = [...new Set(found)].filter((url) => !existing.has(url));
+    if (fresh.length === 0) {
+      toast?.info('Todos os URLs já estavam na lista.');
+      return;
+    }
+    setRows((prev) => [...prev.filter((row) => row.trim()), ...fresh]);
+    toast?.info(`${fresh.length} URL${fresh.length === 1 ? '' : 's'} adicionado${fresh.length === 1 ? '' : 's'} à lista.`);
   };
 
   const handleFile = async (file: File | undefined | null) => {
@@ -207,7 +209,8 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
       }
       setResults({ ...progress });
 
-      if (!cancelRef.current && !stopped) {
+      const isLast = index === queue[queue.length - 1].index;
+      if (!isLast && !cancelRef.current && !stopped) {
         await sleep(800 + Math.random() * 1200); // anti-bot pacing between items
       }
     }
@@ -447,7 +450,9 @@ export default function BatchImportPanel({ attested }: { attested: boolean }) {
             disabled={!attested || validCount === 0 || overCap}
             onClick={startImport}
           >
-            Importar {validCount > 0 ? validCount : ''} anúncio{validCount === 1 ? '' : 's'}
+            {validCount > 0
+              ? `Importar ${validCount} anúncio${validCount === 1 ? '' : 's'}`
+              : 'Importar anúncios'}
           </Button>
           {!attested && (
             <p className="text-xs text-fg-muted text-center">

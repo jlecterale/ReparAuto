@@ -80,7 +80,16 @@ export async function importStandvirtualAdvert(url: string): Promise<ImportAdver
       url,
       attestOwnership: true,
     });
-  } catch {
+  } catch (err) {
+    // Session lost mid-batch: stop the whole run instead of failing every URL.
+    if (err instanceof Error && err.message === 'unauthorized') {
+      return {
+        status: 'failed',
+        reason: 'unauthorized',
+        message: importErrorMessage('unauthorized'),
+        fatal: true,
+      };
+    }
     return { status: 'failed', reason: 'fetch_failed', message: importErrorMessage('fetch_failed') };
   }
 
