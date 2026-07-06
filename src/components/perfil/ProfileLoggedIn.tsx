@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
+import { pickChangedFields } from '@/lib/changedFields';
 import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
 import { releasePendingFiles } from '@/lib/pendingUploadFiles';
 import type { PecaFormDraft } from '@/components/pecas/PecaForm';
@@ -220,7 +221,10 @@ export default function ProfileLoggedIn() {
       editCarro?.fotos ?? [],
       (dados.fotos as string[] | undefined) ?? [],
     );
-    await updateCarro(id, { ...dados, status });
+    const changed = pickChangedFields(editCarro ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updateCarro(id, changed);
+    }
     setEditCarro(null);
     await carregar();
   };
@@ -231,7 +235,10 @@ export default function ProfileLoggedIn() {
       editPeca?.foto ? [editPeca.foto] : [],
       dados.foto ? [dados.foto as string] : [],
     );
-    await updatePeca(id, { ...dados, status });
+    const changed = pickChangedFields(editPeca ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updatePeca(id, changed);
+    }
     setEditPeca(null);
     await carregar();
   };

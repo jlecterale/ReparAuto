@@ -22,26 +22,45 @@ import { isValidYoutubeUrl } from '@/lib/youtube';
 import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import {
   CAMBIOS,
+  CAR_AIRBAGS_MAX,
+  CAR_CO2_MAX,
+  CAR_CONSUMPTION_MAX,
   CAR_DISPLACEMENT_MAX,
   CAR_DOORS_MAX,
   CAR_DOORS_MIN,
+  CAR_GEARS_MAX,
   CAR_KM_MAX,
   CAR_POWER_MAX,
+  CAR_PREVIOUS_OWNERS_MAX,
   CAR_PRICE_MAX,
+  CAR_RANGE_MAX,
   CAR_SEATS_MIN,
+  CAR_VERSION_MAX,
+  CAR_WARRANTY_MONTHS_MAX,
   CAR_YEAR_MIN,
   carYearMax,
   maxSeatsForBodyType,
+  parseDecimalPt,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
   EQUIPAMENTOS_CARRO,
   ESTADOS_VEICULO,
   MAX_FOTOS_CARRO,
+  MESES,
+  ORIGENS_VEICULO,
   TIPOS_CARROCERIA,
+  TIPOS_ESTOFO,
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { colors } from '@/theme/colors';
-import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction } from '@/types';
+import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction, Upholstery, VehicleOrigin } from '@/types';
+
+type CommercialKey = 'acceptsFinancing' | 'vatDeductible' | 'acceptsExchange';
+const COMERCIAL_OPTIONS: { value: CommercialKey; label: string }[] = [
+  { value: 'acceptsFinancing', label: 'Aceita financiamento' },
+  { value: 'vatDeductible', label: 'IVA dedutível' },
+  { value: 'acceptsExchange', label: 'Aceita retoma' },
+];
 
 export default function AnunciarCarroScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
@@ -70,6 +89,26 @@ export default function AnunciarCarroScreen() {
   const [displacement, setDisplacement] = useState('');
   const [traction, setTraction] = useState<Traction | null>(null);
   const [features, setFeatures] = useState<string[]>([]);
+  const [version, setVersion] = useState('');
+  // Month of first registration stored as its label (e.g. "Março"); converted to
+  // its 1–12 number only at the DB boundary.
+  const [firstRegMonth, setFirstRegMonth] = useState('');
+  const [origin, setOrigin] = useState<VehicleOrigin | null>(null);
+  const [previousOwners, setPreviousOwners] = useState('');
+  const [gears, setGears] = useState('');
+  const [co2Emissions, setCo2Emissions] = useState('');
+  const [maxFuelRange, setMaxFuelRange] = useState('');
+  const [consumptionUrban, setConsumptionUrban] = useState('');
+  const [consumptionExtraUrban, setConsumptionExtraUrban] = useState('');
+  const [consumptionCombined, setConsumptionCombined] = useState('');
+  const [upholstery, setUpholstery] = useState<Upholstery | null>(null);
+  const [numberOfAirbags, setNumberOfAirbags] = useState('');
+  const [warrantyMonths, setWarrantyMonths] = useState('');
+  const [comercial, setComercial] = useState({
+    acceptsFinancing: false,
+    vatDeductible: false,
+    acceptsExchange: false,
+  });
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
   const [local, setLocal] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -86,12 +125,16 @@ export default function AnunciarCarroScreen() {
   const draftData = useMemo<CarDraftData>(
     () => ({
       fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
-      seats, condition, power, displacement, traction, features, estado, local,
-      descricao, videoUrl, telefone, whatsapp,
+      seats, condition, power, displacement, traction, features, version, firstRegistrationMonth: firstRegMonth,
+      origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
+      consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
+      ...comercial, estado, local, descricao, videoUrl, telefone, whatsapp,
     }),
     [fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
-     seats, condition, power, displacement, traction, features, estado, local,
-     descricao, videoUrl, telefone, whatsapp],
+     seats, condition, power, displacement, traction, features, version, firstRegMonth,
+     origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
+     consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
+     comercial, estado, local, descricao, videoUrl, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(marca || modelo || km || preco || descricao || fotos.length);
@@ -114,6 +157,24 @@ export default function AnunciarCarroScreen() {
     setDisplacement(d.displacement ?? '');
     setTraction(d.traction ?? null);
     setFeatures(d.features ?? []);
+    setVersion(d.version ?? '');
+    setFirstRegMonth(d.firstRegistrationMonth ?? '');
+    setOrigin(d.origin ?? null);
+    setPreviousOwners(d.previousOwners ?? '');
+    setGears(d.gears ?? '');
+    setCo2Emissions(d.co2Emissions ?? '');
+    setMaxFuelRange(d.maxFuelRange ?? '');
+    setConsumptionUrban(d.consumptionUrban ?? '');
+    setConsumptionExtraUrban(d.consumptionExtraUrban ?? '');
+    setConsumptionCombined(d.consumptionCombined ?? '');
+    setUpholstery(d.upholstery ?? null);
+    setNumberOfAirbags(d.numberOfAirbags ?? '');
+    setWarrantyMonths(d.warrantyMonths ?? '');
+    setComercial({
+      acceptsFinancing: d.acceptsFinancing ?? false,
+      vatDeductible: d.vatDeductible ?? false,
+      acceptsExchange: d.acceptsExchange ?? false,
+    });
     setEstado(d.estado ?? 'pronto');
     setLocal(d.local ?? '');
     setDescricao(d.descricao ?? '');
@@ -159,6 +220,24 @@ export default function AnunciarCarroScreen() {
         setDisplacement(c.displacement != null ? String(c.displacement) : '');
         setTraction(c.traction ?? null);
         setFeatures(c.features ?? []);
+        setVersion(c.version ?? '');
+        setFirstRegMonth(c.firstRegistrationMonth ? MESES[c.firstRegistrationMonth - 1] ?? '' : '');
+        setOrigin(c.origin ?? null);
+        setPreviousOwners(c.previousOwners != null ? String(c.previousOwners) : '');
+        setGears(c.gears != null ? String(c.gears) : '');
+        setCo2Emissions(c.co2Emissions != null ? String(c.co2Emissions) : '');
+        setMaxFuelRange(c.maxFuelRange != null ? String(c.maxFuelRange) : '');
+        setConsumptionUrban(c.consumptionUrban != null ? String(c.consumptionUrban).replace('.', ',') : '');
+        setConsumptionExtraUrban(c.consumptionExtraUrban != null ? String(c.consumptionExtraUrban).replace('.', ',') : '');
+        setConsumptionCombined(c.consumptionCombined != null ? String(c.consumptionCombined).replace('.', ',') : '');
+        setUpholstery(c.upholstery ?? null);
+        setNumberOfAirbags(c.numberOfAirbags != null ? String(c.numberOfAirbags) : '');
+        setWarrantyMonths(c.warrantyMonths != null ? String(c.warrantyMonths) : '');
+        setComercial({
+          acceptsFinancing: c.acceptsFinancing ?? false,
+          vatDeductible: c.vatDeductible ?? false,
+          acceptsExchange: c.acceptsExchange ?? false,
+        });
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
         setDescricao(c.descricao ?? '');
@@ -177,6 +256,8 @@ export default function AnunciarCarroScreen() {
   function validar(): string | null {
     if (fotos.length === 0) return 'Adicione pelo menos uma foto.';
     if (!marca.trim() || !modelo.trim()) return 'Indique a marca e o modelo.';
+    if (version.trim().length > CAR_VERSION_MAX)
+      return `A versão deve ter no máximo ${CAR_VERSION_MAX} caracteres.`;
     const anoMax = carYearMax();
     const anoNum = Number(ano);
     if (!Number.isInteger(anoNum) || anoNum < CAR_YEAR_MIN || anoNum > anoMax)
@@ -208,6 +289,30 @@ export default function AnunciarCarroScreen() {
       if (!Number.isInteger(ccNum) || ccNum < 1 || ccNum > CAR_DISPLACEMENT_MAX)
         return `A cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`;
     }
+    // Standvirtual-parity optional specs — only checked once the user fills them.
+    const optIntErr = (raw: string, min: number, max: number, label: string): string | null => {
+      if (!raw.trim()) return null;
+      const n = Number(raw);
+      return Number.isInteger(n) && n >= min && n <= max ? null : `${label} deve estar entre ${min} e ${max}.`;
+    };
+    const specErro =
+      optIntErr(gears, 1, CAR_GEARS_MAX, 'O nº de mudanças') ??
+      optIntErr(previousOwners, 0, CAR_PREVIOUS_OWNERS_MAX, 'O nº de proprietários') ??
+      optIntErr(co2Emissions, 0, CAR_CO2_MAX, 'As emissões de CO₂') ??
+      optIntErr(maxFuelRange, 0, CAR_RANGE_MAX, 'A autonomia') ??
+      optIntErr(numberOfAirbags, 0, CAR_AIRBAGS_MAX, 'O nº de airbags') ??
+      optIntErr(warrantyMonths, 0, CAR_WARRANTY_MONTHS_MAX, 'A garantia');
+    if (specErro) return specErro;
+    const consErr = (raw: string, label: string): string | null => {
+      if (!raw.trim()) return null;
+      const n = parseDecimalPt(raw);
+      return n != null && n <= CAR_CONSUMPTION_MAX ? null : `${label} deve estar entre 0 e ${CAR_CONSUMPTION_MAX} l/100 km.`;
+    };
+    const consumoErro =
+      consErr(consumptionUrban, 'O consumo urbano') ??
+      consErr(consumptionExtraUrban, 'O consumo extra-urbano') ??
+      consErr(consumptionCombined, 'O consumo combinado');
+    if (consumoErro) return consumoErro;
     if (!combustivel) return 'Selecione o combustível.';
     if (!cambio) return 'Selecione a caixa.';
     if (!local.trim()) return 'Indique a localidade.';
@@ -239,6 +344,9 @@ export default function AnunciarCarroScreen() {
         angleByPhoto,
       );
 
+      // Month label ("Março") → its 1–12 number for storage; 0 when unset/invalid.
+      const regMonthNum = firstRegMonth ? MESES.indexOf(firstRegMonth) + 1 : 0;
+
       const dados = {
         marca: marca.trim(),
         modelo: modelo.trim(),
@@ -256,6 +364,24 @@ export default function AnunciarCarroScreen() {
         displacement: displacement ? Number(displacement) : undefined,
         traction: traction ?? undefined,
         features: features.length ? features : undefined,
+        // Standvirtual-parity optional specs (undefined → dropped on create /
+        // nulled on update by the db helpers).
+        version: version.trim() || undefined,
+        firstRegistrationMonth: regMonthNum >= 1 ? regMonthNum : undefined,
+        origin: origin ?? undefined,
+        previousOwners: previousOwners ? Number(previousOwners) : undefined,
+        gears: gears ? Number(gears) : undefined,
+        co2Emissions: co2Emissions ? Number(co2Emissions) : undefined,
+        maxFuelRange: maxFuelRange ? Number(maxFuelRange) : undefined,
+        consumptionUrban: parseDecimalPt(consumptionUrban) ?? undefined,
+        consumptionExtraUrban: parseDecimalPt(consumptionExtraUrban) ?? undefined,
+        consumptionCombined: parseDecimalPt(consumptionCombined) ?? undefined,
+        upholstery: upholstery ?? undefined,
+        numberOfAirbags: numberOfAirbags ? Number(numberOfAirbags) : undefined,
+        warrantyMonths: warrantyMonths ? Number(warrantyMonths) : undefined,
+        acceptsFinancing: comercial.acceptsFinancing || undefined,
+        vatDeductible: comercial.vatDeductible || undefined,
+        acceptsExchange: comercial.acceptsExchange || undefined,
         estadoVeiculo: estado,
         local: local.trim(),
         descricao: descricao.trim(),
@@ -349,6 +475,14 @@ export default function AnunciarCarroScreen() {
           disabled={!marca}
           placeholder={marca ? 'Selecionar modelo' : 'Escolha a marca primeiro'}
           title="Modelo"
+        />
+
+        <Input
+          label="Versão"
+          value={version}
+          onChangeText={setVersion}
+          placeholder="CDi Avantgarde"
+          maxLength={60}
         />
 
         <View className="flex-row gap-3">
@@ -471,6 +605,141 @@ export default function AnunciarCarroScreen() {
               prev.includes(value) ? prev.filter((f) => f !== value) : [...prev, value],
             )
           }
+        />
+
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Input
+              label="Nº de mudanças"
+              value={gears}
+              onChangeText={setGears}
+              placeholder="6"
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+          </View>
+          <View className="flex-1">
+            <Input
+              label="Proprietários anteriores"
+              value={previousOwners}
+              onChangeText={setPreviousOwners}
+              placeholder="1"
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+          </View>
+        </View>
+
+        <SelectField
+          label="Mês da 1ª matrícula"
+          value={firstRegMonth}
+          onChange={setFirstRegMonth}
+          options={MESES}
+          emptyOption="Indiferente"
+          placeholder="Selecionar mês"
+          title="Mês da 1ª matrícula"
+        />
+        <ChipSelect
+          label="Origem"
+          options={ORIGENS_VEICULO.map((o) => ({ value: o, label: o }))}
+          value={origin}
+          onChange={setOrigin}
+        />
+
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Input
+              label="Emissões CO₂ (g/km)"
+              value={co2Emissions}
+              onChangeText={setCo2Emissions}
+              placeholder="120"
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+          </View>
+          <View className="flex-1">
+            <Input
+              label="Autonomia (km)"
+              value={maxFuelRange}
+              onChangeText={setMaxFuelRange}
+              placeholder="900"
+              keyboardType="number-pad"
+              maxLength={4}
+            />
+          </View>
+        </View>
+
+        <ChipSelect
+          label="Estofos"
+          options={TIPOS_ESTOFO.map((u) => ({ value: u, label: u }))}
+          value={upholstery}
+          onChange={setUpholstery}
+        />
+
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Input
+              label="Nº de airbags"
+              value={numberOfAirbags}
+              onChangeText={setNumberOfAirbags}
+              placeholder="8"
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+          </View>
+          <View className="flex-1">
+            <Input
+              label="Garantia (meses)"
+              value={warrantyMonths}
+              onChangeText={setWarrantyMonths}
+              placeholder="12"
+              keyboardType="number-pad"
+              maxLength={3}
+            />
+          </View>
+        </View>
+
+        <View>
+          <Text className="mb-1.5 text-sm font-semibold text-fg-muted">Consumo (l/100 km)</Text>
+          <View className="flex-row gap-3">
+            <View className="flex-1">
+              <Input
+                label="Urbano"
+                value={consumptionUrban}
+                onChangeText={setConsumptionUrban}
+                placeholder="7,2"
+                keyboardType="decimal-pad"
+                maxLength={5}
+              />
+            </View>
+            <View className="flex-1">
+              <Input
+                label="Extra-urbano"
+                value={consumptionExtraUrban}
+                onChangeText={setConsumptionExtraUrban}
+                placeholder="4,8"
+                keyboardType="decimal-pad"
+                maxLength={5}
+              />
+            </View>
+            <View className="flex-1">
+              <Input
+                label="Combinado"
+                value={consumptionCombined}
+                onChangeText={setConsumptionCombined}
+                placeholder="5,6"
+                keyboardType="decimal-pad"
+                maxLength={5}
+              />
+            </View>
+          </View>
+        </View>
+
+        <MultiChipSelect
+          label="Condições comerciais"
+          options={COMERCIAL_OPTIONS}
+          values={(Object.keys(comercial) as CommercialKey[]).filter((k) => comercial[k])}
+          onToggle={(key) => setComercial((prev) => ({ ...prev, [key]: !prev[key] }))}
         />
 
         <Input label="Localidade *" value={local} onChangeText={setLocal} placeholder="Lisboa" />

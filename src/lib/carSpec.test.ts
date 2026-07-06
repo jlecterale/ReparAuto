@@ -1,4 +1,17 @@
-import { validarDadosVeiculo, CAR_KM_MAX, CAR_YEAR_MIN, carYearMax } from '@/lib/carSpec';
+import {
+  validarDadosVeiculo,
+  CAR_KM_MAX,
+  CAR_YEAR_MIN,
+  carYearMax,
+  CAR_GEARS_MAX,
+  CAR_CO2_MAX,
+  CAR_RANGE_MAX,
+  CAR_AIRBAGS_MAX,
+  CAR_WARRANTY_MONTHS_MAX,
+  CAR_CONSUMPTION_MAX,
+  CAR_PREVIOUS_OWNERS_MAX,
+  CAR_VERSION_MAX,
+} from '@/lib/carSpec';
 
 // The car-listing form lets users type free-form numbers; validation must keep a
 // listing from carrying absurd specs (year 99999, 500 doors, unbounded mileage).
@@ -90,5 +103,81 @@ describe('validarDadosVeiculo', () => {
   it('rejects non-integer / non-numeric numeric input', () => {
     expect(validarDadosVeiculo({ ...valido, portas: 'abc' }).portas).toBeTruthy();
     expect(validarDadosVeiculo({ ...valido, anoFabricacao: '2015.5' }).anoFabricacao).toBeTruthy();
+  });
+
+  // ---- Standvirtual-parity optional fields (added together) ----
+
+  it('leaves the new optional fields alone when empty', () => {
+    const erros = validarDadosVeiculo(valido);
+    expect(erros.gears).toBeUndefined();
+    expect(erros.previousOwners).toBeUndefined();
+    expect(erros.co2Emissions).toBeUndefined();
+    expect(erros.maxFuelRange).toBeUndefined();
+    expect(erros.numberOfAirbags).toBeUndefined();
+    expect(erros.warrantyMonths).toBeUndefined();
+    expect(erros.firstRegistrationMonth).toBeUndefined();
+    expect(erros.consumptionUrban).toBeUndefined();
+    expect(erros.consumptionExtraUrban).toBeUndefined();
+    expect(erros.consumptionCombined).toBeUndefined();
+  });
+
+  it('accepts valid integer specs', () => {
+    const erros = validarDadosVeiculo({
+      ...valido,
+      gears: '7',
+      previousOwners: '1',
+      co2Emissions: '120',
+      maxFuelRange: '900',
+      numberOfAirbags: '8',
+      warrantyMonths: '12',
+      firstRegistrationMonth: '3',
+    });
+    expect(erros.gears).toBeUndefined();
+    expect(erros.previousOwners).toBeUndefined();
+    expect(erros.co2Emissions).toBeUndefined();
+    expect(erros.maxFuelRange).toBeUndefined();
+    expect(erros.numberOfAirbags).toBeUndefined();
+    expect(erros.warrantyMonths).toBeUndefined();
+    expect(erros.firstRegistrationMonth).toBeUndefined();
+  });
+
+  it('accepts previousOwners of exactly 0 (first owner selling)', () => {
+    expect(validarDadosVeiculo({ ...valido, previousOwners: '0' }).previousOwners).toBeUndefined();
+  });
+
+  it('rejects integer specs above their cap', () => {
+    expect(validarDadosVeiculo({ ...valido, gears: String(CAR_GEARS_MAX + 1) }).gears).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, previousOwners: String(CAR_PREVIOUS_OWNERS_MAX + 1) }).previousOwners).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, co2Emissions: String(CAR_CO2_MAX + 1) }).co2Emissions).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, maxFuelRange: String(CAR_RANGE_MAX + 1) }).maxFuelRange).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, numberOfAirbags: String(CAR_AIRBAGS_MAX + 1) }).numberOfAirbags).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, warrantyMonths: String(CAR_WARRANTY_MONTHS_MAX + 1) }).warrantyMonths).toBeTruthy();
+  });
+
+  it('rejects an out-of-range first-registration month', () => {
+    expect(validarDadosVeiculo({ ...valido, firstRegistrationMonth: '0' }).firstRegistrationMonth).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, firstRegistrationMonth: '13' }).firstRegistrationMonth).toBeTruthy();
+  });
+
+  it('accepts decimal fuel consumption with a dot or a comma', () => {
+    expect(validarDadosVeiculo({ ...valido, consumptionCombined: '5.6' }).consumptionCombined).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, consumptionUrban: '7,2' }).consumptionUrban).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, consumptionExtraUrban: '4' }).consumptionExtraUrban).toBeUndefined();
+  });
+
+  it('rejects fuel consumption above the cap or negative', () => {
+    expect(validarDadosVeiculo({ ...valido, consumptionCombined: String(CAR_CONSUMPTION_MAX + 1) }).consumptionCombined).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, consumptionUrban: '-1' }).consumptionUrban).toBeTruthy();
+    expect(validarDadosVeiculo({ ...valido, consumptionExtraUrban: 'abc' }).consumptionExtraUrban).toBeTruthy();
+  });
+
+  it('accepts a version within the length cap and leaves it alone when empty', () => {
+    expect(validarDadosVeiculo({ ...valido, version: 'CDi Avantgarde' }).version).toBeUndefined();
+    expect(validarDadosVeiculo(valido).version).toBeUndefined();
+    expect(validarDadosVeiculo({ ...valido, version: 'x'.repeat(CAR_VERSION_MAX) }).version).toBeUndefined();
+  });
+
+  it('rejects a version longer than the cap', () => {
+    expect(validarDadosVeiculo({ ...valido, version: 'x'.repeat(CAR_VERSION_MAX + 1) }).version).toBeTruthy();
   });
 });

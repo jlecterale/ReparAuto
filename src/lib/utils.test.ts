@@ -4,6 +4,9 @@ import {
   isValidYoutubeUrl,
   toggleInList,
   parsePositiveInt,
+  parseNonNegativeInt,
+  sanitizeDecimalInput,
+  parseDecimalOrNull,
   parseExternalImageUrl,
   formatMessageTime,
   canOptimizeImage,
@@ -123,6 +126,46 @@ describe('parsePositiveInt', () => {
 
   it('truncates decimals to an integer', () => {
     expect(parsePositiveInt('4.9')).toBe(4);
+  });
+});
+
+describe('parseNonNegativeInt', () => {
+  it('accepts 0 (unlike parsePositiveInt) and positive integers', () => {
+    expect(parseNonNegativeInt('0')).toBe(0);
+    expect(parseNonNegativeInt(' 8 ')).toBe(8);
+  });
+
+  it('returns null for empty, negative or non-numeric input', () => {
+    expect(parseNonNegativeInt('')).toBeNull();
+    expect(parseNonNegativeInt('-1')).toBeNull();
+    expect(parseNonNegativeInt('abc')).toBeNull();
+  });
+});
+
+describe('sanitizeDecimalInput', () => {
+  it('keeps digits and collapses to a single comma separator', () => {
+    expect(sanitizeDecimalInput('5,6')).toBe('5,6');
+    expect(sanitizeDecimalInput('5.6')).toBe('5,6');
+    expect(sanitizeDecimalInput('7,2,3')).toBe('7,23');
+    expect(sanitizeDecimalInput('1a2.b3')).toBe('12,3');
+  });
+
+  it('leaves a plain integer untouched', () => {
+    expect(sanitizeDecimalInput('12')).toBe('12');
+  });
+});
+
+describe('parseDecimalOrNull', () => {
+  it('parses PT (comma) and dot decimals, including 0', () => {
+    expect(parseDecimalOrNull('5,6')).toBe(5.6);
+    expect(parseDecimalOrNull('4.8')).toBe(4.8);
+    expect(parseDecimalOrNull('0')).toBe(0);
+  });
+
+  it('returns null for empty, negative or non-numeric input', () => {
+    expect(parseDecimalOrNull('')).toBeNull();
+    expect(parseDecimalOrNull('-2')).toBeNull();
+    expect(parseDecimalOrNull('abc')).toBeNull();
   });
 });
 

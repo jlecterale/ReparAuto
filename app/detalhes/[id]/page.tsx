@@ -79,6 +79,17 @@ export default async function Page({ params }: PageProps) {
     ...(carro.bodyType ? { bodyType: carro.bodyType } : {}),
     ...(carro.seats ? { seatingCapacity: carro.seats } : {}),
     ...(carro.traction ? { driveWheelConfiguration: carro.traction } : {}),
+    ...(carro.gears != null ? { numberOfForwardGears: carro.gears } : {}),
+    ...(carro.previousOwners != null ? { numberOfPreviousOwners: carro.previousOwners } : {}),
+    ...(carro.numberOfAirbags != null ? { numberOfAirbags: carro.numberOfAirbags } : {}),
+    ...(carro.co2Emissions != null ? { emissionsCO2: carro.co2Emissions } : {}),
+    ...(carro.upholstery ? { vehicleInteriorType: carro.upholstery } : {}),
+    ...(carro.consumptionCombined != null
+      ? { fuelConsumption: { '@type': 'QuantitativeValue', value: carro.consumptionCombined, unitText: 'l/100km' } }
+      : {}),
+    ...(carro.firstRegistrationMonth
+      ? { dateVehicleFirstRegistered: `${carro.anoFabricacao}-${String(carro.firstRegistrationMonth).padStart(2, '0')}` }
+      : {}),
     ...(carro.displacement || carro.power
       ? {
           vehicleEngine: {

@@ -7,7 +7,7 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
-import { parsePositiveInt } from '@/lib/utils';
+import { parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull } from '@/lib/utils';
 import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
@@ -186,6 +186,24 @@ export default function Anunciar() {
         displacement: parsePositiveInt(dados.displacement) ?? undefined,
         traction: dados.traction || undefined,
         features: dados.features.length ? dados.features : undefined,
+        // Standvirtual-parity optional specs — strings/booleans coerced to the
+        // stored shape; empty/invalid drop to undefined (cleanUndefined strips them).
+        version: dados.version?.trim() || undefined,
+        firstRegistrationMonth: parsePositiveInt(dados.firstRegistrationMonth) ?? undefined,
+        origin: dados.origin || undefined,
+        previousOwners: parseNonNegativeInt(dados.previousOwners) ?? undefined,
+        gears: parsePositiveInt(dados.gears) ?? undefined,
+        co2Emissions: parseNonNegativeInt(dados.co2Emissions) ?? undefined,
+        maxFuelRange: parseNonNegativeInt(dados.maxFuelRange) ?? undefined,
+        consumptionUrban: parseDecimalOrNull(dados.consumptionUrban) ?? undefined,
+        consumptionExtraUrban: parseDecimalOrNull(dados.consumptionExtraUrban) ?? undefined,
+        consumptionCombined: parseDecimalOrNull(dados.consumptionCombined) ?? undefined,
+        upholstery: dados.upholstery || undefined,
+        numberOfAirbags: parseNonNegativeInt(dados.numberOfAirbags) ?? undefined,
+        warrantyMonths: parseNonNegativeInt(dados.warrantyMonths) ?? undefined,
+        acceptsFinancing: dados.acceptsFinancing || undefined,
+        vatDeductible: dados.vatDeductible || undefined,
+        acceptsExchange: dados.acceptsExchange || undefined,
         rodando: dados.rodando === 'sim',
         inspecao: dados.inspecao === 'sim',
         criador: user.email,

@@ -5,6 +5,8 @@ import {
   doc,
   getDoc,
   setDoc,
+  arrayUnion,
+  arrayRemove,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { incrementCampo, decrementCampo, criarNotificacao } from '@/lib/db';
@@ -140,14 +142,20 @@ export default function useFavoritos(user: Usuario | null, onRequireLogin?: () =
     return () => window.removeEventListener('online', replayQueue);
   }, [user?.uid]);
 
+  // Persists a single toggle as a field delta (arrayUnion/arrayRemove) so two
+  // devices toggling concurrently never clobber each other's full list.
   const salvar = useCallback(
-    async (lista: string[]) => {
+    async (lista: string[], prefixedId: string, unprefixedId: string, add: boolean) => {
       setFavoritosState(lista);
 
       if (user?.uid) {
         try {
           const userRef = doc(db, 'users', user.uid);
-          await setDoc(userRef, { favoritos: lista }, { merge: true });
+          const delta = add
+            ? arrayUnion(prefixedId)
+            // Remove the legacy unprefixed variant too (backward compat).
+            : arrayRemove(prefixedId, unprefixedId);
+          await setDoc(userRef, { favoritos: delta }, { merge: true });
         } catch (err) {
           console.error('[Favoritos] Erro ao salvar no Firestore:', err);
           salvarLocal(lista);
@@ -224,7 +232,7 @@ export default function useFavoritos(user: Usuario | null, onRequireLogin?: () =
           enqueue({ uid, type: 'favorito_add', payload: { itemId: idStr, colecao: colecaoParam } });
         }
       }
-      salvar(nova);
+      salvar(nova, prefixedId, idStr, !alreadyFav);
     },
     [favoritos, salvar, user?.uid, onRequireLogin]
   );
