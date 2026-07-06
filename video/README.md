@@ -47,11 +47,13 @@ cenas de produto (mock da UI real) → CTA final. Renderiza todos com
 | 12 | `ReelPartsFinder` | Oficinas | Encontrar peças compatíveis + confirmar no chat |
 | 13 | `ReelRepairFlip` | Oficinas | Carros para restaurar: estado real + análise de danos IA |
 | 14 | `ReelAudioListing` | Ambos | Anúncio por áudio: fala e a IA preenche o formulário |
+| 15 | `ReelStandImport` | Stands | Importar anúncios do Standvirtual por URL (1, lote ou stand inteiro) |
 
 > Nota: os Reels 01/02 (painel + CRM), 04, 05 e 06 apresentam funcionalidades
-> das PRs #33, #58, #54 e #9, o Reel 13 usa a análise de danos da PR #54 e o
-> Reel 14 o anúncio por áudio da PR #69 — publica esses vídeos apenas depois
-> de os recursos estarem em produção.
+> das PRs #33, #58, #54 e #9, o Reel 13 usa a análise de danos da PR #54, o
+> Reel 14 o anúncio por áudio da PR #69 e o Reel 15 a importação do
+> Standvirtual da PR #78 — publica esses vídeos apenas depois de os recursos
+> estarem em produção.
 
 ## Começar
 
