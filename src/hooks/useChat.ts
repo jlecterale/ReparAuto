@@ -8,6 +8,7 @@ import {
   writeBatch,
   query,
   where,
+  limit,
   onSnapshot,
   Timestamp,
   type Unsubscribe,
@@ -18,6 +19,8 @@ import type { Mensagem, ListingType } from '@/types/chat';
 
 const MENSAGENS_COLLECTION = 'messages';
 const NOTIFICACOES_COLLECTION = 'notifications';
+// 100 docs is enough for an exact count up to 99; the UI shows "99+" beyond.
+const UNREAD_BADGE_LIMIT = 100;
 
 export function useChat(uid: string | null, nome: string = '') {
   const [mensagensNaoLidas, setMensagensNaoLidas] = useState(0);
@@ -43,11 +46,14 @@ export function useChat(uid: string | null, nome: string = '') {
       return;
     }
     // Equality-only filters are served by merging single-field indexes, so
-    // the badge only streams the user's unread messages.
+    // the badge only streams the user's unread messages. The stream is
+    // capped: the badge renders anything above 99 as "99+", so downloading
+    // more than UNREAD_BADGE_LIMIT docs would never change what users see.
     const q = query(
       collection(db, MENSAGENS_COLLECTION),
       where('toUid', '==', uid),
       where('lida', '==', false),
+      limit(UNREAD_BADGE_LIMIT),
     );
     unsubNaoLidas.current = onSnapshot(
       q,
