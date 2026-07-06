@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
+import { pickChangedFields } from '@/lib/changedFields';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
@@ -92,7 +93,10 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
       carro?.fotos ?? [],
       (dados.fotos as string[] | undefined) ?? [],
     );
-    await updateCarro(id, { ...dados, status });
+    const changed = pickChangedFields(carro ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updateCarro(id, changed);
+    }
     setEditModalOpen(false);
     const data = await getCarroPorIdDb(id);
     if (data) setCarro(data);
