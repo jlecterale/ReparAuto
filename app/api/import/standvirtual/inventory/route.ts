@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase.admin';
-import { requireUser } from '@/lib/server/requireUser';
+import { isAdminUser, requireUser } from '@/lib/server/requireUser';
 import { internalErrorResponse } from '@/lib/server/routeError';
 import { checkImportRateLimit, discoverInventoryAdUrls } from '@/lib/importers/standvirtual.server';
 import { validateStandvirtualInventoryUrl } from '@/lib/importers/urlList';
@@ -38,12 +38,16 @@ async function handleInventory(request: Request) {
     return NextResponse.json({ error: 'server_unavailable' }, { status: 503 });
   }
 
-  const profileSnap = await db.collection('users').doc(uid).get();
-  const profile = profileSnap.exists
-    ? (profileSnap.data() as { tipoConta?: string; verificado?: boolean })
-    : {};
-  if (profile.tipoConta !== 'profissional' || profile.verificado !== true) {
-    return NextResponse.json({ error: 'professional_verification_required' }, { status: 403 });
+  // Admins run discovery on behalf of clients (PR #78 discussion); everyone
+  // else needs a professional account with validated documentation.
+  if (!(await isAdminUser(auth.user))) {
+    const profileSnap = await db.collection('users').doc(uid).get();
+    const profile = profileSnap.exists
+      ? (profileSnap.data() as { tipoConta?: string; verificado?: boolean })
+      : {};
+    if (profile.tipoConta !== 'profissional' || profile.verificado !== true) {
+      return NextResponse.json({ error: 'professional_verification_required' }, { status: 403 });
+    }
   }
 
   const body = (await request.json().catch(() => null)) as { url?: unknown } | null;

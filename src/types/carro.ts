@@ -112,6 +112,8 @@ export interface Carro {
   /** Canonical source advert URL (audit trail). */
   origemUrl?: string;
   importadoEm?: Timestamp;
+  /** Uid of who ran the import when it wasn't the owner (admin-on-behalf). */
+  importadoPor?: string;
 }
 
 export type CarroInput = Omit<Carro, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };
