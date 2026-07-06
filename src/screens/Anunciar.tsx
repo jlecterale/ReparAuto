@@ -11,6 +11,7 @@ import { parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull } from '@/lib
 import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
+import { EMPTY_CARRO_FORM_DATA } from '@/lib/carFormDefaults';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
@@ -25,57 +26,7 @@ import type { CarroFormData } from '@/types/carro';
 
 type CategoriaAnuncio = 'carro' | 'peca';
 
-const initialDados: CarroFormData = {
-  marca: '',
-  modelo: '',
-  anoFabricacao: '',
-  anoModelo: '',
-  km: '',
-  cor: '',
-  combustivel: 'Gasolina',
-  cambio: 'Manual',
-  portas: '',
-  bodyType: '',
-  seats: '',
-  condition: 'Usado',
-  power: '',
-  displacement: '',
-  traction: '',
-  features: [],
-  version: '',
-  firstRegistrationMonth: '',
-  origin: '',
-  previousOwners: '',
-  gears: '',
-  co2Emissions: '',
-  maxFuelRange: '',
-  consumptionUrban: '',
-  consumptionExtraUrban: '',
-  consumptionCombined: '',
-  upholstery: '',
-  numberOfAirbags: '',
-  warrantyMonths: '',
-  acceptsFinancing: false,
-  vatDeductible: false,
-  acceptsExchange: false,
-  localizacao: '',
-  localizacaoDistrito: '',
-  preco: '',
-  descricao: '',
-  videoUrl: '',
-  estadoVeiculo: 'pronto',
-  rodando: 'sim',
-  inspecao: 'sim',
-  tiposManutencao: [],
-  orcamentoTexto: '',
-  incluirMecanicoNome: false,
-  incluirMecanicoTelefone: false,
-  mecanicoNome: '',
-  mecanicoTelefone: '',
-  vendedorWhatsApp: '',
-  vendedorTelefone: '',
-  vendedorEmail: '',
-};
+const initialDados: CarroFormData = EMPTY_CARRO_FORM_DATA;
 
 export default function Anunciar() {
   const router = useRouter();

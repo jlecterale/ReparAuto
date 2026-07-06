@@ -25,6 +25,10 @@ const FAQ_ITEMS: FaqItem[] = [
     question: 'Como posso anunciar o meu carro usado ou peças auto?',
     answer: 'Anunciar no RecarGarage é extremamente simples e rápido. Basta clicar no botão "Anunciar" no menu superior, preencher os detalhes da viatura ou peça (como marca, modelo, ano, quilometragem, preço e fotos) e publicar. O seu anúncio ficará disponível para milhares de compradores interessados em Portugal.',
   },
+  {
+    question: 'Posso importar os meus anúncios do Standvirtual?',
+    answer: 'Sim! Em "Anunciar", escolha "Já anuncia no Standvirtual?" e cole o link do seu anúncio — o formulário fica pré-preenchido com os dados, a ficha técnica e as fotos. Também pode importar vários links de uma vez, e stands com conta profissional e documentação validada podem importar o inventário inteiro colando o endereço da sua página de stand. Os anúncios importados ficam pendentes até aprovação, como qualquer anúncio novo.',
+  },
 ];
 
 export default function FaqSection() {
@@ -74,7 +78,7 @@ export default function FaqSection() {
               </button>
               <div
                 className={`overflow-hidden transition-all duration-300 ${
-                  isOpen ? 'max-h-48 mt-2 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
+                  isOpen ? 'max-h-72 mt-2 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
                 }`}
               >
                 <p className="text-sm sm:text-base text-zinc-600 leading-relaxed">

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
+import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, DownloadSimple, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
@@ -422,9 +422,19 @@ export default function ProfileLoggedIn() {
         <>
       {/* My Cars */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
-          <ListChecks className="text-accent" /> Os Seus Carros Anunciados
-        </h4>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h4 className="font-extrabold text-fg-heading flex items-center gap-2">
+            <ListChecks className="text-accent" /> Os Seus Carros Anunciados
+          </h4>
+          <Button
+            tipo="secundario"
+            tamanho="sm"
+            icone={<DownloadSimple weight="bold" />}
+            onClick={() => router.push('/importar')}
+          >
+            Importar do Standvirtual
+          </Button>
+        </div>
 
         {carDraft && (
           <DraftCard

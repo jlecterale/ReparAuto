@@ -195,6 +195,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
           <div className="flex items-center gap-2">
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
+            {carro.origem === 'standvirtual' && <Badge cor="blue">Importado</Badge>}
             <button
               onClick={() => toggleFavorito(carro.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${

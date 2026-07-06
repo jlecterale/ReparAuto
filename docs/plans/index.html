@@ -2282,11 +2282,11 @@ const extraPlans = [
     evidence: 'Entregue — src/lib/spin360.ts (+20 testes TDD), campo photoAngles em cars, seletor de angulo no FotosEditor/PhotoPicker, captura guiada com moldura (GuidedSpinCapture; expo-camera no mobile) e Spin360Viewer em ambas as plataformas.'
   },
   {
-    id: '24', title: 'Importacao de Anuncios do Standvirtual (Perfis Profissionais)', priority: 'ALTA', effort: '~12-18 dias',
+    id: '24', title: 'Importacao de Anuncios do Standvirtual', priority: 'ALTA', effort: '~12-18 dias',
     implemented: false, file: '24-importacao-anuncios-standvirtual.html',
     impact: 'Reduz o custo de migracao dos stands: importa o inventario do Standvirtual num clique',
-    summary: 'Ferramenta so para contas profissionais que importa os proprios anuncios do stand no Standvirtual para o RecarGarage como rascunhos pendentes. Investigacao cobre a API oficial OLX Group/Standvirtual (OAuth2 password/partner grant, GET /account/adverts), o fallback de parsing de __NEXT_DATA__ por URL colado, e a parceria com integradores de stands. Mapeia params -> schema Carro, copia fotos para o Storage e nunca republica no Standvirtual.',
-    evidence: 'Em fila — plano de investigacao criado; sem implementacao no codigo. Bloqueador: aprovacao de credenciais da API do Grupo OLX (gratis, discricionaria) — contornavel comecando pela Via B (paste-URL).'
+    summary: 'Importa os proprios anuncios do utilizador (particular ou profissional) do Standvirtual para o RecarGarage como rascunhos pendentes. Investigacao cobre a API oficial OLX Group/Standvirtual (OAuth2 password/partner grant, GET /account/adverts), o fallback de parsing de __NEXT_DATA__ por URL colado, e a parceria com integradores de stands. Mapeia params -> schema Carro, copia fotos para o Storage e nunca republica no Standvirtual.',
+    evidence: 'Onda 1 (Via B, paste-URL) ENTREGUE: rota /importar com modo 1-URL (pre-preenche o formulario Anunciar) e modo lote serial com progresso por item (ate 25, dedupe por origemId), primeiras API routes (app/api/import/standvirtual/preview, /import e /inventory) com anti-SSRF, rate limit por utilizador, re-hospedagem de fotos no Storage e badge "Importado". Descoberta do stand inteiro (pagina <slug>.standvirtual.com/inventory paginada) para profissionais com documentacao validada. Nucleo urlList/nextdata/map com TDD. Onda 2 (API oficial com login do stand) em fila — bloqueador: credenciais do Grupo OLX.'
   },
   {
     id: '25', title: 'Campos de Anuncio em Paridade com a Standvirtual (Web + Mobile)', priority: 'MEDIA', effort: '~2-3 dias',

@@ -8,9 +8,11 @@ import type { Carro } from '@/types/carro';
 // duck-typed shape ({toDate, toMillis, seconds, nanoseconds}) the rest of the
 // client code already consumes.
 
-export interface SerializedCarro extends Omit<Carro, 'dataCriacao' | 'dataAprovacao' | 'impulso'> {
+export interface SerializedCarro
+  extends Omit<Carro, 'dataCriacao' | 'dataAprovacao' | 'impulso' | 'importadoEm'> {
   dataCriacao: number | null;
   dataAprovacao?: number | null;
+  importadoEm?: number | null;
   impulso?: { ativo: boolean; dataInicio?: number | null; dataFim?: number | null };
 }
 
@@ -31,11 +33,12 @@ function fromMillis(ms: number): Timestamp {
 }
 
 export function serializeCarro(carro: Carro): SerializedCarro {
-  const { dataCriacao, dataAprovacao, impulso, ...rest } = carro;
+  const { dataCriacao, dataAprovacao, impulso, importadoEm, ...rest } = carro;
   return {
     ...rest,
     dataCriacao: toMillisOrNull(dataCriacao),
     ...(dataAprovacao !== undefined ? { dataAprovacao: toMillisOrNull(dataAprovacao) } : {}),
+    ...(importadoEm !== undefined ? { importadoEm: toMillisOrNull(importadoEm) } : {}),
     ...(impulso
       ? {
           impulso: {
@@ -49,11 +52,12 @@ export function serializeCarro(carro: Carro): SerializedCarro {
 }
 
 export function deserializeCarro(serialized: SerializedCarro): Carro {
-  const { dataCriacao, dataAprovacao, impulso, ...rest } = serialized;
+  const { dataCriacao, dataAprovacao, impulso, importadoEm, ...rest } = serialized;
   return {
     ...rest,
     dataCriacao: fromMillis(dataCriacao ?? 0),
     ...(dataAprovacao != null ? { dataAprovacao: fromMillis(dataAprovacao) } : {}),
+    ...(importadoEm != null ? { importadoEm: fromMillis(importadoEm) } : {}),
     ...(impulso
       ? {
           impulso: {

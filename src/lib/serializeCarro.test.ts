@@ -30,6 +30,31 @@ describe('serializeCarro / deserializeCarro', () => {
     expect(pending.dataAprovacao).toBeUndefined();
   });
 
+  it('round-trips the import origin fields (plan 24) including the importadoEm timestamp', () => {
+    const IMPORTED_AT_MS = CREATED_AT_MS + 120_000;
+    const revived = deserializeCarro(
+      JSON.parse(
+        JSON.stringify(
+          serializeCarro(
+            buildCarro({
+              origem: 'standvirtual',
+              origemId: '8Q0B0W',
+              origemUrl: 'https://www.standvirtual.com/carros/anuncio/x-ID8Q0B0W.html',
+              importadoEm: timestampLike(IMPORTED_AT_MS),
+            }),
+          ),
+        ),
+      ),
+    );
+    expect(revived.origem).toBe('standvirtual');
+    expect(revived.origemId).toBe('8Q0B0W');
+    expect(revived.importadoEm?.toMillis()).toBe(IMPORTED_AT_MS);
+
+    const manual = deserializeCarro(JSON.parse(JSON.stringify(serializeCarro(buildCarro()))));
+    expect(manual.origem).toBeUndefined();
+    expect(manual.importadoEm).toBeUndefined();
+  });
+
   it('flattens boost (impulso) timestamps so the serialized form is fully JSON-safe', () => {
     const serialized = serializeCarro(
       buildCarro({
