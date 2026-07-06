@@ -21,6 +21,7 @@ import {
   watchTokenRefresh,
 } from '@/lib/push';
 import { logScreenView } from '@/lib/analytics';
+import { setupCrashReporting } from '@/lib/crashReporting';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
@@ -30,6 +31,7 @@ import type { Href } from 'expo-router';
 import { colors } from '@/theme/colors';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+setupCrashReporting();
 
 function RootNavigator() {
   const { loading, user } = useAuth();
