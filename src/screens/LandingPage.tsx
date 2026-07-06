@@ -27,6 +27,7 @@ import {
   Handshake,
   UserPlus,
   Target,
+  DownloadSimple,
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
 import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
@@ -170,7 +171,7 @@ const SCENARIOS = [
     emoji: '🏪',
     title: 'Tem um stand ou oficina?',
     description:
-      'Registe-se gratuitamente por tempo limitado. Divulgue os seus serviços e atraia novos clientes.',
+      'Registe-se gratuitamente por tempo limitado. Importe os seus anúncios do Standvirtual e atraia novos clientes.',
     cta: 'Registar oficina',
     href: '/oficinas/registar',
   },
@@ -200,6 +201,10 @@ const FAQ_ITEMS = [
   {
     q: 'Quem pode usar a plataforma?',
     a: 'Qualquer pessoa em Portugal. Particulares, stands, oficinas, mecânicos independentes e vendedores de peças.',
+  },
+  {
+    q: 'Posso importar os meus anúncios do Standvirtual?',
+    a: 'Sim! Cole o link de um anúncio e o formulário fica pré-preenchido com os dados, a ficha técnica e as fotos — ou importe vários de uma vez. Stands com conta profissional verificada podem trazer o inventário inteiro colando o endereço da página do stand.',
   },
   {
     q: 'Qual a diferença para os concorrentes?',
@@ -550,6 +555,43 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ─── STANDVIRTUAL IMPORT ANNOUNCEMENT ─── */}
+      <section className="py-12 sm:py-16 bg-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <AnimatedSection>
+            <div className="relative bg-gradient-to-br from-primary-900 via-primary-800 to-primary-950 rounded-3xl p-8 sm:p-12 overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-accent/10 blur-3xl" />
+                <div className="absolute -bottom-16 -left-16 w-56 h-56 rounded-full bg-primary-400/10 blur-3xl" />
+              </div>
+              <div className="relative flex flex-col lg:flex-row items-center gap-8 lg:gap-14">
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/20 border border-accent/30 text-secondary-200 text-xs font-bold mb-5">
+                    <span className="w-2 h-2 rounded-full bg-success-400 animate-pulse" />
+                    Novidade
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl text-white mb-3">
+                    Já anuncia no Standvirtual? Importe tudo em minutos
+                  </h2>
+                  <p className="text-white/75 text-lg leading-relaxed max-w-xl">
+                    Cole o link de um anúncio — ou traga o inventário inteiro do seu stand — e nós
+                    recriamos a ficha completa: dados, equipamento, preço e fotos. Sem reescrever
+                    nada; revê e publica.
+                  </p>
+                </div>
+                <Link
+                  href="/importar"
+                  className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-white text-primary-900 text-base font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 shrink-0"
+                >
+                  <DownloadSimple size={22} weight="bold" />
+                  Importar anúncios
+                </Link>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </section>
+
       {/* ─── USE CASES / SCENARIOS ─── */}
       <section className="py-20 sm:py-28 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -641,7 +683,7 @@ export default function LandingPage() {
                   </h2>
                   <p className="text-white text-lg leading-relaxed max-w-xl">
                     Registe o seu stand ou oficina agora e aproveite o acesso completo sem qualquer custo.
-                    Posicione-se antes de toda a gente.
+                    Traga os seus anúncios do Standvirtual em minutos e posicione-se antes de toda a gente.
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 shrink-0">
