@@ -34,9 +34,12 @@ export default function useReviews(vendedorEmail: string | undefined) {
     return await addReview(data);
   }, []);
 
-  const remover = useCallback(async (id: string, vendedorUid: string, vendedorEmailParam: string) => {
+  // Author-only path (ReviewsList gates on autorUid). No rating recompute
+  // here: the rules deny an author writing the seller's profile, so that
+  // write always failed after burning a full reviews + profile read. The
+  // admin queue (useReviewsAdmin) keeps the recompute, where it is allowed.
+  const remover = useCallback(async (id: string) => {
     await deleteReview(id);
-    await updateSellerRating(vendedorUid, vendedorEmailParam);
   }, []);
 
   return {
