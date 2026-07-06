@@ -96,6 +96,22 @@ const CONDITION_BY_KEY: Record<string, string> = {
   novo: 'Novo',
 };
 
+const UPHOLSTERY_BY_KEY: Record<string, string> = {
+  cloth: 'Tecido',
+  fabric: 'Tecido',
+  tecido: 'Tecido',
+  leather: 'Pele',
+  pele: 'Pele',
+  couro: 'Pele',
+  ecoleather: 'Pele sintética',
+  leatherette: 'Pele sintética',
+  syntheticleather: 'Pele sintética',
+  pelesintetica: 'Pele sintética',
+  alcantara: 'Alcântara',
+  other: 'Outro',
+  outro: 'Outro',
+};
+
 /** Equipment option keys → entries of the EQUIPAMENTOS_CARRO checklist. */
 const FEATURE_BY_EQUIPMENT_KEY: Record<string, (typeof EQUIPAMENTOS_CARRO)[number]> = {
   air_conditioning: 'Ar condicionado',
@@ -171,6 +187,14 @@ function parseIntStrict(value: string | undefined): number | null {
   if (!digits) return null;
   const parsed = Number.parseInt(digits, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/** "6,1" / "6.1" / "6.1 l/100km" → "6.1" (dot-normalized), or undefined. */
+function parseDecimalString(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const match = /\d+(?:[.,]\d+)?/.exec(value);
+  if (!match) return undefined;
+  return match[0].replace(',', '.');
 }
 
 function matchCatalogMarca(label: string): MarcaEntry | undefined {
@@ -320,6 +344,87 @@ export function mapAdvertToCarroFormData(advert: NormalizedAdvert): MappedAdvert
   }
   if (features.size > 0) dados.features = Array.from(features);
 
+  // ---- Standvirtual-parity fields (plan 25) — all optional: absence is
+  // silent, only a present-but-unrecognized value flags for review. ----
+
+  /** First param present among the aliases (SV/Otomoto key names vary). */
+  const firstParam = (...keys: string[]) => {
+    for (const key of keys) {
+      if (params[key]) return params[key];
+    }
+    return undefined;
+  };
+  /** Positive integer (rejects 0) from a param's value. */
+  const intFrom = (...keys: string[]) => parseIntStrict(firstParam(...keys)?.value) ?? undefined;
+  /** Non-negative integer (0 is meaningful, e.g. previous owners). */
+  const countFrom = (...keys: string[]) => {
+    const value = firstParam(...keys)?.value;
+    if (!value) return undefined;
+    const digits = value.replace(/[^\d]/g, '');
+    return digits ? String(Number.parseInt(digits, 10)) : undefined;
+  };
+  /** "1"/"Sim" → true, "0"/"Não" → false, anything else → undefined. */
+  const flagFrom = (...keys: string[]): boolean | undefined => {
+    const param = firstParam(...keys);
+    if (!param) return undefined;
+    const key = normalizeKey(param.value) || normalizeKey(param.label);
+    if (key === '1' || key === 'sim' || key === 'yes' || key === 'true') return true;
+    if (key === '0' || key === 'nao' || key === 'no' || key === 'false') return false;
+    return undefined;
+  };
+
+  const version = params.version_label?.value || params.version?.label;
+  if (version) dados.version = version;
+
+  const month = intFrom('first_registration_month');
+  if (month && month >= 1 && month <= 12) dados.firstRegistrationMonth = String(month);
+
+  const imported = flagFrom('is_imported_car');
+  if (imported !== undefined) dados.origin = imported ? 'Importado' : 'Nacional';
+
+  const upholsteryParam = firstParam('upholstery');
+  if (upholsteryParam) {
+    const upholstery =
+      UPHOLSTERY_BY_KEY[normalizeKey(upholsteryParam.value)] ??
+      UPHOLSTERY_BY_KEY[normalizeKey(upholsteryParam.label)];
+    if (upholstery) dados.upholstery = upholstery;
+    else flag('upholstery');
+  }
+
+  const previousOwners = countFrom('nr_of_owners', 'previous_owners', 'nr_owners');
+  if (previousOwners !== undefined) dados.previousOwners = previousOwners;
+
+  const gears = intFrom('nr_gears', 'gears', 'gearbox_gears');
+  if (gears) dados.gears = String(gears);
+
+  const co2 = countFrom('co2_emissions');
+  if (co2 !== undefined) dados.co2Emissions = co2;
+
+  const range = intFrom('max_fuel_range', 'range', 'battery_range');
+  if (range) dados.maxFuelRange = String(range);
+
+  const urban = parseDecimalString(firstParam('urban_consumption', 'consumption_urban')?.value);
+  if (urban) dados.consumptionUrban = urban;
+  const extraUrban = parseDecimalString(
+    firstParam('extra_urban_consumption', 'consumption_extra_urban')?.value,
+  );
+  if (extraUrban) dados.consumptionExtraUrban = extraUrban;
+  const combined = parseDecimalString(
+    firstParam('mixed_consumption', 'combined_consumption', 'consumption_combined', 'average_consumption')?.value,
+  );
+  if (combined) dados.consumptionCombined = combined;
+
+  const airbags = countFrom('nr_of_airbags', 'nr_airbags', 'airbags');
+  if (airbags !== undefined) dados.numberOfAirbags = airbags;
+
+  // Despite the name, this param carries the remaining months ("18 Meses").
+  const warranty = countFrom('vendors_warranty_valid_until_date', 'vendors_warranty');
+  if (warranty !== undefined && warranty !== '0') dados.warrantyMonths = warranty;
+
+  if (flagFrom('accept_funding') === true) dados.acceptsFinancing = true;
+  if (flagFrom('accept_returns') === true) dados.acceptsExchange = true;
+  if (flagFrom('vat_discount', 'vat_deductible', 'vat') === true) dados.vatDeductible = true;
+
   return { dados, unmappedFields };
 }
 
@@ -334,6 +439,12 @@ export function buildCarroPayload(dados: Partial<CarroFormData>): Record<string,
     if (!value) return undefined;
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  };
+  // Zero is meaningful here (owners, CO₂…) — mirrors parseNonNegativeInt.
+  const num0 = (value: string | undefined): number | undefined => {
+    if (!value) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
   };
 
   const payload: Record<string, unknown> = {
@@ -354,6 +465,22 @@ export function buildCarroPayload(dados: Partial<CarroFormData>): Record<string,
     displacement: num(dados.displacement),
     traction: dados.traction || undefined,
     features: dados.features?.length ? dados.features : undefined,
+    version: dados.version?.trim() || undefined,
+    firstRegistrationMonth: num(dados.firstRegistrationMonth),
+    origin: dados.origin || undefined,
+    previousOwners: num0(dados.previousOwners),
+    gears: num(dados.gears),
+    co2Emissions: num0(dados.co2Emissions),
+    maxFuelRange: num0(dados.maxFuelRange),
+    consumptionUrban: num0(dados.consumptionUrban),
+    consumptionExtraUrban: num0(dados.consumptionExtraUrban),
+    consumptionCombined: num0(dados.consumptionCombined),
+    upholstery: dados.upholstery || undefined,
+    numberOfAirbags: num0(dados.numberOfAirbags),
+    warrantyMonths: num0(dados.warrantyMonths),
+    acceptsFinancing: dados.acceptsFinancing || undefined,
+    vatDeductible: dados.vatDeductible || undefined,
+    acceptsExchange: dados.acceptsExchange || undefined,
     local: dados.localizacao,
     distrito: dados.localizacaoDistrito || undefined,
     coordenadas: dados.localizacao ? getCoordenadas(dados.localizacao) : undefined,

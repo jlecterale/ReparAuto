@@ -69,6 +69,55 @@ describe('mapAdvertToCarroFormData — real fixture', () => {
     const { unmappedFields } = mapAdvertToCarroFormData(realAdvert());
     expect(unmappedFields).toEqual([]);
   });
+
+  it('maps the Standvirtual-parity fields present in the real advert (plan 25)', () => {
+    const { dados } = mapAdvertToCarroFormData(realAdvert());
+    expect(dados.version).toBe('PureTech 110 Stop&Start EAT6 Shine');
+    expect(dados.firstRegistrationMonth).toBe('8');
+    expect(dados.origin).toBe('Importado'); // is_imported_car = Sim
+    expect(dados.acceptsFinancing).toBe(true); // accept_funding
+    expect(dados.acceptsExchange).toBe(true); // accept_returns ("Aceita retoma")
+    expect(dados.warrantyMonths).toBe('18'); // vendors_warranty_valid_until_date = "18 Meses"
+  });
+});
+
+describe('mapAdvertToCarroFormData — parity fields via synthetic params', () => {
+  const parityParams = {
+    is_imported_car: { value: '0', label: 'Não' },
+    upholstery: { value: 'leather', label: 'Pele' },
+    nr_gears: { value: '6', label: '6' },
+    co2_emissions: { value: '126', label: '126 g/km' },
+    urban_consumption: { value: '6.1', label: '6,1 l/100km' },
+    extra_urban_consumption: { value: '4,2', label: '4,2 l/100km' },
+    mixed_consumption: { value: '5.0', label: '5 l/100km' },
+    nr_of_owners: { value: '1', label: '1' },
+    nr_of_airbags: { value: '6', label: '6' },
+    max_fuel_range: { value: '540', label: '540 km' },
+  };
+
+  it('maps upholstery, gears, emissions, consumptions, owners, airbags and range', () => {
+    const advert = advertWith({ params: { ...realAdvert().params, ...parityParams } });
+    const { dados } = mapAdvertToCarroFormData(advert);
+    expect(dados.origin).toBe('Nacional');
+    expect(dados.upholstery).toBe('Pele');
+    expect(dados.gears).toBe('6');
+    expect(dados.co2Emissions).toBe('126');
+    expect(dados.consumptionUrban).toBe('6.1');
+    expect(dados.consumptionExtraUrban).toBe('4.2'); // PT comma normalized
+    expect(dados.consumptionCombined).toBe('5.0');
+    expect(dados.previousOwners).toBe('1');
+    expect(dados.numberOfAirbags).toBe('6');
+    expect(dados.maxFuelRange).toBe('540');
+  });
+
+  it('flags an unknown upholstery value without blocking', () => {
+    const advert = advertWith({
+      params: { ...realAdvert().params, upholstery: { value: 'carbon-fiber', label: 'Fibra' } },
+    });
+    const { dados, unmappedFields } = mapAdvertToCarroFormData(advert);
+    expect(dados.upholstery).toBeUndefined();
+    expect(unmappedFields).toContain('upholstery');
+  });
 });
 
 describe('mapAdvertToCarroFormData — unknown values never block', () => {
@@ -161,6 +210,12 @@ describe('buildCarroPayload', () => {
     expect(payload.power).toBe(110);
     expect(payload.local).toBe('Barcelos');
     expect(payload.distrito).toBe('Braga');
+    expect(payload.version).toBe('PureTech 110 Stop&Start EAT6 Shine');
+    expect(payload.firstRegistrationMonth).toBe(8);
+    expect(payload.origin).toBe('Importado');
+    expect(payload.acceptsFinancing).toBe(true);
+    expect(payload.acceptsExchange).toBe(true);
+    expect(payload.warrantyMonths).toBe(18);
     expect(payload.coordenadas).toEqual({ lat: expect.any(Number), lng: expect.any(Number) });
     expect(payload.estadoVeiculo).toBe('pronto');
     expect(payload.tiposManutencao).toEqual([]);
