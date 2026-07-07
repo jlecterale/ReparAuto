@@ -6,6 +6,7 @@ import { formatarPreco, renderFoto } from '@/lib/utils';
 import { useApp } from '@/providers/AppProvider';
 import Badge from '@/components/ui/Badge';
 import LazyImage from '@/components/ui/LazyImage';
+import SellerBadges from '@/components/trust/SellerBadges';
 import type { Peca, TipoPeca } from '@/types/peca';
 
 const tipoConfig: Record<TipoPeca, { cor: 'blue' | 'yellow' | 'gray'; Icon: Icon; label: string }> = {
@@ -15,8 +16,9 @@ const tipoConfig: Record<TipoPeca, { cor: 'blue' | 'yellow' | 'gray'; Icon: Icon
 };
 
 function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) => void }) {
-  const { favoritos } = useApp();
+  const { favoritos, pecas } = useApp();
   const { toggleFavorito, isFavorito } = favoritos;
+  const vendedorVerificado = !!peca.criadorUid && pecas.verifiedUids.has(peca.criadorUid);
   const config = tipoConfig[peca.tipo] || tipoConfig.venda;
   const isNovo = peca.dataAprovacao && (Date.now() - peca.dataAprovacao.toMillis()) < 24 * 60 * 60 * 1000;
   const fotoData = peca.foto ? renderFoto(peca.foto) : null;
@@ -98,6 +100,7 @@ function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) 
             <MapPin />
             {peca.local || 'Portugal'}
           </span>
+          {vendedorVerificado && <SellerBadges verificado />}
         </div>
       </div>
     </div>

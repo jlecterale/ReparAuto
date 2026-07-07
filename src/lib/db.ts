@@ -15,6 +15,7 @@ import {
   Timestamp,
   onSnapshot,
   increment,
+  documentId,
   type DocumentData,
   type DocumentReference,
 } from 'firebase/firestore';
@@ -41,6 +42,7 @@ import {
   sanitizeAlertSubscriptionInput,
   sanitizeAlertText,
 } from './alerts';
+import { chunkArray } from './sellers';
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
@@ -222,6 +224,30 @@ export async function getUserProfile(uid: string): Promise<Usuario | null> {
     console.error('[DB] Erro ao buscar perfil:', err);
     return null;
   }
+}
+
+// Firestore 'in' queries accept at most 30 values per disjunction.
+const VERIFIED_UIDS_CHUNK = 30;
+
+/**
+ * Of the given seller uids, returns the ones whose profile has
+ * `verificado: true`. Reads the public `users` collection in chunks
+ * (documentId 'in'), provable against the open read rule.
+ */
+export async function getVerifiedUids(uids: string[]): Promise<string[]> {
+  const verified: string[] = [];
+  try {
+    for (const chunk of chunkArray(uids, VERIFIED_UIDS_CHUNK)) {
+      const q = query(collection(db, USERS_COLLECTION), where(documentId(), 'in', chunk));
+      const snap = await getDocs(q);
+      snap.docs.forEach((d) => {
+        if (d.data().verificado === true) verified.push(d.id);
+      });
+    }
+  } catch (err) {
+    console.error('[DB] Erro ao buscar vendedores verificados:', err);
+  }
+  return verified;
 }
 
 export async function createUserProfile(uid: string, data: Record<string, unknown>): Promise<void> {

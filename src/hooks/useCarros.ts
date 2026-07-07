@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'rea
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import { matchesCarSpecFilters } from '@/lib/carSpecFilters';
+import { prioritizeVerified } from '@/lib/sellers';
+import useVerifiedSellers from '@/hooks/useVerifiedSellers';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 
@@ -45,6 +47,8 @@ export default function useCarros(active: boolean = true) {
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
   const deferredSearchQuery = useDeferredValue(searchQuery);
+
+  const verifiedUids = useVerifiedSellers(carros);
 
   const carrosFiltrados = useMemo(() => {
     let cs = [...carros];
@@ -110,10 +114,14 @@ export default function useCarros(active: boolean = true) {
       cs.sort((a, b) => a.preco - b.preco);
     } else if (sortOrdem === 'decrescente') {
       cs.sort((a, b) => b.preco - a.preco);
+    } else {
+      // Default (recency) order: verified sellers surface first, keeping
+      // recency within each group. Explicit sorts respect the user's choice.
+      cs = prioritizeVerified(cs, verifiedUids);
     }
 
     return cs;
-  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
+  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem, verifiedUids]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -139,6 +147,7 @@ export default function useCarros(active: boolean = true) {
   return useMemo(() => ({
     carros,
     carrosFiltrados,
+    verifiedUids,
     loading,
     filtroAtivo,
     setFiltroAtivo,
@@ -178,6 +187,7 @@ export default function useCarros(active: boolean = true) {
   }), [
     carros,
     carrosFiltrados,
+    verifiedUids,
     loading,
     filtroAtivo,
     searchQuery,
