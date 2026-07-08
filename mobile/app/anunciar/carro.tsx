@@ -271,7 +271,7 @@ export default function AnunciarCarroScreen() {
       return `Indique os quilómetros (0 a ${CAR_KM_MAX.toLocaleString('pt-PT')}).`;
     const precoNum = Number(preco);
     if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX)
-      return `Indique um preço entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+      return `Indique um preço entre 1 ${currencySymbol} e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} ${currencySymbol}.`;
     if (portas.trim()) {
       const portasNum = Number(portas);
       if (!Number.isInteger(portasNum) || portasNum < CAR_DOORS_MIN || portasNum > CAR_DOORS_MAX)

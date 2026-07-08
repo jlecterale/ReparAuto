@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -31,6 +31,7 @@ import {
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
 import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
+import { useCountry } from '@/providers/CountryProvider';
 
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -257,6 +258,30 @@ function FAQItem({ item }: { item: (typeof FAQ_ITEMS)[number] }) {
 
 export default function LandingPage() {
   const [headerSolid, setHeaderSolid] = useState(false);
+  // Standvirtual is a Portugal-only competitor: drop its mentions (import
+  // announcement, FAQ entry, scenario/promo copy) for the Brazilian market.
+  const { country } = useCountry();
+  const isPT = country === 'PT';
+
+  const scenarios = useMemo(
+    () =>
+      SCENARIOS.map((s) =>
+        s.href === '/oficinas/registar'
+          ? {
+              ...s,
+              description: isPT
+                ? s.description
+                : 'Registe-se gratuitamente por tempo limitado e atraia novos clientes na sua região.',
+            }
+          : s,
+      ),
+    [isPT],
+  );
+
+  const faqItems = useMemo(
+    () => FAQ_ITEMS.filter((item) => isPT || !item.q.includes('Standvirtual')),
+    [isPT],
+  );
 
   useEffect(() => {
     const handler = () => setHeaderSolid(window.scrollY > 40);
@@ -555,7 +580,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── STANDVIRTUAL IMPORT ANNOUNCEMENT ─── */}
+      {/* ─── STANDVIRTUAL IMPORT ANNOUNCEMENT (Portugal only) ─── */}
+      {isPT && (
       <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <AnimatedSection>
@@ -591,6 +617,7 @@ export default function LandingPage() {
           </AnimatedSection>
         </div>
       </section>
+      )}
 
       {/* ─── USE CASES / SCENARIOS ─── */}
       <section className="py-20 sm:py-28 bg-white">
@@ -608,7 +635,7 @@ export default function LandingPage() {
           </AnimatedSection>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {SCENARIOS.map((item, i) => (
+            {scenarios.map((item, i) => (
               <AnimatedSection key={item.title} delay={i * 80}>
                 <div className="flex gap-5 p-6 sm:p-8 rounded-2xl bg-neutral-50 border border-neutral-200 hover:border-neutral-300 hover:shadow-sm transition-all h-full">
                   <span className="text-3xl shrink-0 mt-1">{item.emoji}</span>
@@ -683,7 +710,9 @@ export default function LandingPage() {
                   </h2>
                   <p className="text-white text-lg leading-relaxed max-w-xl">
                     Registe o seu stand ou oficina agora e aproveite o acesso completo sem qualquer custo.
-                    Traga os seus anúncios do Standvirtual em minutos e posicione-se antes de toda a gente.
+                    {isPT
+                      ? ' Traga os seus anúncios do Standvirtual em minutos e posicione-se antes de toda a gente.'
+                      : ' Publique os seus anúncios em minutos e posicione-se antes de toda a gente.'}
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 shrink-0">
@@ -722,7 +751,7 @@ export default function LandingPage() {
 
           <AnimatedSection>
             <div className="flex flex-col gap-3">
-              {FAQ_ITEMS.map((item, i) => (
+              {faqItems.map((item, i) => (
                 <FAQItem key={i} item={item} />
               ))}
             </div>

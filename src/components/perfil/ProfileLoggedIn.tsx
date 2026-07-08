@@ -429,14 +429,17 @@ export default function ProfileLoggedIn() {
           <h4 className="font-extrabold text-fg-heading flex items-center gap-2">
             <ListChecks className="text-accent" /> Os Seus Carros Anunciados
           </h4>
-          <Button
-            tipo="secundario"
-            tamanho="sm"
-            icone={<DownloadSimple weight="bold" />}
-            onClick={() => router.push('/importar')}
-          >
-            Importar do Standvirtual
-          </Button>
+          {/* Standvirtual import is Portugal-only (no Brazilian equivalent yet). */}
+          {country === 'PT' && (
+            <Button
+              tipo="secundario"
+              tamanho="sm"
+              icone={<DownloadSimple weight="bold" />}
+              onClick={() => router.push('/importar')}
+            >
+              Importar do Standvirtual
+            </Button>
+          )}
         </div>
 
         {carDraft && (
