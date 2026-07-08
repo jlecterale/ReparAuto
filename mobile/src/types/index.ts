@@ -32,6 +32,8 @@ export interface Usuario {
   badges?: string[];
   /** Market the account belongs to; docs without it are PT (pre-Brazil). */
   country?: Country;
+  /** Per-group × per-channel notification preferences — shared with web. */
+  notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }
@@ -45,6 +47,20 @@ export type Combustivel =
   | 'Elétrico'
   | 'Híbrido';
 export type Cambio = 'Manual' | 'Automático' | 'CVT';
+export type BodyType =
+  | 'Citadino'
+  | 'Utilitário'
+  | 'Sedan'
+  | 'Carrinha'
+  | 'SUV'
+  | 'Monovolume'
+  | 'Coupé'
+  | 'Cabrio'
+  | 'Pick-up';
+export type Condition = 'Novo' | 'Usado' | 'Para peças';
+export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
+export type VehicleOrigin = 'Nacional' | 'Importado';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {
@@ -59,6 +75,39 @@ export interface Carro {
   cambio: Cambio;
   cor: string;
   portas: number;
+  bodyType?: BodyType;
+  seats?: number;
+  condition?: Condition;
+  power?: number;
+  displacement?: number;
+  traction?: Traction;
+  features?: string[];
+  /** Trim / variant, e.g. "CDi Avantgarde" (Standvirtual "version"). */
+  version?: string;
+  /** Month of first registration (1–12), pairs with anoFabricacao as the year. */
+  firstRegistrationMonth?: number;
+  origin?: VehicleOrigin;
+  /** Number of previous owners (0 = seller is the first owner). */
+  previousOwners?: number;
+  /** Number of forward gears. */
+  gears?: number;
+  /** Combined CO₂ emissions, g/km. */
+  co2Emissions?: number;
+  /** Max fuel/electric range, km. */
+  maxFuelRange?: number;
+  /** Fuel consumption, l/100 km. */
+  consumptionUrban?: number;
+  consumptionExtraUrban?: number;
+  consumptionCombined?: number;
+  upholstery?: Upholstery;
+  numberOfAirbags?: number;
+  /** Remaining vendor warranty, in months. */
+  warrantyMonths?: number;
+  acceptsFinancing?: boolean;
+  /** VAT-deductible invoice available (IVA dedutível). */
+  vatDeductible?: boolean;
+  /** Seller accepts a trade-in / part-exchange (retoma). */
+  acceptsExchange?: boolean;
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
@@ -67,6 +116,8 @@ export interface Carro {
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   fotos: string[];
+  /** Vehicle angle → index into `fotos`; enables the 360 spin viewer (see src/lib/spin360.ts). */
+  photoAngles?: Record<string, number> | null;
   criador: string;
   criadorUid?: string;
   vendedorNome?: string;
@@ -320,7 +371,7 @@ export interface Conversa {
 }
 
 // ---------- Notificações ----------
-export type TipoNotificacao = 'aprovado' | 'rejeitado' | 'info' | 'mensagem';
+export type TipoNotificacao = 'aprovado' | 'rejeitado' | 'info' | 'mensagem' | 'alerta' | 'preco';
 
 export interface Notificacao {
   id: string;
@@ -332,6 +383,93 @@ export interface Notificacao {
   lida: boolean;
   dataCriacao: Timestamp;
 }
+
+// ---------- Alertas (mirrors web src/types/alertas.ts + busca.ts) ----------
+export type CategoriaAlerta = 'carros' | 'pecas' | 'oficinas';
+
+/**
+ * Subset of the web's SearchFilters that the mobile filter sheet
+ * (useCarFilters/CarAdvFilters) can actually produce. Field names match the
+ * web's SearchFilters verbatim — the Cloud Function matcher
+ * (functions/src/lib/matching.ts) reads this shape regardless of platform.
+ */
+export interface AlertFiltros {
+  texto?: string;
+  marca?: string;
+  modelo?: string;
+  combustivel?: Combustivel;
+  distrito?: string;
+  concelho?: string;
+  precoMin?: number;
+  precoMax?: number;
+  anoMin?: number;
+  anoMax?: number;
+  kmMin?: number;
+  kmMax?: number;
+  estadoVeiculo?: EstadoVeiculo;
+}
+
+export interface AlertCriteria {
+  categoria: CategoriaAlerta;
+  tipoAnuncio?: string;
+  concelho?: string;
+  distrito?: string;
+  marca?: string;
+}
+
+interface AlertSubscriptionBase {
+  id: string;
+  uid: string;
+  nome: string;
+  ativo: boolean;
+  novosResultados: number;
+  dataCriacao: Timestamp;
+  ultimaNotificacao?: Timestamp;
+}
+
+export interface KeywordAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'palavra_chave';
+  keyword: string;
+  categoria?: CategoriaAlerta;
+}
+
+export interface CriteriaAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'criterio';
+  criteria: AlertCriteria;
+}
+
+export interface SavedFilterAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'filtro_salvo';
+  filters: AlertFiltros;
+}
+
+export type AlertSubscription =
+  | KeywordAlertSubscription
+  | CriteriaAlertSubscription
+  | SavedFilterAlertSubscription;
+
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+
+export type AlertSubscriptionInput = DistributiveOmit<
+  AlertSubscription,
+  'id' | 'uid' | 'novosResultados' | 'dataCriacao' | 'ultimaNotificacao'
+>;
+
+/** Only the two groups mobile has a UI for today (alerta/preco) — mensagem
+ * and conta keep the single blanket `Usuario.notificacoes` switch for now. */
+export interface ChannelPreferences {
+  inApp: boolean;
+  push: boolean;
+}
+
+export interface NotificationPreferences {
+  mensagem: ChannelPreferences;
+  conta: ChannelPreferences;
+  alerta: ChannelPreferences;
+  preco: ChannelPreferences;
+}
+
+export type GrupoPreferencia = keyof NotificationPreferences;
 
 /** Workshops live in the `services` collection (web type: OficinaMecanico). */
 export interface Oficina {

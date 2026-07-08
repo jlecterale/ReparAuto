@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import CriarIntencaoCompra from '@/components/intencao/CriarIntencaoCompra';
 
 export const metadata: Metadata = {
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <CriarIntencaoCompra />;
+  // CriarIntencaoCompra reads ?retomar via useSearchParams — needs Suspense.
+  return (
+    <Suspense fallback={null}>
+      <CriarIntencaoCompra />
+    </Suspense>
+  );
 }

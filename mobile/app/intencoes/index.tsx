@@ -11,6 +11,9 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { IntencaoCompra } from '@/types';
 import { colors } from '@/theme/colors';
 
+// Module-scope so the memoized IntencaoCard rows keep a stable onPress identity.
+const openIntencao = (id: string) => router.push(`/intencoes/${id}`);
+
 export default function IntencoesScreen() {
   const requireAuth = useRequireAuth();
   const { country } = useCountry();
@@ -57,9 +60,7 @@ export default function IntencoesScreen() {
           data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerClassName="p-4"
-          renderItem={({ item }) => (
-            <IntencaoCard intencao={item} onPress={(id) => router.push(`/intencoes/${id}`)} />
-          )}
+          renderItem={({ item }) => <IntencaoCard intencao={item} onPress={openIntencao} />}
           ListEmptyComponent={
             <EmptyState
               icon="search-outline"

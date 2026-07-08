@@ -1,6 +1,7 @@
 import type { User } from 'firebase/auth';
 import type { Timestamp } from 'firebase/firestore';
 import type { Country } from '@/lib/country';
+import type { NotificationPreferences } from './alertas';
 
 export type Role = 'user' | 'admin';
 export type TipoConta = 'particular' | 'profissional';
@@ -42,6 +43,12 @@ export interface Usuario {
   badges?: string[];
   planoAtivo?: PlanoAtivo;
   impulsosDisponiveis?: number;
+  /** Prefixed favourite ids (car_/part_/service_) — price-drop alerts fan out from this. */
+  favoritos?: string[];
+  /** FCM device tokens written after push consent (web + mobile). */
+  fcmTokens?: string[];
+  /** Per-group × per-channel notification preferences (see normalizeNotificationPreferences). */
+  notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }

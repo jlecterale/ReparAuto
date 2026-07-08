@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useApp } from '@/providers/AppProvider';
+import { formatMessageTime } from '@/lib/utils';
 import type { Mensagem, ListingType } from '@/types/chat';
 
 interface ChatInboxProps {
@@ -108,11 +109,16 @@ export default function ChatInbox({ show, onClose }: ChatInboxProps) {
                   <User className="text-accent text-sm" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <span className="font-bold text-sm text-fg-heading truncate">{msg.fromNome}</span>
-                    {!msg.lida && (
-                      <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>
-                    )}
+                    <span className="flex items-center gap-1.5 flex-shrink-0">
+                      <span className="text-[10px] text-fg-muted">
+                        {formatMessageTime(msg.dataCriacao)}
+                      </span>
+                      {!msg.lida && (
+                        <span className="w-2 h-2 rounded-full bg-accent"></span>
+                      )}
+                    </span>
                   </div>
                   <p className="text-xs text-fg-subtle truncate">{msg.listingTitle}</p>
                   <p className="text-xs text-fg-muted mt-0.5 truncate">{msg.mensagem}</p>

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
@@ -12,6 +13,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
+import { trackPositiveAction } from '@/lib/appReview';
+import { clearAdDraft, type WorkshopDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { isValidYoutubeUrl } from '@/lib/youtube';
 import { colors } from '@/theme/colors';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
@@ -21,7 +25,7 @@ const ESPECIALIDADES = (Object.keys(ESPECIALIDADES_LABELS) as EspecialidadeOfici
 );
 
 export default function RegistarOficinaScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
   const { country } = useCountry();
@@ -46,6 +50,43 @@ export default function RegistarOficinaScreen() {
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  // Set once the registration is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
+
+  const draftData = useMemo<WorkshopDraftData>(
+    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades }),
+    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades],
+  );
+  // Prefilled contacts (responsável/telefone/email) don't count as progress.
+  const hasDraftContent = !!(nome || descricao || morada || especialidades.length || logo.length);
+
+  function restoreDraft(d: WorkshopDraftData) {
+    setLogo(d.logo ?? []);
+    setNome(d.nome ?? '');
+    setResponsavel(d.responsavel ?? user?.nome ?? '');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+    setEmail(d.email ?? user?.email ?? '');
+    setWebsite(d.website ?? '');
+    setVideoUrl(d.videoUrl ?? '');
+    setDistrito(d.distrito ?? '');
+    setLocalidade(d.localidade ?? '');
+    setMorada(d.morada ?? '');
+    setDescricao(d.descricao ?? '');
+    setEspecialidades(d.especialidades ?? []);
+  }
+
+  useAdDraft<WorkshopDraftData>({
+    kind: 'oficina',
+    enabled: !editId,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'um registo de oficina',
+    onRestore: restoreDraft,
+  });
 
   useEffect(() => {
     if (!editId) return;
@@ -129,12 +170,22 @@ export default function RegistarOficinaScreen() {
         await updateOficina(editId, { ...dados, status: 'pendente' });
       } else {
         await addOficina({ ...dados, criador: user.email });
+        clearAdDraft('oficina');
       }
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
         'O registo foi submetido e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              if (!editId) trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível guardar. Tente novamente.', 'error');
@@ -215,6 +266,7 @@ export default function RegistarOficinaScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O registo fica visível após aprovação da equipa.
         </Text>
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

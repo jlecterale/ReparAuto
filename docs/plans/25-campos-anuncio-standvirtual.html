@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campos de Anúncio em Paridade com a Standvirtual — ReparAuto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: { 50:'#fff7ed',100:'#ffedd5',500:'#f97316',600:'#ea580c',700:'#c2410c',900:'#7c2d12' },
+            dark: { 800:'#1e293b',900:'#0f172a',950:'#020617' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.07) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(249, 115, 22, 0.06) 0%, transparent 42%);
+    }
+    h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-sky { box-shadow: 0 0 22px rgba(56, 189, 248, 0.15); }
+    .glow-amber { box-shadow: 0 0 20px rgba(250, 204, 21, 0.15); }
+    code { font-size: 0.82em; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-sky relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          ✅ Entregue — Web + Mobile
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-sky-400 via-orange-200 to-orange-400 bg-clip-text text-transparent">
+          Campos de Anúncio em Paridade com a Standvirtual
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Cruzando o <code>params</code> de um anúncio da Standvirtual com o que o RecarGarage guardava, faltavam vários atributos que os compradores esperam numa ficha técnica completa. Este plano fecha essa lacuna com <strong>16 campos opcionais</strong> no formulário, na edição do admin, na ficha técnica e no JSON-LD — em ambas as plataformas. Continua o <a href="22-campos-filtros-anuncios-carros.md" class="text-sky-400 underline">plano 22</a> (foco em completude, não em novos filtros).
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-emerald-400 rounded-full"></div>
+        <span class="text-xs font-bold text-slate-300">Sem alterações de <code>firestore.rules</code></span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-sky-400">16 campos</span>
+        <span class="text-xs text-slate-400">Novos atributos opcionais no schema <code>Carro</code></span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">2 plataformas</span>
+        <span class="text-xs text-slate-400">Web (Next.js) + app mobile (React Native)</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">TDD</span>
+        <span class="text-xs text-slate-400">Validação (<code>carSpec</code>/<code>utils</code>) testada test-first</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">SEO+</span>
+        <span class="text-xs text-slate-400">JSON-LD <code>Vehicle</code> enriquecido (7 props)</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">01.</span> O que resolve
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            A ficha técnica do RecarGarage estava mais pobre do que a de um anúncio equivalente na Standvirtual/OLX PT. Faltavam a <strong>versão</strong>, o <strong>mês da 1ª matrícula</strong>, a <strong>origem</strong>, o nº de <strong>proprietários</strong>, os <strong>consumos</strong>, as <strong>emissões</strong>, a <strong>garantia</strong> e as <strong>condições comerciais</strong> (financiamento, IVA dedutível, retoma) — dados que pesam na decisão de compra e na confiança. Todos os campos são <strong>opcionais e não-breaking</strong>: anúncios antigos continuam válidos.
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">📋</span>
+              <h3 class="font-bold text-sky-400 text-sm">Ficha completa</h3>
+              <p class="text-xs text-slate-400 mt-1">Paridade com o painel «Características» da Standvirtual — o comprador vê o mesmo detalhe.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🤝</span>
+              <h3 class="font-bold text-orange-400 text-sm">Condições comerciais</h3>
+              <p class="text-xs text-slate-400 mt-1">Financiamento, IVA dedutível e retoma são argumentos de venda que faltavam de todo.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🔎</span>
+              <h3 class="font-bold text-emerald-400 text-sm">SEO</h3>
+              <p class="text-xs text-slate-400 mt-1">Mais propriedades no schema.org <code>Vehicle</code> → rich results mais ricos.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 - Mapeamento -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">02.</span> Mapeamento (<code>params</code> Standvirtual → <code>Carro</code>)
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Campos já existentes omitidos (<code>make</code>, <code>model</code>, <code>fuel_type</code>, <code>mileage</code>, <code>engine_capacity</code>, <code>power</code>, <code>price</code>, <code>section</code>, <code>color</code>, <code>gearbox_type</code>, <code>number_doors</code>, <code>capacity</code>, <code>traction</code>).</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[520px]">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3">Campo Standvirtual</th>
+                  <th class="py-2 pr-3">Campo RecarGarage</th>
+                  <th class="py-2">Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">version</td><td class="py-2 pr-3 font-semibold text-white">version</td><td class="py-2">texto (Versão/variante)</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">first_registration_month</td><td class="py-2 pr-3 font-semibold text-white">firstRegistrationMonth</td><td class="py-2">1–12</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">origin</td><td class="py-2 pr-3 font-semibold text-white">origin</td><td class="py-2">Nacional / Importado</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">number_of_registrations</td><td class="py-2 pr-3 font-semibold text-white">previousOwners</td><td class="py-2">inteiro ≥ 0</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">gearbox_shifts</td><td class="py-2 pr-3 font-semibold text-white">gears</td><td class="py-2">nº de mudanças</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">co2_emissions</td><td class="py-2 pr-3 font-semibold text-white">co2Emissions</td><td class="py-2">g/km</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">urban/extra_urban/combined_consumption</td><td class="py-2 pr-3 font-semibold text-white">consumption{Urban,ExtraUrban,Combined}</td><td class="py-2">l/100 km (decimal)</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">max_fuel_range</td><td class="py-2 pr-3 font-semibold text-white">maxFuelRange</td><td class="py-2">km (autonomia)</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">vendors_warranty_valid_until_date</td><td class="py-2 pr-3 font-semibold text-white">warrantyMonths</td><td class="py-2">meses</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">upholstery</td><td class="py-2 pr-3 font-semibold text-white">upholstery</td><td class="py-2">Tecido / Pele / …</td></tr>
+                <tr class="border-b border-slate-900"><td class="py-2 pr-3 font-mono text-sky-400">number_airbags</td><td class="py-2 pr-3 font-semibold text-white">numberOfAirbags</td><td class="py-2">inteiro ≥ 0</td></tr>
+                <tr><td class="py-2 pr-3 font-mono text-sky-400">accept_funding · tax_deductible · accept_returns</td><td class="py-2 pr-3 font-semibold text-white">acceptsFinancing · vatDeductible · acceptsExchange</td><td class="py-2">boolean</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 03 - Excluídos -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">03.</span> Excluídos de propósito
+          </h2>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-rose-300"><code>registration</code> (matrícula)</strong> — dado sensível (privacidade/fraude); não deve ser público.</li>
+            <li><strong class="text-slate-200"><code>value_without_isv</code>, <code>value_without_iuc</code>, <code>iuc</code>, <code>fixed_value</code></strong> — detalhes fiscais de nicho PT.</li>
+            <li><strong class="text-slate-200"><code>engine_code</code>, <code>vehicle_class</code></strong> — redundantes com marca/modelo/carroçaria.</li>
+            <li><strong class="text-slate-200"><code>glasses</code>, <code>hood</code>, <code>electrict_hood</code>, <code>ceiling_open</code>, <code>alloy_wheels</code>, <code>measure</code>, <code>airbag_type</code>, <code>air_conditioning</code></strong> — muito granulares; o checklist de equipamento já cobre os mais procurados.</li>
+          </ul>
+        </section>
+
+        <!-- 04 - Âmbito -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-sky-400 font-extrabold">04.</span> Âmbito da implementação
+          </h2>
+          <div class="space-y-3 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">1</div>
+              <div><h4 class="font-bold text-white text-sm">Types &amp; constantes</h4><p class="text-xs text-slate-400 mt-1"><code>Carro</code> + <code>CarroFormData</code> (web e mobile), novos enums <code>VehicleOrigin</code>/<code>Upholstery</code>, <code>ORIGENS_VEICULO</code>/<code>TIPOS_ESTOFO</code>/<code>MESES</code> e limites numéricos (<code>CAR_GEARS_MAX</code>, <code>CAR_CO2_MAX</code>, …).</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">2</div>
+              <div><h4 class="font-bold text-white text-sm">Validação (TDD)</h4><p class="text-xs text-slate-400 mt-1"><code>validarDadosVeiculo</code> (web) e <code>validar()</code> (mobile) validam cada campo só quando preenchido; consumos aceitam decimal PT (<code>5,6</code>/<code>5.6</code>). Novos helpers <code>parseNonNegativeInt</code>/<code>parseDecimalOrNull</code>/<code>sanitizeDecimalInput</code>.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">3</div>
+              <div><h4 class="font-bold text-white text-sm">Formulários</h4><p class="text-xs text-slate-400 mt-1">Assistente (<code>StepDados</code>), edição do admin (<code>EditarCarroModal</code>) e <code>anunciar/carro</code> mobile — versão no bloco principal, o resto em «mais detalhes», condições comerciais como chips. Com suporte a rascunhos.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-sky-500/10 border border-sky-500 text-sky-400 font-bold flex items-center justify-center shrink-0">4</div>
+              <div><h4 class="font-bold text-white text-sm">Ficha técnica &amp; SEO</h4><p class="text-xs text-slate-400 mt-1"><code>TechnicalSheet</code> (web) e specs de <code>detalhes/[id]</code> (mobile) mostram os novos campos + secção «Condições comerciais». JSON-LD <code>Vehicle</code> ganha <code>numberOfForwardGears</code>, <code>numberOfPreviousOwners</code>, <code>numberOfAirbags</code>, <code>emissionsCO2</code>, <code>vehicleInteriorType</code>, <code>fuelConsumption</code> e <code>dateVehicleFirstRegistered</code>.</p></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Benchmark -->
+        <section class="glass rounded-2xl p-6 glow-amber relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🏁 Benchmark</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-sky-300">Standvirtual / OLX PT</strong> — painel «Características»: versão, mês de matrícula, origem, proprietários, consumos, emissões, garantia.</li>
+            <li><strong class="text-slate-300">AutoScout24</strong> — mesmo núcleo + estofos e nº de airbags.</li>
+            <li><strong class="text-slate-300">Webmotors / iCarros (BR)</strong> — destacam financiamento, aceita troca e garantia.</li>
+          </ul>
+        </section>
+
+        <!-- Escopo -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📦 Escopo de Mudanças</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Reaproveita</span><span class="text-slate-400"><code>campo()</code> · <code>ToggleChip</code> · <code>cleanUndefined</code></span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:50%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Adapta</span><span class="text-slate-400">forms · <code>TechnicalSheet</code> · detalhe mobile · JSON-LD</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:35%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-sky-400 font-bold">Novo</span><span class="text-slate-400">16 campos · 2 enums · bounds · helpers</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-sky-500" style="width:15%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Casos de borda -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Casos de Borda</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong><code>0</code> é válido</strong> em proprietários/CO₂/airbags (parser não-negativo, não «positivo»).</li>
+            <li><strong>Consumo decimal PT</strong> (<code>5,6</code>) normalizado para número na gravação.</li>
+            <li><strong>Mês da 1ª matrícula</strong> guardado como 1–12 (Web: <code>select</code> com nomes; mobile: <code>SelectField</code>, nome ↔ número no limite da BD).</li>
+            <li><strong>Vazios não gravados</strong> — Web/mobile <code>cleanUndefined</code> no create, <code>nullifyUndefined</code> no update.</li>
+          </ul>
+        </section>
+
+        <!-- Verificação -->
+        <section class="glass rounded-2xl p-6 bg-emerald-500/5 border-emerald-500/20">
+          <h3 class="text-emerald-400 font-bold text-base flex items-center gap-2 mb-2">✅ Verificação</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><code>npm test</code> — novos casos TDD em <code>carSpec.test.ts</code> e <code>utils.test.ts</code>.</li>
+            <li><code>npx tsc --noEmit</code> + <code>npm run build</code> (web).</li>
+            <li><code>npm run typecheck</code> (mobile).</li>
+            <li>Manual: publicar/editar com os novos campos e validar o JSON-LD no Rich Results Test.</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 25 — Campos de Anúncio em Paridade com a Standvirtual 📋 • Verificação: <code>npm test</code> · <code>tsc --noEmit</code> · <code>build</code>
+    </footer>
+  </div>
+</body>
+</html>

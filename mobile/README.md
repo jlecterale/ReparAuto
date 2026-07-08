@@ -15,7 +15,7 @@ utilizadores e regras de segurança.
 | Framework | Expo SDK 55 (Dev Client) · React Native 0.83 · React 19 |
 | Navegação | Expo Router (rotas por ficheiros, com typed routes) |
 | Estilos | NativeWind 4 (tokens de marca em `tailwind.config.js`) |
-| Backend | `@react-native-firebase/*` (Auth, Firestore, Storage, Messaging) |
+| Backend | `@react-native-firebase/*` (Auth, Firestore, Storage, Messaging, Analytics) |
 | Auth | Email/password + Google Sign-In nativo |
 
 ## Pré-requisitos
@@ -80,6 +80,11 @@ assets/                   # ícones e splash gerados a partir do logo da marca
       ecrã **Definições** (versão + Termos/Privacidade/Cookies/Segurança/FAQ via
       browser), rodapé legal no login, feedback háptico nos favoritos. Pronta
       para submissão via EAS (ver `PUBLICACAO.md`).
+- [x] **Avaliação nas lojas**: pedido nativo de review in-app
+      (`expo-store-review`) disparado após momentos positivos — publicar
+      anúncio/procura, avaliar vendedor, enviar mensagens, favoritar — com
+      salvaguardas (pontuação mínima, cooldown de 90 dias, máx. 3 pedidos/ano).
+      Lógica em `src/lib/appReview.ts`.
 
 ## Conformidade com as lojas (já tratado)
 
@@ -94,6 +99,32 @@ assets/                   # ícones e splash gerados a partir do logo da marca
   - **Câmara**: pedida só ao tocar em "Tirar foto" no Anunciar.
   - **Notificações**: pedidas no registo de push (Fase 4).
   - **Localização**: pedida só ao usar "perto de mim" no mapa de oficinas (Fase 5).
+
+## Analytics (Firebase / GA4)
+
+A app usa `@react-native-firebase/analytics` (mesmo projeto `reparauto-site`).
+Não requer chaves extra — as credenciais vêm dos ficheiros nativos em
+`firebase/`. Toda a instrumentação passa por `src/lib/analytics.ts` (helpers
+fire-and-forget; nunca bloqueiam nem quebram um fluxo):
+
+- **`screen_view`** — automático em cada navegação (em `app/_layout.tsx`), com
+  o *padrão* da rota (ex.: `/detalhes/[id]`) como `screen_name` para manter a
+  cardinalidade baixa e sem ids.
+- **`login` / `sign_up`** — com `method` (`password` | `google` | `apple`).
+- **`view_item`** — abertura do detalhe de carro/peça.
+- **`add_to_wishlist`** — adicionar aos favoritos.
+- **`publish_listing`** (custom) — submissão de anúncio (carro/peça/oficina).
+- **`send_message`** (custom) — mensagem de chat sobre um anúncio.
+- **User id + propriedades** (`account_type`, `role`) — sincronizados com a
+  sessão em `AuthContext` e limpos no logout.
+
+O `firebase.json` desativa a recolha do **Advertising ID**
+(`google_analytics_adid_collection_enabled: false`) — não fazemos ads
+personalizados, e isto simplifica as declarações de privacidade (Play Data
+Safety / App Store) e evita exigências de ATT no iOS. **Nota (lojas):** ao
+publicar uma versão com Analytics, atualizar as fichas de privacidade para
+declarar a recolha de dados de utilização/diagnóstico (ver `PUBLICACAO.md`).
+Nunca enviar PII (email, telefone, texto livre) como parâmetro de evento.
 
 ## Publicação nas lojas
 

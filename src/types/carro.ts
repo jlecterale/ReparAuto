@@ -1,13 +1,29 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { Country } from '@/lib/country';
+import type { PhotoAngles } from '@/lib/spin360';
 
 export type EstadoVeiculo = 'pronto' | 'manutencao';
 export type Combustivel = 'Gasolina' | 'Etanol' | 'Flex' | 'Diesel' | 'Elétrico' | 'Híbrido';
 export type Cambio = 'Manual' | 'Automático' | 'CVT';
+export type BodyType =
+  | 'Citadino'
+  | 'Utilitário'
+  | 'Sedan'
+  | 'Carrinha'
+  | 'SUV'
+  | 'Monovolume'
+  | 'Coupé'
+  | 'Cabrio'
+  | 'Pick-up';
+export type Condition = 'Novo' | 'Usado' | 'Para peças';
+export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
+export type VehicleOrigin = 'Nacional' | 'Importado';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
 export type FiltroAtivo = 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer' | null;
 export type SortOrdem = 'crescente' | 'decrescente' | null;
 export type FiltroChip = { label: string; value: string };
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
+export type OrigemAnuncio = 'manual' | 'standvirtual';
 
 export interface Carro {
   id: string;
@@ -21,6 +37,39 @@ export interface Carro {
   cambio: Cambio;
   cor: string;
   portas: number;
+  bodyType?: BodyType;
+  seats?: number;
+  condition?: Condition;
+  power?: number;
+  displacement?: number;
+  traction?: Traction;
+  features?: string[];
+  /** Trim / variant, e.g. "CDi Avantgarde" (Standvirtual "version"). */
+  version?: string;
+  /** Month of first registration (1–12), pairs with anoFabricacao as the year. */
+  firstRegistrationMonth?: number;
+  origin?: VehicleOrigin;
+  /** Number of previous owners (0 = seller is the first owner). */
+  previousOwners?: number;
+  /** Number of forward gears. */
+  gears?: number;
+  /** Combined CO₂ emissions, g/km. */
+  co2Emissions?: number;
+  /** Max fuel/electric range, km. */
+  maxFuelRange?: number;
+  /** Fuel consumption, l/100 km. */
+  consumptionUrban?: number;
+  consumptionExtraUrban?: number;
+  consumptionCombined?: number;
+  upholstery?: Upholstery;
+  numberOfAirbags?: number;
+  /** Remaining vendor warranty, in months. */
+  warrantyMonths?: number;
+  acceptsFinancing?: boolean;
+  /** VAT-deductible invoice available (IVA dedutível). */
+  vatDeductible?: boolean;
+  /** Seller accepts a trade-in / part-exchange (retoma). */
+  acceptsExchange?: boolean;
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
@@ -38,6 +87,8 @@ export interface Carro {
   incluirMecanicoTelefone?: boolean;
   mecanicoTelefone?: string;
   fotos: string[];
+  /** Vehicle angle → index into `fotos`; enables the 360 spin viewer (see src/lib/spin360.ts). */
+  photoAngles?: PhotoAngles | null;
   criador: string;
   criadorUid?: string;
   vendedorNome?: string;
@@ -57,6 +108,15 @@ export interface Carro {
   visualizacoes?: number;
   contagemMensagens?: number;
   contagemFavoritos?: number;
+  /** Where the listing came from (plan 24). Absent means created manually. */
+  origem?: OrigemAnuncio;
+  /** Source advert id (the URL ID token) — duplicate-import detection key. */
+  origemId?: string;
+  /** Canonical source advert URL (audit trail). */
+  origemUrl?: string;
+  importadoEm?: Timestamp;
+  /** Uid of who ran the import when it wasn't the owner (admin-on-behalf). */
+  importadoPor?: string;
 }
 
 export type CarroInput = Omit<Carro, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };
@@ -71,6 +131,29 @@ export interface CarroFormData {
   combustivel: Combustivel;
   cambio: Cambio;
   portas: string;
+  bodyType: string;
+  seats: string;
+  condition: string;
+  power: string;
+  displacement: string;
+  traction: string;
+  features: string[];
+  version: string;
+  firstRegistrationMonth: string;
+  origin: string;
+  previousOwners: string;
+  gears: string;
+  co2Emissions: string;
+  maxFuelRange: string;
+  consumptionUrban: string;
+  consumptionExtraUrban: string;
+  consumptionCombined: string;
+  upholstery: string;
+  numberOfAirbags: string;
+  warrantyMonths: string;
+  acceptsFinancing: boolean;
+  vatDeductible: boolean;
+  acceptsExchange: boolean;
   localizacao: string;
   localizacaoDistrito: string;
   preco: string;

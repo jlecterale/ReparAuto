@@ -38,7 +38,9 @@ const cspDirectives = [
   "default-src 'self'",
   `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  `img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org https://www.google-analytics.com https://*.google-analytics.com ${GOOGLE_ADS_HOSTS.join(' ')}`,
+  // `https:` is deliberate: listing photos can be added by pasting any https
+  // image URL, so img-src cannot be a fixed host allowlist.
+  "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com",
   // api.country.is: first-visit GeoIP market detection. parallelum.com.br / brasilapi.com.br: FIPE brands/models for Brazilian listings.
   `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} ${GOOGLE_ADS_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org https://api.country.is https://parallelum.com.br https://brasilapi.com.br`,

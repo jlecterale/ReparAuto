@@ -6,9 +6,10 @@ import { formatarData, formatarDataHora } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import GrantPlanModal from './GrantPlanModal';
-import { 
-  X, User, Envelope, Phone, Cardholder, 
-  MapPin, Calendar, Crown, SealCheck, CheckCircle, Storefront
+import ImportInventoryModal from './ImportInventoryModal';
+import {
+  X, User, Envelope, Phone, Cardholder,
+  MapPin, Calendar, Crown, SealCheck, CheckCircle, Storefront, DownloadSimple
 } from '@phosphor-icons/react';
 
 interface UserTableProps {
@@ -26,6 +27,7 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
   const [loadingUid, setLoadingUid] = useState<string | null>(null);
   const [planUser, setPlanUser] = useState<Usuario | null>(null);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [importUser, setImportUser] = useState<Usuario | null>(null);
 
   const handleRoleChange = async (uid: string, role: Role) => {
     setLoadingUid(uid);
@@ -231,6 +233,13 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                     >
                       <Storefront size={16} weight={u.tipoConta === 'profissional' ? 'fill' : 'regular'} />
                     </button>
+                    <button
+                      onClick={() => setImportUser(u)}
+                      className="p-1.5 rounded-lg border border-neutral-200 text-fg-muted hover:border-accent/30 hover:text-accent transition"
+                      title="Importar inventário do Standvirtual para esta conta"
+                    >
+                      <DownloadSimple size={16} />
+                    </button>
                   </td>
                 </tr>
               );
@@ -411,24 +420,37 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
             </div>
 
             {/* Bottom drawer actions */}
-            <div className="pt-6 border-t border-neutral-200 mt-6 flex gap-3">
+            <div className="pt-6 border-t border-neutral-200 mt-6 space-y-3">
               <Button
                 tipo="secundario"
                 blocoCompleto
-                onClick={() => setSelectedUser(null)}
-              >
-                Fechar Painel
-              </Button>
-              <Button
-                tipo="primario"
-                blocoCompleto
+                icone={<DownloadSimple weight="bold" />}
                 onClick={() => {
                   setSelectedUser(null);
-                  setPlanUser(currentSelectedUser);
+                  setImportUser(currentSelectedUser);
                 }}
               >
-                Gerir Planos
+                Importar inventário do Standvirtual
               </Button>
+              <div className="flex gap-3">
+                <Button
+                  tipo="secundario"
+                  blocoCompleto
+                  onClick={() => setSelectedUser(null)}
+                >
+                  Fechar Painel
+                </Button>
+                <Button
+                  tipo="primario"
+                  blocoCompleto
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setPlanUser(currentSelectedUser);
+                  }}
+                >
+                  Gerir Planos
+                </Button>
+              </div>
             </div>
           </div>
         </>
@@ -470,6 +492,10 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
         onGrant={onGrantPlan}
         onRevoke={onRevokePlan}
       />
+
+      {importUser && (
+        <ImportInventoryModal user={importUser} onClose={() => setImportUser(null)} />
+      )}
     </>
   );
 }

@@ -52,6 +52,14 @@ const faqJsonLd = {
         '@type': 'Answer',
         'text': 'Anunciar no RecarGarage é extremamente simples e rápido. Basta clicar no botão "Anunciar" no menu superior, preencher os detalhes da viatura ou peça (como marca, modelo, ano, quilometragem, preço e fotos) e publicar. O seu anúncio ficará disponível para milhares de compradores interessados em Portugal.'
       }
+    },
+    {
+      '@type': 'Question',
+      'name': 'Posso importar os meus anúncios do Standvirtual?',
+      'acceptedAnswer': {
+        '@type': 'Answer',
+        'text': 'Sim! Em "Anunciar", escolha "Já anuncia no Standvirtual?" e cole o link do seu anúncio — o formulário fica pré-preenchido com os dados, a ficha técnica e as fotos. Também pode importar vários links de uma vez, e stands com conta profissional e documentação validada podem importar o inventário inteiro colando o endereço da sua página de stand. Os anúncios importados ficam pendentes até aprovação, como qualquer anúncio novo.'
+      }
     }
   ]
 };

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
@@ -12,6 +13,9 @@ import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { criarIntencao } from '@/lib/trust';
+import { trackPositiveAction } from '@/lib/appReview';
+import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { COMBUSTIVEIS } from '@/lib/constants';
 import {
   CATEGORIA_INTENCAO_LABELS,
@@ -32,6 +36,7 @@ const CONTACTO: { value: ContatoPreferido; label: string }[] = [
 ];
 
 export default function CriarIntencaoScreen() {
+  const { retomar } = useLocalSearchParams<{ retomar?: string }>();
   const { user } = useAuth();
   const { country } = useCountry();
   const { showToast } = useToast();
@@ -54,6 +59,42 @@ export default function CriarIntencaoScreen() {
   const [contato, setContato] = useState<ContatoPreferido>('chat');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [enviando, setEnviando] = useState(false);
+  // Set once the intent is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
+
+  const draftData = useMemo<IntentDraftData>(
+    () => ({ categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone }),
+    [categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone],
+  );
+  // The prefilled phone doesn't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(titulo || descricao || marca || precoMax);
+
+  function restoreDraft(d: IntentDraftData) {
+    setCategoria(d.categoria ?? 'carro');
+    setTitulo(d.titulo ?? '');
+    setDescricao(d.descricao ?? '');
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setAnoMin(d.anoMin ?? '');
+    setPrecoMax(d.precoMax ?? '');
+    setKmMax(d.kmMax ?? '');
+    setDistrito(d.distrito ?? '');
+    setCombustivel(d.combustivel ?? []);
+    setContato(d.contato ?? 'chat');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+  }
+
+  useAdDraft<IntentDraftData>({
+    kind: 'intencao',
+    enabled: true,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'uma procura',
+    onRestore: restoreDraft,
+  });
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título (ex.: Procuro Golf diesel).';
@@ -96,10 +137,20 @@ export default function CriarIntencaoScreen() {
         vendedorWhatsApp: telefone.trim() || undefined,
         vendedorEmail: user.email,
       });
+      clearAdDraft('intencao');
+      setSubmitted(true);
       Alert.alert(
         'Procura enviada',
         'A sua procura foi submetida e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível publicar. Tente novamente.', 'error');
@@ -180,6 +231,7 @@ export default function CriarIntencaoScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           A procura fica visível após aprovação da equipa.
         </Text>
+        <DraftSavedNote />
       </ScrollView>
     </KeyboardAvoider>
   );

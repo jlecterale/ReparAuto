@@ -135,6 +135,16 @@ export default function LoginScreen() {
               autoComplete="password"
             />
 
+            <Pressable
+              onPress={() => router.push('/recuperar')}
+              hitSlop={8}
+              className="-mt-1 self-end"
+            >
+              <Text className="text-sm font-semibold text-primary-700">
+                Esqueceu-se da palavra-passe?
+              </Text>
+            </Pressable>
+
             <Button label="Entrar" onPress={handleLogin} loading={loading} />
 
             <View className="my-2 flex-row items-center gap-3">

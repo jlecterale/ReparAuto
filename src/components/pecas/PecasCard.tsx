@@ -31,15 +31,15 @@ function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) 
     >
       <div className="relative">
         {fotoData?.type === 'img' && (
-          <LazyImage src={fotoData.src} alt={peca.titulo} className="w-full h-36" />
+          <LazyImage src={fotoData.src} alt={peca.titulo} className="w-full aspect-[4/3]" />
         )}
         {fotoData?.type === 'emoji' && (
-          <div className="w-full h-36 bg-slate-100 flex items-center justify-center text-5xl">
+          <div className="w-full aspect-[4/3] bg-slate-100 flex items-center justify-center text-5xl">
             {fotoData.emoji}
           </div>
         )}
         {!hasImageArea && (
-          <div className="w-full h-36 bg-slate-100 flex items-center justify-center text-slate-400 text-4xl">
+          <div className="w-full aspect-[4/3] bg-slate-100 flex items-center justify-center text-slate-400 text-4xl">
             <GearSix />
           </div>
         )}

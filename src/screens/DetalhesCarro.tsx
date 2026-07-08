@@ -1,15 +1,19 @@
 'use client';
 
-import { ArrowLeft, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsClockwise, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
+import { statusAfterOwnerEdit } from '@/lib/listingModeration';
+import { pickChangedFields } from '@/lib/changedFields';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
+import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
+import Spin360Viewer from '@/components/detalhes/Spin360Viewer';
 import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
 import FinanciamentoSeguroWidget from '@/components/detalhes/FinanciamentoSeguroWidget';
@@ -20,9 +24,13 @@ import ShareButton from '@/components/ui/ShareButton';
 import FotoRender from '@/components/ui/FotoRender';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import EditarCarroModal from '@/components/admin/EditarCarroModal';
+import { deserializeCarro, type SerializedCarro } from '@/lib/serializeCarro';
 import type { Carro } from '@/types/carro';
 
-export default function DetalhesCarro() {
+// The server component already fetched (and approval-checked) the listing for
+// metadata/JSON-LD; it hands it down as `initialCarro` so the screen renders
+// instantly instead of spinning on a second, client-side Firestore fetch.
+export default function DetalhesCarro({ initialCarro }: { initialCarro?: SerializedCarro | null }) {
   const params = useParams<{ id: string }>();
   const id = params?.id;
   const router = useRouter();
@@ -30,16 +38,27 @@ export default function DetalhesCarro() {
   const { user, isAdmin } = auth;
   const { toggleFavorito, isFavorito } = favoritos;
 
-  const [carro, setCarro] = useState<Carro | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [carro, setCarro] = useState<Carro | null>(() => (initialCarro ? deserializeCarro(initialCarro) : null));
+  const [loading, setLoading] = useState(!initialCarro);
   const [bloqueado, setBloqueado] = useState(false);
   const [galeriaAberta, setGaleriaAberta] = useState(false);
   const [indiceGaleria, setIndiceGaleria] = useState(0);
+  const [spinAberto, setSpinAberto] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Client-side navigations between two listings reuse this component
+  // instance — resync when the server hands over a different listing.
   useEffect(() => {
+    if (!initialCarro) return;
+    setCarro(deserializeCarro(initialCarro));
+    setBloqueado(false);
+    setLoading(false);
+  }, [initialCarro]);
+
+  useEffect(() => {
+    if (initialCarro) return;
     async function fetchCarro() {
       if (!id) { setLoading(false); return; }
       const data = await getCarroPorIdDb(id);
@@ -54,17 +73,31 @@ export default function DetalhesCarro() {
       }
       setCarro(data);
       setLoading(false);
-      const key = `viewed_car_${id}`;
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, '1');
-        incrementCampo('cars', id, 'visualizacoes');
-      }
     }
     fetchCarro();
-  }, [id, user, isAdmin]);
+  }, [id, user, isAdmin, initialCarro]);
+
+  useEffect(() => {
+    if (!id || !carro) return;
+    const key = `viewed_car_${id}`;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      incrementCampo('cars', id, 'visualizacoes');
+    }
+  }, [id, carro]);
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
-    await updateCarro(id, { ...dados, status: 'pendente' });
+    // Only a photo change re-queues the ad for approval; other edits keep the
+    // listing's current status so an approved ad stays live.
+    const status = statusAfterOwnerEdit(
+      carro?.status ?? 'pendente',
+      carro?.fotos ?? [],
+      (dados.fotos as string[] | undefined) ?? [],
+    );
+    const changed = pickChangedFields(carro ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updateCarro(id, changed);
+    }
     setEditModalOpen(false);
     const data = await getCarroPorIdDb(id);
     if (data) setCarro(data);
@@ -129,6 +162,8 @@ export default function DetalhesCarro() {
   }
 
   const isLowCost = carro.preco <= 2000;
+  const spinFrames = getSpinFrames(carro.fotos || [], carro.photoAngles);
+  const spinAngles = getSpinAngles(carro.fotos || [], carro.photoAngles);
 
   return (
     <div className="page-enter">
@@ -161,6 +196,7 @@ export default function DetalhesCarro() {
           <div className="flex items-center gap-2">
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
+            {carro.origem === 'standvirtual' && <Badge cor="blue">Importado</Badge>}
             <button
               onClick={() => toggleFavorito(carro.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${
@@ -198,7 +234,7 @@ export default function DetalhesCarro() {
         {carro.fotos && carro.fotos.length > 0 && (
           <div className="mb-6">
             <div
-              className="w-full h-56 sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
+              className="w-full aspect-[4/3] sm:aspect-auto sm:h-80 rounded-xl overflow-hidden bg-slate-100 cursor-pointer relative group"
               onClick={() => { setIndiceGaleria(0); setGaleriaAberta(true); }}
             >
               {/* Blurred backdrop fills the letterbox area so the contained photo never shows bare gray bars */}
@@ -211,6 +247,15 @@ export default function DetalhesCarro() {
                     <ArrowsOut className="mr-1" /> Ver {carro.fotos.length} fotos
                   </span>
                 </div>
+              )}
+              {spinFrames.length > 0 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setSpinAberto(true); }}
+                  aria-label="Abrir vista 360 graus"
+                  className="absolute bottom-2 right-2 flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white text-xs font-bold px-3 py-1.5 rounded-full transition"
+                >
+                  <ArrowsClockwise weight="bold" /> 360°
+                </button>
               )}
             </div>
             {carro.fotos.length > 1 && (
@@ -315,6 +360,13 @@ export default function DetalhesCarro() {
         onClose={() => setGaleriaAberta(false)}
         fotos={carro.fotos}
         indiceInicial={indiceGaleria}
+      />
+
+      <Spin360Viewer
+        show={spinAberto}
+        onClose={() => setSpinAberto(false)}
+        frames={spinFrames}
+        angles={spinAngles}
       />
     </div>
   );

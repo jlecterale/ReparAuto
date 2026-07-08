@@ -16,6 +16,10 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useNotificacoes } from '@/context/NotificacoesContext';
 import { colors } from '@/theme/colors';
 
+// Module-scope so the memoized CarCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const openDetalhes = (id: string) => router.push(`/detalhes/${id}`);
+
 const FILTROS: ChipOption<QuickChip>[] = [
   { value: 'todos', label: 'Todos' },
   { value: 'ate1000', label: 'Até €1.000' },
@@ -115,9 +119,7 @@ export default function HomeScreen() {
           data={filtrados}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
-          renderItem={({ item }) => (
-            <CarCard carro={item} onPress={(id) => router.push(`/detalhes/${id}`)} />
-          )}
+          renderItem={({ item }) => <CarCard carro={item} onPress={openDetalhes} />}
           ListEmptyComponent={
             <EmptyState
               icon="car-outline"
@@ -136,6 +138,7 @@ export default function HomeScreen() {
       <CarFiltersSheet
         visible={filtersOpen}
         onClose={() => setFiltersOpen(false)}
+        busca={busca}
         filters={filters}
         update={update}
         onClear={limpar}

@@ -4,6 +4,7 @@ import { Image } from '@phosphor-icons/react';
 import NextImage from 'next/image';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { getCachedLqip, cacheLqip, generateLqipFromImage } from '@/lib/lqip';
+import { canOptimizeImage } from '@/lib/utils';
 
 interface LazyImageProps {
   src: string;
@@ -12,22 +13,6 @@ interface LazyImageProps {
   lqip?: string;
   /** Responsive hint forwarded to next/image (defaults to a card-grid layout). */
   sizes?: string;
-}
-
-// Hosts whitelisted in next.config.ts images.remotePatterns. Anything else
-// (data:/blob: previews, legacy hosts) falls back to a plain <img> so the
-// optimizer never throws on unconfigured domains.
-const OPTIMIZABLE_HOSTS = ['firebasestorage.googleapis.com', 'googleusercontent.com'];
-
-function canOptimize(src: string): boolean {
-  if (src.startsWith('/')) return true;
-  if (!src.startsWith('https://')) return false;
-  try {
-    const host = new URL(src).hostname;
-    return OPTIMIZABLE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-  } catch {
-    return false;
-  }
 }
 
 export default function LazyImage({
@@ -95,7 +80,7 @@ export default function LazyImage({
         </div>
       )}
       {inView && !error && (
-        canOptimize(src) ? (
+        canOptimizeImage(src) ? (
           <NextImage
             src={src}
             alt={alt}

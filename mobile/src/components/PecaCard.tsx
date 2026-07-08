@@ -34,6 +34,7 @@ function PecaCardBase({ peca, onPress }: PecaCardProps) {
           placeholder={{ blurhash: BLURHASH }}
           contentFit="cover"
           transition={200}
+          recyclingKey={peca.id}
           style={{ width: 110, height: 110 }}
         />
       ) : (

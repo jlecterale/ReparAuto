@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getCarrosServer } from '@/lib/db.server';
+import { GUIDES } from '@/data/guias';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
@@ -14,6 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/pecas`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/oficinas`, changeFrequency: 'daily', priority: 0.8 },
     { url: `${SITE_URL}/faq`, changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${SITE_URL}/guias`, changeFrequency: 'monthly', priority: 0.7 },
+    ...GUIDES.map((guide) => ({
+      url: `${SITE_URL}/guias/${guide.slug}`,
+      lastModified: new Date(guide.updatedAt),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    })),
     { url: `${SITE_URL}/anunciar`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/termos`, changeFrequency: 'yearly', priority: 0.2 },
     { url: `${SITE_URL}/privacidade`, changeFrequency: 'yearly', priority: 0.2 },

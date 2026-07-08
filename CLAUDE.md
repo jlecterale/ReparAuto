@@ -62,7 +62,7 @@ src/
 ## Data Layer
 
 Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`, `intencoes_compra`, `contatos_intencao`, `denuncias_intencao`.
-Firebase Storage for images (1MB limit, 7 max for cars/services, 3 max for parts).
+Firebase Storage for images (10MB limit, 20 max for cars, 1 for parts). Listing photos can also be external https URLs pasted by the user (stored as-is, no upload).
 localStorage fallback for anonymous favorites only (`favs_reparauto` key).
 
 Public listing queries filter `where('status' == 'aprovado')` server-side and sort by `dataCriacao` in memory (no composite index needed). Realtime car/part subscriptions are route-gated in `AppProvider` (`needsCarros`/`needsPecas`) — add the route there if a new screen reads those lists from context.
@@ -123,9 +123,6 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/lib/fcm.ts` — FCM token request + foreground message listener
 - `src/lib/lqip.ts` — LQIP blur-up placeholder generation + cache
 - `src/lib/offlineQueue.ts` — localStorage action queue for offline writes
-- `src/hooks/useInstallPrompt.ts` — PWA install prompt (engagement-based)
-- `src/hooks/useOnlineStatus.ts` — online/offline detection
-- `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
 - `src/hooks/useSwipe.ts` — touch swipe with drag feedback
 - `src/hooks/useImageZoom.ts` — fullscreen gallery lightbox controller (pinch/wheel/double-tap zoom, pan, swipe-to-navigate, drag-down-to-close)
 - `public/firebase-messaging-sw.js` — FCM background message service worker
@@ -169,11 +166,19 @@ Consolidate findings into the plan — don't jump straight to code on non-trivia
 
 ### Plans
 
-Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), the commit sequence, edge cases, and verification steps.
+Plans live in `docs/plans/` — **always authored as a self-contained interactive HTML page (`NN-<slug>.html`), never as a `.md` file.** The HTML page carries the full written analysis (not just a visual summary): it should cover context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), the commit sequence, edge cases, and verification steps. Match the layout of the existing HTML plans (`docs/plans/20-expansao-brasil.html`, `24-importacao-anuncios-standvirtual.html`): Tailwind CDN + the dark glass theme, header, metrics strip, numbered sections, and a sidebar (benchmark / scope / risks / next steps). Legacy plans still exist as `.md` — leave them as-is, but every **new** plan is `.html`.
 
 - **Number new plans sequentially** (continue from the highest existing `NN`).
 - **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
 - `docs/plans/index.html` is the **canonical roadmap** (shipped vs. queued) — keep it the source of truth, trust it over prose scattered elsewhere.
+
+### User guides for new features (`docs/guias` → `/guias`)
+
+For every new user-facing feature, **if relevant, write a companion guide** in the `/guias` section (`src/data/guias.ts`, rendered by `app/guias/page.tsx` and `app/guias/[slug]/page.tsx`). A guide is relevant when the feature adds a new user workflow, decision point, or "how do I…" moment (e.g., comparing vehicles, checking a seller's verification, using a new filter, a new financing/insurance flow). Skip it for internal/admin-only tooling, infra/i18n plumbing, or minor UI tweaks with no new behavior to explain.
+
+- Add an entry to the `GUIDES` array following the existing `Guide` shape (`slug`, `title`, `description`, `category`, `readingMinutes`, `updatedAt`, `intro`, `sections`) — PT-PT content, English identifiers, no mention of "ReparAuto".
+- It must pass `src/data/guias.test.ts` (unique url-safe slug, description within SEO bounds, valid category, non-empty sections, no internal brand name leakage).
+- The index page, per-guide `generateMetadata`/JSON-LD, and `app/sitemap.ts` pick up new entries automatically — no extra wiring needed.
 
 ### Closing out a plan (after it ships)
 
@@ -192,6 +197,7 @@ Before opening a PR or reporting a task as done, **always do a self-review pass*
 7. **Firestore-rules provability** — any new query must be provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
 8. **Tests** — tests were written test-first (TDD) for any new/changed logic; `npm test` is green. New behavior has a test that would fail without the change.
 9. **Type safety** — run `npx tsc --noEmit` and `npm run build`. Fix every error before reporting done.
+10. **Risk analysis** — think through what this change could break: other screens/hooks/components consuming the same data or component, Firestore rules/queries, realtime subscriptions, SEO/metadata, shared UI primitives, other locales/routes. Write this down — it feeds directly into the PR description (see below).
 
 Only after this pass is clean should you open the PR or report the task complete.
 
@@ -202,3 +208,11 @@ Only after this pass is clean should you open the PR or report the task complete
 - Conventional commits (`feat:`, `fix:`, `docs:`, …), imperative present, English, short subject + a body explaining the *why*.
 - **Never add Claude/Anthropic as a co-author** — no `Co-Authored-By: Claude` trailer, no "Generated with Claude Code" line. Commits are authored by the user only.
 - **Commit/push only when the user asks.** As with deploys, never push or open PRs unprompted.
+
+### PR description requirements
+
+Every PR opened in this repo must include, regardless of the language used elsewhere in the codebase:
+
+1. **Escrita em português do Brasil.** O corpo da PR (título pode ficar em inglês se seguir o padrão de commits, mas a descrição deve ser em pt-BR) — resumo do que mudou e por quê, para revisores que não leem o código a fundo.
+2. **Análise de risco / o que pode quebrar** — uma seção explícita (ex.: "## O que pode quebrar") listando os efeitos colaterais prováveis: outras telas/hooks/componentes que consomem os mesmos dados, regras do Firestore, subscriptions em tempo real, SEO/metadata, comportamento para usuários não autenticados, etc. Baseie-se no item 10 do checklist de pre-PR acima.
+3. **Passo a passo para testar** — uma seção (ex.: "## Como testar") com instruções numeradas e reproduzíveis para um humano validar a mudança manually (rotas a acessar, ações a tomar, o que esperar ver), cobrindo o caminho feliz e os principais casos de borda.

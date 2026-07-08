@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { logViewListing } from '@/lib/analytics';
 import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
 import { docCountry } from '@/lib/country';
@@ -39,6 +41,7 @@ export default function DetalhesPecaScreen() {
       .then((p) => {
         if (!active) return;
         setPeca(p);
+        if (p) logViewListing('peca', p.id, p.titulo);
         // Count the view for everyone except the owner.
         if (p && p.criadorUid !== user?.uid) registarVisualizacao('parts', id);
       })
@@ -101,7 +104,7 @@ export default function DetalhesPecaScreen() {
             >
               <Image
                 source={peca.foto}
-                style={{ width, height: width * 0.72 }}
+                style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                 contentFit="cover"
                 transition={200}
               />

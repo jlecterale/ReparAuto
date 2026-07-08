@@ -1,20 +1,27 @@
 'use client';
 
-import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
+import { BellRinging, Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
-import { useState, useEffect } from 'react';
+import Modal from '@/components/ui/Modal';
+import KeywordAlertInput from '@/components/alertas/KeywordAlertInput';
+import SaveAlertButton from '@/components/alertas/SaveAlertButton';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
-import { formatarPreco, obterWhatsApp } from '@/lib/utils';
+import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
+import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import { docCountry, filterByCountry } from '@/lib/country';
 import { term } from '@/lib/terms';
 import { useCountry } from '@/providers/CountryProvider';
+import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
+import type { SearchFilters } from '@/types/busca';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
@@ -26,7 +33,39 @@ const quickChips = [
   { label: 'Até 1.000€', value: '1000' },
 ] as const;
 
-export default function CarGrid() {
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+  anyLabel,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: readonly string[];
+  anyLabel: string;
+}) {
+  return (
+    <div>
+      <label className="block text-xs font-bold text-fg-subtle mb-1">{label}</label>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent"
+      >
+        <option value="">{anyLabel}</option>
+        {options.map((opt) => (
+          <option key={opt} value={opt}>{opt}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+// `initialCarros` (server-fetched, ISR) replaces the skeletons while the
+// realtime subscription is still loading; the live list takes over after.
+export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
   const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
@@ -54,12 +93,31 @@ export default function CarGrid() {
     setAdvRaioCentro,
     advRaioKm,
     setAdvRaioKm,
+    advBodyType,
+    setAdvBodyType,
+    advCondition,
+    setAdvCondition,
+    advCombustivel,
+    setAdvCombustivel,
+    advCambio,
+    setAdvCambio,
+    advSeatsMin,
+    setAdvSeatsMin,
+    advTraction,
+    setAdvTraction,
+    advFeatures,
+    setAdvFeatures,
     sortOrdem,
     setSortOrdem,
   } = carros;
 
+  const toggleFeature = (feature: string) => {
+    setAdvFeatures(toggleInList(advFeatures, feature));
+  };
+
   const { distritos, getConcelhos } = useDistritosConcelhos();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showKeywordAlert, setShowKeywordAlert] = useState(false);
   const [raioMode, setRaioMode] = useState(false);
   const [raioDist, setRaioDist] = useState('');
 
@@ -72,6 +130,13 @@ export default function CarGrid() {
     setAdvConcelho('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
+    setAdvBodyType('');
+    setAdvCondition('');
+    setAdvCombustivel('');
+    setAdvCambio('');
+    setAdvSeatsMin(null);
+    setAdvTraction('');
+    setAdvFeatures([]);
     setSortOrdem(null);
     setRaioMode(false);
     setRaioDist('');
@@ -132,15 +197,18 @@ export default function CarGrid() {
     }
   }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid, country]);
 
-  const oficinasFiltradas = oficinas.filter((o) => {
-    const correspondeBusca = !searchQuery ||
-      (o.nome && o.nome.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (o.descricao && o.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+  const oficinasFiltradas = useMemo(() => {
+    const busca = searchQuery.toLowerCase();
+    return oficinas.filter((o) => {
+      const correspondeBusca = !busca ||
+        (o.nome && o.nome.toLowerCase().includes(busca)) ||
+        (o.descricao && o.descricao.toLowerCase().includes(busca));
 
-    return correspondeBusca && correspondeDistrito;
-  });
+      const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+
+      return correspondeBusca && correspondeDistrito;
+    });
+  }, [oficinas, searchQuery, advDistrito]);
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -164,6 +232,17 @@ export default function CarGrid() {
               className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
             />
           </div>
+
+          {/* Keyword alert entry point (plan 3.1) */}
+          {tipo === 'carros' && searchQuery.trim().length >= 2 && (
+            <button
+              onClick={() => (user ? setShowKeywordAlert(true) : loginModal.openLoginModal('/'))}
+              className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
+            >
+              <BellRinging size={14} weight="bold" />
+              Criar alerta para &quot;{searchQuery.trim()}&quot;
+            </button>
+          )}
 
           {/* Search type select dropdown */}
           <div className="space-y-1">
@@ -209,6 +288,14 @@ export default function CarGrid() {
             </div>
           )}
 
+          {/* Category & condition — common filters, always visible */}
+          {tipo === 'carros' && (
+            <div className="grid grid-cols-2 gap-3">
+              <FilterSelect label="Categoria" value={advBodyType} onChange={setAdvBodyType} options={TIPOS_CARROCERIA} anyLabel="Todas" />
+              <FilterSelect label="Condição" value={advCondition} onChange={setAdvCondition} options={CONDICOES_VEICULO} anyLabel="Qualquer" />
+            </div>
+          )}
+
           {/* Advanced filters toggle (mobile only) */}
           <Button
             tipo="secundario"
@@ -244,6 +331,39 @@ export default function CarGrid() {
                   />
                 </div>
               </div>
+            )}
+
+            {tipo === 'carros' && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <FilterSelect label="Combustível" value={advCombustivel} onChange={setAdvCombustivel} options={TIPOS_COMBUSTIVEL} anyLabel="Todos" />
+                  <FilterSelect label="Câmbio" value={advCambio} onChange={setAdvCambio} options={TIPOS_CAMBIO} anyLabel="Todos" />
+                  <div>
+                    <label className="block text-xs font-bold text-fg-subtle mb-1">Lugares (mín.)</label>
+                    <input type="number" min={1} max={9} placeholder="Ex: 5"
+                      value={advSeatsMin ?? ''}
+                      onChange={(e) => setAdvSeatsMin(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg placeholder-slate-500 focus:outline-none focus:border-accent" />
+                  </div>
+                  <FilterSelect label="Tração" value={advTraction} onChange={setAdvTraction} options={TIPOS_TRACAO} anyLabel="Todas" />
+                </div>
+
+                <div>
+                  <span className="block text-xs font-bold text-fg-subtle mb-2">Equipamento</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {EQUIPAMENTOS_CARRO.map((feature) => (
+                      <ToggleChip
+                        key={feature}
+                        tamanho="sm"
+                        active={advFeatures.includes(feature)}
+                        onClick={() => toggleFeature(feature)}
+                      >
+                        {feature}
+                      </ToggleChip>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             <div>
@@ -320,8 +440,41 @@ export default function CarGrid() {
             >
               Limpar filtros
             </Button>
+
+            {/* Criar Alerta — instant saved-filter alert (plan 3.1) */}
+            {tipo === 'carros' && (
+              <SaveAlertButton
+                uid={user?.uid}
+                filters={{
+                  texto: searchQuery || undefined,
+                  precoMin: advPriceMin ?? undefined,
+                  precoMax: advPriceMax ?? undefined,
+                  distrito: advDistrito || undefined,
+                  concelho: advConcelho || undefined,
+                  combustivel: (advCombustivel || undefined) as SearchFilters['combustivel'],
+                  cambio: (advCambio || undefined) as SearchFilters['cambio'],
+                }}
+                onRequireLogin={() => loginModal.openLoginModal('/')}
+              />
+            )}
           </div>
         </div>
+
+        <Modal
+          show={showKeywordAlert}
+          onClose={() => setShowKeywordAlert(false)}
+          titulo="Criar alerta de pesquisa"
+          tamanho="sm"
+        >
+          {user && (
+            <KeywordAlertInput
+              uid={user.uid}
+              initialKeyword={searchQuery.trim()}
+              categoria="carros"
+              onCreated={() => setShowKeywordAlert(false)}
+            />
+          )}
+        </Modal>
       </aside>
 
       {/* ============ RESULTS (right column) ============ */}
@@ -335,7 +488,9 @@ export default function CarGrid() {
 
             {carros.loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-                {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
+                {initialCarros.length > 0
+                  ? initialCarros.map((carro) => <CarCard key={carro.id} carro={carro} />)
+                  : Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">

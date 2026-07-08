@@ -19,6 +19,8 @@ import {
   ListChecks,
   Crown,
   Bell,
+  GooglePlayLogo,
+  AppleLogo,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
@@ -31,6 +33,7 @@ import UserAvatar from '@/components/ui/UserAvatar';
 import Badge from '@/components/ui/Badge';
 import usePremiumConfig from '@/hooks/usePremiumConfig';
 import useNotificacoes from '@/hooks/useNotificacoes';
+import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
 
 interface SidebarProps {
   /** Mobile drawer open state (ignored on desktop, where the rail is always visible). */
@@ -92,6 +95,23 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     );
   };
 
+  const StoreLink = ({ href, Icon, label }: { href: string; Icon: Icon; label: string }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClose}
+      className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold no-underline text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200"
+    >
+      <Icon
+        size={20}
+        weight="fill"
+        className="shrink-0 text-white/55 group-hover:text-accent-bright transition-colors"
+      />
+      {label}
+    </a>
+  );
+
   const SectionLabel = ({ children }: { children: React.ReactNode }) => (
     <p className="px-3 mb-2 text-[11px] font-bold uppercase tracking-wider text-white/35">{children}</p>
   );
@@ -116,7 +136,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       >
         {/* Brand */}
         <div className="relative flex items-center justify-center px-5 py-5 border-b border-white/5">
-          <Link href="/" onClick={onClose} className="flex items-center justify-center no-underline">
+          <Link href="/app" onClick={onClose} className="flex items-center justify-center no-underline">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.svg" alt="RecarGarage" className="h-14 w-auto" />
           </Link>
@@ -222,6 +242,14 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
                 Definido pela sua conta
               </p>
             )}
+          </div>
+
+          <div>
+            <SectionLabel>Obter a app</SectionLabel>
+            <div className="space-y-1">
+              <StoreLink href={PLAY_STORE_URL} Icon={GooglePlayLogo} label="Google Play" />
+              <StoreLink href={APP_STORE_URL} Icon={AppleLogo} label="App Store" />
+            </div>
           </div>
         </nav>
 

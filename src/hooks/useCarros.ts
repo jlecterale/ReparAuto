@@ -5,6 +5,7 @@ import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
 import { filterByCountry } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
+import { matchesCarSpecFilters } from '@/lib/carSpecFilters';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 
@@ -23,6 +24,13 @@ export default function useCarros(active: boolean = true) {
   const [advConcelho, setAdvConcelho] = useState('');
   const [advRaioCentro, setAdvRaioCentro] = useState('');
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
+  const [advBodyType, setAdvBodyType] = useState('');
+  const [advCondition, setAdvCondition] = useState('');
+  const [advCombustivel, setAdvCombustivel] = useState('');
+  const [advCambio, setAdvCambio] = useState('');
+  const [advSeatsMin, setAdvSeatsMin] = useState<number | null>(null);
+  const [advTraction, setAdvTraction] = useState('');
+  const [advFeatures, setAdvFeatures] = useState<string[]>([]);
   const [sortOrdem, setSortOrdem] = useState<SortOrdem>(null);
 
   useEffect(() => {
@@ -76,6 +84,19 @@ export default function useCarros(active: boolean = true) {
       cs = cs.filter((c) => c.preco <= Number(advPriceMax));
     }
 
+    // matchesCarSpecFilters is a no-op (returns true) when no criterion is set.
+    cs = cs.filter((c) =>
+      matchesCarSpecFilters(c, {
+        bodyType: advBodyType,
+        condition: advCondition,
+        combustivel: advCombustivel,
+        cambio: advCambio,
+        seatsMin: advSeatsMin,
+        traction: advTraction,
+        features: advFeatures,
+      }),
+    );
+
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
       // Scoped to the active market: place names collide across markets.
       const centro = getCoordenadas(advRaioCentro, country);
@@ -101,7 +122,7 @@ export default function useCarros(active: boolean = true) {
     }
 
     return cs;
-  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, sortOrdem]);
+  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -144,6 +165,20 @@ export default function useCarros(active: boolean = true) {
     setAdvRaioCentro,
     advRaioKm,
     setAdvRaioKm,
+    advBodyType,
+    setAdvBodyType,
+    advCondition,
+    setAdvCondition,
+    advCombustivel,
+    setAdvCombustivel,
+    advCambio,
+    setAdvCambio,
+    advSeatsMin,
+    setAdvSeatsMin,
+    advTraction,
+    setAdvTraction,
+    advFeatures,
+    setAdvFeatures,
     sortOrdem,
     setSortOrdem,
     publicarCarro,
@@ -161,6 +196,13 @@ export default function useCarros(active: boolean = true) {
     advConcelho,
     advRaioCentro,
     advRaioKm,
+    advBodyType,
+    advCondition,
+    advCombustivel,
+    advCambio,
+    advSeatsMin,
+    advTraction,
+    advFeatures,
     sortOrdem,
     publicarCarro,
     eliminarCarro,

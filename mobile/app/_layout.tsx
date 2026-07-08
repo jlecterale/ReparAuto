@@ -2,7 +2,7 @@ import '../global.css';
 
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -19,7 +19,9 @@ import {
   requestPermissionOnFirstLaunch,
   setupPushHandlers,
   unregisterPush,
+  watchTokenRefresh,
 } from '@/lib/push';
+import { logScreenView } from '@/lib/analytics';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { AccountCountrySync } from '@/components/AccountCountrySync';
@@ -41,6 +43,16 @@ function RootNavigator() {
   // Silently check for and download OTA updates (applied on next launch).
   useOTAUpdates();
 
+  // Log a GA4 screen_view on every navigation. screen_name is the route
+  // *pattern* (e.g. "/detalhes/[id]"), keeping it low-cardinality; pathname is
+  // in the deps so navigating between two ids of the same route still logs.
+  const pathname = usePathname();
+  const segments = useSegments();
+  const screenName = segments.length ? `/${segments.join('/')}` : '/';
+  useEffect(() => {
+    logScreenView(screenName);
+  }, [screenName, pathname]);
+
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
   }, [loading]);
@@ -56,6 +68,8 @@ function RootNavigator() {
   useEffect(() => {
     if (!uid || !pushEnabled) return;
     registerForPush(uid).catch(() => {});
+    // Keep the stored token fresh if FCM rotates it while signed in.
+    const unsubTokenRefresh = watchTokenRefresh(uid);
     const unsub = setupPushHandlers((data) => {
       const link = data?.link;
       if (typeof link === 'string' && link.startsWith('/')) {
@@ -66,6 +80,7 @@ function RootNavigator() {
     });
     return () => {
       unsub();
+      unsubTokenRefresh();
       unregisterPush(uid).catch(() => {});
     };
   }, [uid, pushEnabled]);
@@ -82,7 +97,16 @@ function RootNavigator() {
   // is fully readable without an account. Login is only required for actions
   // (favourite, announce, contact), which push the (auth) modal on demand.
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.neutral[50] } }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        // iOS labels the back button with the previous route's title; screens
+        // pushed from the tab bar would otherwise show the literal "(tabs)"
+        // group name, so show only the chevron.
+        headerBackButtonDisplayMode: 'minimal',
+        contentStyle: { backgroundColor: colors.neutral[50] },
+      }}
+    >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="detalhes/[id]" options={{ headerShown: true, title: '' }} />
       <Stack.Screen name="pecas/[id]" options={{ headerShown: true, title: '' }} />
@@ -97,6 +121,7 @@ function RootNavigator() {
       <Stack.Screen name="anunciar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="perfil/editar" options={{ headerShown: true, title: 'Editar perfil' }} />
       <Stack.Screen name="meus-anuncios" options={{ headerShown: true, title: 'Os meus anúncios' }} />
+      <Stack.Screen name="meus-alertas" options={{ headerShown: true, title: 'Meus Alertas' }} />
       <Stack.Screen name="definicoes" options={{ headerShown: true, title: 'Definições' }} />
       <Stack.Screen name="admin" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ presentation: 'modal' }} />

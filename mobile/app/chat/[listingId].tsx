@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { FlatList, Keyboard, Pressable, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { trackPositiveAction } from '@/lib/appReview';
+import { formatMessageTime } from '@/lib/format';
 import type { ListingType, Mensagem } from '@/types';
 import { colors } from '@/theme/colors';
 
@@ -44,6 +46,10 @@ export default function ChatScreen() {
     [getConversa, listingId, outroUid],
   );
 
+  // Newest-first copy for the inverted list, memoized so typing in the
+  // composer doesn't hand the FlatList a fresh array every keystroke.
+  const conversaInvertida = useMemo(() => [...conversa].reverse(), [conversa]);
+
   // Mark incoming messages as read whenever the thread updates.
   useEffect(() => {
     if (conversa.length) marcarLidas(conversa);
@@ -63,6 +69,7 @@ export default function ChatScreen() {
         listingTitle,
         texto: t,
       });
+      trackPositiveAction('send-message');
     } catch {
       setTexto(t); // restore on failure
     } finally {
@@ -75,7 +82,7 @@ export default function ChatScreen() {
       <Stack.Screen options={{ title: outroNome || 'Conversa' }} />
 
       <FlatList
-        data={[...conversa].reverse()}
+        data={conversaInvertida}
         inverted
         keyExtractor={(item) => item.id}
         contentContainerClassName="px-4 py-3"
@@ -117,7 +124,8 @@ export default function ChatScreen() {
   );
 }
 
-function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
+const Bolha = memo(function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
+  const time = formatMessageTime(mensagem.dataCriacao);
   return (
     <View className={`mb-2 max-w-[80%] ${meu ? 'self-end' : 'self-start'}`}>
       <View
@@ -128,7 +136,12 @@ function Bolha({ mensagem, meu }: { mensagem: Mensagem; meu: boolean }) {
         <Text className={meu ? 'text-base text-white' : 'text-base text-fg'}>
           {mensagem.mensagem}
         </Text>
+        {!!time && (
+          <Text className={`mt-0.5 self-end text-[11px] ${meu ? 'text-white/70' : 'text-fg-subtle'}`}>
+            {time}
+          </Text>
+        )}
       </View>
     </View>
   );
-}
+});
