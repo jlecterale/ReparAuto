@@ -146,6 +146,13 @@ export default function PerfilScreen() {
             badge={novosResultados}
             onPress={() => router.push('/meus-alertas')}
           />
+          {!user.verificado && (
+            <Row
+              icon="shield-checkmark-outline"
+              label="Verificar conta"
+              onPress={() => router.push('/perfil/verificar')}
+            />
+          )}
           <Row
             icon="create-outline"
             label="Editar perfil"

@@ -330,6 +330,11 @@ export interface Verification {
   notasAdmin?: string;
 }
 
+export type VerificationInput = Omit<
+  Verification,
+  'id' | 'dataPedido' | 'dataResolucao' | 'resolvidoPor' | 'notasAdmin'
+>;
+
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';
 

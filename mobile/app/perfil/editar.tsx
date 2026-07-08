@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { colors } from '@/theme/colors';
 import type { TipoConta } from '@/types';
 
 const TIPOS_CONTA = [
@@ -33,6 +35,10 @@ export default function EditarPerfilScreen() {
   const [tipoConta, setTipoConta] = useState<TipoConta>(user?.tipoConta ?? 'particular');
   const [guardando, setGuardando] = useState(false);
 
+  // The account type is chosen once, while completing the profile, and is locked
+  // afterwards (also enforced by firestore.rules). Only send it before completion.
+  const contaBloqueada = user?.profileCompleted ?? false;
+
   async function guardar() {
     if (!nome.trim()) {
       showToast('O nome é obrigatório.', 'error');
@@ -49,7 +55,7 @@ export default function EditarPerfilScreen() {
         morada: morada.trim(),
         nif: nif.trim(),
         bio: bio.trim(),
-        tipoConta,
+        ...(contaBloqueada ? {} : { tipoConta }),
         profileCompleted: true,
       });
       showToast('Perfil atualizado.', 'success');
@@ -69,7 +75,27 @@ export default function EditarPerfilScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Input label="Nome *" value={nome} onChangeText={setNome} placeholder="O seu nome" />
-        <ChipSelect label="Tipo de conta" options={TIPOS_CONTA} value={tipoConta} onChange={setTipoConta} />
+        {contaBloqueada ? (
+          <View>
+            <Text className="mb-1.5 text-sm font-semibold text-fg-muted">Tipo de conta</Text>
+            <View className="flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-3.5">
+              <Ionicons
+                name={user?.tipoConta === 'profissional' ? 'briefcase-outline' : 'person-outline'}
+                size={18}
+                color={colors.neutral[500]}
+              />
+              <Text className="flex-1 text-base font-semibold text-fg-muted">
+                {user?.tipoConta === 'profissional' ? 'Profissional' : 'Particular'}
+              </Text>
+              <Ionicons name="lock-closed" size={16} color={colors.neutral[400]} />
+            </View>
+            <Text className="mt-1 text-xs text-fg-subtle">
+              O tipo de conta é definido no registo e não pode ser alterado.
+            </Text>
+          </View>
+        ) : (
+          <ChipSelect label="Tipo de conta" options={TIPOS_CONTA} value={tipoConta} onChange={setTipoConta} />
+        )}
         <Input label="Telefone" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
 
         <View className="flex-row gap-3">
