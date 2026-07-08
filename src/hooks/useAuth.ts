@@ -128,8 +128,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // Brand-new account in the active market; stamp it so the account-market
+    // lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const loginGoogle = useCallback(async (): Promise<Usuario> => {
@@ -147,8 +150,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const loginApple = useCallback(async (): Promise<Usuario> => {
@@ -164,8 +170,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {

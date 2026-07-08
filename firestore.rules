@@ -50,7 +50,12 @@ service cloud.firestore {
     // resolve to PT). Docs from legacy clients that send no country at all
     // stay allowed — the app resolves them to PT.
     function accountCountry() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('country', 'PT');
+      // Guard the get(): a verified user may not have a profile doc yet (a
+      // failed/racing createUserProfile, or an auto-verified Google/Apple
+      // sign-in whose profile write hasn't landed). Missing doc resolves to
+      // PT — matching docCountry — instead of erroring and denying the write.
+      let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userPath) ? get(userPath).data.get('country', 'PT') : 'PT';
     }
     function matchesAccountCountry() {
       let data = request.resource.data;
