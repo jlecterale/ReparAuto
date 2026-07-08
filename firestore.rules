@@ -23,6 +23,17 @@ service cloud.firestore {
         || request.resource.data.role == 'user'
         || (resource != null && request.resource.data.role == resource.data.role);
     }
+    // A profile owner picks their account type (particular/profissional) during
+    // signup/setup, but may NEVER change it once the profile is completed —
+    // only an admin can (isAdmin branch). Allowed when: field absent, on first
+    // create, still completing the initial setup (profileCompleted not yet
+    // true), or the value is unchanged. Mirrors ownerRoleAllowed().
+    function ownerTipoContaAllowed() {
+      return !('tipoConta' in request.resource.data)
+        || resource == null
+        || resource.data.get('profileCompleted', false) != true
+        || request.resource.data.tipoConta == resource.data.tipoConta;
+    }
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
@@ -44,8 +55,8 @@ service cloud.firestore {
       // Profile create/update is allowed without email verification so new
       // accounts can finish their profile; listings/messages/etc. still require
       // a verified email (isAuthenticated) in their own rules below.
-      allow create: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
-      allow update: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
+      allow create: if (isProfileOwner(userId) && ownerRoleAllowed() && ownerTipoContaAllowed()) || isAdmin();
+      allow update: if (isProfileOwner(userId) && ownerRoleAllowed() && ownerTipoContaAllowed()) || isAdmin();
       allow delete: if isProfileOwner(userId) || isAdmin();
     }
 

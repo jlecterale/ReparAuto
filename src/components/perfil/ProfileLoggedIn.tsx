@@ -675,6 +675,7 @@ export default function ProfileLoggedIn() {
             email={user.email}
             nome={user.nome}
             nif={user.nif}
+            tipoConta={user.tipoConta}
             verificado={user.verificado}
             verification={verification}
             loading={verificationLoading}
