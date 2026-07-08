@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { getDistritoForConcelho } from '@/lib/geo';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCepBr } from '@/hooks/useCepBr';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import {
@@ -45,21 +46,24 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const lookupTriggered = useRef(false);
 
-  const cpLookup = useCodigoPostal();
-  // Brazilian accounts validate phone/CEP/CPF against BR formats.
+  // Both lookups run; pick by market. PT derives the district from the city;
+  // BR gets the state directly from the CEP (BrasilAPI).
   const { country } = useCountry();
+  const cpLookupPt = useCodigoPostal();
+  const cpLookupBr = useCepBr();
+  const cpLookup = country === 'BR' ? cpLookupBr : cpLookupPt;
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
-      const d = getDistritoForConcelho(cpLookup.localidade, 'PT');
+      const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade, 'PT');
       if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -193,7 +197,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           />
           {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
             <p className="text-[10px] text-green-600 mt-1">
-              <Check className="mr-0.5" /> Preenchido automaticamente pelo código postal
+              <Check className="mr-0.5" /> Preenchido automaticamente pelo {term('postalCodeLabel', country)}
             </p>
           )}
         </div>
@@ -210,14 +214,14 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
                   const formatted = formatarCodigoPostal(e.target.value, country);
                   setCodigoPostal(formatted);
                   lookupTriggered.current = false;
-                  // Auto-fill from the postal code is a PT-only service.
-                  if (country === 'PT' && formatted.length === 8) {
+                  // Auto-fill address once the code is complete (BR CEP = 9 chars, PT = 8).
+                  if (formatted.length === (country === 'BR' ? 9 : 8)) {
                     cpLookup.buscar(formatted);
                   }
                 }}
                 onBlur={() => {
                   handleBlur('codigoPostal');
-                  if (country === 'PT' && validarCodigoPostal(codigoPostal, country)) {
+                  if (validarCodigoPostal(codigoPostal, country)) {
                     cpLookup.buscar(codigoPostal);
                   }
                 }}

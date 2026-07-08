@@ -12,6 +12,7 @@ import { getPendingIntent } from '@/lib/onboarding';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCepBr } from '@/hooks/useCepBr';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import {
@@ -42,21 +43,25 @@ export default function SetupPerfil() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const lookupTriggered = useRef(false);
 
-  const cpLookup = useCodigoPostal();
-  // Brazilian accounts validate phone/CEP/CPF against BR formats.
+  // Brazilian accounts validate/format against BR rules and look up the CEP via
+  // BrasilAPI; PT uses the postal-code service. Both hooks run; we pick by market.
   const { country } = useCountry();
+  const cpLookupPt = useCodigoPostal();
+  const cpLookupBr = useCepBr();
+  const cpLookup = country === 'BR' ? cpLookupBr : cpLookupPt;
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
-      const d = getDistritoForConcelho(cpLookup.localidade);
+      // The BR lookup returns the state directly; PT derives it from the city.
+      const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade);
       if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -275,7 +280,7 @@ export default function SetupPerfil() {
               />
               {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
                 <p className="text-xs font-medium text-success-700 mt-1.5 flex items-center gap-1">
-                  <Check weight="bold" /> Preenchido automaticamente pelo código postal
+                  <Check weight="bold" /> Preenchido automaticamente pelo {term('postalCodeLabel', country)}
                 </p>
               )}
             </div>
@@ -291,14 +296,15 @@ export default function SetupPerfil() {
                     const formatted = formatarCodigoPostal(e.target.value, country);
                     setCodigoPostal(formatted);
                     lookupTriggered.current = false;
-                    // Auto-fill from the postal code is a PT-only service.
-                    if (country === 'PT' && formatted.length === 8) {
+                    // Auto-fill address from the code once it's complete (BR CEP
+                    // formats to 9 chars, PT postal code to 8).
+                    if (formatted.length === (country === 'BR' ? 9 : 8)) {
                       cpLookup.buscar(formatted);
                     }
                   }}
                   onBlur={() => {
                     handleBlur('codigoPostal');
-                    if (country === 'PT' && validarCodigoPostal(codigoPostal, country)) {
+                    if (validarCodigoPostal(codigoPostal, country)) {
                       cpLookup.buscar(codigoPostal);
                     }
                   }}

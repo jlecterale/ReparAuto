@@ -38,6 +38,14 @@ export function ufForEstado(estado: string): string | undefined {
   return UF_BY_ESTADO[estado];
 }
 
+const ESTADO_BY_UF: Record<string, string> = Object.fromEntries(
+  Object.entries(UF_BY_ESTADO).map(([nome, uf]) => [uf, nome]),
+);
+
+export function estadoForUf(uf: string): string | undefined {
+  return ESTADO_BY_UF[uf?.toUpperCase()];
+}
+
 const SMALL_WORDS = new Set(['da', 'de', 'do', 'das', 'dos', 'e', 'd']);
 
 // IBGE names come uppercased ("SÃO PAULO", "MOGI DAS CRUZES"); render them in
