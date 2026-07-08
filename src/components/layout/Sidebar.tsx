@@ -220,58 +220,6 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </div>
 
-          {/* Market switcher — only for anonymous visitors; once signed in the
-              market is bound to the account and can't be changed, so we hide it. */}
-          {!isLoggedIn && (
-            <div>
-              <SectionLabel>Mercado</SectionLabel>
-              <div ref={marketRef} className="relative px-3">
-                <button
-                  type="button"
-                  onClick={() => setMarketOpen((o) => !o)}
-                  aria-haspopup="listbox"
-                  aria-expanded={marketOpen}
-                  aria-label={`Mercado: ${COUNTRY_INFO[country].name}`}
-                  className="inline-flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                  <span aria-hidden="true" className="text-base leading-none">{COUNTRY_INFO[country].flag}</span>
-                  <CaretDown
-                    size={13}
-                    weight="bold"
-                    className={`text-white/50 transition-transform duration-200 ${marketOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {marketOpen && (
-                  <ul
-                    role="listbox"
-                    aria-label="Escolher mercado"
-                    className="absolute left-3 top-full mt-1 z-20 min-w-[150px] rounded-xl bg-primary-950 border border-white/10 shadow-2xl overflow-hidden py-1"
-                  >
-                    {COUNTRIES.map((code) => {
-                      const info = COUNTRY_INFO[code];
-                      const active = country === code;
-                      return (
-                        <li key={code} role="option" aria-selected={active}>
-                          <button
-                            type="button"
-                            onClick={() => { setCountry(code); setMarketOpen(false); }}
-                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold transition-colors ${
-                              active ? 'bg-accent text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
-                            }`}
-                          >
-                            <span aria-hidden="true" className="text-base leading-none">{info.flag}</span>
-                            {info.name}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </div>
-          )}
-
           <div>
             <SectionLabel>Obter a app</SectionLabel>
             <div className="space-y-1">
@@ -323,13 +271,64 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               </button>
             </div>
           ) : (
-            <Link
-              href="/perfil"
-              onClick={onClose}
-              className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white text-sm font-bold px-4 py-3 rounded-xl transition no-underline shadow-lg shadow-accent/30"
-            >
-              <User size={18} weight="bold" /> Entrar
-            </Link>
+            <>
+              <Link
+                href="/perfil"
+                onClick={onClose}
+                className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-white text-sm font-bold px-4 py-3 rounded-xl transition no-underline shadow-lg shadow-accent/30"
+              >
+                <User size={18} weight="bold" /> Entrar
+              </Link>
+
+              {/* Market switcher — anonymous visitors only; once signed in the
+                  market is bound to the account and can't be changed, so it's
+                  hidden entirely. Opens upward since it sits at the sidebar's foot. */}
+              <div ref={marketRef} className="relative mt-2">
+                <button
+                  type="button"
+                  onClick={() => setMarketOpen((o) => !o)}
+                  aria-haspopup="listbox"
+                  aria-expanded={marketOpen}
+                  aria-label={`Mercado: ${COUNTRY_INFO[country].name}`}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <span aria-hidden="true" className="text-base leading-none">{COUNTRY_INFO[country].flag}</span>
+                  <span className="text-sm font-semibold">{COUNTRY_INFO[country].name}</span>
+                  <CaretDown
+                    size={13}
+                    weight="bold"
+                    className={`ml-auto text-white/50 transition-transform duration-200 ${marketOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {marketOpen && (
+                  <ul
+                    role="listbox"
+                    aria-label="Escolher mercado"
+                    className="absolute inset-x-0 bottom-full mb-1 z-20 rounded-xl bg-primary-950 border border-white/10 shadow-2xl overflow-hidden py-1"
+                  >
+                    {COUNTRIES.map((code) => {
+                      const info = COUNTRY_INFO[code];
+                      const active = country === code;
+                      return (
+                        <li key={code} role="option" aria-selected={active}>
+                          <button
+                            type="button"
+                            onClick={() => { setCountry(code); setMarketOpen(false); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold transition-colors ${
+                              active ? 'bg-accent text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            <span aria-hidden="true" className="text-base leading-none">{info.flag}</span>
+                            {info.name}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </>
           )}
         </div>
       </aside>
