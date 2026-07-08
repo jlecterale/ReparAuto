@@ -1,5 +1,15 @@
 import { renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import CountryProvider from '@/providers/CountryProvider';
+import { COUNTRY_STORAGE_KEY } from '@/lib/country';
+
+// The hook reads the active market (PT here) to pick between the Firestore
+// catalog and the FIPE one, so every render needs a CountryProvider ancestor.
+// Pre-seeding the stored preference keeps the provider on its synchronous
+// "stored" branch — otherwise its first-launch GeoIP lookup would fire a real
+// network request from the test.
+const wrapper = ({ children }: { children: ReactNode }) => <CountryProvider>{children}</CountryProvider>;
 
 // Firestore is mocked at the boundary: getDocs is what the hook awaits, and
 // its resolution/rejection is what we vary across the scenarios below.
@@ -26,6 +36,7 @@ function snapshotOf(docs: Array<{ id: string; data: Record<string, unknown> }>) 
 }
 
 beforeEach(() => {
+  localStorage.setItem(COUNTRY_STORAGE_KEY, 'PT');
   getDocsMock.mockReset();
 });
 
@@ -36,7 +47,7 @@ describe('useMarcasModelos', () => {
     // getDocs never resolves — the list must already be populated on first render.
     getDocsMock.mockReturnValue(new Promise(() => {}));
 
-    const { result } = renderHook(() => useMarcasModelos());
+    const { result } = renderHook(() => useMarcasModelos(), { wrapper });
 
     expect(result.current.loading).toBe(false);
     expect(result.current.marcas).toEqual(sortedFallback);
@@ -47,7 +58,7 @@ describe('useMarcasModelos', () => {
       snapshotOf([{ id: 'Tesla', data: { tipos: ['carro'], modelos: ['Model 3'], ativo: true } }])
     );
 
-    const { result } = renderHook(() => useMarcasModelos());
+    const { result } = renderHook(() => useMarcasModelos(), { wrapper });
 
     await waitFor(() => expect(result.current.marcas).toEqual(['Tesla']));
     expect(result.current.getModelos('Tesla')).toEqual(['Model 3']);
@@ -58,7 +69,7 @@ describe('useMarcasModelos', () => {
     // snapshot instead of throwing — the seeded fallback must stay in place.
     getDocsMock.mockResolvedValue(snapshotOf([]));
 
-    const { result } = renderHook(() => useMarcasModelos());
+    const { result } = renderHook(() => useMarcasModelos(), { wrapper });
 
     await waitFor(() => expect(getDocsMock).toHaveBeenCalled());
     expect(result.current.marcas).toEqual(sortedFallback);
@@ -73,7 +84,7 @@ describe('useMarcasModelos', () => {
     );
     getDocsMock.mockReturnValue(new Promise(() => {}));
 
-    const { result } = renderHook(() => useMarcasModelos());
+    const { result } = renderHook(() => useMarcasModelos(), { wrapper });
 
     expect(result.current.marcas).toEqual(sortedFallback);
   });
@@ -81,7 +92,7 @@ describe('useMarcasModelos', () => {
   it('mantém o JSON empacotado quando a query lança erro', async () => {
     getDocsMock.mockRejectedValue(new Error('permission-denied'));
 
-    const { result } = renderHook(() => useMarcasModelos());
+    const { result } = renderHook(() => useMarcasModelos(), { wrapper });
 
     await waitFor(() => expect(getDocsMock).toHaveBeenCalled());
     expect(result.current.marcas).toEqual(sortedFallback);

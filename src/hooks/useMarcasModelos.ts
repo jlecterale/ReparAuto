@@ -79,9 +79,11 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
     if (cached && isCacheValid(cached)) return cached.dados;
     return getFallbackData();
   });
-  // Always have data to show, so there's no loading gate and no stuck skeleton.
-  const loading = false;
-  const error = null;
+  // PT: always have data to show synchronously, so there's no loading gate and
+  // no stuck skeleton. BR has no bundled fallback (FIPE has no offline dataset
+  // to seed from), so it gets a real loading/error state below.
+  const ptLoading = false;
+  const ptError = null;
 
   useEffect(() => {
     let cancelled = false;
@@ -132,24 +134,26 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
   // brand) and land in a map that getModelos reads synchronously.
   const [fipeBrands, setFipeBrands] = useState<FipeBrand[]>([]);
   const [fipeModelos, setFipeModelos] = useState<Record<string, string[]>>({});
+  const [fipeLoading, setFipeLoading] = useState(false);
+  const [fipeError, setFipeError] = useState<string | null>(null);
   const fipePending = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (country !== 'BR') return;
     let cancelled = false;
-    setLoading(true);
+    setFipeLoading(true);
     fetchFipeBrands(tipo)
       .then((brands) => {
         if (cancelled) return;
         setFipeBrands(brands);
-        setError(null);
+        setFipeError(null);
       })
       .catch((err) => {
         console.warn('[useMarcasModelos] Erro ao buscar marcas FIPE:', err);
-        if (!cancelled) setError('Não foi possível carregar as marcas.');
+        if (!cancelled) setFipeError('Não foi possível carregar as marcas.');
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setFipeLoading(false);
       });
     return () => {
       cancelled = true;
@@ -203,6 +207,9 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
     },
     [country, fipeModelos, requestFipeModelos, docs]
   );
+
+  const loading = country === 'BR' ? fipeLoading : ptLoading;
+  const error = country === 'BR' ? fipeError : ptError;
 
   return { marcas, getModelos, loading, error, docs };
 }
