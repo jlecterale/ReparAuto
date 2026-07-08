@@ -18,6 +18,17 @@ export function formatKm(km: number): string {
   return `${new Intl.NumberFormat('pt-PT').format(km)} km`;
 }
 
+/**
+ * Masks a postal code as the user types (PT `0000-000`, BR CEP `00000-000`).
+ * Mirrors the web `formatarCodigoPostal` in `src/lib/utils.ts`.
+ */
+export function formatarCodigoPostal(cp: string, country: Country = 'PT'): string {
+  const digits = cp.replace(/\D/g, '');
+  const prefixLength = country === 'BR' ? 5 : 4;
+  if (digits.length <= prefixLength) return digits;
+  return `${digits.slice(0, prefixLength)}-${digits.slice(prefixLength, prefixLength + 3)}`;
+}
+
 export function formatNumero(n: number): string {
   return new Intl.NumberFormat('pt-PT').format(n);
 }

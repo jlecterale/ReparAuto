@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
@@ -7,8 +7,15 @@ import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
+import { useConcelhos } from '@/hooks/useConcelhos';
+import { useCepBr } from '@/hooks/useCepBr';
+import { getDistritoForConcelho, getDistritos } from '@/lib/geo';
+import { formatarCodigoPostal } from '@/lib/format';
+import { term } from '@/lib/terms';
 import type { TipoConta } from '@/types';
 
 const TIPOS_CONTA = [
@@ -18,6 +25,7 @@ const TIPOS_CONTA = [
 
 export default function EditarPerfilScreen() {
   const { user, updateProfile } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -25,13 +33,33 @@ export default function EditarPerfilScreen() {
   const [nome, setNome] = useState(user?.nome ?? '');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [localidade, setLocalidade] = useState(user?.localidade ?? '');
-  const [distrito, setDistrito] = useState(user?.distrito ?? '');
+  const [distrito, setDistrito] = useState(
+    user?.distrito || (user?.localidade ? getDistritoForConcelho(user.localidade) ?? '' : ''),
+  );
   const [codigoPostal, setCodigoPostal] = useState(user?.codigoPostal ?? '');
   const [morada, setMorada] = useState(user?.morada ?? '');
   const [nif, setNif] = useState(user?.nif ?? '');
   const [bio, setBio] = useState(user?.bio ?? '');
   const [tipoConta, setTipoConta] = useState<TipoConta>(user?.tipoConta ?? 'particular');
   const [guardando, setGuardando] = useState(false);
+
+  const distritos = getDistritos(country);
+  const { concelhos, loading: cidadesLoading } = useConcelhos(distrito);
+
+  // BR fills the state/city/street from the CEP (BrasilAPI). PT has no CEP
+  // lookup on mobile, so the pickers are the only path there.
+  const cep = useCepBr();
+  const lookupTriggered = useRef(false);
+
+  useEffect(() => {
+    if (country !== 'BR' || !cep.localidade || lookupTriggered.current) return;
+    lookupTriggered.current = true;
+    setLocalidade(cep.localidade);
+    if (cep.distrito) setDistrito(cep.distrito);
+    if (cep.ruas.length > 0) setMorada((prev) => prev || cep.ruas[0]);
+  }, [country, cep.localidade, cep.distrito, cep.ruas]);
+
+  const cepPreenchido = country === 'BR' && !!cep.localidade && localidade === cep.localidade;
 
   async function guardar() {
     if (!nome.trim()) {
@@ -70,27 +98,92 @@ export default function EditarPerfilScreen() {
       >
         <Input label="Nome *" value={nome} onChangeText={setNome} placeholder="O seu nome" />
         <ChipSelect label="Tipo de conta" options={TIPOS_CONTA} value={tipoConta} onChange={setTipoConta} />
-        <Input label="Telefone" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+        <Input
+          label={term('phoneLabel', country)}
+          value={telefone}
+          onChangeText={(t) => setTelefone(t.replace(/\D/g, ''))}
+          placeholder={term('phonePlaceholder', country)}
+          keyboardType="phone-pad"
+          maxLength={country === 'BR' ? 11 : 9}
+        />
 
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Localidade" value={localidade} onChangeText={setLocalidade} placeholder="Lisboa" />
+            <SelectField
+              label={term('districtLabel', country)}
+              value={distrito}
+              onChange={(d) => {
+                setDistrito(d);
+                setLocalidade('');
+                lookupTriggered.current = true;
+              }}
+              options={distritos}
+              placeholder={term('districtSelectOption', country)}
+            />
           </View>
           <View className="flex-1">
-            <Input label="Distrito" value={distrito} onChangeText={setDistrito} placeholder="Lisboa" />
+            <SelectField
+              label={term('municipalityLabel', country)}
+              value={localidade}
+              onChange={(c) => {
+                setLocalidade(c);
+                lookupTriggered.current = true;
+              }}
+              options={concelhos}
+              loading={cidadesLoading}
+              disabled={!distrito}
+              allowCustom
+            />
           </View>
         </View>
+        {cepPreenchido && (
+          <Text className="-mt-2 text-xs text-success-600">
+            ✓ Preenchido automaticamente pelo {term('postalCodeLabel', country)}
+          </Text>
+        )}
 
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Código postal" value={codigoPostal} onChangeText={setCodigoPostal} placeholder="1000-001" />
+            <Input
+              label={term('postalCodeLabel', country)}
+              value={codigoPostal}
+              onChangeText={(t) => {
+                const formatted = formatarCodigoPostal(t, country);
+                setCodigoPostal(formatted);
+                lookupTriggered.current = false;
+                if (country === 'BR' && formatted.replace(/\D/g, '').length === 8) {
+                  cep.buscar(formatted);
+                }
+              }}
+              placeholder={term('postalCodePlaceholder', country)}
+              keyboardType="number-pad"
+              maxLength={country === 'BR' ? 9 : 8}
+            />
           </View>
           <View className="flex-1">
-            <Input label="NIF" value={nif} onChangeText={setNif} placeholder="123456789" keyboardType="number-pad" />
+            <Input
+              label={term('taxIdLabel', country)}
+              value={nif}
+              onChangeText={(t) => setNif(t.replace(/\D/g, ''))}
+              placeholder={term('taxIdPlaceholder', country)}
+              keyboardType="number-pad"
+              maxLength={country === 'BR' ? 14 : 9}
+            />
           </View>
         </View>
+        {country === 'BR' && cep.loading && (
+          <Text className="-mt-2 text-xs text-fg-subtle">A procurar endereço…</Text>
+        )}
+        {country === 'BR' && !!cep.erro && (
+          <Text className="-mt-2 text-xs text-danger-600">{cep.erro}</Text>
+        )}
 
-        <Input label="Morada" value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
+        <Input
+          label={term('addressLabel', country)}
+          value={morada}
+          onChangeText={setMorada}
+          placeholder={term('addressPlaceholder', country)}
+        />
         <Input
           label="Sobre si"
           value={bio}

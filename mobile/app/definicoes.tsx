@@ -133,7 +133,11 @@ export default function DefinicoesScreen() {
         {LINKS.map((l, i) => (
           <Pressable
             key={l.path}
-            onPress={() => WebBrowser.openBrowserAsync(`${SITE}${l.path}`)}
+            // Carry the account market so the (client-rendered) policy pages —
+            // opened in a fresh browser with no stored preference — resolve the
+            // right variant (e.g. LGPD vs. RGPD privacy) instead of falling back
+            // to GeoIP, which misfires for a BR user physically in PT.
+            onPress={() => WebBrowser.openBrowserAsync(`${SITE}${l.path}?mercado=${country}`)}
             accessibilityRole="link"
             className={`flex-row items-center px-4 py-4 active:bg-neutral-50 ${
               i < LINKS.length - 1 ? 'border-b border-neutral-100' : ''
