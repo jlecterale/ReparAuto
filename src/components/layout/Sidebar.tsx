@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -21,6 +21,7 @@ import {
   Bell,
   GooglePlayLogo,
   AppleLogo,
+  CaretDown,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
@@ -43,7 +44,7 @@ interface SidebarProps {
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
   const { auth, chat } = useApp();
-  const { country, setCountry, locked } = useCountry();
+  const { country, setCountry } = useCountry();
   const premiumConfig = usePremiumConfig();
   const isPremiumActive = premiumConfig.impulsionamento || premiumConfig.oficinas || premiumConfig.leads;
   const pathname = usePathname();
@@ -54,6 +55,20 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
   const [showChatInbox, setShowChatInbox] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showPlanos, setShowPlanos] = useState(false);
+  const [marketOpen, setMarketOpen] = useState(false);
+  const marketRef = useRef<HTMLDivElement>(null);
+
+  // Close the market dropdown when clicking outside it.
+  useEffect(() => {
+    if (!marketOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (marketRef.current && !marketRef.current.contains(e.target as Node)) {
+        setMarketOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [marketOpen]);
 
   const isActive = (path: string) => {
     if (!pathname) return false;
@@ -205,44 +220,57 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
             </div>
           </div>
 
-          <div>
-            <SectionLabel>Mercado</SectionLabel>
-            <div
-              role="radiogroup"
-              aria-label="Escolher mercado"
-              className="flex gap-1 rounded-xl bg-white/5 border border-white/5 p-1"
-            >
-              {COUNTRIES.map((code) => {
-                const info = COUNTRY_INFO[code];
-                const active = country === code;
-                return (
-                  <button
-                    key={code}
-                    role="radio"
-                    aria-checked={active}
-                    disabled={locked}
-                    onClick={() => setCountry(code)}
-                    title={locked ? 'O mercado é definido pela sua conta.' : undefined}
-                    className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-bold transition-all duration-200 ${
-                      active
-                        ? 'bg-accent text-white shadow-lg shadow-accent/30'
-                        : locked
-                          ? 'text-white/30 cursor-not-allowed'
-                          : 'text-white/65 hover:text-white hover:bg-white/10'
-                    }`}
+          {/* Market switcher — only for anonymous visitors; once signed in the
+              market is bound to the account and can't be changed, so we hide it. */}
+          {!isLoggedIn && (
+            <div>
+              <SectionLabel>Mercado</SectionLabel>
+              <div ref={marketRef} className="relative px-3">
+                <button
+                  type="button"
+                  onClick={() => setMarketOpen((o) => !o)}
+                  aria-haspopup="listbox"
+                  aria-expanded={marketOpen}
+                  aria-label={`Mercado: ${COUNTRY_INFO[country].name}`}
+                  className="inline-flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <span aria-hidden="true" className="text-base leading-none">{COUNTRY_INFO[country].flag}</span>
+                  <CaretDown
+                    size={13}
+                    weight="bold"
+                    className={`text-white/50 transition-transform duration-200 ${marketOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {marketOpen && (
+                  <ul
+                    role="listbox"
+                    aria-label="Escolher mercado"
+                    className="absolute left-3 top-full mt-1 z-20 min-w-[150px] rounded-xl bg-primary-950 border border-white/10 shadow-2xl overflow-hidden py-1"
                   >
-                    <span aria-hidden="true">{info.flag}</span>
-                    {info.name}
-                  </button>
-                );
-              })}
+                    {COUNTRIES.map((code) => {
+                      const info = COUNTRY_INFO[code];
+                      const active = country === code;
+                      return (
+                        <li key={code} role="option" aria-selected={active}>
+                          <button
+                            type="button"
+                            onClick={() => { setCountry(code); setMarketOpen(false); }}
+                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-semibold transition-colors ${
+                              active ? 'bg-accent text-white' : 'text-white/70 hover:text-white hover:bg-white/10'
+                            }`}
+                          >
+                            <span aria-hidden="true" className="text-base leading-none">{info.flag}</span>
+                            {info.name}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             </div>
-            {locked && (
-              <p className="px-3 mt-1.5 text-[10px] text-white/35">
-                Definido pela sua conta
-              </p>
-            )}
-          </div>
+          )}
 
           <div>
             <SectionLabel>Obter a app</SectionLabel>
