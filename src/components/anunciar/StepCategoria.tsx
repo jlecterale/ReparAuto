@@ -1,3 +1,5 @@
+'use client';
+
 import { Car, DownloadSimple, GearSix, type Icon } from '@phosphor-icons/react';
 import Link from 'next/link';
 import { useCountry } from '@/providers/CountryProvider';

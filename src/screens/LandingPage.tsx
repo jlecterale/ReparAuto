@@ -751,8 +751,8 @@ export default function LandingPage() {
 
           <AnimatedSection>
             <div className="flex flex-col gap-3">
-              {faqItems.map((item, i) => (
-                <FAQItem key={i} item={item} />
+              {faqItems.map((item) => (
+                <FAQItem key={item.q} item={item} />
               ))}
             </div>
           </AnimatedSection>
