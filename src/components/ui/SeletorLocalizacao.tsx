@@ -1,7 +1,8 @@
 'use client';
 
-import { CaretDown } from '@phosphor-icons/react';
+import { CaretDown, CircleNotch } from '@phosphor-icons/react';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
+import { useConcelhos } from '@/hooks/useConcelhos';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 
@@ -22,8 +23,9 @@ export default function SeletorLocalizacao({
   erro,
   className = '',
 }: SeletorLocalizacaoProps) {
-  const { distritos, getConcelhos } = useDistritosConcelhos();
-  const concelhos = getConcelhos(distrito);
+  const { distritos } = useDistritosConcelhos();
+  // BR cities come from the full IBGE list (loaded per state); PT is synchronous.
+  const { concelhos, loading: loadingCidades } = useConcelhos(distrito);
   const { country } = useCountry();
   // PT: Distrito/Concelho · BR: Estado/Cidade
   const regionLabel = term('districtLabel', country);
@@ -70,25 +72,34 @@ export default function SeletorLocalizacao({
           <select
             value={concelho}
             onChange={(e) => onChange(distrito, e.target.value)}
-            disabled={!distrito}
+            disabled={!distrito || loadingCidades}
             className={`${baseSelect} ${erro && !concelho ? 'border-danger-500' : 'border-neutral-300'}`}
           >
             <option value="">
-              {distrito
-                ? `Selecionar ${cityLabel.toLowerCase()}`
-                : `Selecione um ${regionLabel.toLowerCase()}`}
+              {!distrito
+                ? `Selecione um ${regionLabel.toLowerCase()}`
+                : loadingCidades
+                  ? 'A carregar…'
+                  : `Selecionar ${cityLabel.toLowerCase()}`}
             </option>
             {concelhos.map((c) => (
-              <option key={c.nome} value={c.nome}>{c.nome}</option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <CaretDown
-            size={16}
-            weight="bold"
-            className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
-              distrito ? 'text-fg-subtle' : 'text-neutral-300'
-            }`}
-          />
+          {loadingCidades ? (
+            <CircleNotch
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-accent"
+            />
+          ) : (
+            <CaretDown
+              size={16}
+              weight="bold"
+              className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
+                distrito ? 'text-fg-subtle' : 'text-neutral-300'
+              }`}
+            />
+          )}
         </div>
       </div>
     </div>

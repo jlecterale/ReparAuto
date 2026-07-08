@@ -13,6 +13,7 @@ import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
 import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import {
   validarTelefone,
   validarCodigoPostal,
@@ -128,11 +129,11 @@ export default function SetupPerfil() {
       return;
     }
     if (!telefone.trim()) {
-      setErro('O número de telemóvel é obrigatório.');
+      setErro(`O ${term('phoneLabel', country).toLowerCase()} é obrigatório.`);
       return;
     }
     if (!validarTelefone(telefone, country)) {
-      setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
+      setErro(term('phoneInvalid', country));
       return;
     }
     if (!localidade.trim()) {
@@ -140,11 +141,11 @@ export default function SetupPerfil() {
       return;
     }
     if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
-      setErro('Código postal inválido. Formato: XXXX-XXX');
+      setErro(term('postalCodeInvalid', country));
       return;
     }
     if (nif.trim() && !validarNif(nif, country)) {
-      setErro('NIF inválido. Verifique o número.');
+      setErro(term('taxIdInvalid', country));
       return;
     }
 
@@ -234,15 +235,15 @@ export default function SetupPerfil() {
 
             <div>
               <label className={labelCls}>
-                Telemóvel <span className="text-danger-500">*</span>
+                {term('phoneLabel', country)} <span className="text-danger-500">*</span>
               </label>
               <input
                 type="tel"
-                placeholder="Ex: 912345678"
+                placeholder={term('phonePlaceholder', country)}
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
                 onBlur={() => handleBlur('telefone')}
-                maxLength={9}
+                maxLength={country === 'BR' ? 11 : 9}
                 className={inputClasse('telefone')}
               />
             </div>
@@ -258,7 +259,7 @@ export default function SetupPerfil() {
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
               <label className={labelCls}>
-                Distrito e Concelho <span className="text-danger-500">*</span>
+                {term('districtAndMunicipality', country)} <span className="text-danger-500">*</span>
               </label>
               <SeletorLocalizacao
                 distrito={distrito}
@@ -280,17 +281,18 @@ export default function SetupPerfil() {
             </div>
 
             <div>
-              <label className={labelCls}>Código Postal</label>
+              <label className={labelCls}>{term('postalCodeLabel', country)}</label>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="XXXX-XXX"
+                  placeholder={term('postalCodePlaceholder', country)}
                   value={codigoPostal}
                   onChange={(e) => {
                     const formatted = formatarCodigoPostal(e.target.value, country);
                     setCodigoPostal(formatted);
                     lookupTriggered.current = false;
-                    if (formatted.length === 8) {
+                    // Auto-fill from the postal code is a PT-only service.
+                    if (country === 'PT' && formatted.length === 8) {
                       cpLookup.buscar(formatted);
                     }
                   }}
@@ -300,7 +302,7 @@ export default function SetupPerfil() {
                       cpLookup.buscar(codigoPostal);
                     }
                   }}
-                  maxLength={8}
+                  maxLength={country === 'BR' ? 9 : 8}
                   className={inputClasse('codigoPostal', 'pr-10')}
                 />
                 {cpLookup.loading && (
@@ -310,24 +312,24 @@ export default function SetupPerfil() {
             </div>
 
             <div>
-              <label className={labelCls}>NIF {opcional}</label>
+              <label className={labelCls}>{term('taxIdLabel', country)} {opcional}</label>
               <input
                 type="text"
-                placeholder="123456789"
+                placeholder={term('taxIdPlaceholder', country)}
                 value={nif}
                 onChange={(e) => setNif(e.target.value.replace(/\D/g, ''))}
                 onBlur={() => handleBlur('nif')}
-                maxLength={9}
+                maxLength={country === 'BR' ? 14 : 9}
                 className={inputClasse('nif')}
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className={labelCls}>Morada {opcional}</label>
+              <label className={labelCls}>{term('addressLabel', country)} {opcional}</label>
               <input
                 type="text"
                 list="ruas-list"
-                placeholder="Rua, número, bairro..."
+                placeholder={term('addressPlaceholder', country)}
                 value={morada}
                 onChange={(e) => setMorada(e.target.value)}
                 className={inputClasse('morada')}

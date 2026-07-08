@@ -11,6 +11,7 @@ import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { getDistritoForConcelho } from '@/lib/geo';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
 import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import {
   validarTelefone,
   validarCodigoPostal,
@@ -116,15 +117,15 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       return;
     }
     if (telefone.trim() && !validarTelefone(telefone, country)) {
-      setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
+      setErro(term('phoneInvalid', country));
       return;
     }
     if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
-      setErro('Código postal inválido. Formato: XXXX-XXX');
+      setErro(term('postalCodeInvalid', country));
       return;
     }
     if (nif.trim() && !validarNif(nif, country)) {
-      setErro('NIF inválido. Verifique o número.');
+      setErro(term('taxIdInvalid', country));
       return;
     }
 
@@ -167,13 +168,14 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Telemóvel</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('phoneLabel', country)}</label>
           <input
             type="tel"
+            placeholder={term('phonePlaceholder', country)}
             value={telefone}
             onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
             onBlur={() => handleBlur('telefone')}
-            maxLength={9}
+            maxLength={country === 'BR' ? 11 : 9}
             className={inputClasse('telefone')}
           />
         </div>
@@ -198,16 +200,18 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">Código Postal</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('postalCodeLabel', country)}</label>
             <div className="relative">
               <input
                 type="text"
+                placeholder={term('postalCodePlaceholder', country)}
                 value={codigoPostal}
                 onChange={(e) => {
                   const formatted = formatarCodigoPostal(e.target.value, country);
                   setCodigoPostal(formatted);
                   lookupTriggered.current = false;
-                  if (formatted.length === 8) {
+                  // Auto-fill from the postal code is a PT-only service.
+                  if (country === 'PT' && formatted.length === 8) {
                     cpLookup.buscar(formatted);
                   }
                 }}
@@ -217,7 +221,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
                     cpLookup.buscar(codigoPostal);
                   }
                 }}
-                maxLength={8}
+                maxLength={country === 'BR' ? 9 : 8}
                 className={inputClasse('codigoPostal', 'pr-10')}
               />
               {cpLookup.loading && (
@@ -226,20 +230,21 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">NIF</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('taxIdLabel', country)}</label>
             <input
               type="text"
+              placeholder={term('taxIdPlaceholder', country)}
               value={nif}
               onChange={(e) => setNif(e.target.value.replace(/\D/g, ''))}
               onBlur={() => handleBlur('nif')}
-              maxLength={9}
+              maxLength={country === 'BR' ? 14 : 9}
               className={inputClasse('nif')}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Morada</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('addressLabel', country)}</label>
           <div className="relative">
             <input
               type="text"
