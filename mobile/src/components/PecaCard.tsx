@@ -18,9 +18,11 @@ const TIPO_STYLE: Record<Peca['tipo'], string> = {
 interface PecaCardProps {
   peca: Peca;
   onPress: (id: string) => void;
+  /** Seller has a verified profile — shows the trust badge. */
+  vendedorVerificado?: boolean;
 }
 
-function PecaCardBase({ peca, onPress }: PecaCardProps) {
+function PecaCardBase({ peca, onPress, vendedorVerificado = false }: PecaCardProps) {
   return (
     <Pressable
       onPress={() => onPress(peca.id)}
@@ -51,9 +53,20 @@ function PecaCardBase({ peca, onPress }: PecaCardProps) {
         <Text className="mt-1 text-base font-bold text-fg-heading" numberOfLines={1}>
           {peca.titulo}
         </Text>
-        <Text className="text-sm text-fg-muted" numberOfLines={1}>
-          {[peca.categoria, peca.marcaCarro].filter(Boolean).join(' · ')}
-        </Text>
+        <View className="flex-row items-center">
+          <Text className="shrink text-sm text-fg-muted" numberOfLines={1}>
+            {[peca.categoria, peca.marcaCarro].filter(Boolean).join(' · ')}
+          </Text>
+          {vendedorVerificado && (
+            <Ionicons
+              name="checkmark-circle"
+              size={14}
+              color={colors.primary[600]}
+              style={{ marginLeft: 4 }}
+              accessibilityLabel="Vendedor verificado"
+            />
+          )}
+        </View>
         <View className="mt-auto flex-row items-center justify-between pt-1">
           <Text className="text-base font-extrabold text-accent">
             {formatPrecoOpcional(peca.preco)}
