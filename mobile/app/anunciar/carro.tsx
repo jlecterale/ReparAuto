@@ -13,6 +13,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
@@ -635,13 +636,13 @@ export default function AnunciarCarroScreen() {
         </View>
 
         <SelectField
-          label="Mês da 1ª matrícula"
+          label={term('firstRegistrationLabel', country)}
           value={firstRegMonth}
           onChange={setFirstRegMonth}
           options={MESES}
           emptyOption="Indiferente"
           placeholder="Selecionar mês"
-          title="Mês da 1ª matrícula"
+          title={term('firstRegistrationLabel', country)}
         />
         <ChipSelect
           label="Origem"
@@ -772,7 +773,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Telefone"
+              label={term('phoneLabel', country)}
               value={telefone}
               onChangeText={setTelefone}
               placeholder="912345678"

@@ -1,11 +1,16 @@
 import { ClipboardText, Invoice, Phone, RoadHorizon, User } from '@phosphor-icons/react';
 import { formatarPreco } from '@/lib/utils';
 import { MESES } from '@/lib/constants';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
 
 export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
   if (!carro) return null;
+
+  // Spec sheet of a specific listing → label by the listing's market, not the viewer's.
+  const country = docCountry(carro);
 
   const consumo = (l?: number) => (l != null ? `${l.toLocaleString('pt-PT')} l/100 km` : undefined);
 
@@ -17,7 +22,7 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
     { label: 'Condição', value: carro.condition },
     { label: 'Origem', value: carro.origin },
     { label: 'Ano de Fabricação', value: carro.anoFabricacao },
-    { label: 'Mês da 1ª matrícula', value: carro.firstRegistrationMonth ? MESES[carro.firstRegistrationMonth - 1] : undefined },
+    { label: term('firstRegistrationLabel', country), value: carro.firstRegistrationMonth ? MESES[carro.firstRegistrationMonth - 1] : undefined },
     { label: 'Ano Modelo', value: carro.anoModelo || '-' },
     { label: 'Quilómetros', value: carro.km ? `${carro.km.toLocaleString('pt-PT')} km` : '-' },
     { label: 'Proprietários anteriores', value: carro.previousOwners != null ? String(carro.previousOwners) : undefined },

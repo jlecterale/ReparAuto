@@ -19,6 +19,8 @@ import {
 } from '@/lib/constants';
 import { CAR_PRICE_MAX, validarDadosVeiculo } from '@/lib/carSpec';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { toggleInList, parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull, sanitizeDecimalInput } from '@/lib/utils';
 import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { useApp } from '@/providers/AppProvider';
@@ -40,6 +42,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const { auth } = useApp();
   const toast = useToast();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  // Editing a specific listing → label by the listing's market.
+  const country = docCountry(carro);
 
   const [form, setForm] = useState({
     marca: carro.marca,
@@ -281,7 +285,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Cilindrada (cc)', 'displacement', 'number', null, false, 5)}
         {campo('Tração', 'traction', 'text', TIPOS_TRACAO, true)}
         <div className="col-span-2">{campo('Versão', 'version', 'text', null, false, 60)}</div>
-        {campo('Mês da 1ª matrícula', 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
+        {campo(term('firstRegistrationLabel', country), 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
         {campo('Origem', 'origin', 'text', ORIGENS_VEICULO, true)}
         {campo('Proprietários anteriores', 'previousOwners', 'number', null, false, 2)}
         {campo('Nº de mudanças', 'gears', 'number', null, false, 2)}

@@ -9,6 +9,8 @@ import { uploadFileToStorage } from '@/lib/upload';
 import ImageCropper from '@/components/ui/ImageCropper';
 import { getCoordenadas } from '@/lib/geo';
 import { getActiveCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
@@ -55,6 +57,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
   const { pecas, auth } = useApp();
   const { publicarPeca } = pecas;
   const { user } = auth;
+  const { country } = useCountry();
   const toast = useToast();
 
   const telefoneInicial = user?.telefone || '';
@@ -486,7 +489,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         </span>
         <div className="space-y-2">
           <div>
-            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">WhatsApp / Telefone</label>
+            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">WhatsApp / {term('phoneLabel', country)}</label>
             <input
               type="tel"
               placeholder="912345678"
@@ -507,11 +510,11 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
               }}
               className="rounded text-accent focus:ring-accent"
             />
-            Telefone diferente do WhatsApp
+            {term('phoneLabel', country)} diferente do WhatsApp
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">Telefone</label>
+              <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">{term('phoneLabel', country)}</label>
               <input
                 type="tel"
                 placeholder="912345678"
