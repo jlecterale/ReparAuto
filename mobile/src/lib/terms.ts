@@ -32,6 +32,7 @@ const TERMS = {
   municipalityLabel: { PT: 'Concelho', BR: 'Cidade' },
   municipalityAllOption: { PT: 'Todos os concelhos', BR: 'Todas as cidades' },
   plateLabel: { PT: 'Matrícula', BR: 'Placa' },
+  firstRegistrationLabel: { PT: 'Mês da 1ª matrícula', BR: 'Mês do 1º emplacamento' },
 } satisfies Record<string, Record<Country, string>>;
 
 export type TermKey = keyof typeof TERMS;

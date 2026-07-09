@@ -11,6 +11,7 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { criarIntencao } from '@/lib/trust';
 import { trackPositiveAction } from '@/lib/appReview';
@@ -219,7 +220,7 @@ export default function CriarIntencaoScreen() {
 
         <ChipSelect label="Como prefere ser contactado" options={CONTACTO} value={contato} onChange={setContato} />
         {contato !== 'chat' && (
-          <Input label="Telefone / WhatsApp" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+          <Input label={`${term('phoneLabel', country)} / WhatsApp`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
         )}
 
         <Button

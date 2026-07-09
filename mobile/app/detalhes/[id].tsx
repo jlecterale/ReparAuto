@@ -24,6 +24,7 @@ import { logViewListing } from '@/lib/analytics';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
 import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Carro } from '@/types';
@@ -191,7 +192,7 @@ export default function DetalhesCarroScreen() {
             {!!carro.version && <Spec icon="card-outline" label="Versão" value={carro.version} />}
             <Spec icon="calendar-outline" label="Ano" value={String(carro.anoFabricacao)} />
             {carro.firstRegistrationMonth != null && (
-              <Spec icon="calendar-number-outline" label="1ª matrícula" value={MESES[carro.firstRegistrationMonth - 1]} />
+              <Spec icon="calendar-number-outline" label={term('firstRegistrationLabel', docCountry(carro))} value={MESES[carro.firstRegistrationMonth - 1]} />
             )}
             <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
             {carro.previousOwners != null && (
