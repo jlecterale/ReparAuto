@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -98,13 +98,11 @@ export function OnboardingGate() {
   const { tourVisible, openTour, closeTour } = useOnboarding();
   const { country, setCountry } = useCountry();
   const [step, setStep] = useState<'country' | 'intents'>('country');
-  const [selectedCountry, setSelectedCountry] = useState<Country>(country);
-  // The async first-launch resolution (AsyncStorage / GeoIP) can land after the
-  // tour opens — keep the pre-selection following it until the visitor taps.
-  const countryTouchedRef = useRef(false);
-  useEffect(() => {
-    if (!countryTouchedRef.current) setSelectedCountry(country);
-  }, [country]);
+  // Only the visitor's tap is state; until then the pre-selection derives from
+  // the context country, so it keeps following the async first-launch
+  // resolution (AsyncStorage / GeoIP) that can land after the tour opens.
+  const [pickedCountry, setPickedCountry] = useState<Country | null>(null);
+  const selectedCountry = pickedCountry ?? country;
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -125,22 +123,22 @@ export function OnboardingGate() {
   }, [loading, isLoggedIn, openTour]);
 
   function dismiss() {
-    // Backing out of the country step keeps the pre-selected market (the GeoIP
-    // suggestion or PT) — same outcome as before the picker existed — and the
-    // tour won't re-ask when reopened from signup's "Voltar".
-    if (step === 'country') confirmCountry(false);
+    // Backing out of the country step only commits a market the visitor
+    // actually tapped. An untouched pre-selection is left alone so the
+    // first-launch resolution (GeoIP) still applies and persists — closing the
+    // welcome must not launder the suggestion into an explicit choice.
+    if (step === 'country' && pickedCountry) setCountry(pickedCountry);
     markOnboardingSeen();
     closeTour();
   }
 
   function selectCountry(next: Country) {
-    countryTouchedRef.current = true;
     Haptics.selectionAsync().catch(() => {});
-    setSelectedCountry(next);
+    setPickedCountry(next);
   }
 
-  function confirmCountry(haptics = true) {
-    if (haptics) Haptics.selectionAsync().catch(() => {});
+  function confirmCountry() {
+    Haptics.selectionAsync().catch(() => {});
     setCountry(selectedCountry);
     setStep('intents');
   }
@@ -181,22 +179,27 @@ export function OnboardingGate() {
           </View>
 
           <ScrollView contentContainerClassName="flex-grow justify-center px-5 py-4">
+            {/* Header — shared between the two steps, only the copy changes */}
+            <View className="mb-7 items-center">
+              <View className="mb-3 flex-row items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
+                <Ionicons name="sparkles" size={14} color={colors.warning[500]} />
+                <Text className="text-sm font-bold text-white">Bem-vindo à RecarGarage</Text>
+              </View>
+              <Text className="text-center text-3xl font-extrabold leading-tight text-white">
+                {step === 'country'
+                  ? 'Onde quer comprar e vender?'
+                  : 'O ecossistema que liga mecânicos, vendedores e compradores'}
+              </Text>
+              <Text className="mt-3 text-center text-base leading-relaxed text-white/85">
+                {step === 'country'
+                  ? 'Escolha o seu país para ver anúncios, preços e localizações do seu mercado.'
+                  : 'Tudo num só lugar. Diga-nos o que o traz aqui hoje — tratamos do resto.'}
+              </Text>
+            </View>
+
             {step === 'country' ? (
               <>
                 {/* Country step — confirm the market before anything else */}
-                <View className="mb-7 items-center">
-                  <View className="mb-3 flex-row items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-                    <Ionicons name="sparkles" size={14} color={colors.warning[500]} />
-                    <Text className="text-sm font-bold text-white">Bem-vindo à RecarGarage</Text>
-                  </View>
-                  <Text className="text-center text-3xl font-extrabold leading-tight text-white">
-                    Onde quer comprar e vender?
-                  </Text>
-                  <Text className="mt-3 text-center text-base leading-relaxed text-white/85">
-                    Escolha o seu país para ver anúncios, preços e localizações do seu mercado.
-                  </Text>
-                </View>
-
                 <View className="gap-3">
                   {COUNTRIES.map((c) => {
                     const active = selectedCountry === c;
@@ -231,27 +234,13 @@ export function OnboardingGate() {
                   })}
                 </View>
 
-                <Button label="Continuar" onPress={() => confirmCountry()} className="mt-7" />
+                <Button label="Continuar" onPress={confirmCountry} className="mt-7" />
                 <Text className="mt-4 text-center text-sm text-white/70">
                   Pode alterar o país mais tarde, nas Definições.
                 </Text>
               </>
             ) : (
               <>
-                {/* Header */}
-                <View className="mb-7 items-center">
-                  <View className="mb-3 flex-row items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
-                    <Ionicons name="sparkles" size={14} color={colors.warning[500]} />
-                    <Text className="text-sm font-bold text-white">Bem-vindo à RecarGarage</Text>
-                  </View>
-                  <Text className="text-center text-3xl font-extrabold leading-tight text-white">
-                    O ecossistema que liga mecânicos, vendedores e compradores
-                  </Text>
-                  <Text className="mt-3 text-center text-base leading-relaxed text-white/85">
-                    Tudo num só lugar. Diga-nos o que o traz aqui hoje — tratamos do resto.
-                  </Text>
-                </View>
-
                 {/* Intent cards */}
                 <View className="gap-3">
                   {INTENTS.map((intent) => (

@@ -73,21 +73,24 @@ export function getActiveCountry(): Country {
 // permanently lock it to the wrong market, so account-binding code awaits
 // this instead of reading the active country synchronously.
 let resolveInitialCountry: ((country: Country) => void) | null = null;
-let initialCountrySettled = false;
 const initialCountryResolution = new Promise<Country>((resolve) => {
   resolveInitialCountry = resolve;
 });
 
 /**
- * Called by CountryContext when the first-launch resolution settles (stored
- * preference, GeoIP result, GeoIP failure, or an account lock that beat it).
- * Subsequent calls only update the active country.
+ * Called when the market is decided: the first-launch resolution settles
+ * (stored preference, GeoIP result, GeoIP failure) or an explicit choice /
+ * account lock beats it. Subsequent calls only update the active country.
  */
 export function markCountryResolved(country: Country): void {
   setActiveCountry(country);
-  initialCountrySettled = true;
   resolveInitialCountry?.(country);
   resolveInitialCountry = null;
+}
+
+/** Whether the market has been decided (first-launch resolution or explicit choice). */
+export function isCountryResolved(): boolean {
+  return resolveInitialCountry === null;
 }
 
 /**
@@ -96,11 +99,11 @@ export function markCountryResolved(country: Country): void {
  * GeoIP request can never block signup.
  */
 export function getBindingCountry(): Promise<Country> {
-  // Once the first launch settled, the live active country is the source of
-  // truth (welcome picker, signup selector, Definições). The one-shot promise
-  // below is frozen on the *initial* value, so racing it here would bind every
-  // later signup to the first-launch market and ignore an explicit switch.
-  if (initialCountrySettled) return Promise.resolve(getActiveCountry());
+  // Once resolved, the live active country is the source of truth (welcome
+  // picker, signup selector, Definições). The one-shot promise below is frozen
+  // on the *initial* value, so racing it here would bind every later signup to
+  // the first-launch market and ignore an explicit switch.
+  if (isCountryResolved()) return Promise.resolve(getActiveCountry());
   return Promise.race([
     initialCountryResolution,
     new Promise<Country>((resolve) => {

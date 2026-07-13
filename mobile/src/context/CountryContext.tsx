@@ -4,7 +4,6 @@ import React, {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,6 +11,7 @@ import {
   COUNTRY_STORAGE_KEY,
   DEFAULT_COUNTRY,
   getActiveCountry,
+  isCountryResolved,
   markCountryResolved,
   parseCountry,
   type Country,
@@ -36,20 +36,13 @@ const CountryContext = createContext<CountryContextValue | null>(null);
 export function CountryProvider({ children }: { children: React.ReactNode }) {
   const [country, setCountryState] = useState<Country>(DEFAULT_COUNTRY);
   const [locked, setLocked] = useState(false);
-  // The async first-launch resolution (AsyncStorage read / GeoIP fetch) must
-  // never override a market that was meanwhile bound to the signed-in account
-  // or chosen explicitly (welcome picker / signup selector / Definições).
-  const lockedRef = useRef(false);
-  const chosenRef = useRef(false);
-  useEffect(() => {
-    lockedRef.current = locked;
-  }, [locked]);
 
   const setCountry = useCallback((next: Country) => {
-    chosenRef.current = true;
     setCountryState(next);
-    // An explicit choice also settles the first-launch resolution, so account
-    // binding (getBindingCountry) follows it immediately.
+    // An explicit choice (welcome picker / signup selector / Definições) or an
+    // account bind settles the first-launch resolution, so account binding
+    // (getBindingCountry) follows it immediately and the async resolution
+    // below knows to stand down.
     markCountryResolved(next);
     AsyncStorage.setItem(COUNTRY_STORAGE_KEY, next).catch(() => {
       // Storage unavailable — the choice still applies to this session.
@@ -69,12 +62,9 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       // Every settled branch below calls markCountryResolved so account
       // binding (getBindingCountry) never waits on an already-decided market.
-      if (lockedRef.current || chosenRef.current) {
-        // An account lock or explicit choice beat the first-launch resolution
-        // — it wins.
-        markCountryResolved(getActiveCountry());
-        return;
-      }
+      // An explicit choice or account bind (both go through setCountry, which
+      // settles the resolution) beats this async first-launch resolution.
+      if (isCountryResolved()) return;
       if (stored) {
         setCountryState(stored);
         markCountryResolved(stored);
@@ -88,10 +78,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         const data: { country?: string } | null = res.ok ? await res.json() : null;
         const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
         if (cancelled) return;
-        if (lockedRef.current || chosenRef.current) {
-          markCountryResolved(getActiveCountry());
-          return;
-        }
+        if (isCountryResolved()) return;
         setCountryState(detected);
         markCountryResolved(detected);
         await AsyncStorage.setItem(COUNTRY_STORAGE_KEY, detected);

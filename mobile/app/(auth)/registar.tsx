@@ -15,12 +15,15 @@ import { colors } from '@/theme/colors';
 
 export default function RegistarScreen() {
   const { registar } = useAuth();
-  const { country, setCountry } = useCountry();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const { openTour } = useOnboarding();
   // Accounts belong to one market: pre-select the active one (welcome picker /
-  // GeoIP / Definições) but let the user override it before committing.
-  const [selectedCountry, setSelectedCountry] = useState<Country>(country);
+  // GeoIP / Definições) but let the user override it before committing. Only
+  // the override is state, so an untouched picker keeps following a late
+  // async first-launch resolution.
+  const [pickedCountry, setPickedCountry] = useState<Country | null>(null);
+  const selectedCountry = pickedCountry ?? country;
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -67,11 +70,10 @@ export default function RegistarScreen() {
     }
     setLoading(true);
     try {
-      // Make the chosen market the active one *before* creating the account —
-      // profile seeding binds the new account to the active country
-      // (getBindingCountry), and AccountCountrySync then locks it.
-      setCountry(selectedCountry);
-      await registar(nome.trim(), email.trim(), password);
+      // The chosen market binds the account at profile seeding; on success
+      // AccountCountrySync applies and locks it. A failed signup leaves the
+      // app's active market untouched.
+      await registar(nome.trim(), email.trim(), password, selectedCountry);
       if (router.canDismiss()) router.dismiss();
       // From the welcome, head straight to the chosen creation flow; otherwise
       // go to Perfil so the user can finish the (still incomplete) profile. The
@@ -119,7 +121,7 @@ export default function RegistarScreen() {
                   return (
                     <Pressable
                       key={c}
-                      onPress={() => setSelectedCountry(c)}
+                      onPress={() => setPickedCountry(c)}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: active }}
                       className={`flex-1 flex-row items-center justify-center rounded-xl border px-4 py-3 ${
