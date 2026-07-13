@@ -14,7 +14,6 @@ import {
   getActiveCountry,
   markCountryResolved,
   parseCountry,
-  setActiveCountry,
   type Country,
 } from '@/lib/country';
 
@@ -38,15 +37,20 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   const [country, setCountryState] = useState<Country>(DEFAULT_COUNTRY);
   const [locked, setLocked] = useState(false);
   // The async first-launch resolution (AsyncStorage read / GeoIP fetch) must
-  // never override a market that was meanwhile bound to the signed-in account.
+  // never override a market that was meanwhile bound to the signed-in account
+  // or chosen explicitly (welcome picker / signup selector / Definições).
   const lockedRef = useRef(false);
+  const chosenRef = useRef(false);
   useEffect(() => {
     lockedRef.current = locked;
   }, [locked]);
 
   const setCountry = useCallback((next: Country) => {
+    chosenRef.current = true;
     setCountryState(next);
-    setActiveCountry(next);
+    // An explicit choice also settles the first-launch resolution, so account
+    // binding (getBindingCountry) follows it immediately.
+    markCountryResolved(next);
     AsyncStorage.setItem(COUNTRY_STORAGE_KEY, next).catch(() => {
       // Storage unavailable — the choice still applies to this session.
     });
@@ -65,8 +69,9 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       // Every settled branch below calls markCountryResolved so account
       // binding (getBindingCountry) never waits on an already-decided market.
-      if (lockedRef.current) {
-        // An account lock beat the first-launch resolution — it wins.
+      if (lockedRef.current || chosenRef.current) {
+        // An account lock or explicit choice beat the first-launch resolution
+        // — it wins.
         markCountryResolved(getActiveCountry());
         return;
       }
@@ -83,7 +88,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         const data: { country?: string } | null = res.ok ? await res.json() : null;
         const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
         if (cancelled) return;
-        if (lockedRef.current) {
+        if (lockedRef.current || chosenRef.current) {
           markCountryResolved(getActiveCountry());
           return;
         }

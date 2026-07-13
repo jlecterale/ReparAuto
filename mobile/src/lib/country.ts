@@ -73,6 +73,7 @@ export function getActiveCountry(): Country {
 // permanently lock it to the wrong market, so account-binding code awaits
 // this instead of reading the active country synchronously.
 let resolveInitialCountry: ((country: Country) => void) | null = null;
+let initialCountrySettled = false;
 const initialCountryResolution = new Promise<Country>((resolve) => {
   resolveInitialCountry = resolve;
 });
@@ -84,6 +85,7 @@ const initialCountryResolution = new Promise<Country>((resolve) => {
  */
 export function markCountryResolved(country: Country): void {
   setActiveCountry(country);
+  initialCountrySettled = true;
   resolveInitialCountry?.(country);
   resolveInitialCountry = null;
 }
@@ -94,6 +96,11 @@ export function markCountryResolved(country: Country): void {
  * GeoIP request can never block signup.
  */
 export function getBindingCountry(): Promise<Country> {
+  // Once the first launch settled, the live active country is the source of
+  // truth (welcome picker, signup selector, Definições). The one-shot promise
+  // below is frozen on the *initial* value, so racing it here would bind every
+  // later signup to the first-launch market and ignore an explicit switch.
+  if (initialCountrySettled) return Promise.resolve(getActiveCountry());
   return Promise.race([
     initialCountryResolution,
     new Promise<Country>((resolve) => {
