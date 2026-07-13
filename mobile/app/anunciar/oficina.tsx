@@ -8,6 +8,7 @@ import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { LocationSelect } from '@/components/ui/LocationSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
@@ -33,8 +34,6 @@ export default function RegistarOficinaScreen() {
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  // Market vocabulary: PT says distrito, BR says estado.
-  const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
 
   const [logo, setLogo] = useState<string[]>([]);
   const [nome, setNome] = useState('');
@@ -129,7 +128,7 @@ export default function RegistarOficinaScreen() {
     if (!telefone.trim()) return 'Indique um telefone.';
     if (!email.trim()) return 'Indique um email.';
     if (!distrito.trim() || !localidade.trim())
-      return `Indique ${regionLabel.toLowerCase()} e localidade.`;
+      return `Indique ${term('districtAndMunicipality', country).toLowerCase()}.`;
     if (especialidades.length === 0) return 'Selecione pelo menos uma especialidade.';
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
       return 'O link do vídeo do YouTube é inválido.';
@@ -235,14 +234,15 @@ export default function RegistarOficinaScreen() {
         />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Localização</Text>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <Input label={`${regionLabel} *`} value={distrito} onChangeText={setDistrito} placeholder={country === 'BR' ? 'São Paulo' : 'Lisboa'} />
-          </View>
-          <View className="flex-1">
-            <Input label="Localidade *" value={localidade} onChangeText={setLocalidade} placeholder="Amadora" />
-          </View>
-        </View>
+        <LocationSelect
+          distrito={distrito}
+          localidade={localidade}
+          onChange={(d, c) => {
+            setDistrito(d);
+            setLocalidade(c);
+          }}
+          required
+        />
         <Input label={term('addressLabel', country)} value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>

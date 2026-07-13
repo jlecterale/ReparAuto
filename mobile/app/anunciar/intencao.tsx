@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
 import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
+import { getDistritos } from '@/lib/geo';
 import { criarIntencao } from '@/lib/trust';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
@@ -42,8 +44,9 @@ export default function CriarIntencaoScreen() {
   const { country } = useCountry();
   const { showToast } = useToast();
   // Market vocabulary: PT says distrito/€, BR says estado/R$.
-  const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
+  const regionLabel = term('districtLabel', country);
   const currencySymbol = country === 'BR' ? 'R$' : '€';
+  const distritos = getDistritos(country);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
@@ -203,7 +206,14 @@ export default function CriarIntencaoScreen() {
             <Input label={`Preço máx. (${currencySymbol}) *`} value={precoMax} onChangeText={setPrecoMax} placeholder="15000" keyboardType="number-pad" />
           </View>
           <View className="flex-1">
-            <Input label={`${regionLabel} *`} value={distrito} onChangeText={setDistrito} placeholder={country === 'BR' ? 'São Paulo' : 'Porto'} />
+            <SelectField
+              label={`${regionLabel} *`}
+              value={distrito}
+              onChange={setDistrito}
+              options={distritos}
+              placeholder={term('districtSelectOption', country)}
+              title={regionLabel}
+            />
           </View>
         </View>
 
