@@ -236,7 +236,7 @@ export function OnboardingGate() {
 
                 <Button label="Continuar" onPress={confirmCountry} className="mt-7" />
                 <Text className="mt-4 text-center text-sm text-white/70">
-                  Pode alterar o país mais tarde, nas Definições.
+                  Pode alterar o país mais tarde, no separador Perfil.
                 </Text>
               </>
             ) : (

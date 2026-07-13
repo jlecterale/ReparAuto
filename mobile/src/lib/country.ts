@@ -27,6 +27,11 @@ export const COUNTRY_INFO: Record<Country, CountryInfo> = {
   BR: { code: 'BR', name: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
 };
 
+/** UI currency symbol for a market — labels like "Preço (R$)" / "Preço (€)". */
+export function getCurrencySymbol(country: Country): string {
+  return COUNTRY_INFO[country].currency === 'BRL' ? 'R$' : '€';
+}
+
 /**
  * Resolve the country of a Firestore document. Docs created before the Brazil
  * launch carry no `country` field — they are Portuguese by definition, so

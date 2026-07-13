@@ -18,6 +18,7 @@ import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type CarDraftData } from '@/lib/draft';
@@ -76,7 +77,7 @@ export default function AnunciarCarroScreen() {
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
   // Listings are priced in the active market's currency.
-  const currencySymbol = country === 'BR' ? 'R$' : '€';
+  const currencySymbol = getCurrencySymbol(country);
 
   const [fotos, setFotos] = useState<string[]>([]);
   const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>({});
