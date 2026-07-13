@@ -97,9 +97,13 @@ export default function AdminVerificacoesScreen() {
                 {term('taxIdLabel', docCountry(item))}: {item.nif}
               </Text>
             )}
-            <Text className="mt-1 text-sm text-fg-muted">
-              Documento: {DOCUMENTO_LABELS[item.tipoDocumento]}
-            </Text>
+            {/* Legacy docs may lack tipoDocumento — guard and fall back to the
+                raw value, mirroring the web VerificationsQueue. */}
+            {!!item.tipoDocumento && (
+              <Text className="mt-1 text-sm text-fg-muted">
+                Documento: {DOCUMENTO_LABELS[item.tipoDocumento] || item.tipoDocumento}
+              </Text>
+            )}
 
             {item.documentoUrl || item.selfieUrl ? (
               <View className="mt-3 flex-row gap-3">

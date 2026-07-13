@@ -74,6 +74,17 @@ export async function getCarroById(id: string): Promise<Carro | null> {
 }
 
 /**
+ * File extension of a local picker/camera URI, query string stripped. Falls
+ * back to jpg for extension-less URIs (e.g. content:// providers) so the
+ * Storage path never embeds the raw URI and putFile still infers an image
+ * content type.
+ */
+function localImageExt(localUri: string): string {
+  const match = /\.([A-Za-z0-9]+)$/.exec(localUri.split('?')[0]);
+  return match ? match[1].toLowerCase() : 'jpg';
+}
+
+/**
  * Uploads a local image (file:// URI from the picker/camera) to
  * `ads/{uid}/...` and returns its download URL — same Storage layout the web
  * app uses, allowed by `storage.rules`.
@@ -83,8 +94,7 @@ export async function uploadAnuncioFoto(
   localUri: string,
   index: number,
 ): Promise<string> {
-  const ext = (localUri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
-  const ref = storage.ref(`ads/${uid}/${Date.now()}_${index}.${ext}`);
+  const ref = storage.ref(`ads/${uid}/${Date.now()}_${index}.${localImageExt(localUri)}`);
   await ref.putFile(localUri);
   return ref.getDownloadURL();
 }
@@ -327,7 +337,10 @@ export async function registarVisualizacao(
  * Uploads a verification image (document or selfie, local file:// URI) to
  * `verifications/{uid}/...` — the owner-writable path in `storage.rules`
  * (image only, 5MB max; readable by the owner and admins, wiped after the
- * admin decision). Reports upload progress as a 0–1 fraction.
+ * admin decision). File names are deterministic on purpose: `storage.rules`
+ * only lets admins delete under `verifications/`, so a submission that fails
+ * halfway must overwrite its own leftovers on retry instead of accumulating
+ * orphaned ID photos. Reports upload progress as a 0–1 fraction.
  */
 export async function uploadVerificationImage(
   uid: string,
@@ -335,8 +348,7 @@ export async function uploadVerificationImage(
   name: 'documento' | 'selfie',
   onProgress?: (fraction: number) => void,
 ): Promise<string> {
-  const ext = (localUri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
-  const ref = storage.ref(`verifications/${uid}/${name}_${Date.now()}.${ext}`);
+  const ref = storage.ref(`verifications/${uid}/${name}.${localImageExt(localUri)}`);
   const task = ref.putFile(localUri);
   task.on('state_changed', (snap) => {
     if (snap.totalBytes > 0) onProgress?.(snap.bytesTransferred / snap.totalBytes);

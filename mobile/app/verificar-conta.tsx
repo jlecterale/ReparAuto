@@ -5,21 +5,22 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Ionicons } from '@expo/vector-icons';
-import { BottomSheet } from '@/components/ui/BottomSheet';
+import { VerifyEmailGate } from '@/components/auth/VerifyEmailGate';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { PhotoSourceSheet } from '@/components/ui/PhotoSourceSheet';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
-import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { addVerification, getVerificationByUid, uploadVerificationImage } from '@/lib/db';
 import { documentosPermitidos } from '@/lib/verificationDocs';
 import { colors } from '@/theme/colors';
 import type { TipoDocumento, TipoVerificacao, Verification } from '@/types';
 
 // Storage caps verification images at 5MB; camera originals can exceed that,
-// so every pick is downscaled to this width and recompressed before upload.
-// Documents stay perfectly readable at this size.
+// so picks wider than this are downscaled (and every pick is re-encoded as
+// JPEG) before upload. Documents stay perfectly readable at this width.
 const MAX_IMAGE_WIDTH = 1920;
 
 export default function VerificarContaScreen() {
@@ -29,43 +30,74 @@ export default function VerificarContaScreen() {
 
   const [verification, setVerification] = useState<Verification | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [tipo, setTipo] = useState<TipoVerificacao>('identidade');
   // Accepted documents depend on the market and on personal vs. professional
-  // verification — see src/lib/verificationDocs.ts.
+  // verification — see src/lib/verificationDocs.ts. The selection is derived
+  // so it stays valid when switching type changes the list.
   const documentos = useMemo(() => documentosPermitidos(country, tipo), [country, tipo]);
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>(documentos[0].value);
-  // Keep the selected document valid whenever the market or type changes the list.
-  useEffect(() => {
-    if (!documentos.some((d) => d.value === tipoDocumento)) setTipoDocumento(documentos[0].value);
-  }, [documentos, tipoDocumento]);
+  const selectedDocumentType = documentos.some((d) => d.value === tipoDocumento)
+    ? tipoDocumento
+    : documentos[0].value;
 
   const [docUri, setDocUri] = useState<string | null>(null);
   const [selfieUri, setSelfieUri] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [progresso, setProgresso] = useState(0);
-  const [erro, setErro] = useState('');
+  const [sending, setSending] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [submitError, setSubmitError] = useState('');
 
   const uid = user?.uid;
+  // Reading `verifications` requires a verified email (Firestore rules), so
+  // only fetch once past the gate — and refetch when the gate clears. A fetch
+  // failure must NOT render the blank form (a hidden pending request would
+  // allow duplicate submissions); it shows a retry state instead.
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !emailVerified) return;
     let cancelled = false;
-    getVerificationByUid(uid)
-      .catch(() => null)
-      .then((v) => {
+    setLoading(true);
+    setLoadFailed(false);
+    getVerificationByUid(uid).then(
+      (v) => {
         if (cancelled) return;
         setVerification(v);
         setLoading(false);
-      });
+      },
+      () => {
+        if (cancelled) return;
+        setLoadFailed(true);
+        setLoading(false);
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [uid]);
+  }, [uid, emailVerified, reloadKey]);
 
   if (!user) return <Redirect href="/login" />;
   // Creating a verification request (Firestore + Storage) requires a verified
   // email per the security rules — block up front with a clear message.
-  if (!emailVerified) return <EmailGate email={user.email} />;
+  if (!emailVerified) {
+    return (
+      <VerifyEmailGate
+        inline
+        message="Para pedir a verificação da conta precisa de confirmar o seu endereço de email"
+      />
+    );
+  }
+
+  if (loadFailed) {
+    return (
+      <EmptyState
+        icon="cloud-offline-outline"
+        titulo="Sem ligação"
+        texto="Não foi possível carregar o estado da sua verificação."
+        action={{ label: 'Tentar novamente', onPress: () => setReloadKey((k) => k + 1) }}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -75,7 +107,7 @@ export default function VerificarContaScreen() {
     );
   }
 
-  if (user.verificado) {
+  if (user.verificado || verification?.status === 'aprovado') {
     return (
       <StatusCard
         icon="shield-checkmark"
@@ -87,14 +119,7 @@ export default function VerificarContaScreen() {
   }
 
   if (verification && verification.status !== 'rejeitado') {
-    return verification.status === 'aprovado' ? (
-      <StatusCard
-        icon="shield-checkmark"
-        color="success"
-        titulo="Verificação aprovada"
-        texto="O seu pedido foi aprovado!"
-      />
-    ) : (
+    return (
       <StatusCard
         icon="time-outline"
         color="warning"
@@ -104,37 +129,46 @@ export default function VerificarContaScreen() {
     );
   }
 
-  async function submeter() {
+  async function handleSubmit() {
     if (!user || !docUri || !selfieUri) return;
-    setEnviando(true);
-    setErro('');
-    setProgresso(0);
+    setSending(true);
+    setSubmitError('');
+    setProgress(0);
     try {
-      const documentoUrl = await uploadVerificationImage(user.uid, docUri, 'documento', (f) =>
-        setProgresso(Math.round(f * 50)),
-      );
-      const selfieUrl = await uploadVerificationImage(user.uid, selfieUri, 'selfie', (f) =>
-        setProgresso(50 + Math.round(f * 50)),
-      );
-      const nova = await addVerification({
+      // The two uploads are independent — run them in parallel and combine
+      // their fractions into one progress value.
+      const fractions = { documento: 0, selfie: 0 };
+      const report = () =>
+        setProgress(Math.round((fractions.documento + fractions.selfie) * 50));
+      const [documentoUrl, selfieUrl] = await Promise.all([
+        uploadVerificationImage(user.uid, docUri, 'documento', (f) => {
+          fractions.documento = f;
+          report();
+        }),
+        uploadVerificationImage(user.uid, selfieUri, 'selfie', (f) => {
+          fractions.selfie = f;
+          report();
+        }),
+      ]);
+      const created = await addVerification({
         uid: user.uid,
         email: user.email,
         nome: user.nome,
         country,
         tipo,
-        tipoDocumento,
+        tipoDocumento: selectedDocumentType,
         documentoUrl,
         selfieUrl,
         nif: user.nif || undefined,
         status: 'pendente',
       });
-      setVerification(nova);
+      setVerification(created);
       showToast('Pedido de verificação enviado.', 'success');
     } catch {
-      setErro('Erro ao enviar o pedido. Tente novamente.');
+      setSubmitError('Erro ao enviar o pedido. Tente novamente.');
     } finally {
-      setEnviando(false);
-      setProgresso(0);
+      setSending(false);
+      setProgress(0);
     }
   }
 
@@ -183,7 +217,7 @@ export default function VerificarContaScreen() {
           <ChipSelect<TipoDocumento>
             label="Tipo de documento"
             options={documentos}
-            value={tipoDocumento}
+            value={selectedDocumentType}
             onChange={setTipoDocumento}
           />
         </View>
@@ -196,7 +230,7 @@ export default function VerificarContaScreen() {
             cameraFacing="back"
             onChange={(uri) => {
               setDocUri(uri);
-              setErro('');
+              setSubmitError('');
             }}
           />
         </View>
@@ -209,38 +243,36 @@ export default function VerificarContaScreen() {
             cameraFacing="front"
             onChange={(uri) => {
               setSelfieUri(uri);
-              setErro('');
+              setSubmitError('');
             }}
           />
         </View>
 
-        {!!erro && (
+        {!!submitError && (
           <View className="mt-3 flex-row items-center">
             <Ionicons name="warning-outline" size={14} color={colors.danger[600]} />
-            <Text className="ml-1 text-sm text-danger-600">{erro}</Text>
+            <Text className="ml-1 text-sm text-danger-600">{submitError}</Text>
           </View>
         )}
 
-        {enviando && progresso > 0 && (
+        {sending && progress > 0 && (
           <View className="mt-3">
             <View className="h-1.5 w-full rounded-full bg-neutral-200">
               <View
                 className="h-1.5 rounded-full bg-primary-600"
-                style={{ width: `${progresso}%` }}
+                style={{ width: `${progress}%` }}
               />
             </View>
-            <Text className="mt-1 text-center text-xs text-fg-subtle">
-              A enviar… {progresso}%
-            </Text>
+            <Text className="mt-1 text-center text-xs text-fg-subtle">A enviar… {progress}%</Text>
           </View>
         )}
 
         <View className="mt-4">
           <Button
             label="Pedir verificação"
-            loading={enviando}
-            disabled={enviando || !docUri || !selfieUri}
-            onPress={submeter}
+            loading={sending}
+            disabled={sending || !docUri || !selfieUri}
+            onPress={handleSubmit}
             icon={<Ionicons name="paper-plane-outline" size={18} color="#fff" />}
           />
         </View>
@@ -260,8 +292,10 @@ export default function VerificarContaScreen() {
 /**
  * One photo input (document or selfie): a tappable dashed box that opens a
  * camera/gallery sheet, then shows the picked image with a remove action.
- * Picks are downscaled/recompressed locally so they respect the 5MB Storage
- * rule for `verifications/` before upload.
+ * Picks are downscaled/re-encoded locally so they respect the 5MB Storage
+ * rule for `verifications/`; a pick that cannot be processed is rejected
+ * with an alert instead of being uploaded raw (which the rules would deny
+ * with an unexplainable generic error at submit time).
  */
 function DocumentPhotoField({
   label,
@@ -280,54 +314,54 @@ function DocumentPhotoField({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
 
-  async function prepare(pickedUri: string, width?: number) {
+  async function prepare(asset: { uri: string; width?: number }) {
     setProcessing(true);
     try {
-      const targetWidth = width ? Math.min(MAX_IMAGE_WIDTH, width) : MAX_IMAGE_WIDTH;
-      const ref = await ImageManipulator.manipulate(pickedUri)
-        .resize({ width: targetWidth })
-        .renderAsync();
-      const saved = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+      let context = ImageManipulator.manipulate(asset.uri);
+      // Only resize when the pick is wider than the cap (or its width is
+      // unknown) — resize() scales to the exact width, so an unconditional
+      // call would upscale smaller images.
+      if (!asset.width || asset.width > MAX_IMAGE_WIDTH) {
+        context = context.resize({ width: MAX_IMAGE_WIDTH });
+      }
+      const image = await context.renderAsync();
+      const saved = await image.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
       onChange(saved.uri);
     } catch {
-      // Manipulation hiccup — keep the original pick; Storage still enforces 5MB.
-      onChange(pickedUri);
+      Alert.alert('Foto não suportada', 'Não foi possível processar a imagem. Tente outra foto.');
     } finally {
       setProcessing(false);
     }
   }
 
-  // Presenting the native picker while the sheet Modal is still animating out
-  // fails silently on iOS — same workaround as PhotoPicker.
-  function runAfterSheetClose(action: () => void) {
-    setSheetOpen(false);
-    setTimeout(action, 350);
-  }
-
-  async function escolherDaGaleria() {
-    // The system Photo Picker (Android 13+ / iOS PHPicker) needs no permission.
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      await prepare(result.assets[0].uri, result.assets[0].width);
+  async function takePhoto() {
+    try {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permissão necessária', 'Autorize o acesso à câmara nas Definições.');
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 1,
+        cameraType:
+          cameraFacing === 'front' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
+      });
+      if (!result.canceled) await prepare(result.assets[0]);
+    } catch {
+      Alert.alert('Câmara indisponível', 'Não foi possível abrir a câmara. Tente novamente.');
     }
   }
 
-  async function tirarFoto() {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert('Permissão necessária', 'Autorize o acesso à câmara nas Definições.');
-      return;
-    }
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-      cameraType:
-        cameraFacing === 'front' ? ImagePicker.CameraType.front : ImagePicker.CameraType.back,
-    });
-    if (!result.canceled) {
-      await prepare(result.assets[0].uri, result.assets[0].width);
+  async function pickFromGallery() {
+    try {
+      // The system Photo Picker (Android 13+ / iOS PHPicker) needs no permission.
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 1,
+      });
+      if (!result.canceled) await prepare(result.assets[0]);
+    } catch {
+      Alert.alert('Galeria indisponível', 'Não foi possível abrir a galeria. Tente novamente.');
     }
   }
 
@@ -371,36 +405,20 @@ function DocumentPhotoField({
         </Pressable>
       )}
 
-      <BottomSheet visible={sheetOpen} onClose={() => setSheetOpen(false)} title={label}>
-        <View className="gap-1">
-          {(
-            [
-              { icon: 'camera-outline', label: 'Tirar foto', action: tirarFoto },
-              { icon: 'images-outline', label: 'Escolher da galeria', action: escolherDaGaleria },
-            ] as const
-          ).map((opt) => (
-            <Pressable
-              key={opt.label}
-              onPress={() => runAfterSheetClose(opt.action)}
-              accessibilityRole="button"
-              className="flex-row items-center rounded-xl px-3 py-3.5 active:bg-neutral-100"
-            >
-              <Ionicons
-                name={opt.icon}
-                size={20}
-                color={colors.primary[600]}
-                style={{ marginRight: 12 }}
-              />
-              <Text className="flex-1 text-base text-fg">{opt.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </BottomSheet>
+      <PhotoSourceSheet
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title={label}
+        options={[
+          { icon: 'camera-outline', label: 'Tirar foto', action: takePhoto },
+          { icon: 'images-outline', label: 'Escolher da galeria', action: pickFromGallery },
+        ]}
+      />
     </View>
   );
 }
 
-/** Full-screen status card (verified / pending / approved). */
+/** Full-screen status card (verified / pending). */
 function StatusCard({
   icon,
   color,
@@ -425,48 +443,5 @@ function StatusCard({
       <Text className="text-center text-2xl font-extrabold text-fg-heading">{titulo}</Text>
       <Text className="mt-2 text-center text-base leading-relaxed text-fg-muted">{texto}</Text>
     </View>
-  );
-}
-
-/**
- * Inline email-verification block. Unlike the full-screen VerifyEmailGate
- * (which replaces a whole Stack), this renders under the native header of
- * this screen with copy specific to account verification.
- */
-function EmailGate({ email }: { email: string }) {
-  const { reenviar, verificar, resending, checking } = useEmailVerification();
-  return (
-    <ScrollView
-      className="flex-1 bg-neutral-50"
-      contentContainerClassName="flex-grow items-center justify-center px-6 py-8"
-    >
-      <View className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-warning-50">
-        <Ionicons name="mail-unread-outline" size={40} color={colors.warning[500]} />
-      </View>
-      <Text className="text-center text-2xl font-extrabold text-fg-heading">
-        Verifique o seu email
-      </Text>
-      <Text className="mt-2 text-center text-base leading-relaxed text-fg-muted">
-        Para pedir a verificação da conta precisa de confirmar o seu endereço de email ({email}).
-        Enviámos-lhe um link de verificação — depois de confirmar, toque em “Já verifiquei”.
-      </Text>
-      <View className="mt-7 w-full gap-3">
-        <Button
-          label={checking ? 'A verificar…' : 'Já verifiquei'}
-          onPress={verificar}
-          loading={checking}
-        />
-        <Pressable
-          onPress={reenviar}
-          disabled={resending}
-          accessibilityRole="button"
-          className="items-center py-2 active:opacity-70"
-        >
-          <Text className="text-sm font-semibold text-primary-700">
-            {resending ? 'A enviar…' : 'Reenviar email de verificação'}
-          </Text>
-        </Pressable>
-      </View>
-    </ScrollView>
   );
 }
