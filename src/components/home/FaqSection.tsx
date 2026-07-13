@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { CaretDown, Question } from '@phosphor-icons/react';
 import { useCountry } from '@/providers/CountryProvider';
+import { parseCountry, type Country } from '@/lib/country';
 
 interface FaqItem {
   question: string;
@@ -32,11 +34,15 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
-export default function FaqSection() {
+function FaqContent({ marketOverride }: { marketOverride?: Country | null }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   // Standvirtual is Portugal-only — drop that entry for the Brazilian market.
+  // An explicit `?mercado=` wins over the GeoIP/preference market: the mobile
+  // app passes the account market when opening this page in a fresh browser
+  // session (same pattern as PoliticaPage).
   const { country } = useCountry();
-  const items = FAQ_ITEMS.filter((item) => country === 'PT' || !item.question.includes('Standvirtual'));
+  const effectiveCountry = marketOverride ?? country;
+  const items = FAQ_ITEMS.filter((item) => effectiveCountry === 'PT' || !item.question.includes('Standvirtual'));
 
   const toggleIndex = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -94,5 +100,21 @@ export default function FaqSection() {
         })}
       </div>
     </section>
+  );
+}
+
+function FaqContentWithMarketParam() {
+  const marketOverride = parseCountry(useSearchParams().get('mercado'));
+  return <FaqContent marketOverride={marketOverride} />;
+}
+
+export default function FaqSection() {
+  // useSearchParams needs a Suspense boundary in statically-generated routes.
+  // The fallback renders the same FAQ without the override so the questions
+  // stay in the prerendered HTML for SEO instead of an empty shell.
+  return (
+    <Suspense fallback={<FaqContent />}>
+      <FaqContentWithMarketParam />
+    </Suspense>
   );
 }
