@@ -120,6 +120,7 @@ function RootNavigator() {
       <Stack.Screen name="notificacoes" options={{ headerShown: true, title: 'Notificações' }} />
       <Stack.Screen name="anunciar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="perfil/editar" options={{ headerShown: true, title: 'Editar perfil' }} />
+      <Stack.Screen name="verificar-conta" options={{ headerShown: true, title: 'Verificação de conta' }} />
       <Stack.Screen name="meus-anuncios" options={{ headerShown: true, title: 'Os meus anúncios' }} />
       <Stack.Screen name="meus-alertas" options={{ headerShown: true, title: 'Meus Alertas' }} />
       <Stack.Screen name="definicoes" options={{ headerShown: true, title: 'Definições' }} />
