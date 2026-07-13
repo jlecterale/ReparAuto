@@ -21,6 +21,12 @@ jest.mock('../../providers/CountryProvider', () => ({
 const standvirtualQuestion = () =>
   screen.queryByRole('button', { name: /Standvirtual/i });
 
+// Guards against over-filtering: the market filter must only drop the
+// Standvirtual entry, never the market-agnostic questions.
+const expectOtherQuestionsVisible = () => {
+  expect(screen.getAllByRole('button', { name: /\?$/ })).toHaveLength(4);
+};
+
 describe('FaqSection', () => {
   beforeEach(() => {
     mockSearch = '';
@@ -38,6 +44,7 @@ describe('FaqSection', () => {
     render(<FaqSection />);
 
     expect(standvirtualQuestion()).not.toBeInTheDocument();
+    expectOtherQuestionsVisible();
   });
 
   it('lets ?mercado=BR override a PT provider market (account market wins)', () => {
@@ -46,6 +53,7 @@ describe('FaqSection', () => {
     render(<FaqSection />);
 
     expect(standvirtualQuestion()).not.toBeInTheDocument();
+    expectOtherQuestionsVisible();
   });
 
   it('lets ?mercado=PT override a BR provider market', () => {
@@ -62,5 +70,6 @@ describe('FaqSection', () => {
     render(<FaqSection />);
 
     expect(standvirtualQuestion()).not.toBeInTheDocument();
+    expectOtherQuestionsVisible();
   });
 });
