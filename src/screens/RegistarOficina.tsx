@@ -12,6 +12,8 @@ import { useAdDraft } from '@/hooks/useAdDraft';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
@@ -46,6 +48,7 @@ export default function RegistarOficina() {
   const searchParams = useSearchParams();
   const { auth } = useApp();
   const { user } = auth;
+  const { country } = useCountry();
   const toast = useToast();
   // The profile's "Continuar rascunho" button deep-links with ?retomar=1.
   const resumeParam = searchParams.get('retomar') === '1';
@@ -366,7 +369,7 @@ export default function RegistarOficina() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-fg mb-1.5">
-                  Telefone <span className="text-danger-500">*</span>
+                  {term('phoneLabel', country)} <span className="text-danger-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -438,7 +441,7 @@ export default function RegistarOficina() {
 
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                Morada Completa (Rua, Número) <span className="text-danger-500">*</span>
+                {term('addressLabel', country)} (Rua, Número) <span className="text-danger-500">*</span>
               </label>
               <input
                 type="text"

@@ -10,6 +10,8 @@ import useOficinas from '@/hooks/useOficinas';
 import { useChat } from '@/hooks/useChat';
 import { useIntencoes } from '@/hooks/useIntencoes';
 import LoginModal from '@/components/auth/LoginModal';
+import { useCountry } from '@/providers/CountryProvider';
+import { docCountry } from '@/lib/country';
 import type { AppContextValue, OpenLoginOptions } from '@/types/app';
 import { subscribePremiumConfig } from '@/lib/db';
 import type { PremiumConfig } from '@/types/usuario';
@@ -72,6 +74,22 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const auth = useAuth();
+
+  // Accounts belong to one market (plan 20): while signed in, the active
+  // country is bound to the account's country (legacy accounts resolve to PT)
+  // and the selector locks. Anonymous visitors keep the free selector.
+  const { setCountry, setLocked } = useCountry();
+  const accountCountry = auth.user ? docCountry(auth.user) : null;
+  useEffect(() => {
+    if (auth.loading) return;
+    if (accountCountry) {
+      setCountry(accountCountry);
+      setLocked(true);
+    } else {
+      setLocked(false);
+    }
+  }, [accountCountry, auth.loading, setCountry, setLocked]);
+
   // Only stream the heavy public collections on routes that render them.
   // Other routes still get the action methods (publicarCarro/publicarPeca);
   // add the route here if a new screen starts reading carros/pecas data.

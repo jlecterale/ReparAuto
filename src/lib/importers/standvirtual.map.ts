@@ -9,7 +9,7 @@ import marcasModelos from '@/data/marcas-modelos.json';
 // listingOptions/geo (not constants.ts) so the server routes can import this
 // module without dragging icon components into the route bundle.
 import { EQUIPAMENTOS_CARRO, TIPOS_CARROCERIA } from '@/lib/listingOptions';
-import { DISTRITOS, getAllConcelhos, getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+import { getAllConcelhos, getCoordenadas, getDistritoForConcelho, getDistritos } from '@/lib/geo';
 import type { NormalizedAdvert } from '@/lib/importers/standvirtual.nextdata';
 import type { CarroFormData } from '@/types/carro';
 
@@ -323,11 +323,12 @@ export function mapAdvertToCarroFormData(advert: NormalizedAdvert): MappedAdvert
   const concelho = matchConcelho(advert.location.concelhoSlug, advert.location.city);
   if (concelho) {
     dados.localizacao = concelho;
-    dados.localizacaoDistrito = getDistritoForConcelho(concelho) ?? '';
+    dados.localizacaoDistrito = getDistritoForConcelho(concelho, 'PT') ?? '';
   } else {
     flag('localizacao');
   }
-  if (!dados.localizacaoDistrito && advert.location.region && DISTRITOS.includes(advert.location.region)) {
+  // Standvirtual only lists Portuguese ads, so every geo lookup here is scoped to PT.
+  if (!dados.localizacaoDistrito && advert.location.region && getDistritos('PT').includes(advert.location.region)) {
     dados.localizacaoDistrito = advert.location.region;
   }
 
@@ -483,7 +484,7 @@ export function buildCarroPayload(dados: Partial<CarroFormData>): Record<string,
     acceptsExchange: dados.acceptsExchange || undefined,
     local: dados.localizacao,
     distrito: dados.localizacaoDistrito || undefined,
-    coordenadas: dados.localizacao ? getCoordenadas(dados.localizacao) : undefined,
+    coordenadas: dados.localizacao ? getCoordenadas(dados.localizacao, 'PT') : undefined,
     descricao: dados.descricao ?? '',
     estadoVeiculo: 'pronto',
     tiposManutencao: [],

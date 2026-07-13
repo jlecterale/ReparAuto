@@ -6,6 +6,7 @@ import { formatarDataHora } from '@/lib/utils';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
+import { DOCUMENTO_LABELS } from '@/lib/verificationDocs';
 import type { Verification, StatusVerificacao } from '@/types/verification';
 
 interface VerificationsQueueProps {
@@ -26,11 +27,8 @@ const statusLabels: Record<StatusVerificacao, string> = {
   rejeitado: 'Rejeitado',
 };
 
-const tipoDocLabels: Record<string, string> = {
-  cc: 'Cartão de Cidadão',
-  passaporte: 'Passaporte',
-  residencia: 'Título de Residência',
-};
+// Shared with the request form so BR documents (RG/CNH/CNPJ/…) label correctly.
+const tipoDocLabels = DOCUMENTO_LABELS;
 
 export default function VerificationsQueue({ verifications, loading, onUpdateStatus }: VerificationsQueueProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);

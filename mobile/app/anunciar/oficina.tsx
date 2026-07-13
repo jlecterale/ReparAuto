@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
@@ -27,9 +29,12 @@ export default function RegistarOficinaScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  // Market vocabulary: PT says distrito, BR says estado.
+  const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
 
   const [logo, setLogo] = useState<string[]>([]);
   const [nome, setNome] = useState('');
@@ -123,7 +128,8 @@ export default function RegistarOficinaScreen() {
     if (!responsavel.trim()) return 'Indique o responsável.';
     if (!telefone.trim()) return 'Indique um telefone.';
     if (!email.trim()) return 'Indique um email.';
-    if (!distrito.trim() || !localidade.trim()) return 'Indique distrito e localidade.';
+    if (!distrito.trim() || !localidade.trim())
+      return `Indique ${regionLabel.toLowerCase()} e localidade.`;
     if (especialidades.length === 0) return 'Selecione pelo menos uma especialidade.';
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
       return 'O link do vídeo do YouTube é inválido.';
@@ -231,18 +237,18 @@ export default function RegistarOficinaScreen() {
         <Text className="mt-2 text-base font-bold text-fg-heading">Localização</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Distrito *" value={distrito} onChangeText={setDistrito} placeholder="Lisboa" />
+            <Input label={`${regionLabel} *`} value={distrito} onChangeText={setDistrito} placeholder={country === 'BR' ? 'São Paulo' : 'Lisboa'} />
           </View>
           <View className="flex-1">
             <Input label="Localidade *" value={localidade} onChangeText={setLocalidade} placeholder="Amadora" />
           </View>
         </View>
-        <Input label="Morada" value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
+        <Input label={term('addressLabel', country)} value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Telefone *" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={`${term('phoneLabel', country)} *`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />

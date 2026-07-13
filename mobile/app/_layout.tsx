@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CountryProvider } from '@/context/CountryContext';
 import { FavoritosProvider } from '@/context/FavoritosContext';
 import { ChatProvider } from '@/context/ChatContext';
 import { NotificacoesProvider } from '@/context/NotificacoesContext';
@@ -23,6 +24,7 @@ import {
 import { logScreenView } from '@/lib/analytics';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { AccountCountrySync } from '@/components/AccountCountrySync';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
@@ -131,24 +133,27 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <FavoritosProvider>
-            <ChatProvider>
-              <NotificacoesProvider>
-                <ToastProvider>
-                  <OnboardingProvider>
-                    <StatusBar style="dark" />
-                    <UpdateBanner />
-                    <OfflineBanner />
-                    <EmailVerificationBanner />
-                    <RootNavigator />
-                    <OnboardingGate />
-                  </OnboardingProvider>
-                </ToastProvider>
-              </NotificacoesProvider>
-            </ChatProvider>
-          </FavoritosProvider>
-        </AuthProvider>
+        <CountryProvider>
+          <AuthProvider>
+            <FavoritosProvider>
+              <ChatProvider>
+                <NotificacoesProvider>
+                  <ToastProvider>
+                    <OnboardingProvider>
+                      <StatusBar style="dark" />
+                      <AccountCountrySync />
+                      <UpdateBanner />
+                      <OfflineBanner />
+                      <EmailVerificationBanner />
+                      <RootNavigator />
+                      <OnboardingGate />
+                    </OnboardingProvider>
+                  </ToastProvider>
+                </NotificacoesProvider>
+              </ChatProvider>
+            </FavoritosProvider>
+          </AuthProvider>
+        </CountryProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

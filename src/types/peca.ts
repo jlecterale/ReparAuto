@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 import type { StatusAnuncio } from './carro';
 
 export type TipoPeca = 'venda' | 'desmonte' | 'procura';
@@ -37,6 +38,8 @@ export interface Peca {
   local: string;
   distrito?: string;
   coordenadas?: { lat: number; lng: number };
+  /** Market the listing belongs to (missing on legacy docs = PT). */
+  country?: Country;
   contacto?: string;
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;

@@ -11,6 +11,8 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
@@ -31,10 +33,13 @@ export default function AnunciarPecaScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
+  // Listings are priced in the active market's currency.
+  const currencySymbol = country === 'BR' ? 'R$' : '€';
 
   const [foto, setFoto] = useState<string[]>([]);
   const [tipo, setTipo] = useState<TipoPeca>('venda');
@@ -239,7 +244,7 @@ export default function AnunciarPecaScreen() {
 
         {precisaPreco && (
           <Input
-            label="Preço (€) *"
+            label={`Preço (${currencySymbol}) *`}
             value={preco}
             onChangeText={setPreco}
             placeholder="60"
@@ -263,7 +268,7 @@ export default function AnunciarPecaScreen() {
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Telefone" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={term('phoneLabel', country)} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />

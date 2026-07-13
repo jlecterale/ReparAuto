@@ -1,6 +1,7 @@
 // Shared domain types — mirror the web app (src/types) so the same Firestore
 // documents deserialize identically on mobile.
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type Timestamp = FirebaseFirestoreTypes.Timestamp;
 
@@ -29,6 +30,8 @@ export interface Usuario {
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];
+  /** Market the account belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   /** Per-group × per-channel notification preferences — shared with web. */
   notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
@@ -123,6 +126,8 @@ export interface Carro {
   vendedorEmail?: string;
   rodando?: boolean;
   inspecao?: boolean;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -161,6 +166,8 @@ export interface Peca {
   criadorUid?: string;
   vendedorNome?: string;
   descricao: string;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -243,6 +250,8 @@ export interface IntencaoCompra {
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;
   vendedorEmail?: string;
+  /** Market the intent belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusIntencao;
   prioritaria: boolean;
   stats: { visualizacoes: number; visualizacoes7Dias: number; contatos: number; contatos7Dias: number };
@@ -481,6 +490,8 @@ export interface Oficina {
   logoUrl?: string;
   videoUrl?: string;
   fotos?: string[];
+  /** Market the workshop belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;

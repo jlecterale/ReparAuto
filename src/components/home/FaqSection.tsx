@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CaretDown, Question } from '@phosphor-icons/react';
+import { useCountry } from '@/providers/CountryProvider';
 
 interface FaqItem {
   question: string;
@@ -33,6 +34,9 @@ const FAQ_ITEMS: FaqItem[] = [
 
 export default function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  // Standvirtual is Portugal-only — drop that entry for the Brazilian market.
+  const { country } = useCountry();
+  const items = FAQ_ITEMS.filter((item) => country === 'PT' || !item.question.includes('Standvirtual'));
 
   const toggleIndex = (index: number) => {
     setOpenIndex(openIndex === index ? null : index);
@@ -55,7 +59,7 @@ export default function FaqSection() {
       </div>
 
       <div className="space-y-4">
-        {FAQ_ITEMS.map((item, idx) => {
+        {items.map((item, idx) => {
           const isOpen = openIndex === idx;
           return (
             <div

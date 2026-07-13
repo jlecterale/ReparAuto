@@ -2,10 +2,10 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
-import { DISTRITOS } from '@/lib/constants';
+import { getDistritos } from '@/lib/geo';
+import { useCountry } from '@/context/CountryContext';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
 
-const DISTRITO_OPTS = [{ value: '', label: 'Todos' }, ...DISTRITOS.map((d) => ({ value: d, label: d }))];
 const ESPECIALIDADE_OPTS = [
   { value: '', label: 'Todas' },
   ...(Object.keys(ESPECIALIDADES_LABELS) as EspecialidadeOficina[]).map((e) => ({
@@ -35,6 +35,8 @@ export function OficinaFiltersSheet({
   onClear,
   resultCount,
 }: OficinaFiltersSheetProps) {
+  const { country } = useCountry();
+  const distritoOpts = [{ value: '', label: 'Todos' }, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
   return (
     <BottomSheet
       visible={visible}
@@ -50,8 +52,8 @@ export function OficinaFiltersSheet({
       <SheetSection title="Especialidade" first>
         <ChipSelect options={ESPECIALIDADE_OPTS} value={especialidade} onChange={setEspecialidade} />
       </SheetSection>
-      <SheetSection title="Distrito">
-        <ChipSelect options={DISTRITO_OPTS} value={distrito} onChange={setDistrito} />
+      <SheetSection title={country === 'BR' ? 'Estado' : 'Distrito'}>
+        <ChipSelect options={distritoOpts} value={distrito} onChange={setDistrito} />
       </SheetSection>
     </BottomSheet>
   );

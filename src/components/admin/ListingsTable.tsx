@@ -6,6 +6,7 @@ import type { Carro, StatusAnuncio } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import { Timestamp } from 'firebase/firestore';
 import { formatarPreco, formatarData } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import type { BadgeCor } from '@/types/ui';
@@ -189,7 +190,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                         )}
                       </div>
                     </td>
-                    <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco)}</td>
+                    <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco, docCountry(c))}</td>
                     <td className="py-3 pr-4 text-fg-muted text-xs">{c.criador}</td>
                     <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(c.dataCriacao)}</td>
                     <td className="py-3 pr-4">
@@ -300,7 +301,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                       </div>
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">
-                      {p.preco != null && p.preco > 0 ? formatarPreco(p.preco) : '—'}
+                      {p.preco != null && p.preco > 0 ? formatarPreco(p.preco, docCountry(p)) : '—'}
                     </td>
                     <td className="py-3 pr-4 text-fg-muted text-xs">{p.criador}</td>
                     <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(p.dataCriacao)}</td>

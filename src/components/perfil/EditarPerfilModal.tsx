@@ -10,6 +10,9 @@ import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { getDistritoForConcelho } from '@/lib/geo';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCepBr } from '@/hooks/useCepBr';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import {
   validarTelefone,
   validarCodigoPostal,
@@ -43,19 +46,24 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const lookupTriggered = useRef(false);
 
-  const cpLookup = useCodigoPostal();
+  // Both lookups run; pick by market. PT derives the district from the city;
+  // BR gets the state directly from the CEP (BrasilAPI).
+  const { country } = useCountry();
+  const cpLookupPt = useCodigoPostal();
+  const cpLookupBr = useCepBr();
+  const cpLookup = country === 'BR' ? cpLookupBr : cpLookupPt;
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
-      const d = getDistritoForConcelho(cpLookup.localidade);
+      const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade, 'PT');
       if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -71,9 +79,9 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
     if (!touched[campo]) return null;
     switch (campo) {
       case 'nome': return nome.trim().length > 0;
-      case 'telefone': return !telefone.trim() || validarTelefone(telefone);
-      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal);
-      case 'nif': return !nif.trim() || validarNif(nif);
+      case 'telefone': return !telefone.trim() || validarTelefone(telefone, country);
+      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal, country);
+      case 'nif': return !nif.trim() || validarNif(nif, country);
       default: return null;
     }
   };
@@ -112,16 +120,16 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setErro('O nome é obrigatório.');
       return;
     }
-    if (telefone.trim() && !validarTelefone(telefone)) {
-      setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
+    if (telefone.trim() && !validarTelefone(telefone, country)) {
+      setErro(term('phoneInvalid', country));
       return;
     }
-    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal)) {
-      setErro('Código postal inválido. Formato: XXXX-XXX');
+    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
+      setErro(term('postalCodeInvalid', country));
       return;
     }
-    if (nif.trim() && !validarNif(nif)) {
-      setErro('NIF inválido. Verifique o número.');
+    if (nif.trim() && !validarNif(nif, country)) {
+      setErro(term('taxIdInvalid', country));
       return;
     }
 
@@ -164,13 +172,14 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Telemóvel</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('phoneLabel', country)}</label>
           <input
             type="tel"
+            placeholder={term('phonePlaceholder', country)}
             value={telefone}
             onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
             onBlur={() => handleBlur('telefone')}
-            maxLength={9}
+            maxLength={country === 'BR' ? 11 : 9}
             className={inputClasse('telefone')}
           />
         </div>
@@ -188,33 +197,35 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           />
           {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
             <p className="text-[10px] text-green-600 mt-1">
-              <Check className="mr-0.5" /> Preenchido automaticamente pelo código postal
+              <Check className="mr-0.5" /> Preenchido automaticamente pelo {term('postalCodeLabel', country)}
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">Código Postal</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('postalCodeLabel', country)}</label>
             <div className="relative">
               <input
                 type="text"
+                placeholder={term('postalCodePlaceholder', country)}
                 value={codigoPostal}
                 onChange={(e) => {
-                  const formatted = formatarCodigoPostal(e.target.value);
+                  const formatted = formatarCodigoPostal(e.target.value, country);
                   setCodigoPostal(formatted);
                   lookupTriggered.current = false;
-                  if (formatted.length === 8) {
+                  // Auto-fill address once the code is complete (BR CEP = 9 chars, PT = 8).
+                  if (formatted.length === (country === 'BR' ? 9 : 8)) {
                     cpLookup.buscar(formatted);
                   }
                 }}
                 onBlur={() => {
                   handleBlur('codigoPostal');
-                  if (validarCodigoPostal(codigoPostal)) {
+                  if (validarCodigoPostal(codigoPostal, country)) {
                     cpLookup.buscar(codigoPostal);
                   }
                 }}
-                maxLength={8}
+                maxLength={country === 'BR' ? 9 : 8}
                 className={inputClasse('codigoPostal', 'pr-10')}
               />
               {cpLookup.loading && (
@@ -223,20 +234,21 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">NIF</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('taxIdLabel', country)}</label>
             <input
               type="text"
+              placeholder={term('taxIdPlaceholder', country)}
               value={nif}
               onChange={(e) => setNif(e.target.value.replace(/\D/g, ''))}
               onBlur={() => handleBlur('nif')}
-              maxLength={9}
+              maxLength={country === 'BR' ? 14 : 9}
               className={inputClasse('nif')}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Morada</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('addressLabel', country)}</label>
           <div className="relative">
             <input
               type="text"

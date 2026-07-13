@@ -12,6 +12,9 @@ import { getPendingIntent } from '@/lib/onboarding';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import Alert from '@/components/ui/Alert';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCepBr } from '@/hooks/useCepBr';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import {
   validarTelefone,
   validarCodigoPostal,
@@ -40,19 +43,25 @@ export default function SetupPerfil() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const lookupTriggered = useRef(false);
 
-  const cpLookup = useCodigoPostal();
+  // Brazilian accounts validate/format against BR rules and look up the CEP via
+  // BrasilAPI; PT uses the postal-code service. Both hooks run; we pick by market.
+  const { country } = useCountry();
+  const cpLookupPt = useCodigoPostal();
+  const cpLookupBr = useCepBr();
+  const cpLookup = country === 'BR' ? cpLookupBr : cpLookupPt;
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
-      const d = getDistritoForConcelho(cpLookup.localidade);
+      // The BR lookup returns the state directly; PT derives it from the city.
+      const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade);
       if (d) setDistrito(d);
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -96,10 +105,10 @@ export default function SetupPerfil() {
     if (!touched[campo]) return null;
     switch (campo) {
       case 'nome': return nome.trim().length > 0;
-      case 'telefone': return validarTelefone(telefone);
+      case 'telefone': return validarTelefone(telefone, country);
       case 'localidade': return localidade.trim().length > 0;
-      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal);
-      case 'nif': return !nif.trim() || validarNif(nif);
+      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal, country);
+      case 'nif': return !nif.trim() || validarNif(nif, country);
       default: return null;
     }
   };
@@ -125,23 +134,23 @@ export default function SetupPerfil() {
       return;
     }
     if (!telefone.trim()) {
-      setErro('O número de telemóvel é obrigatório.');
+      setErro(`O ${term('phoneLabel', country).toLowerCase()} é obrigatório.`);
       return;
     }
-    if (!validarTelefone(telefone)) {
-      setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
+    if (!validarTelefone(telefone, country)) {
+      setErro(term('phoneInvalid', country));
       return;
     }
     if (!localidade.trim()) {
       setErro('A localidade é obrigatória.');
       return;
     }
-    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal)) {
-      setErro('Código postal inválido. Formato: XXXX-XXX');
+    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
+      setErro(term('postalCodeInvalid', country));
       return;
     }
-    if (nif.trim() && !validarNif(nif)) {
-      setErro('NIF inválido. Verifique o número.');
+    if (nif.trim() && !validarNif(nif, country)) {
+      setErro(term('taxIdInvalid', country));
       return;
     }
 
@@ -231,15 +240,15 @@ export default function SetupPerfil() {
 
             <div>
               <label className={labelCls}>
-                Telemóvel <span className="text-danger-500">*</span>
+                {term('phoneLabel', country)} <span className="text-danger-500">*</span>
               </label>
               <input
                 type="tel"
-                placeholder="Ex: 912345678"
+                placeholder={term('phonePlaceholder', country)}
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
                 onBlur={() => handleBlur('telefone')}
-                maxLength={9}
+                maxLength={country === 'BR' ? 11 : 9}
                 className={inputClasse('telefone')}
               />
             </div>
@@ -255,7 +264,7 @@ export default function SetupPerfil() {
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
               <label className={labelCls}>
-                Distrito e Concelho <span className="text-danger-500">*</span>
+                {term('districtAndMunicipality', country)} <span className="text-danger-500">*</span>
               </label>
               <SeletorLocalizacao
                 distrito={distrito}
@@ -271,33 +280,35 @@ export default function SetupPerfil() {
               />
               {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
                 <p className="text-xs font-medium text-success-700 mt-1.5 flex items-center gap-1">
-                  <Check weight="bold" /> Preenchido automaticamente pelo código postal
+                  <Check weight="bold" /> Preenchido automaticamente pelo {term('postalCodeLabel', country)}
                 </p>
               )}
             </div>
 
             <div>
-              <label className={labelCls}>Código Postal</label>
+              <label className={labelCls}>{term('postalCodeLabel', country)}</label>
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="XXXX-XXX"
+                  placeholder={term('postalCodePlaceholder', country)}
                   value={codigoPostal}
                   onChange={(e) => {
-                    const formatted = formatarCodigoPostal(e.target.value);
+                    const formatted = formatarCodigoPostal(e.target.value, country);
                     setCodigoPostal(formatted);
                     lookupTriggered.current = false;
-                    if (formatted.length === 8) {
+                    // Auto-fill address from the code once it's complete (BR CEP
+                    // formats to 9 chars, PT postal code to 8).
+                    if (formatted.length === (country === 'BR' ? 9 : 8)) {
                       cpLookup.buscar(formatted);
                     }
                   }}
                   onBlur={() => {
                     handleBlur('codigoPostal');
-                    if (validarCodigoPostal(codigoPostal)) {
+                    if (validarCodigoPostal(codigoPostal, country)) {
                       cpLookup.buscar(codigoPostal);
                     }
                   }}
-                  maxLength={8}
+                  maxLength={country === 'BR' ? 9 : 8}
                   className={inputClasse('codigoPostal', 'pr-10')}
                 />
                 {cpLookup.loading && (
@@ -307,24 +318,24 @@ export default function SetupPerfil() {
             </div>
 
             <div>
-              <label className={labelCls}>NIF {opcional}</label>
+              <label className={labelCls}>{term('taxIdLabel', country)} {opcional}</label>
               <input
                 type="text"
-                placeholder="123456789"
+                placeholder={term('taxIdPlaceholder', country)}
                 value={nif}
                 onChange={(e) => setNif(e.target.value.replace(/\D/g, ''))}
                 onBlur={() => handleBlur('nif')}
-                maxLength={9}
+                maxLength={country === 'BR' ? 14 : 9}
                 className={inputClasse('nif')}
               />
             </div>
 
             <div className="sm:col-span-2">
-              <label className={labelCls}>Morada {opcional}</label>
+              <label className={labelCls}>{term('addressLabel', country)} {opcional}</label>
               <input
                 type="text"
                 list="ruas-list"
-                placeholder="Rua, número, bairro..."
+                placeholder={term('addressPlaceholder', country)}
                 value={morada}
                 onChange={(e) => setMorada(e.target.value)}
                 className={inputClasse('morada')}

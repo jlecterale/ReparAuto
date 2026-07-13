@@ -12,6 +12,8 @@ import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
@@ -66,10 +68,13 @@ export default function AnunciarCarroScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
+  // Listings are priced in the active market's currency.
+  const currencySymbol = country === 'BR' ? 'R$' : '€';
 
   const [fotos, setFotos] = useState<string[]>([]);
   const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>({});
@@ -267,7 +272,7 @@ export default function AnunciarCarroScreen() {
       return `Indique os quilómetros (0 a ${CAR_KM_MAX.toLocaleString('pt-PT')}).`;
     const precoNum = Number(preco);
     if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX)
-      return `Indique um preço entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+      return `Indique um preço entre 1 ${currencySymbol} e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} ${currencySymbol}.`;
     if (portas.trim()) {
       const portasNum = Number(portas);
       if (!Number.isInteger(portasNum) || portasNum < CAR_DOORS_MIN || portasNum > CAR_DOORS_MAX)
@@ -511,7 +516,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Preço (€) *"
+              label={`Preço (${currencySymbol}) *`}
               value={preco}
               onChangeText={setPreco}
               placeholder="15000"
@@ -631,13 +636,13 @@ export default function AnunciarCarroScreen() {
         </View>
 
         <SelectField
-          label="Mês da 1ª matrícula"
+          label={term('firstRegistrationLabel', country)}
           value={firstRegMonth}
           onChange={setFirstRegMonth}
           options={MESES}
           emptyOption="Indiferente"
           placeholder="Selecionar mês"
-          title="Mês da 1ª matrícula"
+          title={term('firstRegistrationLabel', country)}
         />
         <ChipSelect
           label="Origem"
@@ -768,7 +773,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Telefone"
+              label={term('phoneLabel', country)}
               value={telefone}
               onChangeText={setTelefone}
               placeholder="912345678"

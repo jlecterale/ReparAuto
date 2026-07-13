@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { pecaCompatibleWithCar } from '@/lib/compatibility';
 import { formatarPreco } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
@@ -58,7 +59,7 @@ export default function CompatibleParts({ carro, onSelect, limit = 12 }: Props) 
                 <h4 className="font-semibold text-sm text-brand-900 line-clamp-2">{p.titulo}</h4>
                 {p.preco != null && (
                   <span className="text-sm font-extrabold text-accent whitespace-nowrap">
-                    {formatarPreco(p.preco)}
+                    {formatarPreco(p.preco, docCountry(p))}
                   </span>
                 )}
               </div>

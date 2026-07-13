@@ -10,6 +10,7 @@ import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull } from '@/lib/utils';
 import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { getCoordenadas } from '@/lib/geo';
+import { getActiveCountry } from '@/lib/country';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
 import { EMPTY_CARRO_FORM_DATA } from '@/lib/carFormDefaults';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
@@ -170,7 +171,7 @@ export default function Anunciar() {
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
-        coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
+        coordenadas: localizacao ? getCoordenadas(localizacao, getActiveCountry()) : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         photoAngles: photoAngles ?? undefined,
