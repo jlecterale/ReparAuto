@@ -1,3 +1,4 @@
+import type { Country } from '@/lib/country';
 import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction, Upholstery, VehicleOrigin } from '@/types';
 
 export const COMBUSTIVEIS: Combustivel[] = [
@@ -106,7 +107,18 @@ export function maxSeatsForBodyType(bodyType?: string): number {
 }
 export const CAR_POWER_MAX = 2000; // cv
 export const CAR_DISPLACEMENT_MAX = 10_000; // cc
-export const CAR_PRICE_MAX = 10_000_000; // €
+export const CAR_PRICE_MAX = 10_000_000; // market currency (€ / R$)
+
+/**
+ * Quick price-filter bands for the home screen chips ("Até …"), in the
+ * market's currency. Listings are priced in their own market's currency, so
+ * the EUR bands are meaningless in BRL — Brazil gets bands that map to the
+ * same segments (fixer-uppers / cheap usable cars).
+ */
+export const QUICK_PRICE_BANDS: Record<Country, { low: number; mid: number }> = {
+  PT: { low: 1_000, mid: 5_000 },
+  BR: { low: 10_000, mid: 30_000 },
+};
 
 // Bounds for the Standvirtual-parity optional specs — mirror the web `carSpec.ts`.
 export const CAR_GEARS_MAX = 12;

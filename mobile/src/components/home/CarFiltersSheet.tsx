@@ -16,6 +16,7 @@ import {
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { getConcelhos, getDistritos } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { useCountry } from '@/context/CountryContext';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
@@ -117,7 +118,7 @@ export function CarFiltersSheet({
         </SheetSection>
       )}
 
-      <SheetSection title="Preço (€)" first={marcaOpts.length === 0}>
+      <SheetSection title={`Preço (${getCurrencySymbol(country)})`} first={marcaOpts.length === 0}>
         <RangeRow
           minValue={f.precoMin}
           maxValue={f.precoMax}

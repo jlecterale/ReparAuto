@@ -15,6 +15,7 @@ import { useCountry } from '@/context/CountryContext';
 import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { getDistritos } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { criarIntencao } from '@/lib/trust';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
@@ -45,7 +46,7 @@ export default function CriarIntencaoScreen() {
   const { showToast } = useToast();
   // Market vocabulary: PT says distrito/€, BR says estado/R$.
   const regionLabel = term('districtLabel', country);
-  const currencySymbol = country === 'BR' ? 'R$' : '€';
+  const currencySymbol = getCurrencySymbol(country);
   const distritos = getDistritos(country);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
