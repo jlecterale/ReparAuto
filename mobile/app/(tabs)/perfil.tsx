@@ -151,6 +151,11 @@ export default function PerfilScreen() {
             label="Editar perfil"
             onPress={() => router.push('/perfil/editar')}
           />
+          <Row
+            icon="id-card-outline"
+            label="Verificação de conta"
+            onPress={() => router.push('/verificar-conta')}
+          />
           {isAdmin && (
             <Row
               icon="shield-checkmark-outline"

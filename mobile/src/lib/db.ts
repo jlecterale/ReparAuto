@@ -12,7 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { logPublishListing } from './analytics';
 import { db, storage } from './firebase';
 import { getActiveCountry, getBindingCountry } from './country';
-import type { Carro, Peca, Oficina, Usuario } from '@/types';
+import type { Carro, Peca, Oficina, Usuario, Verification, VerificationInput } from '@/types';
 
 /** Firestore rejects `undefined`; drop those keys before writing. */
 function cleanUndefined<T extends Record<string, unknown>>(obj: T): T {
@@ -36,6 +36,7 @@ const CARROS = 'cars';
 const PECAS = 'parts';
 const OFICINAS = 'services';
 const USERS = 'users';
+const VERIFICATIONS = 'verifications';
 
 type Snapshot = FirebaseFirestoreTypes.QuerySnapshot;
 type Doc = FirebaseFirestoreTypes.QueryDocumentSnapshot;
@@ -319,4 +320,52 @@ export async function registarVisualizacao(
   } catch {
     // view counting is non-critical; ignore failures.
   }
+}
+
+// ---------- Verificações ----------
+/**
+ * Uploads a verification image (document or selfie, local file:// URI) to
+ * `verifications/{uid}/...` — the owner-writable path in `storage.rules`
+ * (image only, 5MB max; readable by the owner and admins, wiped after the
+ * admin decision). Reports upload progress as a 0–1 fraction.
+ */
+export async function uploadVerificationImage(
+  uid: string,
+  localUri: string,
+  name: 'documento' | 'selfie',
+  onProgress?: (fraction: number) => void,
+): Promise<string> {
+  const ext = (localUri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
+  const ref = storage.ref(`verifications/${uid}/${name}_${Date.now()}.${ext}`);
+  const task = ref.putFile(localUri);
+  task.on('state_changed', (snap) => {
+    if (snap.totalBytes > 0) onProgress?.(snap.bytesTransferred / snap.totalBytes);
+  });
+  await task;
+  return ref.getDownloadURL();
+}
+
+/** Creates a verification request as `pendente` (an admin approves/rejects it). */
+export async function addVerification(data: VerificationInput): Promise<Verification> {
+  const docRef = await db.collection(VERIFICATIONS).add(
+    cleanUndefined({
+      ...data,
+      dataPedido: firestore.FieldValue.serverTimestamp(),
+    }),
+  );
+  return { id: docRef.id, ...data } as Verification;
+}
+
+/**
+ * The user's most recent verification request, or null. Filtering by own uid
+ * keeps the query provable against the `verifications` read rule; sorting
+ * stays in memory (no composite index), like every other list read here.
+ */
+export async function getVerificationByUid(uid: string): Promise<Verification | null> {
+  const snap = await db.collection(VERIFICATIONS).where('uid', '==', uid).get();
+  if (snap.empty) return null;
+  const [latest] = mapDocs<Verification>(snap).sort(
+    (a, b) => (b.dataPedido?.toMillis?.() ?? 0) - (a.dataPedido?.toMillis?.() ?? 0),
+  );
+  return latest;
 }
