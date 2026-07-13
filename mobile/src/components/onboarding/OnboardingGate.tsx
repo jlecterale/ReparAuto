@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { router, type Href } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,8 +6,11 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
+import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { useOnboarding } from '@/context/OnboardingContext';
+import { COUNTRIES, COUNTRY_INFO, type Country } from '@/lib/country';
 import { hasSeenOnboarding, markOnboardingSeen } from '@/lib/onboarding';
 import { colors } from '@/theme/colors';
 
@@ -78,14 +81,28 @@ const INTENTS: Intent[] = [
 
 const GRADIENT = [colors.primary[700], colors.primary[800], colors.primary[950]] as const;
 
+const COUNTRY_HINTS: Record<Country, string> = {
+  PT: 'Anúncios em Portugal · preços em euros (€)',
+  BR: 'Anúncios no Brasil · preços em reais (R$)',
+};
+
 /**
  * Anonymous-first welcome. Shows once, on first launch, for visitors without an
- * account; choosing a door opens the signup screen with context and the chosen
- * creation flow as `next`. Success metric: a new account.
+ * account. Opens with an explicit country step (the GeoIP suggestion is only a
+ * pre-selection — the visitor confirms the market instead of silently landing
+ * on it), then the intent doors; choosing a door opens the signup screen with
+ * context and the chosen creation flow as `next`. Success metric: a new account.
  */
 export function OnboardingGate() {
   const { loading, isLoggedIn } = useAuth();
   const { tourVisible, openTour, closeTour } = useOnboarding();
+  const { country, setCountry } = useCountry();
+  const [step, setStep] = useState<'country' | 'intents'>('country');
+  // Only the visitor's tap is state; until then the pre-selection derives from
+  // the context country, so it keeps following the async first-launch
+  // resolution (AsyncStorage / GeoIP) that can land after the tour opens.
+  const [pickedCountry, setPickedCountry] = useState<Country | null>(null);
+  const selectedCountry = pickedCountry ?? country;
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -106,8 +123,24 @@ export function OnboardingGate() {
   }, [loading, isLoggedIn, openTour]);
 
   function dismiss() {
+    // Backing out of the country step only commits a market the visitor
+    // actually tapped. An untouched pre-selection is left alone so the
+    // first-launch resolution (GeoIP) still applies and persists — closing the
+    // welcome must not launder the suggestion into an explicit choice.
+    if (step === 'country' && pickedCountry) setCountry(pickedCountry);
     markOnboardingSeen();
     closeTour();
+  }
+
+  function selectCountry(next: Country) {
+    Haptics.selectionAsync().catch(() => {});
+    setPickedCountry(next);
+  }
+
+  function confirmCountry() {
+    Haptics.selectionAsync().catch(() => {});
+    setCountry(selectedCountry);
+    setStep('intents');
   }
 
   function selectIntent(intent: Intent) {
@@ -146,60 +179,110 @@ export function OnboardingGate() {
           </View>
 
           <ScrollView contentContainerClassName="flex-grow justify-center px-5 py-4">
-            {/* Header */}
+            {/* Header — shared between the two steps, only the copy changes */}
             <View className="mb-7 items-center">
               <View className="mb-3 flex-row items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5">
                 <Ionicons name="sparkles" size={14} color={colors.warning[500]} />
                 <Text className="text-sm font-bold text-white">Bem-vindo à RecarGarage</Text>
               </View>
               <Text className="text-center text-3xl font-extrabold leading-tight text-white">
-                O ecossistema que liga mecânicos, vendedores e compradores
+                {step === 'country'
+                  ? 'Onde quer comprar e vender?'
+                  : 'O ecossistema que liga mecânicos, vendedores e compradores'}
               </Text>
               <Text className="mt-3 text-center text-base leading-relaxed text-white/85">
-                Tudo num só lugar. Diga-nos o que o traz aqui hoje — tratamos do resto.
+                {step === 'country'
+                  ? 'Escolha o seu país para ver anúncios, preços e localizações do seu mercado.'
+                  : 'Tudo num só lugar. Diga-nos o que o traz aqui hoje — tratamos do resto.'}
               </Text>
             </View>
 
-            {/* Intent cards */}
-            <View className="gap-3">
-              {INTENTS.map((intent) => (
-                <Pressable
-                  key={intent.id}
-                  onPress={() => selectIntent(intent)}
-                  accessibilityRole="button"
-                  className="flex-row items-center rounded-2xl bg-white p-4 shadow-sm active:opacity-90"
-                >
-                  <View
-                    className={`h-12 w-12 items-center justify-center rounded-xl ${intent.iconWrap}`}
-                  >
-                    <Ionicons name={intent.icon} size={24} color={intent.iconColor} />
-                  </View>
-                  <View className="ml-3 flex-1">
-                    <View className="flex-row flex-wrap items-center gap-2">
-                      <Text className="text-lg font-bold text-fg-heading">{intent.titulo}</Text>
-                      {intent.destaque && (
-                        <View className="rounded-full bg-accent px-2 py-0.5">
-                          <Text className="text-xs font-bold text-white">{intent.destaque}</Text>
+            {step === 'country' ? (
+              <>
+                {/* Country step — confirm the market before anything else */}
+                <View className="gap-3">
+                  {COUNTRIES.map((c) => {
+                    const active = selectedCountry === c;
+                    return (
+                      <Pressable
+                        key={c}
+                        onPress={() => selectCountry(c)}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: active }}
+                        className={`flex-row items-center rounded-2xl border-2 bg-white p-4 shadow-sm active:opacity-90 ${
+                          active ? 'border-accent' : 'border-transparent'
+                        }`}
+                      >
+                        <View className="h-12 w-12 items-center justify-center rounded-xl bg-neutral-100">
+                          <Text className="text-2xl">{COUNTRY_INFO[c].flag}</Text>
                         </View>
-                      )}
-                    </View>
-                    <Text className="mt-0.5 text-[15px] leading-snug text-fg-muted">{intent.descricao}</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
-                </Pressable>
-              ))}
-            </View>
+                        <View className="ml-3 flex-1">
+                          <Text className="text-lg font-bold text-fg-heading">
+                            {COUNTRY_INFO[c].name}
+                          </Text>
+                          <Text className="mt-0.5 text-[15px] leading-snug text-fg-muted">
+                            {COUNTRY_HINTS[c]}
+                          </Text>
+                        </View>
+                        <Ionicons
+                          name={active ? 'checkmark-circle' : 'ellipse-outline'}
+                          size={24}
+                          color={active ? colors.accent : colors.neutral[300]}
+                        />
+                      </Pressable>
+                    );
+                  })}
+                </View>
 
-            {/* Escape hatch — low-commitment exit that still belongs to the funnel */}
-            <Pressable
-              onPress={dismiss}
-              accessibilityRole="button"
-              className="mt-7 self-center px-4 py-2"
-            >
-              <Text className="text-sm font-semibold text-white/80 underline">
-                Só quero ver os anúncios
-              </Text>
-            </Pressable>
+                <Button label="Continuar" onPress={confirmCountry} className="mt-7" />
+                <Text className="mt-4 text-center text-sm text-white/70">
+                  Pode alterar o país mais tarde, nas Definições.
+                </Text>
+              </>
+            ) : (
+              <>
+                {/* Intent cards */}
+                <View className="gap-3">
+                  {INTENTS.map((intent) => (
+                    <Pressable
+                      key={intent.id}
+                      onPress={() => selectIntent(intent)}
+                      accessibilityRole="button"
+                      className="flex-row items-center rounded-2xl bg-white p-4 shadow-sm active:opacity-90"
+                    >
+                      <View
+                        className={`h-12 w-12 items-center justify-center rounded-xl ${intent.iconWrap}`}
+                      >
+                        <Ionicons name={intent.icon} size={24} color={intent.iconColor} />
+                      </View>
+                      <View className="ml-3 flex-1">
+                        <View className="flex-row flex-wrap items-center gap-2">
+                          <Text className="text-lg font-bold text-fg-heading">{intent.titulo}</Text>
+                          {intent.destaque && (
+                            <View className="rounded-full bg-accent px-2 py-0.5">
+                              <Text className="text-xs font-bold text-white">{intent.destaque}</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text className="mt-0.5 text-[15px] leading-snug text-fg-muted">{intent.descricao}</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={colors.neutral[400]} />
+                    </Pressable>
+                  ))}
+                </View>
+
+                {/* Escape hatch — low-commitment exit that still belongs to the funnel */}
+                <Pressable
+                  onPress={dismiss}
+                  accessibilityRole="button"
+                  className="mt-7 self-center px-4 py-2"
+                >
+                  <Text className="text-sm font-semibold text-white/80 underline">
+                    Só quero ver os anúncios
+                  </Text>
+                </Pressable>
+              </>
+            )}
           </ScrollView>
         </View>
       </LinearGradient>
