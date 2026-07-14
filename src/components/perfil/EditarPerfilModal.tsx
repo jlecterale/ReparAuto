@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, CircleNotch, WarningCircle } from '@phosphor-icons/react';
+import { Check, CircleNotch, Lock, Storefront, User, WarningCircle } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { useState, useEffect, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
@@ -19,7 +19,6 @@ import {
   validarNif,
   formatarCodigoPostal,
 } from '@/lib/utils';
-import type { TipoConta } from '@/types/usuario';
 
 interface EditarPerfilModalProps {
   show: boolean;
@@ -38,7 +37,6 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [codigoPostal, setCodigoPostal] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
-  const [tipoConta, setTipoConta] = useState<TipoConta>('particular');
   const [bio, setBio] = useState('');
   const [notificacoes, setNotificacoes] = useState(true);
   const [erro, setErro] = useState('');
@@ -104,7 +102,6 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setCodigoPostal(user.codigoPostal || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
-      setTipoConta(user.tipoConta || 'particular');
       setBio(user.bio || '');
       setNotificacoes(user.notificacoes ?? true);
       setErro('');
@@ -143,7 +140,6 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         codigoPostal: codigoPostal.trim(),
         morada: morada.trim(),
         nif: nif.trim(),
-        tipoConta,
         bio: bio.trim(),
         notificacoes,
       });
@@ -267,30 +263,16 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
 
         <div>
           <label className="block text-xs font-semibold text-fg-subtle mb-2">Tipo de Conta</label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setTipoConta('particular')}
-              className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
-                tipoConta === 'particular'
-                  ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-fg-subtle'
-              }`}
-            >
-              Particular
-            </button>
-            <button
-              type="button"
-              onClick={() => setTipoConta('profissional')}
-              className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
-                tipoConta === 'profissional'
-                  ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-fg-subtle'
-              }`}
-            >
-              Profissional
-            </button>
+          <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl p-3 bg-slate-100 text-fg-muted cursor-not-allowed">
+            {user?.tipoConta === 'profissional' ? <Storefront weight="fill" /> : <User weight="fill" />}
+            <span className="text-sm font-bold">
+              {user?.tipoConta === 'profissional' ? 'Profissional' : 'Particular'}
+            </span>
+            <Lock className="ml-auto text-fg-subtle" />
           </div>
+          <p className="text-[11px] text-fg-subtle mt-1">
+            O tipo de conta é definido no registo e não pode ser alterado.
+          </p>
         </div>
 
         <div>

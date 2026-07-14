@@ -23,14 +23,17 @@ import Button from '@/components/ui/Button';
 import CameraCapture from '@/components/ui/CameraCapture';
 import { useCountry } from '@/providers/CountryProvider';
 import { documentosPermitidos } from '@/lib/verificationDocs';
+import { verificationTipoForConta } from '@/lib/verification';
 import type { AlertTipo } from '@/types/ui';
-import type { Verification, VerificationInput, TipoVerificacao, TipoDocumento } from '@/types/verification';
+import type { Verification, VerificationInput, TipoDocumento } from '@/types/verification';
+import type { TipoConta } from '@/types/usuario';
 
 interface VerificationRequestProps {
   uid: string;
   email: string;
   nome: string;
   nif?: string;
+  tipoConta?: TipoConta;
   verificado?: boolean;
   verification: Verification | null;
   loading: boolean;
@@ -42,13 +45,17 @@ export default function VerificationRequest({
   email,
   nome,
   nif,
+  tipoConta,
   verificado,
   verification,
   loading,
   onSubmit,
 }: VerificationRequestProps) {
   const { country } = useCountry();
-  const [tipo, setTipo] = useState<TipoVerificacao>('identidade');
+  // The verification type is fixed by the account type — a professional account
+  // does a professional verification, everyone else an identity one. It is not
+  // chosen here (the account type can't be changed after signup).
+  const tipo = verificationTipoForConta(tipoConta);
   // Accepted documents depend on the market and whether it's a personal or a
   // professional (business) verification — see src/lib/verificationDocs.ts.
   const documentos = useMemo(() => documentosPermitidos(country, tipo), [country, tipo]);
@@ -179,28 +186,16 @@ export default function VerificationRequest({
         Os ficheiros são apagados após a análise.
       </p>
 
-      {/* Tipo de verificação */}
-      <div className="flex gap-2 mb-3">
-        <button
-          onClick={() => setTipo('identidade')}
-          className={`flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition ${
-            tipo === 'identidade'
-              ? 'border-accent bg-accent/5 text-accent'
-              : 'border-slate-200 text-fg-muted hover:border-slate-300'
-          }`}
-        >
-          <IdentificationCard className="mr-1" /> Identidade
-        </button>
-        <button
-          onClick={() => setTipo('profissional')}
-          className={`flex-1 text-xs font-semibold py-2 px-3 rounded-lg border transition ${
-            tipo === 'profissional'
-              ? 'border-accent bg-accent/5 text-accent'
-              : 'border-slate-200 text-fg-muted hover:border-slate-300'
-          }`}
-        >
-          <Storefront className="mr-1" /> Profissional
-        </button>
+      {/* Tipo de verificação — determinado pelo tipo de conta, não escolhido aqui */}
+      <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg border border-slate-200 bg-white">
+        {tipo === 'profissional' ? (
+          <Storefront className="text-accent shrink-0" />
+        ) : (
+          <IdentificationCard className="text-accent shrink-0" />
+        )}
+        <span className="text-xs font-semibold text-fg">
+          {tipo === 'profissional' ? 'Verificação Profissional' : 'Verificação de Identidade'}
+        </span>
       </div>
 
       {/* Tipo de documento */}

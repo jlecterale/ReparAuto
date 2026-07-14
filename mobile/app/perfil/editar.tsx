@@ -3,6 +3,7 @@ import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -16,6 +17,7 @@ import { useCepBr } from '@/hooks/useCepBr';
 import { getDistritoForConcelho, getDistritos } from '@/lib/geo';
 import { formatarCodigoPostal } from '@/lib/format';
 import { term } from '@/lib/terms';
+import { colors } from '@/theme/colors';
 import type { TipoConta } from '@/types';
 
 const TIPOS_CONTA = [
@@ -42,6 +44,10 @@ export default function EditarPerfilScreen() {
   const [bio, setBio] = useState(user?.bio ?? '');
   const [tipoConta, setTipoConta] = useState<TipoConta>(user?.tipoConta ?? 'particular');
   const [guardando, setGuardando] = useState(false);
+
+  // The account type is chosen once, while completing the profile, and is locked
+  // afterwards (also enforced by firestore.rules). Only send it before completion.
+  const accountTypeLocked = user?.profileCompleted ?? false;
 
   const distritos = getDistritos(country);
   const { concelhos, loading: cidadesLoading } = useConcelhos(distrito);
@@ -77,7 +83,7 @@ export default function EditarPerfilScreen() {
         morada: morada.trim(),
         nif: nif.trim(),
         bio: bio.trim(),
-        tipoConta,
+        ...(accountTypeLocked ? {} : { tipoConta }),
         profileCompleted: true,
       });
       showToast('Perfil atualizado.', 'success');
@@ -97,7 +103,27 @@ export default function EditarPerfilScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Input label="Nome *" value={nome} onChangeText={setNome} placeholder="O seu nome" />
-        <ChipSelect label="Tipo de conta" options={TIPOS_CONTA} value={tipoConta} onChange={setTipoConta} />
+        {accountTypeLocked ? (
+          <View>
+            <Text className="mb-1.5 text-sm font-semibold text-fg-muted">Tipo de conta</Text>
+            <View className="flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-3.5">
+              <Ionicons
+                name={user?.tipoConta === 'profissional' ? 'briefcase-outline' : 'person-outline'}
+                size={18}
+                color={colors.neutral[500]}
+              />
+              <Text className="flex-1 text-base font-semibold text-fg-muted">
+                {user?.tipoConta === 'profissional' ? 'Profissional' : 'Particular'}
+              </Text>
+              <Ionicons name="lock-closed" size={16} color={colors.neutral[400]} />
+            </View>
+            <Text className="mt-1 text-xs text-fg-subtle">
+              O tipo de conta é definido no registo e não pode ser alterado.
+            </Text>
+          </View>
+        ) : (
+          <ChipSelect label="Tipo de conta" options={TIPOS_CONTA} value={tipoConta} onChange={setTipoConta} />
+        )}
         <Input
           label={term('phoneLabel', country)}
           value={telefone}

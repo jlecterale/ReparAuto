@@ -15,8 +15,9 @@ import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { addVerification, getVerificationByUid, uploadVerificationImage } from '@/lib/db';
 import { documentosPermitidos } from '@/lib/verificationDocs';
+import { verificationTipoForConta } from '@/lib/verification';
 import { colors } from '@/theme/colors';
-import type { TipoDocumento, TipoVerificacao, Verification } from '@/types';
+import type { TipoDocumento, Verification } from '@/types';
 
 // Storage caps verification images at 5MB; camera originals can exceed that,
 // so picks wider than this are downscaled (and every pick is re-encoded as
@@ -33,7 +34,10 @@ export default function VerificarContaScreen() {
   const [loadFailed, setLoadFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const [tipo, setTipo] = useState<TipoVerificacao>('identidade');
+  // The verification type is fixed by the account type — a professional account
+  // does a professional verification, everyone else an identity one. It is not
+  // chosen here (the account type can't be changed after signup).
+  const tipo = verificationTipoForConta(user?.tipoConta);
   // Accepted documents depend on the market and on personal vs. professional
   // verification — see src/lib/verificationDocs.ts. The selection is derived
   // so it stays valid when switching type changes the list.
@@ -201,16 +205,16 @@ export default function VerificarContaScreen() {
           conta verificada. Os ficheiros são apagados após a análise.
         </Text>
 
-        <View className="mt-4">
-          <ChipSelect<TipoVerificacao>
-            label="Tipo de verificação"
-            options={[
-              { value: 'identidade', label: 'Identidade' },
-              { value: 'profissional', label: 'Profissional' },
-            ]}
-            value={tipo}
-            onChange={setTipo}
+        {/* Tipo de verificação — determinado pelo tipo de conta, não escolhido aqui */}
+        <View className="mt-4 flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-3">
+          <Ionicons
+            name={tipo === 'profissional' ? 'briefcase-outline' : 'person-outline'}
+            size={18}
+            color={colors.primary[600]}
           />
+          <Text className="text-sm font-semibold text-fg">
+            {tipo === 'profissional' ? 'Verificação Profissional' : 'Verificação de Identidade'}
+          </Text>
         </View>
 
         <View className="mt-4">
