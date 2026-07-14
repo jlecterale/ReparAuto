@@ -47,7 +47,7 @@ export default function EditarPerfilScreen() {
 
   // The account type is chosen once, while completing the profile, and is locked
   // afterwards (also enforced by firestore.rules). Only send it before completion.
-  const contaBloqueada = user?.profileCompleted ?? false;
+  const accountTypeLocked = user?.profileCompleted ?? false;
 
   const distritos = getDistritos(country);
   const { concelhos, loading: cidadesLoading } = useConcelhos(distrito);
@@ -83,7 +83,7 @@ export default function EditarPerfilScreen() {
         morada: morada.trim(),
         nif: nif.trim(),
         bio: bio.trim(),
-        ...(contaBloqueada ? {} : { tipoConta }),
+        ...(accountTypeLocked ? {} : { tipoConta }),
         profileCompleted: true,
       });
       showToast('Perfil atualizado.', 'success');
@@ -103,7 +103,7 @@ export default function EditarPerfilScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Input label="Nome *" value={nome} onChangeText={setNome} placeholder="O seu nome" />
-        {contaBloqueada ? (
+        {accountTypeLocked ? (
           <View>
             <Text className="mb-1.5 text-sm font-semibold text-fg-muted">Tipo de conta</Text>
             <View className="flex-row items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-4 py-3.5">
