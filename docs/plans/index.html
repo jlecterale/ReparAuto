@@ -2293,7 +2293,14 @@ const extraPlans = [
     implemented: true, file: '25-campos-anuncio-standvirtual.html',
     impact: 'Ficha tecnica completa em paridade com a Standvirtual/OLX',
     summary: '16 campos opcionais (versao, mes da 1a matricula, origem, proprietarios anteriores, nº de mudanças, emissoes CO2, consumos urbano/extra/combinado, autonomia, estofos, nº de airbags, garantia, aceita financiamento, IVA dedutivel, aceita retoma) no formulario, na edicao do admin, na ficha tecnica e no JSON-LD, em ambas as plataformas.',
-    evidence: 'Entregue — carSpec estendido (+TDD), enums VehicleOrigin/Upholstery, TechnicalSheet e detalhe mobile com nova seccao "Condicoes comerciais", JSON-LD Vehicle enriquecido. Matricula e detalhes fiscais de nicho excluidos por privacidade/relevancia.'
+     evidence: 'Entregue — carSpec estendido (+TDD), enums VehicleOrigin/Upholstery, TechnicalSheet e detalhe mobile com nova seccao "Condicoes comerciais", JSON-LD Vehicle enriquecido. Matricula e detalhes fiscais de nicho excluidos por privacidade/relevancia.'
+  },
+  {
+    id: '26', title: 'Importacao Universal de Anuncios (Qualquer URL)', priority: 'ALTA', effort: '~16-22 dias',
+    implemented: false, file: '26-importacao-universal-anuncios.html',
+    impact: 'Expande o importador para qualquer URL de anuncio em Portugal e Brasil',
+    summary: 'Generaliza o importador do Plano 24 (Standvirtual) para aceitar qualquer URL de anuncio — OLX Portugal, OLX Brasil, Webmotors, Mercado Livre, CustoJusto e qualquer outro portal. Arquitetura de extracao em 4 camadas: parser dedicado → schema.org/JSON-LD → LLM (Gemini/Claude) → revisao manual. Reutiliza Rate Limiter, re-hospedagem de fotos e fluxo de moderacao existentes.',
+    evidence: 'Em investigacao — plano criado; sem implementacao no codigo.'
   }
 ];
 
