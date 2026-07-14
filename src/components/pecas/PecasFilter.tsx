@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import Button from '@/components/ui/Button';
 
 const filtros = [
@@ -36,6 +38,7 @@ export default function PecasFilter({ total }: { total: number }) {
   } = pecas;
 
   const { distritos, getConcelhos } = useDistritosConcelhos();
+  const { country } = useCountry();
   const [raioMode, setRaioMode] = useState(false);
   const [raioDist, setRaioDist] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -175,7 +178,7 @@ export default function PecasFilter({ total }: { total: number }) {
                   onChange={(e) => { setAdvDistrito(e.target.value); setAdvConcelho(''); }}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent"
                 >
-                  <option value="">Todos os distritos</option>
+                  <option value="">{term('districtAllOption', country)}</option>
                   {distritos.map((d) => (
                     <option key={d} value={d}>{d}</option>
                   ))}
@@ -186,7 +189,7 @@ export default function PecasFilter({ total }: { total: number }) {
                   disabled={!advDistrito}
                   className={`w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : ''}`}
                 >
-                  <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                  <option value="">{advDistrito ? term('municipalityAllOption', country) : term('districtSelectOption', country)}</option>
                   {getConcelhos(advDistrito).map((c) => (
                     <option key={c.nome} value={c.nome}>{c.nome}</option>
                   ))}
@@ -199,7 +202,7 @@ export default function PecasFilter({ total }: { total: number }) {
                   onChange={(e) => { setRaioDist(e.target.value); setAdvRaioCentro(''); }}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent"
                 >
-                  <option value="">Selecionar distrito</option>
+                  <option value="">{term('districtSelectOption', country)}</option>
                   {distritos.map((d) => (
                     <option key={d} value={d}>{d}</option>
                   ))}
@@ -210,7 +213,7 @@ export default function PecasFilter({ total }: { total: number }) {
                   disabled={!raioDist}
                   className={`w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : ''}`}
                 >
-                  <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                  <option value="">{raioDist ? 'Selecionar centro' : term('districtSelectOption', country)}</option>
                   {getConcelhos(raioDist).map((c) => (
                     <option key={c.nome} value={c.nome}>{c.nome}</option>
                   ))}

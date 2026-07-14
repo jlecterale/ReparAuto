@@ -9,8 +9,13 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
+import { getDistritos } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { criarIntencao } from '@/lib/trust';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
@@ -37,7 +42,12 @@ const CONTACTO: { value: ContatoPreferido; label: string }[] = [
 export default function CriarIntencaoScreen() {
   const { retomar } = useLocalSearchParams<{ retomar?: string }>();
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
+  // Market vocabulary: PT says distrito/€, BR says estado/R$.
+  const regionLabel = term('districtLabel', country);
+  const currencySymbol = getCurrencySymbol(country);
+  const distritos = getDistritos(country);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
@@ -94,7 +104,7 @@ export default function CriarIntencaoScreen() {
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título (ex.: Procuro Golf diesel).';
     if (!precoMax.trim() || Number.isNaN(Number(precoMax))) return 'Indique o preço máximo.';
-    if (!distrito.trim()) return 'Indique o distrito.';
+    if (!distrito.trim()) return `Indique o ${regionLabel.toLowerCase()}.`;
     return null;
   }
 
@@ -194,10 +204,17 @@ export default function CriarIntencaoScreen() {
 
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Preço máx. (€) *" value={precoMax} onChangeText={setPrecoMax} placeholder="15000" keyboardType="number-pad" />
+            <Input label={`Preço máx. (${currencySymbol}) *`} value={precoMax} onChangeText={setPrecoMax} placeholder="15000" keyboardType="number-pad" />
           </View>
           <View className="flex-1">
-            <Input label="Distrito *" value={distrito} onChangeText={setDistrito} placeholder="Porto" />
+            <SelectField
+              label={`${regionLabel} *`}
+              value={distrito}
+              onChange={setDistrito}
+              options={distritos}
+              placeholder={term('districtSelectOption', country)}
+              title={regionLabel}
+            />
           </View>
         </View>
 
@@ -214,7 +231,7 @@ export default function CriarIntencaoScreen() {
 
         <ChipSelect label="Como prefere ser contactado" options={CONTACTO} value={contato} onChange={setContato} />
         {contato !== 'chat' && (
-          <Input label="Telefone / WhatsApp" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+          <Input label={`${term('phoneLabel', country)} / WhatsApp`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
         )}
 
         <Button

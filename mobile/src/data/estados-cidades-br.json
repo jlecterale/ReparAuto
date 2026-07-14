@@ -1,0 +1,164 @@
+[
+  { "distrito": "Acre", "concelhos": [
+    { "nome": "Rio Branco", "lat": -9.97, "lng": -67.81 },
+    { "nome": "Cruzeiro do Sul", "lat": -7.63, "lng": -72.67 }
+  ]},
+  { "distrito": "Alagoas", "concelhos": [
+    { "nome": "Maceió", "lat": -9.66, "lng": -35.73 },
+    { "nome": "Arapiraca", "lat": -9.75, "lng": -36.66 }
+  ]},
+  { "distrito": "Amapá", "concelhos": [
+    { "nome": "Macapá", "lat": 0.03, "lng": -51.07 },
+    { "nome": "Santana", "lat": -0.06, "lng": -51.17 }
+  ]},
+  { "distrito": "Amazonas", "concelhos": [
+    { "nome": "Manaus", "lat": -3.1, "lng": -60.02 },
+    { "nome": "Parintins", "lat": -2.63, "lng": -56.73 },
+    { "nome": "Itacoatiara", "lat": -3.14, "lng": -58.44 }
+  ]},
+  { "distrito": "Bahia", "concelhos": [
+    { "nome": "Salvador", "lat": -12.97, "lng": -38.5 },
+    { "nome": "Feira de Santana", "lat": -12.27, "lng": -38.97 },
+    { "nome": "Vitória da Conquista", "lat": -14.86, "lng": -40.84 },
+    { "nome": "Camaçari", "lat": -12.7, "lng": -38.32 },
+    { "nome": "Juazeiro", "lat": -9.42, "lng": -40.5 },
+    { "nome": "Ilhéus", "lat": -14.79, "lng": -39.05 }
+  ]},
+  { "distrito": "Ceará", "concelhos": [
+    { "nome": "Fortaleza", "lat": -3.72, "lng": -38.54 },
+    { "nome": "Caucaia", "lat": -3.74, "lng": -38.65 },
+    { "nome": "Juazeiro do Norte", "lat": -7.21, "lng": -39.32 },
+    { "nome": "Sobral", "lat": -3.69, "lng": -40.35 }
+  ]},
+  { "distrito": "Distrito Federal", "concelhos": [
+    { "nome": "Brasília", "lat": -15.79, "lng": -47.88 }
+  ]},
+  { "distrito": "Espírito Santo", "concelhos": [
+    { "nome": "Vitória", "lat": -20.32, "lng": -40.34 },
+    { "nome": "Vila Velha", "lat": -20.33, "lng": -40.29 },
+    { "nome": "Serra", "lat": -20.13, "lng": -40.31 },
+    { "nome": "Cachoeiro de Itapemirim", "lat": -20.85, "lng": -41.11 }
+  ]},
+  { "distrito": "Goiás", "concelhos": [
+    { "nome": "Goiânia", "lat": -16.69, "lng": -49.26 },
+    { "nome": "Aparecida de Goiânia", "lat": -16.82, "lng": -49.24 },
+    { "nome": "Anápolis", "lat": -16.33, "lng": -48.95 },
+    { "nome": "Rio Verde", "lat": -17.79, "lng": -50.93 }
+  ]},
+  { "distrito": "Maranhão", "concelhos": [
+    { "nome": "São Luís", "lat": -2.53, "lng": -44.3 },
+    { "nome": "Imperatriz", "lat": -5.52, "lng": -47.48 },
+    { "nome": "Caxias", "lat": -4.86, "lng": -43.36 }
+  ]},
+  { "distrito": "Mato Grosso", "concelhos": [
+    { "nome": "Cuiabá", "lat": -15.6, "lng": -56.1 },
+    { "nome": "Várzea Grande", "lat": -15.65, "lng": -56.13 },
+    { "nome": "Rondonópolis", "lat": -16.47, "lng": -54.64 },
+    { "nome": "Sinop", "lat": -11.86, "lng": -55.5 }
+  ]},
+  { "distrito": "Mato Grosso do Sul", "concelhos": [
+    { "nome": "Campo Grande", "lat": -20.44, "lng": -54.65 },
+    { "nome": "Dourados", "lat": -22.22, "lng": -54.81 },
+    { "nome": "Três Lagoas", "lat": -20.75, "lng": -51.68 }
+  ]},
+  { "distrito": "Minas Gerais", "concelhos": [
+    { "nome": "Belo Horizonte", "lat": -19.92, "lng": -43.94 },
+    { "nome": "Uberlândia", "lat": -18.91, "lng": -48.28 },
+    { "nome": "Contagem", "lat": -19.93, "lng": -44.05 },
+    { "nome": "Juiz de Fora", "lat": -21.76, "lng": -43.35 },
+    { "nome": "Betim", "lat": -19.97, "lng": -44.2 },
+    { "nome": "Montes Claros", "lat": -16.73, "lng": -43.86 },
+    { "nome": "Uberaba", "lat": -19.75, "lng": -47.93 }
+  ]},
+  { "distrito": "Pará", "concelhos": [
+    { "nome": "Belém", "lat": -1.46, "lng": -48.5 },
+    { "nome": "Ananindeua", "lat": -1.37, "lng": -48.37 },
+    { "nome": "Santarém", "lat": -2.44, "lng": -54.71 },
+    { "nome": "Marabá", "lat": -5.35, "lng": -49.12 }
+  ]},
+  { "distrito": "Paraíba", "concelhos": [
+    { "nome": "João Pessoa", "lat": -7.12, "lng": -34.86 },
+    { "nome": "Campina Grande", "lat": -7.23, "lng": -35.88 }
+  ]},
+  { "distrito": "Paraná", "concelhos": [
+    { "nome": "Curitiba", "lat": -25.43, "lng": -49.27 },
+    { "nome": "Londrina", "lat": -23.31, "lng": -51.16 },
+    { "nome": "Maringá", "lat": -23.42, "lng": -51.93 },
+    { "nome": "Ponta Grossa", "lat": -25.09, "lng": -50.16 },
+    { "nome": "Cascavel", "lat": -24.96, "lng": -53.46 },
+    { "nome": "Foz do Iguaçu", "lat": -25.55, "lng": -54.59 }
+  ]},
+  { "distrito": "Pernambuco", "concelhos": [
+    { "nome": "Recife", "lat": -8.05, "lng": -34.88 },
+    { "nome": "Jaboatão dos Guararapes", "lat": -8.11, "lng": -35.01 },
+    { "nome": "Olinda", "lat": -8.01, "lng": -34.85 },
+    { "nome": "Caruaru", "lat": -8.28, "lng": -35.98 },
+    { "nome": "Petrolina", "lat": -9.39, "lng": -40.5 }
+  ]},
+  { "distrito": "Piauí", "concelhos": [
+    { "nome": "Teresina", "lat": -5.09, "lng": -42.8 },
+    { "nome": "Parnaíba", "lat": -2.9, "lng": -41.78 }
+  ]},
+  { "distrito": "Rio de Janeiro", "concelhos": [
+    { "nome": "Rio de Janeiro", "lat": -22.91, "lng": -43.17 },
+    { "nome": "São Gonçalo", "lat": -22.83, "lng": -43.05 },
+    { "nome": "Duque de Caxias", "lat": -22.79, "lng": -43.31 },
+    { "nome": "Nova Iguaçu", "lat": -22.76, "lng": -43.45 },
+    { "nome": "Niterói", "lat": -22.88, "lng": -43.1 },
+    { "nome": "Petrópolis", "lat": -22.51, "lng": -43.18 },
+    { "nome": "Campos dos Goytacazes", "lat": -21.75, "lng": -41.33 },
+    { "nome": "Volta Redonda", "lat": -22.52, "lng": -44.1 }
+  ]},
+  { "distrito": "Rio Grande do Norte", "concelhos": [
+    { "nome": "Natal", "lat": -5.79, "lng": -35.21 },
+    { "nome": "Mossoró", "lat": -5.19, "lng": -37.34 },
+    { "nome": "Parnamirim", "lat": -5.92, "lng": -35.26 }
+  ]},
+  { "distrito": "Rio Grande do Sul", "concelhos": [
+    { "nome": "Porto Alegre", "lat": -30.03, "lng": -51.23 },
+    { "nome": "Caxias do Sul", "lat": -29.17, "lng": -51.18 },
+    { "nome": "Pelotas", "lat": -31.77, "lng": -52.34 },
+    { "nome": "Canoas", "lat": -29.92, "lng": -51.18 },
+    { "nome": "Santa Maria", "lat": -29.68, "lng": -53.81 },
+    { "nome": "Gravataí", "lat": -29.94, "lng": -50.99 },
+    { "nome": "Novo Hamburgo", "lat": -29.68, "lng": -51.13 }
+  ]},
+  { "distrito": "Rondônia", "concelhos": [
+    { "nome": "Porto Velho", "lat": -8.76, "lng": -63.9 },
+    { "nome": "Ji-Paraná", "lat": -10.88, "lng": -61.95 }
+  ]},
+  { "distrito": "Roraima", "concelhos": [
+    { "nome": "Boa Vista", "lat": 2.82, "lng": -60.67 }
+  ]},
+  { "distrito": "Santa Catarina", "concelhos": [
+    { "nome": "Florianópolis", "lat": -27.6, "lng": -48.55 },
+    { "nome": "Joinville", "lat": -26.3, "lng": -48.85 },
+    { "nome": "Blumenau", "lat": -26.92, "lng": -49.07 },
+    { "nome": "Chapecó", "lat": -27.1, "lng": -52.62 },
+    { "nome": "Itajaí", "lat": -26.91, "lng": -48.66 },
+    { "nome": "Criciúma", "lat": -28.68, "lng": -49.37 }
+  ]},
+  { "distrito": "São Paulo", "concelhos": [
+    { "nome": "São Paulo", "lat": -23.55, "lng": -46.63 },
+    { "nome": "Guarulhos", "lat": -23.45, "lng": -46.53 },
+    { "nome": "Campinas", "lat": -22.91, "lng": -47.06 },
+    { "nome": "São Bernardo do Campo", "lat": -23.69, "lng": -46.56 },
+    { "nome": "Santo André", "lat": -23.67, "lng": -46.54 },
+    { "nome": "Osasco", "lat": -23.53, "lng": -46.79 },
+    { "nome": "São José dos Campos", "lat": -23.22, "lng": -45.9 },
+    { "nome": "Ribeirão Preto", "lat": -21.18, "lng": -47.81 },
+    { "nome": "Sorocaba", "lat": -23.5, "lng": -47.46 },
+    { "nome": "Santos", "lat": -23.96, "lng": -46.33 },
+    { "nome": "São José do Rio Preto", "lat": -20.82, "lng": -49.38 },
+    { "nome": "Bauru", "lat": -22.31, "lng": -49.06 },
+    { "nome": "Piracicaba", "lat": -22.72, "lng": -47.65 }
+  ]},
+  { "distrito": "Sergipe", "concelhos": [
+    { "nome": "Aracaju", "lat": -10.95, "lng": -37.07 },
+    { "nome": "Nossa Senhora do Socorro", "lat": -10.85, "lng": -37.13 }
+  ]},
+  { "distrito": "Tocantins", "concelhos": [
+    { "nome": "Palmas", "lat": -10.24, "lng": -48.36 },
+    { "nome": "Araguaína", "lat": -7.19, "lng": -48.21 }
+  ]}
+]

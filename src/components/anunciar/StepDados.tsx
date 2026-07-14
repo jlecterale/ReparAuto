@@ -18,6 +18,8 @@ import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import ToggleChip from '@/components/ui/ToggleChip';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 
@@ -45,6 +47,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   // Maps a field id to its error message (empty/absent = valid).
   const [erros, setErros] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  const { country } = useCountry();
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -190,7 +193,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Nº de mudanças', 'gears', { type: 'number', placeholder: 'Ex: 6', required: false, maxLength: 2 })}
             {/* Month of first registration — stored as 1–12, labelled by month name. */}
             <div>
-              <label className="block text-xs font-semibold text-fg-subtle mb-1">Mês da 1ª matrícula</label>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('firstRegistrationLabel', country)}</label>
               <select
                 value={dados.firstRegistrationMonth || ''}
                 onChange={(e) => atualizar('firstRegistrationMonth', e.target.value)}

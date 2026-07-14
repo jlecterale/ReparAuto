@@ -8,6 +8,7 @@ import { useApp } from '@/providers/AppProvider';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { addPecasBatch, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { getCoordenadas } from '@/lib/geo';
+import { getActiveCountry } from '@/lib/country';
 import { pickDefined } from '@/lib/compatibility';
 import type { CompatibilityEntry } from '@/types/peca';
 
@@ -117,7 +118,7 @@ export default function DesmancharCarroModal({ show, onClose }: Props) {
     try {
       const primaria = compatibilidades[0];
       const loteId = `lote-${Date.now()}-${newId()}`;
-      const coords = localizacao ? getCoordenadas(localizacao) : undefined;
+      const coords = localizacao ? getCoordenadas(localizacao, getActiveCountry()) : undefined;
       const marcaModelo = `${primaria.marca}${primaria.modelo ? ' ' + primaria.modelo : ''}`;
 
       const docs = validParts.map((p) => {

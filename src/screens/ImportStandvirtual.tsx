@@ -1,9 +1,10 @@
 'use client';
 
 import { CircleNotch, Info, LinkSimple, ListPlus, SignIn } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
+import { useCountry } from '@/providers/CountryProvider';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import SegmentedControl from '@/components/ui/SegmentedControl';
@@ -20,11 +21,18 @@ export default function ImportStandvirtual() {
   const router = useRouter();
   const { auth } = useApp();
   const { user, loading } = auth;
+  const { country } = useCountry();
 
   const [mode, setMode] = useState<ImportMode>('single');
   const [attested, setAttested] = useState(false);
 
-  if (loading) {
+  // Standvirtual is Portugal-only: send Brazilian-market visitors who reach
+  // this URL directly back to the listings instead of a dead-end importer.
+  useEffect(() => {
+    if (country === 'BR') router.replace('/app');
+  }, [country, router]);
+
+  if (loading || country === 'BR') {
     return (
       <div className="max-w-3xl mx-auto flex items-center justify-center py-20">
         <CircleNotch className="animate-spin text-3xl text-accent" />

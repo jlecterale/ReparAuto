@@ -66,6 +66,7 @@ export interface CarDraftData {
   vatDeductible: boolean;
   acceptsExchange: boolean;
   estado: EstadoVeiculo;
+  distrito: string;
   local: string;
   descricao: string;
   videoUrl: string;
@@ -83,6 +84,7 @@ export interface PartDraftData {
   modelo: string;
   preco: string;
   estado: string;
+  distrito: string;
   local: string;
   descricao: string;
   telefone: string;

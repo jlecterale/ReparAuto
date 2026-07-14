@@ -1,5 +1,8 @@
+'use client';
+
 import { Car, DownloadSimple, GearSix, type Icon } from '@phosphor-icons/react';
 import Link from 'next/link';
+import { useCountry } from '@/providers/CountryProvider';
 
 type CategoriaAnuncio = 'carro' | 'peca';
 
@@ -23,6 +26,8 @@ const opcoes: { value: CategoriaAnuncio; Icon: Icon; label: string; subtitulo: s
 ];
 
 export default function StepCategoria({ onSelect }: StepCategoriaProps) {
+  // Standvirtual import is a Portugal-only feature (no Brazilian equivalent yet).
+  const { country } = useCountry();
   return (
     <div>
       <h3 className="font-bold text-lg mb-1">O que pretende anunciar?</h3>
@@ -42,14 +47,16 @@ export default function StepCategoria({ onSelect }: StepCategoriaProps) {
         ))}
       </div>
 
-      <Link
-        href="/importar"
-        className="mt-4 flex items-center justify-center gap-2 p-3 border border-slate-200 bg-slate-50 rounded-xl hover:border-accent hover:bg-orange-50/30 transition text-sm"
-      >
-        <DownloadSimple className="text-accent" weight="bold" />
-        <span className="font-semibold text-fg">Já anuncia no Standvirtual?</span>
-        <span className="text-fg-muted">Importe os seus anúncios automaticamente</span>
-      </Link>
+      {country === 'PT' && (
+        <Link
+          href="/importar"
+          className="mt-4 flex items-center justify-center gap-2 p-3 border border-slate-200 bg-slate-50 rounded-xl hover:border-accent hover:bg-orange-50/30 transition text-sm"
+        >
+          <DownloadSimple className="text-accent" weight="bold" />
+          <span className="font-semibold text-fg">Já anuncia no Standvirtual?</span>
+          <span className="text-fg-muted">Importe os seus anúncios automaticamente</span>
+        </Link>
+      )}
     </div>
   );
 }

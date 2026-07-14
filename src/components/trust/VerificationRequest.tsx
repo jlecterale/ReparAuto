@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, type ReactNode } from 'react';
+import { useState, useRef, useMemo, useEffect, type ReactNode } from 'react';
 import {
   CheckCircle,
   Clock,
@@ -21,10 +21,12 @@ import { storage } from '@/lib/firebase';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import CameraCapture from '@/components/ui/CameraCapture';
+import { useCountry } from '@/providers/CountryProvider';
+import { documentosPermitidos } from '@/lib/verificationDocs';
+import { verificationTipoForConta } from '@/lib/verification';
 import type { AlertTipo } from '@/types/ui';
 import type { Verification, VerificationInput, TipoDocumento } from '@/types/verification';
 import type { TipoConta } from '@/types/usuario';
-import { verificationTipoForConta } from '@/lib/verification';
 
 interface VerificationRequestProps {
   uid: string;
@@ -38,12 +40,6 @@ interface VerificationRequestProps {
   onSubmit: (data: VerificationInput) => Promise<unknown>;
 }
 
-const TIPOS_DOCUMENTO: { value: TipoDocumento; label: string }[] = [
-  { value: 'cc', label: 'Cartão de Cidadão' },
-  { value: 'passaporte', label: 'Passaporte' },
-  { value: 'residencia', label: 'Título de Residência' },
-];
-
 export default function VerificationRequest({
   uid,
   email,
@@ -55,11 +51,19 @@ export default function VerificationRequest({
   loading,
   onSubmit,
 }: VerificationRequestProps) {
+  const { country } = useCountry();
   // The verification type is fixed by the account type — a professional account
   // does a professional verification, everyone else an identity one. It is not
   // chosen here (the account type can't be changed after signup).
   const tipo = verificationTipoForConta(tipoConta);
-  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>('cc');
+  // Accepted documents depend on the market and whether it's a personal or a
+  // professional (business) verification — see src/lib/verificationDocs.ts.
+  const documentos = useMemo(() => documentosPermitidos(country, tipo), [country, tipo]);
+  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>(documentos[0].value);
+  // Keep the selected document valid whenever the market or type changes the list.
+  useEffect(() => {
+    if (!documentos.some((d) => d.value === tipoDocumento)) setTipoDocumento(documentos[0].value);
+  }, [documentos, tipoDocumento]);
   const [docFile, setDocFile] = useState<File | null>(null);
   const [selfieFile, setSelfieFile] = useState<File | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -146,6 +150,7 @@ export default function VerificationRequest({
         uid,
         email,
         nome,
+        country,
         tipo,
         tipoDocumento,
         documentoUrl,
@@ -201,7 +206,7 @@ export default function VerificationRequest({
           onChange={(e) => setTipoDocumento(e.target.value as TipoDocumento)}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent bg-white"
         >
-          {TIPOS_DOCUMENTO.map((d) => (
+          {documentos.map((d) => (
             <option key={d.value} value={d.value}>{d.label}</option>
           ))}
         </select>
@@ -332,7 +337,7 @@ export default function VerificationRequest({
 
       <p className="text-[10px] text-fg-subtle text-center mt-2">
         <Lock className="mr-1" />
-        Os documentos são armazenados de forma segura e apagados após a verificação (RGPD).
+        Os documentos são armazenados de forma segura e apagados após a verificação ({country === 'BR' ? 'LGPD' : 'RGPD'}).
       </p>
 
       {cameraActiveFor && (
