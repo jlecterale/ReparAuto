@@ -81,6 +81,58 @@ export function getAllConcelhos(): string[] {
     .sort((a, b) => a.localeCompare(b, 'pt'));
 }
 
+// In-memory cache so repeated lookups of the same city (e.g. multiple users
+// publishing from Uberlândia in the same session) reuse the result.
+const geocodeCache = new Map<string, { lat: number; lng: number }>();
+
+/**
+ * Geocode a city/state pair via Nominatim (OpenStreetMap). Used as a fallback
+ * when the static dataset doesn't have coordinates for the city (e.g. most
+ * Brazilian municipalities beyond the ~108 curated ones).
+ *
+ * Nominatim's usage policy requires a meaningful User-Agent and max 1 req/s.
+ * This is called at publish time (user action), so the rate limit is fine.
+ */
+export async function geocodeAddress(
+  city: string,
+  state: string,
+  country: Country,
+): Promise<{ lat: number; lng: number } | null> {
+  if (!city || city.length > 200) return null;
+
+  const cacheKey = `${city.toLowerCase()}|${state.toLowerCase()}|${country}`;
+  const cached = geocodeCache.get(cacheKey);
+  if (cached) return cached;
+
+  const countryName = country === 'PT' ? 'Portugal' : 'Brasil';
+  const query = state ? `${city}, ${state}, ${countryName}` : `${city}, ${countryName}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`,
+      { headers: { 'User-Agent': 'RecarGarage/1.0' }, signal: controller.signal },
+    );
+    if (!res.ok) return null;
+    const data: Array<{ lat: string; lon: string }> = await res.json();
+    if (data.length === 0) return null;
+
+    const lat = parseFloat(data[0].lat);
+    const lng = parseFloat(data[0].lon);
+    if (!isFinite(lat) || !isFinite(lng)) return null;
+
+    const result = { lat, lng };
+    geocodeCache.set(cacheKey, result);
+    return result;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function haversineKm(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number }
