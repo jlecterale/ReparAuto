@@ -11,7 +11,7 @@ import { useChat } from '@/hooks/useChat';
 import { useIntencoes } from '@/hooks/useIntencoes';
 import LoginModal from '@/components/auth/LoginModal';
 import { useCountry } from '@/providers/CountryProvider';
-import { docCountry } from '@/lib/country';
+import { accountLockCountry } from '@/lib/country';
 import type { AppContextValue, OpenLoginOptions } from '@/types/app';
 import { subscribePremiumConfig } from '@/lib/db';
 import type { PremiumConfig } from '@/types/usuario';
@@ -77,9 +77,10 @@ export default function AppProvider({ children }: { children: ReactNode }) {
 
   // Accounts belong to one market (plan 20): while signed in, the active
   // country is bound to the account's country (legacy accounts resolve to PT)
-  // and the selector locks. Anonymous visitors keep the free selector.
+  // and the selector locks. Anonymous visitors keep the free selector — and so
+  // do admins, who moderate every market (accountLockCountry returns null).
   const { setCountry, setLocked } = useCountry();
-  const accountCountry = auth.user ? docCountry(auth.user) : null;
+  const accountCountry = accountLockCountry(auth.user);
   useEffect(() => {
     if (auth.loading) return;
     if (accountCountry) {

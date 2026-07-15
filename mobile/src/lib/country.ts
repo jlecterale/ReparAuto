@@ -42,6 +42,19 @@ export function docCountry(doc: { country?: string | null }): Country {
 }
 
 /**
+ * The market a signed-in account locks the selector to, or null when nothing
+ * should lock. Regular accounts belong to one market (legacy accounts resolve
+ * to PT); admins moderate every market, so they keep the free selector and
+ * are never locked. Anonymous visitors (null) aren't locked either.
+ */
+export function accountLockCountry(
+  user: { country?: string | null; role?: string | null } | null | undefined,
+): Country | null {
+  if (!user || user.role === 'admin') return null;
+  return docCountry(user);
+}
+
+/**
  * Safely parse a country preference read from storage (AsyncStorage here).
  * Returns null when nothing is stored or the payload is malformed, so the
  * caller can fall back to GeoIP detection or DEFAULT_COUNTRY.

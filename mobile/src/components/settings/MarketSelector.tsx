@@ -8,7 +8,8 @@ import { colors } from '@/theme/colors';
  * Market (country) picker card — shared by Definições and the logged-out
  * Perfil tab. Signed-in accounts belong to one market (AccountCountrySync
  * locks the selector), so the chips render disabled with a note; anonymous
- * visitors can switch freely.
+ * visitors can switch freely, and so can admins (never locked — they
+ * moderate every market).
  */
 export function MarketSelector({ className = '' }: { className?: string }) {
   const { country, setCountry, locked } = useCountry();
