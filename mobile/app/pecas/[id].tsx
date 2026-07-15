@@ -13,6 +13,7 @@ import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
@@ -123,6 +124,7 @@ export default function DetalhesPecaScreen() {
         )}
 
         <View className="p-4">
+          <ListingStatusBanner status={peca.status} isOwner={ehDono} />
           <View className="self-start rounded bg-primary-100 px-2 py-0.5">
             <Text className="text-xs font-bold text-primary-700">
               {TIPO_PECA_LABELS[peca.tipo]}

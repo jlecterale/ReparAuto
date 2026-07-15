@@ -146,7 +146,7 @@ export default function CriarIntencaoScreen() {
       setSubmitted(true);
       Alert.alert(
         'Procura enviada',
-        'A sua procura foi submetida e ficará visível após aprovação.',
+        'A sua procura foi submetida e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',

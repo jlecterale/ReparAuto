@@ -176,7 +176,7 @@ export default function RegistarOficinaScreen() {
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
-        'O registo foi submetido e ficará visível após aprovação.',
+        'O registo foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',

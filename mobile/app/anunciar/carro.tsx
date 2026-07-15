@@ -428,7 +428,7 @@ export default function AnunciarCarroScreen() {
 
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
-        'O seu anúncio foi submetido e ficará visível após aprovação.',
+        'O seu anúncio foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',

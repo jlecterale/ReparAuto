@@ -190,7 +190,7 @@ export default function AnunciarPecaScreen() {
 
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',
-        'A sua peça foi submetida e ficará visível após aprovação.',
+        'A sua peça foi submetida e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',
