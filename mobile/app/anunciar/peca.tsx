@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { LocationSelect } from '@/components/ui/LocationSelect';
+import { CepAutofillInput } from '@/components/ui/CepAutofillInput';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
@@ -270,6 +271,14 @@ export default function AnunciarPecaScreen() {
 
         {/* "da peça" disambiguates from the BR region picker ("Estado") below. */}
         <ChipSelect label="Estado da peça" options={ESTADOS} value={estado} onChange={setEstado} />
+        <CepAutofillInput
+          city={local}
+          onFound={(a) => {
+            setDistrito(a.state);
+            setLocal(a.city);
+            setBairro(a.neighborhood);
+          }}
+        />
         <LocationSelect
           distrito={distrito}
           localidade={local}

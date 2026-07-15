@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { LocationSelect } from '@/components/ui/LocationSelect';
+import { CepAutofillInput } from '@/components/ui/CepAutofillInput';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
@@ -238,6 +239,16 @@ export default function RegistarOficinaScreen() {
         />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Localização</Text>
+        <CepAutofillInput
+          city={localidade}
+          onFound={(a) => {
+            setDistrito(a.state);
+            setLocalidade(a.city);
+            setBairro(a.neighborhood);
+            // Keep a street the owner already typed (e.g. with door number).
+            if (a.street) setMorada((prev) => prev || a.street);
+          }}
+        />
         <LocationSelect
           distrito={distrito}
           localidade={localidade}

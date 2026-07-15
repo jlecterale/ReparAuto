@@ -17,6 +17,7 @@ import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CepAutofillField from '@/components/ui/CepAutofillField';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
@@ -161,6 +162,15 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
         {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
+          <CepAutofillField
+            city={dados.localizacao}
+            onFound={(a) => {
+              atualizar('localizacaoDistrito', a.state);
+              atualizar('localizacao', a.city);
+              atualizar('bairro', a.neighborhood);
+            }}
+            className="mb-3"
+          />
           <SeletorLocalizacao
             distrito={dados.localizacaoDistrito}
             concelho={dados.localizacao}

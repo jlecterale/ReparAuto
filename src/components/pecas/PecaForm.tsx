@@ -12,6 +12,7 @@ import { getActiveCountry } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CepAutofillField from '@/components/ui/CepAutofillField';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
@@ -379,6 +380,15 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
           O número OEM ajuda compradores a confirmar compatibilidade exata.
         </p>
       </div>
+
+      <CepAutofillField
+        city={form.localizacao}
+        onFound={(a) => {
+          atualizar('localizacaoDistrito', a.state);
+          atualizar('localizacao', a.city);
+          atualizar('bairro', a.neighborhood);
+        }}
+      />
 
       <div>
         <label className="block text-xs font-bold text-fg-subtle mb-1">Localização</label>

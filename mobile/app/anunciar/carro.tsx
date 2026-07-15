@@ -11,6 +11,7 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { LocationSelect } from '@/components/ui/LocationSelect';
+import { CepAutofillInput } from '@/components/ui/CepAutofillInput';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
@@ -763,6 +764,14 @@ export default function AnunciarCarroScreen() {
           onToggle={(key) => setComercial((prev) => ({ ...prev, [key]: !prev[key] }))}
         />
 
+        <CepAutofillInput
+          city={local}
+          onFound={(a) => {
+            setDistrito(a.state);
+            setLocal(a.city);
+            setBairro(a.neighborhood);
+          }}
+        />
         <LocationSelect
           distrito={distrito}
           localidade={local}

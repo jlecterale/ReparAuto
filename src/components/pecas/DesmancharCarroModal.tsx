@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CepAutofillField from '@/components/ui/CepAutofillField';
 import { useApp } from '@/providers/AppProvider';
 import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
 import { addPecasBatch, getAdminUsers, criarNotificacao } from '@/lib/db';
@@ -199,6 +200,14 @@ export default function DesmancharCarroModal({ show, onClose }: Props) {
                 className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
               />
             </div>
+
+            <CepAutofillField
+              city={localizacao}
+              onFound={(a) => {
+                setLocalizacaoDistrito(a.state);
+                setLocalizacao(a.city);
+              }}
+            />
 
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Localização</label>

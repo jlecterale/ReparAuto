@@ -12,6 +12,7 @@ import { useAdDraft } from '@/hooks/useAdDraft';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import CepAutofillField from '@/components/ui/CepAutofillField';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import Button from '@/components/ui/Button';
@@ -433,6 +434,17 @@ export default function RegistarOficina() {
               Localização & Mapa
             </h3>
             
+            <CepAutofillField
+              city={localidade}
+              onFound={(a) => {
+                setDistrito(a.state);
+                setLocalidade(a.city);
+                setBairro(a.neighborhood);
+                // Keep a street the owner already typed (e.g. with door number).
+                if (a.street) setMorada((prev) => prev || a.street);
+              }}
+            />
+
             <SeletorLocalizacao
               distrito={distrito}
               concelho={localidade}
