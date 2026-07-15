@@ -13,6 +13,8 @@ import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
+import AudioAdAssistant from '@/components/anunciar/AudioAdAssistant';
+import { applyPartAudioFieldsToForm, partCompatibilityFromAudio } from '@/lib/audioListingForm';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
 import { clearAdDraft, hasPartDraftContent, saveAdDraft } from '@/lib/adDraft';
@@ -254,6 +256,17 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
 
   return (
     <div className="space-y-4">
+      <AudioAdAssistant
+        kind="peca"
+        onFields={(fields) => {
+          setForm((prev) => applyPartAudioFieldsToForm(prev, fields));
+          const compat = partCompatibilityFromAudio(fields);
+          if (compat) {
+            setCompatibilidades((prev) => (prev.length === 0 ? [compat] : prev));
+          }
+          setErro('');
+        }}
+      />
       <div>
         <label className="block text-xs font-bold text-fg-subtle mb-2">
           O QUE PRETENDE ANUNCIAR? <span className="text-red-500">*</span>

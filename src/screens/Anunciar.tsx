@@ -18,6 +18,9 @@ import { useAdDraft } from '@/hooks/useAdDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
 import StepCategoria from '@/components/anunciar/StepCategoria';
 import StepFotos from '@/components/anunciar/StepFotos';
+import AudioAdAssistant from '@/components/anunciar/AudioAdAssistant';
+import AudioAdIntroModal from '@/components/anunciar/AudioAdIntroModal';
+import { applyCarAudioFieldsToForm } from '@/lib/audioListingForm';
 import StepDados from '@/components/anunciar/StepDados';
 import StepPreco from '@/components/anunciar/StepPreco';
 import PecaForm, { type PecaFormDraft } from '@/components/pecas/PecaForm';
@@ -312,6 +315,7 @@ export default function Anunciar() {
 
   return (
     <div className="max-w-3xl mx-auto page-enter">
+      <AudioAdIntroModal />
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
         <h2 className="text-2xl font-extrabold text-fg-heading mb-1">{titulo}</h2>
         <p className={`text-fg-subtle text-sm ${categoria === 'carro' && passo >= 1 ? 'mb-1' : 'mb-5'}`}>{subtitulo}</p>
@@ -326,16 +330,25 @@ export default function Anunciar() {
             <StepIndicator passoAtual={passo} />
 
             {passo === 1 && (
-              <StepFotos
-                fotos={fotos}
-                setFotos={setFotos}
-                filesRef={pendingFilesRef}
-                angleByPhoto={angleByPhoto}
-                onAngleByPhotoChange={setAngleByPhoto}
-                persistFiles
-                onNext={() => setPasso(2)}
-                onBack={() => { setCategoria(null); setPasso(0); }}
-              />
+              <>
+                {/* First step after choosing "carro": describe the car by voice
+                    and the whole form is pre-filled — only the photos remain. */}
+                <AudioAdAssistant
+                  kind="carro"
+                  className="mb-5"
+                  onFields={(fields) => setDados((prev) => applyCarAudioFieldsToForm(prev, fields))}
+                />
+                <StepFotos
+                  fotos={fotos}
+                  setFotos={setFotos}
+                  filesRef={pendingFilesRef}
+                  angleByPhoto={angleByPhoto}
+                  onAngleByPhotoChange={setAngleByPhoto}
+                  persistFiles
+                  onNext={() => setPasso(2)}
+                  onBack={() => { setCategoria(null); setPasso(0); }}
+                />
+              </>
             )}
             {passo === 2 && (
               <StepDados

@@ -27,6 +27,7 @@ import {
   Handshake,
   UserPlus,
   Target,
+  Microphone,
   DownloadSimple,
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
@@ -127,6 +128,11 @@ const ECOSYSTEM_ITEMS = [
 ];
 
 const FEATURES = [
+  {
+    icon: Microphone,
+    title: 'Anuncie por Voz (Novo)',
+    description: 'Grave um áudio a descrever o carro ou a peça e a nossa IA preenche o anúncio por si — no fim, só faltam as fotos.',
+  },
   {
     icon: CurrencyEur,
     title: 'Gratuito para Particulares',
@@ -411,7 +417,10 @@ export default function LandingPage() {
               style={{ animationDelay: '200ms' }}
             >
               Carros, peças, mecânicos e oficinas — tudo ligado num só lugar.
-              Simples, rápido e gratuito para particulares.
+              Simples, rápido e gratuito para particulares.{' '}
+              <span className="text-white/90 font-semibold">
+                Agora pode criar o anúncio só a falar.
+              </span>
             </p>
 
             {/* CTAs */}

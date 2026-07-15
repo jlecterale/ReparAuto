@@ -25,6 +25,12 @@
       "skillPath": "skills/firebase-firestore/SKILL.md",
       "computedHash": "be5ed12b7402b1f36364e20d4f9ccd2caac90302e23427395a02570db9f1434a"
     },
+    "gemini-interactions-api": {
+      "source": "google-gemini/gemini-skills",
+      "sourceType": "github",
+      "skillPath": "skills/gemini-interactions-api/SKILL.md",
+      "computedHash": "d823975c4eb6d5a65525025d47386ee6008c11132e794c16935687f7ce85e10f"
+    },
     "idea-refine": {
       "source": "addyosmani/agent-skills",
       "sourceType": "github",

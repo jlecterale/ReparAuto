@@ -4,6 +4,19 @@ import type { Country } from '@/lib/country';
 import type { CategoriaIntencao } from '@/types/intencao';
 import type { Condition, Traction, VehicleOrigin, Upholstery } from '@/types/carro';
 
+// Listing option lists live in the dependency-light listingOptions.ts (safe for
+// server code); re-exported here so existing imports keep working.
+export {
+  CATEGORIAS_PECAS,
+  CONDICOES_VEICULO,
+  EQUIPAMENTOS_CARRO,
+  ESTADOS_PECA,
+  TIPOS_CAMBIO,
+  TIPOS_CARROCERIA,
+  TIPOS_COMBUSTIVEL,
+  TIPOS_TRACAO,
+} from '@/lib/listingOptions';
+
 // ============ CONSTANTES REPARAUTO ============
 
 // Limites
@@ -15,8 +28,6 @@ export {
   MAX_FOTOS_CARRO,
   MAX_FOTO_SIZE_MB,
   MAX_FOTO_SIZE_BYTES,
-  TIPOS_CARROCERIA,
-  EQUIPAMENTOS_CARRO,
 } from '@/lib/listingOptions';
 // Every listing photo is cropped to this aspect ratio (width / height) so cards
 // and galleries render uniformly — 4:3 is the automotive-marketplace standard.
@@ -51,19 +62,6 @@ export const TEMPO_EXPIRACAO_INTENCAO_MS = 90 * 24 * 60 * 60 * 1000;
 // Listas
 export const CONCELHOS = getAllConcelhos();
 
-export const TIPOS_COMBUSTIVEL = [
-  'Gasolina', 'Etanol', 'Flex', 'Diesel', 'Elétrico', 'Híbrido',
-];
-
-export const TIPOS_CAMBIO = ['Manual', 'Automático', 'CVT'];
-
-// Vehicle condition. "Para peças" bridges the car and parts marketplaces.
-export const CONDICOES_VEICULO: readonly Condition[] = ['Novo', 'Usado', 'Para peças'];
-
-// Drivetrain / traction.
-export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
-
-// Vehicle origin — national vs. imported (Standvirtual "origin").
 export const ORIGENS_VEICULO: readonly VehicleOrigin[] = ['Nacional', 'Importado'];
 
 // Upholstery / interior material (Standvirtual "upholstery").
@@ -74,25 +72,6 @@ export const MESES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
-
-export const CATEGORIAS_PECAS = [
-  'Motor e Transmissão',
-  'Carroçaria e Chaparia',
-  'Iluminação e Óticas',
-  'Interior e Bancos',
-  'Suspensão e Travões',
-  'Eletrónica e Sensores',
-  'Carro Completo p/ Desmonte',
-  'Outros',
-];
-
-export const ESTADOS_PECA = [
-  'Usado (Segunda Mão)',
-  'Novo (Em caixa)',
-  'Reconstruído / Recondicionado',
-  'Indiferente (Procura)',
-];
-
 export const TIPOS_MANUTENCAO = [
   'Mecânica',
   'Elétrica',

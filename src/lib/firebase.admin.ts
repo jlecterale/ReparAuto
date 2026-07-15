@@ -55,5 +55,4 @@ export function getAdminBucket(): ReturnType<Storage['bucket']> | null {
     return null;
   }
 }
-
 export const ADMIN_PROJECT_ID = PROJECT_ID;
