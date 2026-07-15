@@ -40,7 +40,7 @@ export const EQUIPAMENTOS_CARRO = [
   'GPS / Navegação',
   'Bluetooth',
   'Cruise control',
-  'Bancos em pele',
+  'Bancos de couro',
   'Bancos aquecidos',
   'Teto de abrir',
   'Jantes de liga leve',

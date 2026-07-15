@@ -5,7 +5,7 @@
 
 export type Country = 'PT' | 'BR';
 
-export const DEFAULT_COUNTRY: Country = 'PT';
+export const DEFAULT_COUNTRY: Country = 'BR';
 
 export const COUNTRIES: Country[] = ['PT', 'BR'];
 

@@ -67,7 +67,7 @@ export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Inte
 export const ORIGENS_VEICULO: readonly VehicleOrigin[] = ['Nacional', 'Importado'];
 
 // Upholstery / interior material (Standvirtual "upholstery").
-export const TIPOS_ESTOFO: readonly Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO: readonly Upholstery[] = ['Tecido', 'Couro', 'Couro sintético', 'Alcântara', 'Outro'];
 
 // Month labels for the first-registration selector — index + 1 is the stored value.
 export const MESES = [

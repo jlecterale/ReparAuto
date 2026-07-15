@@ -41,7 +41,7 @@ export const TIPOS_TRACAO: Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4
 export const ORIGENS_VEICULO: VehicleOrigin[] = ['Nacional', 'Importado'];
 
 // Upholstery / interior material (mirrors web `TIPOS_ESTOFO`).
-export const TIPOS_ESTOFO: Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO: Upholstery[] = ['Tecido', 'Couro', 'Couro sintético', 'Alcântara', 'Outro'];
 
 // Month labels for the first-registration selector — index + 1 is the stored value.
 export const MESES = [
@@ -61,7 +61,7 @@ export const EQUIPAMENTOS_CARRO = [
   'GPS / Navegação',
   'Bluetooth',
   'Cruise control',
-  'Bancos em pele',
+  'Bancos de couro',
   'Bancos aquecidos',
   'Teto de abrir',
   'Jantes de liga leve',
