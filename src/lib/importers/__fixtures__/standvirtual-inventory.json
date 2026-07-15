@@ -1,0 +1,14 @@
+{
+ "props": {
+  "pageProps": {
+   "subdomain": "nicolacar",
+   "name": "Stand Exemplo",
+   "urqlState": {
+    "-7374933697": {
+     "hasNext": false,
+     "data": "{\"publishedAds\": {\"pageInfo\": {\"offset\": 0, \"limit\": 30, \"__typename\": \"OffsetPageInfo\"}, \"total\": 34, \"__typename\": \"PublishedAdsOutput\", \"ads\": [{\"id\": \"8097585614\", \"title\": \"Peugeot 308 SW 1.2 PureTech Allure Pack EAT8\", \"url\": \"https://www.standvirtual.com/carros/anuncio/peugeot-308-sw-ver-1-2-puretech-allure-pack-eat8-ID8Q0DWA.html\", \"__typename\": \"Ad\"}, {\"id\": \"8097580658\", \"title\": \"Volvo C40 Recharge Twin Motor Core\", \"url\": \"https://www.standvirtual.com/carros/anuncio/volvo-c40-ver-recharge-twin-motor-core-ID8Q0CDE.html\", \"__typename\": \"Ad\"}, {\"id\": \"8097580655\", \"title\": \"Kia e-Niro 64kWh\", \"url\": \"https://www.standvirtual.com/carros/anuncio/kia-e-niro-ver-e-niro-64kwh-ID8Q0CDB.html\", \"__typename\": \"Ad\"}]}}"
+    }
+   }
+  }
+ }
+}

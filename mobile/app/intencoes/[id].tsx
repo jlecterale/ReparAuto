@@ -4,8 +4,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { getIntencaoById } from '@/lib/trust';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { CATEGORIA_INTENCAO_LABELS, type IntencaoCompra } from '@/types';
@@ -46,6 +48,7 @@ export default function IntencaoDetailScreen() {
   }
 
   const c = intencao.criterios;
+  const ehDono = !!user && intencao.userId === user.uid;
   const podeContactar = intencao.userId !== user?.uid;
   const mostraTel = intencao.mostrarTelefone && intencao.vendedorTelefone;
 
@@ -53,6 +56,7 @@ export default function IntencaoDetailScreen() {
     <View className="flex-1 bg-neutral-50">
       <Stack.Screen options={{ title: intencao.titulo }} />
       <ScrollView contentContainerClassName="p-4 pb-28">
+        <ListingStatusBanner status={intencao.status} isOwner={ehDono} />
         <View className="self-start rounded bg-primary-100 px-2 py-0.5">
           <Text className="text-xs font-bold text-primary-700">
             {CATEGORIA_INTENCAO_LABELS[intencao.categoria]}
@@ -76,14 +80,18 @@ export default function IntencaoDetailScreen() {
           <Spec
             icon="cash-outline"
             label="Preço máx."
-            value={c?.precoMaximo ? formatPreco(c.precoMaximo) : '—'}
+            value={c?.precoMaximo ? formatPreco(c.precoMaximo, docCountry(intencao)) : '—'}
           />
           <Spec
             icon="speedometer-outline"
             label="Km máx."
             value={c?.quilometragemMaxima ? formatKm(c.quilometragemMaxima) : '—'}
           />
-          <Spec icon="location-outline" label="Distrito" value={c?.localizacao?.distrito || '—'} />
+          <Spec
+            icon="location-outline"
+            label={docCountry(intencao) === 'BR' ? 'Estado' : 'Distrito'}
+            value={c?.localizacao?.distrito || '—'}
+          />
         </View>
 
         {!!c?.combustivel?.length && (

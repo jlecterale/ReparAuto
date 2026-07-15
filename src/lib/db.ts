@@ -9,6 +9,7 @@ import {
   query,
   orderBy,
   where,
+  limit,
   setDoc,
   writeBatch,
   Timestamp,
@@ -16,11 +17,13 @@ import {
   increment,
   deleteField,
   type DocumentData,
+  type DocumentReference,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
 import { lisbonDateKey, lisbonDateWindow } from './dates';
+import { docCountry, getActiveCountry } from '@/lib/country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -30,11 +33,18 @@ import type { Review, ReviewInput, StatusReview } from '@/types/review';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
-import type { Proposta, PropostaInput, StatusProposta } from '@/types/proposal';
 import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { Banner, BannerInput } from '@/types/banner';
 import type { Client, ClientInput } from '@/types/client';
+import type { AlertSubscription, AlertSubscriptionInput, NotificationPreferences } from '@/types/alertas';
+import {
+  MAX_ALERT_SUBSCRIPTIONS,
+  MAX_ALERT_TEXT_LENGTH,
+  normalizeNotificationPreferences,
+  sanitizeAlertSubscriptionInput,
+  sanitizeAlertText,
+} from './alerts';
 
 const CARROS_COLLECTION = 'cars';
 const PECAS_COLLECTION = 'parts';
@@ -54,18 +64,6 @@ function sortByDataCriacaoDesc<T extends { dataCriacao?: { toMillis?: () => numb
   return sortByTimestampDesc(items, (i) => i.dataCriacao);
 }
 
-
-export async function getCarros(): Promise<Carro[]> {
-  try {
-    const q = query(collection(db, CARROS_COLLECTION), where('status', '==', 'aprovado'));
-    const snap = await getDocs(q);
-    const todos = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Carro));
-    return sortByDataCriacaoDesc(todos);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar carros:', err);
-    return [];
-  }
-}
 
 export function subscribeCarros(
   onData: (carros: Carro[]) => void,
@@ -113,11 +111,12 @@ export async function getCarroPorId(id: string): Promise<Carro | null> {
 export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
   try {
     const docRef = await addDoc(collection(db, CARROS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Carro;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Carro;
   } catch (err) {
     console.error('[DB] Erro ao adicionar carro:', err);
     throw err;
@@ -130,18 +129,6 @@ export async function deleteCarro(id: string): Promise<void> {
   } catch (err) {
     console.error('[DB] Erro ao eliminar carro:', err);
     throw err;
-  }
-}
-
-export async function getPecas(): Promise<Peca[]> {
-  try {
-    const q = query(collection(db, PECAS_COLLECTION), where('status', '==', 'aprovado'));
-    const snap = await getDocs(q);
-    const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    return sortByDataCriacaoDesc(todas);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar peças:', err);
-    return [];
   }
 }
 
@@ -191,11 +178,12 @@ export async function getPecaPorId(id: string): Promise<Peca | null> {
 export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   try {
     const docRef = await addDoc(collection(db, PECAS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
     throw err;
@@ -210,7 +198,7 @@ export async function addPecasBatch(dadosList: Record<string, unknown>[]): Promi
     const now = Timestamp.now();
     for (const dados of dadosList) {
       const ref = doc(collection(db, PECAS_COLLECTION));
-      batch.set(ref, { ...dados, status: 'pendente', dataCriacao: now });
+      batch.set(ref, { country: getActiveCountry(), ...dados, status: 'pendente', dataCriacao: now });
       ids.push(ref.id);
     }
     await batch.commit();
@@ -252,6 +240,7 @@ export async function createUserProfile(uid: string, data: Record<string, unknow
   try {
     const userRef = doc(db, USERS_COLLECTION, uid);
     await setDoc(userRef, {
+      country: getActiveCountry(),
       ...data,
       dataCriacao: Timestamp.now(),
       dataAtualizacao: Timestamp.now(),
@@ -303,6 +292,30 @@ export async function setUserRole(uid: string, role: Role): Promise<void> {
     await setDoc(userRef, { role, dataAtualizacao: Timestamp.now() }, { merge: true });
   } catch (err) {
     console.error('[DB] Erro ao alterar role:', err);
+    throw err;
+  }
+}
+
+/**
+ * Admin ban toggle. Sets the `banned` flag on the user doc; firestore.rules
+ * (isNotBanned) then blocks the account from posting listings, messaging and
+ * reviewing. Reversible — unbanning clears the timestamp and reason.
+ */
+export async function setUserBanned(uid: string, banned: boolean, reason?: string): Promise<void> {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, uid);
+    await setDoc(
+      userRef,
+      {
+        banned,
+        bannedAt: banned ? Timestamp.now() : null,
+        bannedReason: banned ? (reason ?? null) : null,
+        dataAtualizacao: Timestamp.now(),
+      },
+      { merge: true },
+    );
+  } catch (err) {
+    console.error('[DB] Erro ao banir/desbanir utilizador:', err);
     throw err;
   }
 }
@@ -420,44 +433,6 @@ export async function updatePecaStatus(id: string, status: StatusAnuncio): Promi
   }
 }
 
-export async function matchAndNotifyForPeca(peca: Peca): Promise<number> {
-  try {
-    if (peca.tipo === 'procura') return 0;
-    const { pecasShareCompatibility } = await import('./compatibility');
-    const constraints = [
-      where('status', '==', 'aprovado'),
-      where('tipo', '==', 'procura'),
-    ];
-    if (peca.categoria) {
-      constraints.push(where('categoria', '==', peca.categoria));
-    }
-    const qProcuras = query(collection(db, PECAS_COLLECTION), ...constraints);
-    const snap = await getDocs(qProcuras);
-    const procuras = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Peca));
-    const matches = procuras.filter(
-      (p) => p.criadorUid && p.criadorUid !== peca.criadorUid && pecasShareCompatibility(peca, p),
-    );
-    const seen = new Set<string>();
-    let notified = 0;
-    for (const procura of matches) {
-      if (!procura.criadorUid || seen.has(procura.criadorUid)) continue;
-      seen.add(procura.criadorUid);
-      await criarNotificacao(
-        procura.criadorUid,
-        'info',
-        'Peça encontrada para o seu pedido!',
-        `"${peca.titulo}" corresponde ao seu pedido "${procura.titulo}".`,
-        `/pecas?peca=${peca.id}`,
-      );
-      notified++;
-    }
-    return notified;
-  } catch (err) {
-    console.error('[DB] Erro em matchAndNotifyForPeca:', err);
-    return 0;
-  }
-}
-
 export async function countProcurasForPeca(peca: Peca): Promise<number> {
   try {
     const { pecasShareCompatibility } = await import('./compatibility');
@@ -528,20 +503,11 @@ export async function criarNotificacao(
   }
 }
 
-export async function getNotificacoes(uid: string): Promise<Notificacao[]> {
-  try {
-    const q = query(
-      collection(db, NOTIFICACOES_COLLECTION),
-      where('uid', '==', uid),
-    );
-    const snap = await getDocs(q);
-    const notificacoes = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Notificacao));
-    return sortByDataCriacaoDesc(notificacoes);
-  } catch (err) {
-    console.error('[DB] Erro ao buscar notificações:', err);
-    return [];
-  }
-}
+// Notifications accumulate forever, so the stream is capped to the most
+// recent page instead of downloading the user's whole history on every
+// session. Requires the (uid ASC, dataCriacao DESC) composite index —
+// deploy indexes before shipping this code.
+const NOTIFICATIONS_PAGE_SIZE = 50;
 
 export function subscribeNotificacoes(
   uid: string,
@@ -551,6 +517,8 @@ export function subscribeNotificacoes(
   const q = query(
     collection(db, NOTIFICACOES_COLLECTION),
     where('uid', '==', uid),
+    orderBy('dataCriacao', 'desc'),
+    limit(NOTIFICATIONS_PAGE_SIZE),
   );
   return onSnapshot(
     q,
@@ -808,6 +776,9 @@ export async function addReview(data: ReviewInput): Promise<Review> {
   }
 }
 
+// Review queries filter status server-side with equality-only constraints
+// (served by merging single-field indexes — no composite index needed) and
+// sort in memory, so pending/rejected reviews never come down the wire.
 export function subscribeReviews(
   vendedorEmail: string,
   onData: (reviews: Review[]) => void,
@@ -816,13 +787,13 @@ export function subscribeReviews(
   const q = query(
     collection(db, REVIEWS_COLLECTION),
     where('vendedorEmail', '==', vendedorEmail),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações:', err);
@@ -840,13 +811,13 @@ export function subscribeReviewsOficina(
     collection(db, REVIEWS_COLLECTION),
     where('anuncioId', '==', oficinaId),
     where('anuncioTipo', '==', 'oficina'),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações de oficina:', err);
@@ -855,22 +826,6 @@ export function subscribeReviewsOficina(
   );
 }
 
-
-export async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
-  try {
-    const q = query(
-      collection(db, REVIEWS_COLLECTION),
-      where('vendedorEmail', '==', vendedorEmail),
-      orderBy('dataCriacao', 'desc'),
-    );
-    const snap = await getDocs(q);
-    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-    return all.filter((r) => r.status === 'aprovado');
-  } catch (err) {
-    console.error('[DB] Erro ao buscar avaliações:', err);
-    return [];
-  }
-}
 
 export async function getAllReviewsAdmin(): Promise<Review[]> {
   try {
@@ -898,6 +853,22 @@ export async function deleteReview(id: string): Promise<void> {
   } catch (err) {
     console.error('[DB] Erro ao eliminar avaliação:', err);
     throw err;
+  }
+}
+
+async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
+  try {
+    const q = query(
+      collection(db, REVIEWS_COLLECTION),
+      where('vendedorEmail', '==', vendedorEmail),
+      where('status', '==', 'aprovado'),
+    );
+    const snap = await getDocs(q);
+    const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
+    return sortByDataCriacaoDesc(all);
+  } catch (err) {
+    console.error('[DB] Erro ao buscar avaliações:', err);
+    return [];
   }
 }
 
@@ -1087,6 +1058,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       prioritaria: false,
@@ -1227,6 +1199,8 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
 
     resultados = resultados.filter((intencao) => {
       if (intencao.userId === usuarioId) return false;
+      // Market isolation (plan 20): an intent only matches cars from its own market.
+      if (docCountry(intencao) !== docCountry(carro)) return false;
       const c = intencao.criterios;
       const cat = intencao.categoria;
 
@@ -1358,25 +1332,6 @@ export async function rejeitarContato(contatoId: string, userId: string): Promis
 
 // ============ DENUNCIAS INTENCAO ============
 
-export async function addDenunciaIntencao(data: {
-  intencaoId: string;
-  denunciantId: string;
-  motivo: string;
-  descricao: string;
-}): Promise<string> {
-  try {
-    const docRef = await addDoc(collection(db, DENUNCIAS_INTENCAO_COLLECTION), {
-      ...data,
-      status: 'aberta',
-      criadaEm: Timestamp.now(),
-    });
-    return docRef.id;
-  } catch (err) {
-    console.error('[DB] Erro ao criar denúncia de intenção:', err);
-    throw err;
-  }
-}
-
 export async function getDenunciasIntencao(): Promise<DenunciaIntencao[]> {
   try {
     const q = query(collection(db, DENUNCIAS_INTENCAO_COLLECTION), orderBy('criadaEm', 'desc'));
@@ -1452,14 +1407,14 @@ export async function updateIntencaoStatus(id: string, status: string): Promise<
 
 // ============ OFICINAS E MECÂNICOS ============
 
-export async function getOficinas(): Promise<OficinaMecanico[]> {
+// Used by the professional dashboard (usePainel) to aggregate workshop favorites.
+export async function getOficinasByCreator(email: string): Promise<OficinaMecanico[]> {
   try {
-    const q = query(collection(db, OFICINAS_COLLECTION), where('status', '==', 'aprovado'));
+    const q = query(collection(db, OFICINAS_COLLECTION), where('criador', '==', email));
     const snap = await getDocs(q);
-    const todas = snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
-    return sortByDataCriacaoDesc(todas);
+    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
   } catch (err) {
-    console.error('[DB] Erro ao buscar oficinas:', err);
+    console.error('[DB] Erro ao buscar oficinas do criador:', err);
     return [];
   }
 }
@@ -1499,22 +1454,14 @@ export async function getOficinaPorId(id: string): Promise<OficinaMecanico | nul
 export async function addOficina(dados: Record<string, unknown>): Promise<OficinaMecanico> {
   try {
     const docRef = await addDoc(collection(db, OFICINAS_COLLECTION), {
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     });
-    return { id: docRef.id, ...dados, status: 'pendente' } as OficinaMecanico;
+    return { id: docRef.id, country: getActiveCountry(), ...dados, status: 'pendente' } as OficinaMecanico;
   } catch (err) {
     console.error('[DB] Erro ao adicionar oficina:', err);
-    throw err;
-  }
-}
-
-export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
-  try {
-    await updateDoc(doc(db, OFICINAS_COLLECTION, id), dados);
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar oficina:', err);
     throw err;
   }
 }
@@ -1525,17 +1472,6 @@ export async function updateOficinaStatus(id: string, status: 'pendente' | 'apro
   } catch (err) {
     console.error('[DB] Erro ao atualizar status da oficina:', err);
     throw err;
-  }
-}
-
-export async function getOficinasByCreator(email: string): Promise<OficinaMecanico[]> {
-  try {
-    const q = query(collection(db, OFICINAS_COLLECTION), where('criador', '==', email));
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as OficinaMecanico));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar oficinas do criador:', err);
-    return [];
   }
 }
 
@@ -1563,152 +1499,61 @@ export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
 // Propostas / Contra-propostas (seller → interested buyer negotiation)
 // ---------------------------------------------------------------------------
 
+// The propostas UI was removed as dead code, but the collection may still
+// hold documents, so GDPR cleanup below keeps deleting them.
 const PROPOSTAS_COLLECTION = 'propostas';
 
-function ordenarPorCriacao<T extends { criadaEm?: { toDate?: () => Date } }>(items: T[]): T[] {
-  return items.sort(
-    (a, b) => (b.criadaEm?.toDate?.()?.getTime() || 0) - (a.criadaEm?.toDate?.()?.getTime() || 0),
-  );
-}
+// Firestore batches cap at 500 operations.
+const DELETE_BATCH_LIMIT = 500;
 
-export async function criarProposta(dados: PropostaInput): Promise<Proposta> {
-  try {
-    const id = doc(collection(db, PROPOSTAS_COLLECTION)).id;
-    const agora = Timestamp.now();
-    const proposta: Proposta = { id, ...dados, criadaEm: agora, atualizadaEm: agora };
-    await setDoc(doc(db, PROPOSTAS_COLLECTION, id), cleanUndefined({ ...proposta }));
-
-    // Criar notificação para o vendedor
-    await criarNotificacao(
-      dados.vendedorUid,
-      'info',
-      'Nova Proposta Recebida 💰',
-      `${dados.compradorNome} enviou uma proposta de ${dados.valor}€ para o seu anúncio: ${dados.anuncioTitulo}`,
-      '/perfil',
-    );
-
-    return proposta;
-  } catch (err) {
-    console.error('[DB] Erro ao criar proposta:', err);
-    throw err;
-  }
-}
-
-export async function getPropostasPorVendedor(vendedorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', vendedorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (vendedor):', err);
-    return [];
-  }
-}
-
-export async function getPropostasPorComprador(compradorUid: string): Promise<Proposta[]> {
-  try {
-    const q = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', compradorUid));
-    const snap = await getDocs(q);
-    return ordenarPorCriacao(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Proposta)));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar propostas (comprador):', err);
-    return [];
-  }
-}
-
-export async function atualizarProposta(id: string, status: StatusProposta): Promise<void> {
-  try {
-    const docRef = doc(db, PROPOSTAS_COLLECTION, id);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const prop = docSnap.data() as Proposta;
-      const updates: Record<string, unknown> = { status, atualizadaEm: Timestamp.now() };
-      if (status === 'aceita' || status === 'rejeitada') {
-        updates.respostaCompradorEm = Timestamp.now();
-      }
-      await updateDoc(docRef as any, updates as any);
-
-      // Notificar o comprador sobre a resposta
-      const statusStr = status === 'aceita' ? 'aceitou' : status === 'rejeitada' ? 'rejeitou' : status;
-      await criarNotificacao(
-        prop.compradorUid,
-        'info',
-        `Proposta de Compra ${status === 'aceita' ? 'Aceite' : 'Rejeitada'} 💰`,
-        `O vendedor ${statusStr} a sua proposta de ${prop.valor}€ no anúncio: ${prop.anuncioTitulo}`,
-        '/perfil',
-      );
-    }
-  } catch (err) {
-    console.error('[DB] Erro ao atualizar proposta:', err);
-    throw err;
+async function deleteRefsInBatches(refs: DocumentReference[]): Promise<void> {
+  for (let i = 0; i < refs.length; i += DELETE_BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    for (const ref of refs.slice(i, i + DELETE_BATCH_LIMIT)) batch.delete(ref);
+    await batch.commit();
   }
 }
 
 export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
   try {
-    // 1. Eliminar anúncios de carros
-    const qCars = query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid));
-    const snapCars = await getDocs(qCars);
-    for (const docSnap of snapCars.docs) {
-      await deleteDoc(docSnap.ref);
+    // Chat messages are co-owned by the other participant and deleting them
+    // is admin-only in the rules — attempt it in its own batch and never let
+    // a denial abort the rest of the erasure (it used to stop the whole flow
+    // before the profile was deleted).
+    try {
+      const snapMessages = await getDocs(
+        query(collection(db, 'messages'), where('participants', 'array-contains', uid)),
+      );
+      await deleteRefsInBatches(snapMessages.docs.map((d) => d.ref));
+    } catch (err) {
+      console.warn('[DB] Mensagens não eliminadas (limpeza requer admin):', err);
     }
 
-    // 2. Eliminar anúncios de peças
-    const qParts = query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid));
-    const snapParts = await getDocs(qParts);
-    for (const docSnap of snapParts.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    // Everything the user owns: listings, propostas (as buyer or seller),
+    // notifications, purchase intents, identity verifications and reviews
+    // authored.
+    const ownershipQueries = [
+      query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid)),
+      query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, INTENCOES_COLLECTION), where('userId', '==', uid)),
+      query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid)),
+    ];
+    const snaps = await Promise.all(ownershipQueries.map((q) => getDocs(q)));
 
-    // 3. Eliminar propostas (onde o utilizador é comprador OU vendedor)
-    const qPropComp = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid));
-    const snapPropComp = await getDocs(qPropComp);
-    for (const docSnap of snapPropComp.docs) {
-      await deleteDoc(docSnap.ref);
+    // Dedupe by path — the two propostas queries can match the same doc, and
+    // a batch must not touch a document twice.
+    const refsByPath = new Map<string, DocumentReference>();
+    for (const snap of snaps) {
+      for (const docSnap of snap.docs) refsByPath.set(docSnap.ref.path, docSnap.ref);
     }
-    const qPropVend = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid));
-    const snapPropVend = await getDocs(qPropVend);
-    for (const docSnap of snapPropVend.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    const profileRef = doc(db, USERS_COLLECTION, uid);
+    refsByPath.set(profileRef.path, profileRef);
 
-    // 4. Eliminar notificações do utilizador
-    const qNotif = query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid));
-    const snapNotif = await getDocs(qNotif);
-    for (const docSnap of snapNotif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 5. Eliminar intenções de compra do utilizador
-    const qInten = query(collection(db, INTENCOES_COLLECTION), where('uid', '==', uid));
-    const snapInten = await getDocs(qInten);
-    for (const docSnap of snapInten.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 6. Eliminar verificação de identidade
-    const qVerif = query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid));
-    const snapVerif = await getDocs(qVerif);
-    for (const docSnap of snapVerif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 7. Eliminar reviews escritas pelo utilizador
-    const qRev = query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid));
-    const snapRev = await getDocs(qRev);
-    for (const docSnap of snapRev.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 8. Eliminar mensagens de chats do utilizador
-    const qMessages = query(collection(db, 'messages'), where('participants', 'array-contains', uid));
-    const snapMessages = await getDocs(qMessages);
-    for (const docSnap of snapMessages.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 9. Eliminar perfil do utilizador
-    await deleteDoc(doc(db, USERS_COLLECTION, uid));
+    await deleteRefsInBatches(Array.from(refsByPath.values()));
   } catch (err) {
     console.error('[DB] Erro ao eliminar dados do utilizador:', err);
     throw err;
@@ -1751,47 +1596,6 @@ export async function getLeadsParceriaAdmin(): Promise<LeadParceria[]> {
 
 const CONFIG_COLLECTION = 'config';
 const PREMIUM_DOC = 'premium';
-
-export async function getPremiumConfig(): Promise<PremiumConfig> {
-  try {
-    const docRef = doc(db, CONFIG_COLLECTION, PREMIUM_DOC);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      return {
-        masterActive: data.masterActive !== false,
-        impulsionamento: data.impulsionamento !== false,
-        oficinas: data.oficinas !== false,
-        leads: data.leads !== false,
-        parceriasActive: data.parceriasActive !== false,
-        financiamento: data.financiamento !== false,
-        seguro: data.seguro !== false,
-        atualizadoEm: data.atualizadoEm,
-        atualizadoPor: data.atualizadoPor,
-      } as PremiumConfig;
-    }
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  } catch (err) {
-    console.error('[DB] Erro ao buscar premium config:', err);
-    return {
-      masterActive: true,
-      impulsionamento: true,
-      oficinas: true,
-      leads: true,
-      parceriasActive: true,
-      financiamento: true,
-      seguro: true,
-    };
-  }
-}
 
 export async function updatePremiumConfig(
   features: Partial<PremiumConfig>,
@@ -1997,21 +1801,6 @@ export function subscribeBanners(
   );
 }
 
-export async function getBanners(): Promise<Banner[]> {
-  try {
-    const q = query(
-      collection(db, BANNERS_COLLECTION),
-      where('ativo', '==', true),
-      orderBy('ordem', 'asc')
-    );
-    const snap = await getDocs(q);
-    return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Banner));
-  } catch (err) {
-    console.error('[DB] Erro ao buscar banners ativos:', err);
-    return [];
-  }
-}
-
 export async function addBanner(banner: BannerInput): Promise<string> {
   try {
     const docRef = await addDoc(collection(db, BANNERS_COLLECTION), cleanUndefined({
@@ -2044,3 +1833,96 @@ export async function deleteBanner(id: string): Promise<void> {
 }
 
 
+
+// ============ ALERT SUBSCRIPTIONS (plan 3.1) ============
+
+const ALERT_SUBSCRIPTIONS_COLLECTION = 'alertSubscriptions';
+
+/** Error codes surfaced to the UI as typed failures (never raw messages). */
+export const ALERT_INVALID_ERROR = 'alert/invalid';
+export const ALERT_LIMIT_ERROR = 'alert/limit-reached';
+
+/**
+ * Creates an alert subscription for the signed-in user. Input is sanitized
+ * locally (first defense layer) and re-validated by the Firestore rules;
+ * the per-user cap is a UX quota — the authoritative matching runs in
+ * Cloud Functions, which only reads `ativo == true` docs.
+ */
+export async function addAlertSubscription(
+  uid: string,
+  input: AlertSubscriptionInput,
+): Promise<AlertSubscription> {
+  const sanitized = sanitizeAlertSubscriptionInput(input);
+  if (!sanitized) throw new Error(ALERT_INVALID_ERROR);
+
+  const existing = await getDocs(
+    query(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), where('uid', '==', uid)),
+  );
+  if (existing.size >= MAX_ALERT_SUBSCRIPTIONS) throw new Error(ALERT_LIMIT_ERROR);
+
+  const data = {
+    ...sanitized,
+    uid,
+    novosResultados: 0,
+    dataCriacao: Timestamp.now(),
+  };
+  const docRef = await addDoc(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), cleanUndefined(data));
+  return { id: docRef.id, ...data } as AlertSubscription;
+}
+
+export function subscribeAlertSubscriptions(
+  uid: string,
+  onData: (subscriptions: AlertSubscription[]) => void,
+  onError?: (err: Error) => void,
+): () => void {
+  const q = query(collection(db, ALERT_SUBSCRIPTIONS_COLLECTION), where('uid', '==', uid));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const subscriptions = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AlertSubscription));
+      onData(sortByDataCriacaoDesc(subscriptions));
+    },
+    (err) => {
+      console.error('[DB] Erro no snapshot de alertas:', err);
+      onError?.(err);
+    },
+  );
+}
+
+export async function updateAlertSubscription(
+  id: string,
+  updates: Partial<Pick<AlertSubscription, 'nome' | 'ativo' | 'novosResultados'>>,
+): Promise<void> {
+  const safe: Record<string, unknown> = {};
+  if (typeof updates.nome === 'string') {
+    const nome = sanitizeAlertText(updates.nome, MAX_ALERT_TEXT_LENGTH);
+    if (nome) safe.nome = nome;
+  }
+  if (typeof updates.ativo === 'boolean') safe.ativo = updates.ativo;
+  if (updates.novosResultados === 0) safe.novosResultados = 0;
+  if (Object.keys(safe).length === 0) return;
+  await updateDoc(doc(db, ALERT_SUBSCRIPTIONS_COLLECTION, id), safe);
+}
+
+export async function deleteAlertSubscription(id: string): Promise<void> {
+  await deleteDoc(doc(db, ALERT_SUBSCRIPTIONS_COLLECTION, id));
+}
+
+// ============ NOTIFICATION PREFERENCES (plan 3.1) ============
+
+export async function getNotificationPreferences(uid: string): Promise<NotificationPreferences> {
+  try {
+    const snap = await getDoc(doc(db, USERS_COLLECTION, uid));
+    return normalizeNotificationPreferences(snap.data()?.notifPrefs);
+  } catch (err) {
+    console.error('[DB] Erro ao ler preferências de notificação:', err);
+    return normalizeNotificationPreferences(undefined);
+  }
+}
+
+export async function updateNotificationPreferences(
+  uid: string,
+  prefs: NotificationPreferences,
+): Promise<void> {
+  await setDoc(doc(db, USERS_COLLECTION, uid), { notifPrefs: prefs }, { merge: true });
+}

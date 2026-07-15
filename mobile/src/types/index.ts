@@ -1,6 +1,7 @@
 // Shared domain types — mirror the web app (src/types) so the same Firestore
 // documents deserialize identically on mobile.
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type Timestamp = FirebaseFirestoreTypes.Timestamp;
 
@@ -16,6 +17,8 @@ export interface Usuario {
   distrito?: string;
   codigoPostal: string;
   morada: string;
+  /** Neighbourhood — Brazilian addresses only ("bairro"); unused for PT. */
+  bairro?: string;
   nif: string;
   tipoConta: TipoConta;
   role: Role;
@@ -29,6 +32,10 @@ export interface Usuario {
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];
+  /** Market the account belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
+  /** Per-group × per-channel notification preferences — shared with web. */
+  notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }
@@ -42,6 +49,20 @@ export type Combustivel =
   | 'Elétrico'
   | 'Híbrido';
 export type Cambio = 'Manual' | 'Automático' | 'CVT';
+export type BodyType =
+  | 'Citadino'
+  | 'Utilitário'
+  | 'Sedan'
+  | 'Carrinha'
+  | 'SUV'
+  | 'Monovolume'
+  | 'Coupé'
+  | 'Cabrio'
+  | 'Pick-up';
+export type Condition = 'Novo' | 'Usado' | 'Para peças';
+export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
+export type VehicleOrigin = 'Nacional' | 'Importado';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {
@@ -56,14 +77,51 @@ export interface Carro {
   cambio: Cambio;
   cor: string;
   portas: number;
+  bodyType?: BodyType;
+  seats?: number;
+  condition?: Condition;
+  power?: number;
+  displacement?: number;
+  traction?: Traction;
+  features?: string[];
+  /** Trim / variant, e.g. "CDi Avantgarde" (Standvirtual "version"). */
+  version?: string;
+  /** Month of first registration (1–12), pairs with anoFabricacao as the year. */
+  firstRegistrationMonth?: number;
+  origin?: VehicleOrigin;
+  /** Number of previous owners (0 = seller is the first owner). */
+  previousOwners?: number;
+  /** Number of forward gears. */
+  gears?: number;
+  /** Combined CO₂ emissions, g/km. */
+  co2Emissions?: number;
+  /** Max fuel/electric range, km. */
+  maxFuelRange?: number;
+  /** Fuel consumption, l/100 km. */
+  consumptionUrban?: number;
+  consumptionExtraUrban?: number;
+  consumptionCombined?: number;
+  upholstery?: Upholstery;
+  numberOfAirbags?: number;
+  /** Remaining vendor warranty, in months. */
+  warrantyMonths?: number;
+  acceptsFinancing?: boolean;
+  /** VAT-deductible invoice available (IVA dedutível). */
+  vatDeductible?: boolean;
+  /** Seller accepts a trade-in / part-exchange (retoma). */
+  acceptsExchange?: boolean;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
   videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
   tiposManutencao: string[];
   fotos: string[];
+  /** Vehicle angle → index into `fotos`; enables the 360 spin viewer (see src/lib/spin360.ts). */
+  photoAngles?: Record<string, number> | null;
   criador: string;
   criadorUid?: string;
   vendedorNome?: string;
@@ -72,6 +130,8 @@ export interface Carro {
   vendedorEmail?: string;
   rodando?: boolean;
   inspecao?: boolean;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -100,6 +160,8 @@ export interface Peca {
   estado: string;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   contacto?: string;
   vendedorTelefone?: string;
@@ -110,6 +172,8 @@ export interface Peca {
   criadorUid?: string;
   vendedorNome?: string;
   descricao: string;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -192,6 +256,8 @@ export interface IntencaoCompra {
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;
   vendedorEmail?: string;
+  /** Market the intent belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusIntencao;
   prioritaria: boolean;
   stats: { visualizacoes: number; visualizacoes7Dias: number; contatos: number; contatos7Dias: number };
@@ -254,19 +320,25 @@ export interface Report {
 // ---------- Verificações ----------
 export type StatusVerificacao = 'pendente' | 'aprovado' | 'rejeitado';
 export type TipoVerificacao = 'identidade' | 'profissional';
-export type TipoDocumento = 'cc' | 'passaporte' | 'residencia';
-
-export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
-  cc: 'Cartão de Cidadão',
-  passaporte: 'Passaporte',
-  residencia: 'Autorização de Residência',
-};
+// PT documents: cc (Cartão de Cidadão), passaporte, residencia (Título de
+// Residência). BR documents: rg, cnh (personal), cnpj, contrato_social
+// (professional / pessoa jurídica). See src/lib/verificationDocs.ts.
+export type TipoDocumento =
+  | 'cc'
+  | 'passaporte'
+  | 'residencia'
+  | 'rg'
+  | 'cnh'
+  | 'cnpj'
+  | 'contrato_social';
 
 export interface Verification {
   id: string;
   uid: string;
   email: string;
   nome: string;
+  /** Market the request was submitted in (missing on legacy docs = PT). */
+  country?: Country;
   tipo: TipoVerificacao;
   tipoDocumento: TipoDocumento;
   documentoUrl: string;
@@ -278,6 +350,11 @@ export interface Verification {
   resolvidoPor?: string;
   notasAdmin?: string;
 }
+
+export type VerificationInput = Omit<
+  Verification,
+  'id' | 'dataPedido' | 'dataResolucao' | 'resolvidoPor' | 'notasAdmin'
+>;
 
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';
@@ -311,7 +388,7 @@ export interface Conversa {
 }
 
 // ---------- Notificações ----------
-export type TipoNotificacao = 'aprovado' | 'rejeitado' | 'info' | 'mensagem';
+export type TipoNotificacao = 'aprovado' | 'rejeitado' | 'info' | 'mensagem' | 'alerta' | 'preco';
 
 export interface Notificacao {
   id: string;
@@ -323,6 +400,93 @@ export interface Notificacao {
   lida: boolean;
   dataCriacao: Timestamp;
 }
+
+// ---------- Alertas (mirrors web src/types/alertas.ts + busca.ts) ----------
+export type CategoriaAlerta = 'carros' | 'pecas' | 'oficinas';
+
+/**
+ * Subset of the web's SearchFilters that the mobile filter sheet
+ * (useCarFilters/CarAdvFilters) can actually produce. Field names match the
+ * web's SearchFilters verbatim — the Cloud Function matcher
+ * (functions/src/lib/matching.ts) reads this shape regardless of platform.
+ */
+export interface AlertFiltros {
+  texto?: string;
+  marca?: string;
+  modelo?: string;
+  combustivel?: Combustivel;
+  distrito?: string;
+  concelho?: string;
+  precoMin?: number;
+  precoMax?: number;
+  anoMin?: number;
+  anoMax?: number;
+  kmMin?: number;
+  kmMax?: number;
+  estadoVeiculo?: EstadoVeiculo;
+}
+
+export interface AlertCriteria {
+  categoria: CategoriaAlerta;
+  tipoAnuncio?: string;
+  concelho?: string;
+  distrito?: string;
+  marca?: string;
+}
+
+interface AlertSubscriptionBase {
+  id: string;
+  uid: string;
+  nome: string;
+  ativo: boolean;
+  novosResultados: number;
+  dataCriacao: Timestamp;
+  ultimaNotificacao?: Timestamp;
+}
+
+export interface KeywordAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'palavra_chave';
+  keyword: string;
+  categoria?: CategoriaAlerta;
+}
+
+export interface CriteriaAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'criterio';
+  criteria: AlertCriteria;
+}
+
+export interface SavedFilterAlertSubscription extends AlertSubscriptionBase {
+  tipo: 'filtro_salvo';
+  filters: AlertFiltros;
+}
+
+export type AlertSubscription =
+  | KeywordAlertSubscription
+  | CriteriaAlertSubscription
+  | SavedFilterAlertSubscription;
+
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+
+export type AlertSubscriptionInput = DistributiveOmit<
+  AlertSubscription,
+  'id' | 'uid' | 'novosResultados' | 'dataCriacao' | 'ultimaNotificacao'
+>;
+
+/** Only the two groups mobile has a UI for today (alerta/preco) — mensagem
+ * and conta keep the single blanket `Usuario.notificacoes` switch for now. */
+export interface ChannelPreferences {
+  inApp: boolean;
+  push: boolean;
+}
+
+export interface NotificationPreferences {
+  mensagem: ChannelPreferences;
+  conta: ChannelPreferences;
+  alerta: ChannelPreferences;
+  preco: ChannelPreferences;
+}
+
+export type GrupoPreferencia = keyof NotificationPreferences;
 
 /** Workshops live in the `services` collection (web type: OficinaMecanico). */
 export interface Oficina {
@@ -337,12 +501,16 @@ export interface Oficina {
   website?: string;
   distrito: string;
   localidade: string;
+  /** Neighbourhood — Brazilian workshops only ("bairro"); unused for PT. */
+  bairro?: string;
   morada: string;
   coordenadas?: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
   videoUrl?: string;
   fotos?: string[];
+  /** Market the workshop belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;

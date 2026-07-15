@@ -1,15 +1,25 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Script from 'next/script';
-import { getCarroPorIdServer } from '@/lib/db.server';
+import { getCarroPorIdServer, getCarrosServer } from '@/lib/db.server';
+import { serializeCarro } from '@/lib/serializeCarro';
 import DetalhesCarro from '@/screens/DetalhesCarro';
 import { renderFoto } from '@/lib/utils';
 
 export const revalidate = 60;
 
+// Pre-render every approved listing at build time; listings published later
+// are rendered on demand (dynamicParams) and cached. Registering static params
+// is also what opts this route into ISR — without it Next treats the route as
+// fully dynamic and re-renders (Firestore fetch included) on every click.
+export async function generateStaticParams() {
+  const carros = await getCarrosServer().catch(() => []);
+  return carros.map((carro) => ({ id: carro.id }));
+}
+
 type PageProps = { params: Promise<{ id: string }> };
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://reparauto-site.web.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { id } = await params;
@@ -46,6 +56,13 @@ export default async function Page({ params }: PageProps) {
   const fotoData = carro.fotos?.[0] ? renderFoto(carro.fotos[0]) : null;
   const imageUrl = fotoData?.type === 'img' ? fotoData.src : undefined;
 
+  const itemCondition =
+    carro.condition === 'Novo'
+      ? 'https://schema.org/NewCondition'
+      : carro.condition === 'Para peças'
+        ? 'https://schema.org/DamagedCondition'
+        : 'https://schema.org/UsedCondition';
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Vehicle',
@@ -59,6 +76,34 @@ export default async function Page({ params }: PageProps) {
     vehicleTransmission: carro.cambio,
     color: carro.cor,
     numberOfDoors: carro.portas,
+    ...(carro.bodyType ? { bodyType: carro.bodyType } : {}),
+    ...(carro.seats ? { seatingCapacity: carro.seats } : {}),
+    ...(carro.traction ? { driveWheelConfiguration: carro.traction } : {}),
+    ...(carro.gears != null ? { numberOfForwardGears: carro.gears } : {}),
+    ...(carro.previousOwners != null ? { numberOfPreviousOwners: carro.previousOwners } : {}),
+    ...(carro.numberOfAirbags != null ? { numberOfAirbags: carro.numberOfAirbags } : {}),
+    ...(carro.co2Emissions != null ? { emissionsCO2: carro.co2Emissions } : {}),
+    ...(carro.upholstery ? { vehicleInteriorType: carro.upholstery } : {}),
+    ...(carro.consumptionCombined != null
+      ? { fuelConsumption: { '@type': 'QuantitativeValue', value: carro.consumptionCombined, unitText: 'l/100km' } }
+      : {}),
+    ...(carro.firstRegistrationMonth
+      ? { dateVehicleFirstRegistered: `${carro.anoFabricacao}-${String(carro.firstRegistrationMonth).padStart(2, '0')}` }
+      : {}),
+    ...(carro.displacement || carro.power
+      ? {
+          vehicleEngine: {
+            '@type': 'EngineSpecification',
+            ...(carro.displacement
+              ? { engineDisplacement: { '@type': 'QuantitativeValue', value: carro.displacement, unitCode: 'CMQ' } }
+              : {}),
+            ...(carro.power
+              ? { enginePower: { '@type': 'QuantitativeValue', value: carro.power, unitText: 'cv' } }
+              : {}),
+          },
+        }
+      : {}),
+    ...(carro.features && carro.features.length > 0 ? { vehicleConfiguration: carro.features.join(', ') } : {}),
     image: imageUrl,
     description: (carro.descricao || '').slice(0, 500),
     offers: {
@@ -66,6 +111,7 @@ export default async function Page({ params }: PageProps) {
       price: carro.preco,
       priceCurrency: 'EUR',
       availability: 'https://schema.org/InStock',
+      itemCondition,
       url: `${SITE_URL}/detalhes/${id}`,
       areaServed: carro.local,
     },
@@ -79,7 +125,7 @@ export default async function Page({ params }: PageProps) {
         strategy="beforeInteractive"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <DetalhesCarro />
+      <DetalhesCarro initialCarro={serializeCarro(carro)} />
     </>
   );
 }

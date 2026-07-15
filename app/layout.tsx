@@ -4,6 +4,7 @@ import Script from 'next/script';
 import '@/index.css';
 import Providers from './providers';
 import LayoutShell from '@/components/layout/LayoutShell';
+import { GOOGLE_ADS_ID } from '@/lib/gtag';
 
 const libreFranklin = Libre_Franklin({
   subsets: ['latin'],
@@ -90,6 +91,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <Script
+          id="gtag-src"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            // Consent Mode v2: deny ad/analytics storage by default (RGPD opt-in).
+            // The cookie banner flips these to 'granted' once the user consents.
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: 'denied',
+              wait_for_update: 500,
+            });
+            gtag('js', new Date());
+            gtag('config', '${GOOGLE_ADS_ID}');
+          `}
+        </Script>
       </head>
       <body className={`${libreFranklin.className} antialiased`}>
         <Providers>

@@ -47,11 +47,17 @@ if (!GOOGLE_IOS_URL_SCHEME) {
   );
 }
 
-// EAS project id — set after `eas init` (e.g. in `.env` or EAS env). It powers
-// both `extra.eas.projectId` and the EAS Update endpoint below.
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? undefined;
-const VERSION = '1.5.1';
-const BUILD_NUMBER = 52;
+// iOS APNs environment baked into the `aps-environment` entitlement. TestFlight
+// and App Store builds run against PRODUCTION APNs, so they must ship the
+// `production` entitlement — otherwise the device registers a sandbox token and
+// FCM delivery is silently dropped (BadDeviceToken). `expo-notifications`
+// defaults this to `development`, which only suits dev-client/sandbox builds.
+// The `preview`/`production` EAS profiles set APS_ENVIRONMENT=production; local
+// dev builds fall back to `development`.
+const APS_ENVIRONMENT =
+  process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
+const VERSION = '1.9.0';
+const BUILD_NUMBER = 90;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -63,6 +69,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   icon: './assets/icon.png',
   userInterfaceStyle: 'light',
   backgroundColor: '#ffffff',
+  // Native-only app. Without this, `expo export --platform=all` (run by
+  // `eas update`) auto-detects web because a transitive react-dom is
+  // resolvable, then fails for lack of react-native-web.
+  platforms: ['ios', 'android'],
   // --- OTA updates (EAS Update / expo-updates) ---
   // `fingerprint` ties each JS bundle to the exact native runtime that produced
   // it. Because we use Continuous Native Generation (ios/ and android/ are
@@ -70,16 +80,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   // automatically whenever native deps/config change — so an OTA update can
   // NEVER be delivered to an incompatible binary. Bundle id stays `com.recargarage`.
   runtimeVersion: { policy: 'fingerprint' },
-  // The `updates` block only takes effect once EAS_PROJECT_ID is set (after
-  // `eas init`). We drive checks ourselves from `useOTAUpdates()`, so we disable
-  // the automatic load-time check and never block launch on the network.
-  updates: EAS_PROJECT_ID
-    ? {
-        url: "https://u.expo.dev/2b361ebe-abb0-4514-b884-a0db195e07a5",
-        fallbackToCacheTimeout: 0,
-        checkAutomatically: 'ON_ERROR_RECOVERY',
-      }
-    : undefined,
+  // Must be unconditional: builds up to v1.6.0(60) gated this on an env var
+  // that resolved empty, so they shipped with expo-updates DISABLED and no
+  // update URL — OTA can never reach them. We drive checks ourselves from
+  // `useOTAUpdates()`, so we disable the automatic load-time check and never
+  // block launch on the network.
+  updates: {
+    url: 'https://u.expo.dev/2b361ebe-abb0-4514-b884-a0db195e07a5',
+    fallbackToCacheTimeout: 0,
+    checkAutomatically: 'ON_ERROR_RECOVERY',
+  },
   splash: {
     image: './assets/splash-icon.png',
     resizeMode: 'contain',
@@ -115,11 +125,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // (Fase 5) arrives with its feature.
     permissions: [],
   },
-  web: {
-    bundler: 'metro',
-    output: 'static',
-    favicon: './assets/favicon.png',
-  },
   plugins: [
     // Installs the shared debug keystore so every machine/CI signs with the
     // same SHA-1 (stable Google Sign-In). See plugins/withDebugKeystore.js.
@@ -134,6 +139,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-apple-authentication',
     '@react-native-firebase/app',
+    '@react-native-firebase/analytics',
     '@react-native-firebase/auth',
     '@react-native-firebase/messaging',
     [
@@ -141,6 +147,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         icon: './assets/notification-icon.png',
         color: '#0b4f9e',
+        // Match the APNs environment to the build (see APS_ENVIRONMENT above).
+        // Without `production`, TestFlight/App Store pushes never arrive.
+        mode: APS_ENVIRONMENT,
+        // Add `UIBackgroundModes: [remote-notification]` so pushes are handled
+        // with the app backgrounded/quit — not added by the plugin otherwise.
+        enableBackgroundRemoteNotifications: true,
       },
     ],
     [
@@ -161,6 +173,17 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       '@react-native-google-signin/google-signin',
       { iosUrlScheme: GOOGLE_IOS_URL_SCHEME },
+    ],
+    [
+      // Guided 360 capture renders its own camera preview (with the angle
+      // frame overlay), which the system camera can't do.
+      'expo-camera',
+      {
+        cameraPermission:
+          'A RecarGarage usa a câmara apenas quando tira uma foto para o seu anúncio.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
+      },
     ],
     [
       'expo-image-picker',
@@ -197,8 +220,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     router: {},
     eas: {
-      // Fill in after `eas init` (set EAS_PROJECT_ID in `.env` / EAS env).
-      projectId: "2b361ebe-abb0-4514-b884-a0db195e07a5",
+      projectId: '2b361ebe-abb0-4514-b884-a0db195e07a5',
     },
   },
 });

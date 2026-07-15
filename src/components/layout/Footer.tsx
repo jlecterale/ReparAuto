@@ -1,8 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useCountry } from '@/providers/CountryProvider';
 
 export default function Footer() {
+  // The buying/selling guides are Portugal-specific (IUC, IPO, DUA, matrícula,
+  // Standvirtual). Hide the link for the Brazilian market until BR guides exist
+  // (plan 12 — i18n & SEO) rather than lead BR users into wrong tax/legal info.
+  const { country } = useCountry();
   return (
     <footer className="bg-brand-900 text-slate-400 py-8 px-4 border-t border-slate-800 text-sm text-center">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
@@ -22,6 +27,9 @@ export default function Footer() {
             Definições de Cookies
           </button>
           <Link href="/seguranca" className="hover:text-white transition">Segurança</Link>
+          {country === 'PT' && (
+            <Link href="/guias" className="hover:text-white transition">Guias</Link>
+          )}
           <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
           <a href="mailto:suporte@recargarage.com" className="hover:text-white transition">Fale Conosco (suporte@recargarage.com)</a>
         </div>

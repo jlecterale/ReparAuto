@@ -30,16 +30,18 @@ const WebIcon: React.FC = () => (
 );
 
 const CONFIG = {
-  web: { Icon: WebIcon, top: "Abrir na", bottom: "Web App" },
-  ios: { Icon: AppleIcon, top: "Descarrega na", bottom: "App Store" },
-  android: { Icon: AndroidIcon, top: "Disponível no", bottom: "Google Play" },
+  web: { Icon: WebIcon, top: { pt: "Abrir na", br: "Abra na" }, bottom: "Web App" },
+  ios: { Icon: AppleIcon, top: { pt: "Descarrega na", br: "Baixe na" }, bottom: "App Store" },
+  android: { Icon: AndroidIcon, top: { pt: "Disponível no", br: "Disponível no" }, bottom: "Google Play" },
 } as const;
 
 /** App Store / Google Play / Web App style pill. */
-export const StoreBadge: React.FC<{ platform: keyof typeof CONFIG }> = ({
-  platform,
-}) => {
-  const { Icon, top, bottom } = CONFIG[platform];
+export const StoreBadge: React.FC<{
+  platform: keyof typeof CONFIG;
+  locale?: import("../copy").Locale;
+}> = ({ platform, locale = "pt" }) => {
+  const { Icon, top: topByLocale, bottom } = CONFIG[platform];
+  const top = topByLocale[locale];
   return (
     <div
       style={{

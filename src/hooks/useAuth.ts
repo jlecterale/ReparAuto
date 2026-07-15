@@ -6,6 +6,7 @@ import {
   loginComEmail,
   criarConta,
   loginComGoogle,
+  loginComApple,
   logoutFirebase,
   onAuthChange,
   enviarVerificacaoEmail,
@@ -15,7 +16,9 @@ import {
   createUserProfile,
   updateUserProfile,
 } from '@/lib/db';
+import { getActiveCountry } from '@/lib/country';
 import { auth } from '@/lib/firebase';
+import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
 
 const DEFAULT_ROLE: Role = 'user';
@@ -76,7 +79,9 @@ export default function useAuth() {
           let profile = await getUserProfile(firebaseUser.uid);
           if (!profile) {
             await createUserProfile(firebaseUser.uid, base as unknown as Record<string, unknown>);
-            profile = base;
+            // Mirror the country createUserProfile stamps on the new doc so
+            // the account-market lock binds correctly right after signup.
+            profile = { ...base, country: getActiveCountry() };
           }
           setUser({ ...base, ...profile });
         } catch {
@@ -109,6 +114,8 @@ export default function useAuth() {
 
   const registar = useCallback(async (nome: string, email: string, password: string): Promise<Usuario> => {
     const fbUser = await criarConta(email, password, nome);
+    // Google Ads: account creation (email/password) conversion.
+    reportConversion(CONVERSION_LABELS.signUp);
     const base = criarUsuarioBase(fbUser);
     base.nome = nome;
     try {
@@ -121,12 +128,17 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // Brand-new account in the active market; stamp it so the account-market
+    // lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const loginGoogle = useCallback(async (): Promise<Usuario> => {
-    const fbUser = await loginComGoogle();
+    const { user: fbUser, isNewUser } = await loginComGoogle();
+    // Google Ads: only a first-time Google sign-in counts as account creation.
+    if (isNewUser) reportConversion(CONVERSION_LABELS.signUp);
     const base = criarUsuarioBase(fbUser);
     try {
       const profile = await getUserProfile(fbUser.uid);
@@ -138,8 +150,31 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
+  }, []);
+
+  const loginApple = useCallback(async (): Promise<Usuario> => {
+    const fbUser = await loginComApple();
+    const base = criarUsuarioBase(fbUser);
+    try {
+      const profile = await getUserProfile(fbUser.uid);
+      if (profile) {
+        const merged = { ...base, ...profile };
+        setUser(merged);
+        return merged;
+      }
+    } catch {
+      // fallback
+    }
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {
@@ -159,6 +194,7 @@ export default function useAuth() {
     login,
     registar,
     loginGoogle,
+    loginApple,
     logout,
     isLoggedIn: !!user,
     isAdmin: user?.role === 'admin',
@@ -166,5 +202,5 @@ export default function useAuth() {
     updateProfile,
     refreshProfile,
     reenviarEmailVerificacao,
-  }), [user, loading, login, registar, loginGoogle, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
+  }), [user, loading, login, registar, loginGoogle, loginApple, logout, updateProfile, refreshProfile, reenviarEmailVerificacao]);
 }

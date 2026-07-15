@@ -1,7 +1,10 @@
 'use client';
 
-import { CaretDown } from '@phosphor-icons/react';
+import { CaretDown, CircleNotch } from '@phosphor-icons/react';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
+import { useConcelhos } from '@/hooks/useConcelhos';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 
 interface SeletorLocalizacaoProps {
   distrito: string;
@@ -20,8 +23,13 @@ export default function SeletorLocalizacao({
   erro,
   className = '',
 }: SeletorLocalizacaoProps) {
-  const { distritos, getConcelhos } = useDistritosConcelhos();
-  const concelhos = getConcelhos(distrito);
+  const { distritos } = useDistritosConcelhos();
+  // BR cities come from the full IBGE list (loaded per state); PT is synchronous.
+  const { concelhos, loading: loadingCidades } = useConcelhos(distrito);
+  const { country } = useCountry();
+  // PT: Distrito/Concelho · BR: Estado/Cidade
+  const regionLabel = term('districtLabel', country);
+  const cityLabel = term('municipalityLabel', country);
 
   // appearance-none removes the cramped native arrow so we can render our own
   // chevron with comfortable padding (pr-10 keeps the text clear of it).
@@ -35,7 +43,7 @@ export default function SeletorLocalizacao({
     <div className={`grid grid-cols-2 gap-3 ${className}`}>
       <div>
         <label className={labelCls}>
-          Distrito {obrigatorio && <span className="text-danger-500">*</span>}
+          {regionLabel} {obrigatorio && <span className="text-danger-500">*</span>}
         </label>
         <div className="relative">
           <select
@@ -43,7 +51,7 @@ export default function SeletorLocalizacao({
             onChange={(e) => onChange(e.target.value, '')}
             className={`${baseSelect} ${erro && !distrito ? 'border-danger-500' : 'border-neutral-300'}`}
           >
-            <option value="">Selecionar distrito</option>
+            <option value="">Selecionar {regionLabel.toLowerCase()}</option>
             {distritos.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
@@ -58,29 +66,40 @@ export default function SeletorLocalizacao({
 
       <div>
         <label className={labelCls}>
-          Concelho {obrigatorio && <span className="text-danger-500">*</span>}
+          {cityLabel} {obrigatorio && <span className="text-danger-500">*</span>}
         </label>
         <div className="relative">
           <select
             value={concelho}
             onChange={(e) => onChange(distrito, e.target.value)}
-            disabled={!distrito}
+            disabled={!distrito || loadingCidades}
             className={`${baseSelect} ${erro && !concelho ? 'border-danger-500' : 'border-neutral-300'}`}
           >
             <option value="">
-              {distrito ? 'Selecionar concelho' : 'Selecione um distrito'}
+              {!distrito
+                ? `Selecione um ${regionLabel.toLowerCase()}`
+                : loadingCidades
+                  ? 'A carregar…'
+                  : `Selecionar ${cityLabel.toLowerCase()}`}
             </option>
             {concelhos.map((c) => (
-              <option key={c.nome} value={c.nome}>{c.nome}</option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
-          <CaretDown
-            size={16}
-            weight="bold"
-            className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
-              distrito ? 'text-fg-subtle' : 'text-neutral-300'
-            }`}
-          />
+          {loadingCidades ? (
+            <CircleNotch
+              size={16}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-accent"
+            />
+          ) : (
+            <CaretDown
+              size={16}
+              weight="bold"
+              className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 ${
+                distrito ? 'text-fg-subtle' : 'text-neutral-300'
+              }`}
+            />
+          )}
         </div>
       </div>
     </div>

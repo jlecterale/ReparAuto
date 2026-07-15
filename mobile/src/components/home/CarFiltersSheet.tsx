@@ -1,25 +1,38 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { SheetSection } from '@/components/ui/SheetSection';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
-import { COMBUSTIVEIS, DISTRITOS } from '@/lib/constants';
-import { getConcelhos } from '@/lib/geo';
+import { CriarAlertaButton } from '@/components/home/CriarAlertaButton';
+import {
+  COMBUSTIVEIS,
+  CONDICOES_VEICULO,
+  EQUIPAMENTOS_CARRO,
+  TIPOS_CARROCERIA,
+  TIPOS_TRACAO,
+} from '@/lib/constants';
+import { getConcelhos, getDistritos } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
+import { useCountry } from '@/context/CountryContext';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
 import { colors } from '@/theme/colors';
 
 const TODOS = { value: '', label: 'Todos' };
-const DISTRITO_OPTS = [TODOS, ...DISTRITOS.map((d) => ({ value: d, label: d }))];
 const ESTADO_OPTS = [
   TODOS,
   { value: 'pronto', label: 'Pronto a andar' },
   { value: 'manutencao', label: 'Para reparar' },
 ];
 const COMBUSTIVEL_OPTS = COMBUSTIVEIS.map((c) => ({ value: c, label: c }));
+const CARROCERIA_OPTS = [TODOS, ...TIPOS_CARROCERIA.map((c) => ({ value: c, label: c }))];
+const CONDICAO_OPTS = [TODOS, ...CONDICOES_VEICULO.map((c) => ({ value: c, label: c }))];
+const TRACAO_OPTS = [TODOS, ...TIPOS_TRACAO.map((t) => ({ value: t, label: t }))];
+const EQUIPAMENTO_OPTS = EQUIPAMENTOS_CARRO.map((e) => ({ value: e, label: e }));
 const RAIO_OPTS = [
   { value: '25', label: '25 km' },
   { value: '50', label: '50 km' },
@@ -30,34 +43,53 @@ const RAIO_OPTS = [
 interface CarFiltersSheetProps {
   visible: boolean;
   onClose: () => void;
+  busca: string;
   filters: CarAdvFilters;
   update: (partial: Partial<CarAdvFilters>) => void;
   onClear: () => void;
   resultCount: number;
   marcaOpts: string[];
   modeloOpts: string[];
+  bairroOpts: string[];
 }
 
 export function CarFiltersSheet({
   visible,
   onClose,
+  busca,
   filters: f,
   update,
   onClear,
   resultCount,
   marcaOpts,
   modeloOpts,
+  bairroOpts,
 }: CarFiltersSheetProps) {
+  const { country } = useCountry();
+  // Market vocabulary: PT says distrito/concelho, BR says estado/cidade.
+  const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
+  const placeLabel = country === 'BR' ? 'Cidade' : 'Concelho';
+  const distritoOpts = [TODOS, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
+  const [showMore, setShowMore] = useState(false);
   const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
   const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
-  const concelhoOpts = [TODOS, ...getConcelhos(f.distrito).map((c) => ({ value: c.nome, label: c.nome }))];
-  const centroOpts = getConcelhos(f.raioDist).map((c) => ({ value: c.nome, label: c.nome }));
+  const bairroSelectOpts = [TODOS, ...bairroOpts.map((b) => ({ value: b, label: b }))];
+  const concelhoOpts = [TODOS, ...getConcelhos(f.distrito, country).map((c) => ({ value: c.nome, label: c.nome }))];
+  const centroOpts = getConcelhos(f.raioDist, country).map((c) => ({ value: c.nome, label: c.nome }));
 
   function toggleCombustivel(value: Combustivel) {
     update({
       combustiveis: f.combustiveis.includes(value)
         ? f.combustiveis.filter((x) => x !== value)
         : [...f.combustiveis, value],
+    });
+  }
+
+  function toggleFeature(value: string) {
+    update({
+      features: f.features.includes(value)
+        ? f.features.filter((x) => x !== value)
+        : [...f.features, value],
     });
   }
 
@@ -89,7 +121,7 @@ export function CarFiltersSheet({
         </SheetSection>
       )}
 
-      <SheetSection title="Preço (€)" first={marcaOpts.length === 0}>
+      <SheetSection title={`Preço (${getCurrencySymbol(country)})`} first={marcaOpts.length === 0}>
         <RangeRow
           minValue={f.precoMin}
           maxValue={f.precoMax}
@@ -125,41 +157,58 @@ export function CarFiltersSheet({
         <ChipSelect options={ESTADO_OPTS} value={f.estado} onChange={(v) => update({ estado: v as CarAdvFilters['estado'] })} />
       </SheetSection>
 
+      <SheetSection title="Categoria">
+        <ChipSelect options={CARROCERIA_OPTS} value={f.bodyType} onChange={(v) => update({ bodyType: v })} />
+      </SheetSection>
+
+      <SheetSection title="Condição">
+        <ChipSelect options={CONDICAO_OPTS} value={f.condition} onChange={(v) => update({ condition: v })} />
+      </SheetSection>
+
       <SheetSection title="Localização">
         {/* Mode toggle */}
         <View className="mb-3 flex-row self-start rounded-full bg-neutral-100 p-1">
           <ModeTab
-            label="Distrito"
+            label={regionLabel}
             active={!f.raioMode}
             onPress={() => update({ raioMode: false, raioDist: '', raioCentro: '', raioKm: '' })}
           />
           <ModeTab
             label="Raio"
             active={f.raioMode}
-            onPress={() => update({ raioMode: true, distrito: '', concelho: '' })}
+            onPress={() => update({ raioMode: true, distrito: '', concelho: '', bairro: '' })}
           />
         </View>
 
         {!f.raioMode ? (
           <View className="gap-3">
-            <Sub label="Distrito">
+            <Sub label={regionLabel}>
               <ChipSelect
-                options={DISTRITO_OPTS}
+                options={distritoOpts}
                 value={f.distrito}
-                onChange={(v) => update({ distrito: v, concelho: '' })}
+                onChange={(v) => update({ distrito: v, concelho: '', bairro: '' })}
               />
             </Sub>
             {!!f.distrito && (
-              <Sub label="Concelho">
-                <ChipSelect options={concelhoOpts} value={f.concelho} onChange={(v) => update({ concelho: v })} />
+              <Sub label={placeLabel}>
+                <ChipSelect
+                  options={concelhoOpts}
+                  value={f.concelho}
+                  onChange={(v) => update({ concelho: v, bairro: '' })}
+                />
+              </Sub>
+            )}
+            {country === 'BR' && !!f.concelho && bairroOpts.length > 0 && (
+              <Sub label="Bairro">
+                <ChipSelect options={bairroSelectOpts} value={f.bairro} onChange={(v) => update({ bairro: v })} />
               </Sub>
             )}
           </View>
         ) : (
           <View className="gap-3">
-            <Sub label="1. Distrito do centro">
+            <Sub label={`1. ${regionLabel} do centro`}>
               <ChipSelect
-                options={DISTRITO_OPTS}
+                options={distritoOpts}
                 value={f.raioDist}
                 onChange={(v) => update({ raioDist: v, raioCentro: '' })}
               />
@@ -190,6 +239,49 @@ export function CarFiltersSheet({
           </View>
         )}
       </SheetSection>
+
+      {/* Advanced spec filters — hidden by default to keep the sheet compact */}
+      <Pressable
+        onPress={() => setShowMore((v) => !v)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded: showMore }}
+        className="mt-4 flex-row items-center gap-1.5 self-start"
+      >
+        <Ionicons
+          name={showMore ? 'chevron-up' : 'chevron-down'}
+          size={16}
+          color={colors.primary[700]}
+        />
+        <Text className="text-sm font-semibold text-primary-700">
+          {showMore ? 'Menos filtros' : 'Mais filtros'}
+        </Text>
+      </Pressable>
+
+      {showMore && (
+        <>
+          <SheetSection title="Lugares (mín.)">
+            <View className="w-32">
+              <Input
+                value={f.seatsMin}
+                onChangeText={(v) => update({ seatsMin: v })}
+                placeholder="Ex: 5"
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+          </SheetSection>
+
+          <SheetSection title="Tração">
+            <ChipSelect options={TRACAO_OPTS} value={f.traction} onChange={(v) => update({ traction: v })} />
+          </SheetSection>
+
+          <SheetSection title="Equipamento">
+            <MultiChipSelect options={EQUIPAMENTO_OPTS} values={f.features} onToggle={toggleFeature} />
+          </SheetSection>
+        </>
+      )}
+
+      <CriarAlertaButton busca={busca} filters={f} />
     </BottomSheet>
   );
 }

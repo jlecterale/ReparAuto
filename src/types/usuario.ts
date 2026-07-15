@@ -1,5 +1,7 @@
 import type { User } from 'firebase/auth';
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
+import type { NotificationPreferences } from './alertas';
 
 export type Role = 'user' | 'admin';
 export type TipoConta = 'particular' | 'profissional';
@@ -23,8 +25,12 @@ export interface Usuario {
   telefone: string;
   localidade: string;
   distrito?: string;
+  /** Market the account was created in (missing on legacy docs = PT). */
+  country?: Country;
   codigoPostal: string;
   morada: string;
+  /** Neighbourhood — Brazilian addresses only ("bairro"); unused for PT. */
+  bairro?: string;
   nif: string;
   tipoConta: TipoConta;
   role: Role;
@@ -34,11 +40,21 @@ export interface Usuario {
   profileCompleted: boolean;
   emailVerified?: boolean;
   verificado?: boolean;
+  /** Admin ban (plan: admin moderation). Blocks posting/messaging via firestore.rules; reversible. */
+  banned?: boolean;
+  bannedAt?: Timestamp;
+  bannedReason?: string;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];
   planoAtivo?: PlanoAtivo;
   impulsosDisponiveis?: number;
+  /** Prefixed favourite ids (car_/part_/service_) — price-drop alerts fan out from this. */
+  favoritos?: string[];
+  /** FCM device tokens written after push consent (web + mobile). */
+  fcmTokens?: string[];
+  /** Per-group × per-channel notification preferences (see normalizeNotificationPreferences). */
+  notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
   dataAtualizacao?: Timestamp;
 }
@@ -51,6 +67,7 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<Usuario>;
   registar: (nome: string, email: string, password: string) => Promise<Usuario>;
   loginGoogle: () => Promise<Usuario>;
+  loginApple: () => Promise<Usuario>;
   logout: () => Promise<void>;
   isLoggedIn: boolean;
   isAdmin: boolean;

@@ -5,9 +5,6 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null && request.auth.token.email_verified == true;
     }
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
     // Signed in, regardless of email verification. Used ONLY for a user
     // writing their OWN profile document — every other write still requires
     // isAuthenticated() (verified email).
@@ -33,16 +30,60 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
     }
-    function isCreatorByEmail() {
-      return isAuthenticated() && request.resource.data.criador == request.auth.token.email;
-    }
     function isOwnerByEmail() {
       return isAuthenticated() && resource.data.criador == request.auth.token.email;
+    }
+    // Admin ban: a banned account may still read (public data) but can never
+    // create new content (listings, messages, reviews, intents, proposals).
+    // Reads the requester's own profile — the same doc isAdmin()/accountCountry()
+    // already read, so no extra billable get within one evaluation. A missing
+    // profile is treated as not-banned (matches the app's default).
+    function isNotBanned() {
+      let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return !exists(userPath) || get(userPath).data.get('banned', false) != true;
     }
     function hasValidImageCount(maxLimit) {
       let data = request.resource.data;
       let hasFotos = 'fotos' in data;
       return !hasFotos || data.fotos.size() <= maxLimit;
+    }
+    // Plan 20 (multi-country): when a doc carries a market key it must be a
+    // known one. Absence stays allowed — legacy clients and the mobile app
+    // don't send it yet, and missing resolves to PT in the app.
+    function hasValidCountry() {
+      let data = request.resource.data;
+      return !('country' in data) || data.country in ['PT', 'BR'];
+    }
+    // Plan 20: accounts belong to one market, bound at signup. Listings must
+    // be created in the creator account's market (accounts without a country
+    // resolve to PT). Docs from legacy clients that send no country at all
+    // stay allowed — the app resolves them to PT.
+    function accountCountry() {
+      // Guard the get(): a verified user may not have a profile doc yet (a
+      // failed/racing createUserProfile, or an auto-verified Google/Apple
+      // sign-in whose profile write hasn't landed). Missing doc resolves to
+      // PT — matching docCountry — instead of erroring and denying the write.
+      let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(userPath) ? get(userPath).data.get('country', 'PT') : 'PT';
+    }
+    function matchesAccountCountry() {
+      let data = request.resource.data;
+      return !('country' in data) || data.country == accountCountry();
+    }
+    // A doc's market never changes after creation; only admins may fix mistakes.
+    function keepsCountry() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['country']);
+    }
+    // A profile owner picks their account type (particular/profissional) while
+    // completing the profile, but may NEVER change it once the profile is
+    // completed — only an admin can (isAdmin branch). Allowed when: field absent,
+    // on first create, still completing the initial setup (profileCompleted not
+    // yet true), or the value is unchanged. Mirrors ownerRoleAllowed()/keepsCountry().
+    function ownerTipoContaAllowed() {
+      return !('tipoConta' in request.resource.data)
+        || resource == null
+        || resource.data.get('profileCompleted', false) != true
+        || request.resource.data.tipoConta == resource.data.tipoConta;
     }
 
     match /users/{userId} {
@@ -50,15 +91,15 @@ service cloud.firestore {
       // Profile create/update is allowed without email verification so new
       // accounts can finish their profile; listings/messages/etc. still require
       // a verified email (isAuthenticated) in their own rules below.
-      allow create: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
-      allow update: if (isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin();
+      allow create: if ((isProfileOwner(userId) && ownerRoleAllowed()) || isAdmin()) && hasValidCountry();
+      allow update: if (isProfileOwner(userId) && ownerRoleAllowed() && keepsCountry() && ownerTipoContaAllowed()) || isAdmin();
       allow delete: if isProfileOwner(userId) || isAdmin();
     }
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7);
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin()
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(20) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
+      allow update: if (isOwnerByEmail() && hasValidImageCount(20) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])
@@ -70,21 +111,24 @@ service cloud.firestore {
 
     match /parts/{partId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(3);
-      allow update: if (isOwnerByEmail() && hasValidImageCount(3)) || isAdmin()
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(3) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
+      allow update: if (isOwnerByEmail() && hasValidImageCount(3) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])
-        // Mensagens: apenas autenticados
+        // Mensagens e favoritos: apenas autenticados
         || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['contagemMensagens']));
+            .hasOnly(['contagemMensagens', 'contagemFavoritos']));
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7);
-      allow update: if (isOwnerByEmail() && hasValidImageCount(7)) || isAdmin();
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(7) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
+      allow update: if (isOwnerByEmail() && hasValidImageCount(7) && keepsCountry()) || isAdmin()
+        // Favoritos: apenas autenticados (espelha a exceção de /cars e /parts)
+        || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['contagemFavoritos']));
       allow delete: if isOwnerByEmail() || isAdmin();
     }
 
@@ -97,20 +141,54 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Alert subscriptions (plan 3.1). Owner-only, with field-level validation —
+    // the client sanitizes first, but rules are the layer that cannot be
+    // bypassed by a tampered client. Matching/notification fan-out runs in
+    // Cloud Functions (Admin SDK), which is the only writer of
+    // novosResultados > 0 and ultimaNotificacao.
+    match /alertSubscriptions/{alertId} {
+      function validAlertFields() {
+        let d = request.resource.data;
+        return d.tipo in ['filtro_salvo', 'palavra_chave', 'criterio']
+          && d.nome is string && d.nome.size() >= 1 && d.nome.size() <= 80
+          && d.ativo is bool
+          && (d.tipo != 'palavra_chave'
+              || (d.keyword is string && d.keyword.size() >= 2 && d.keyword.size() <= 60))
+          && (d.tipo != 'criterio'
+              || (d.criteria is map
+                  && d.criteria.categoria in ['carros', 'pecas', 'oficinas']))
+          && (d.tipo != 'filtro_salvo'
+              || (d.filters is map && d.filters.size() >= 1 && d.filters.size() <= 20));
+      }
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+      allow create: if isAuthenticated()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.novosResultados == 0
+        && validAlertFields();
+      allow update: if isAuthenticated()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && validAlertFields()
+        // Owners may rename, pause/resume or clear the unseen counter — never inflate it.
+        && (request.resource.data.novosResultados == 0
+            || request.resource.data.novosResultados == resource.data.novosResultados);
+      allow delete: if (isAuthenticated() && resource.data.uid == request.auth.uid) || isAdmin();
+    }
+
     match /messages/{messageId} {
       allow read: if isAuthenticated() && (
         request.auth.uid in resource.data.participants ||
         request.auth.uid == resource.data.fromUid ||
         request.auth.uid == resource.data.toUid
       );
-      allow create: if isAuthenticated() && request.resource.data.fromUid == request.auth.uid && request.resource.data.fromUid != request.resource.data.toUid;
+      allow create: if isAuthenticated() && isNotBanned() && request.resource.data.fromUid == request.auth.uid && request.resource.data.fromUid != request.resource.data.toUid;
       allow update: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
       allow delete: if isAdmin();
     }
 
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.autorUid == request.auth.uid
         && request.resource.data.vendedorEmail != request.auth.token.email
         && request.resource.data.nota >= 1
@@ -139,11 +217,13 @@ service cloud.firestore {
 
     match /intencoes_compra/{intencaoId} {
       allow read: if true;
-      allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated() && isNotBanned()
+        && request.resource.data.userId == request.auth.uid
+        && hasValidCountry()
+        && matchesAccountCountry();
       // Any signed-in user may bump view/contact counters (stats map only),
       // mirroring the counter exception on /cars and /parts.
-      allow update: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin()
+      allow update: if (isAuthenticated() && request.auth.uid == resource.data.userId && keepsCountry()) || isAdmin()
         || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['stats']));
       allow delete: if (isAuthenticated() && request.auth.uid == resource.data.userId) || isAdmin();
@@ -154,7 +234,7 @@ service cloud.firestore {
         request.auth.uid == get(/databases/$(database)/documents/intencoes_compra/$(resource.data.intencaoId)).data.userId ||
         request.auth.uid == resource.data.vendedorId
       )) || isAdmin();
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.vendedorId == request.auth.uid;
       allow update: if isAuthenticated() && (
         request.auth.uid == get(/databases/$(database)/documents/intencoes_compra/$(resource.data.intencaoId)).data.userId ||
@@ -180,7 +260,7 @@ service cloud.firestore {
         request.auth.uid == resource.data.compradorUid ||
         isAdmin()
       );
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.vendedorUid == request.auth.uid
         && request.resource.data.status == 'pendente';
       allow update: if isAuthenticated() && (

@@ -13,10 +13,14 @@ import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
+import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { logViewListing } from '@/lib/analytics';
 import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { TIPO_PECA_LABELS, type Peca } from '@/types';
@@ -38,6 +42,7 @@ export default function DetalhesPecaScreen() {
       .then((p) => {
         if (!active) return;
         setPeca(p);
+        if (p) logViewListing('peca', p.id, p.titulo);
         // Count the view for everyone except the owner.
         if (p && p.criadorUid !== user?.uid) registarVisualizacao('parts', id);
       })
@@ -100,7 +105,7 @@ export default function DetalhesPecaScreen() {
             >
               <Image
                 source={peca.foto}
-                style={{ width, height: width * 0.72 }}
+                style={{ width, height: width / LISTING_PHOTO_ASPECT }}
                 contentFit="cover"
                 transition={200}
               />
@@ -119,6 +124,7 @@ export default function DetalhesPecaScreen() {
         )}
 
         <View className="p-4">
+          <ListingStatusBanner status={peca.status} isOwner={ehDono} />
           <View className="self-start rounded bg-primary-100 px-2 py-0.5">
             <Text className="text-xs font-bold text-primary-700">
               {TIPO_PECA_LABELS[peca.tipo]}
@@ -126,7 +132,7 @@ export default function DetalhesPecaScreen() {
           </View>
           <Text className="mt-2 text-2xl font-extrabold text-fg-heading">{peca.titulo}</Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPrecoOpcional(peca.preco)}
+            {formatPrecoOpcional(peca.preco, docCountry(peca))}
           </Text>
 
           {ehDono && (
@@ -147,7 +153,7 @@ export default function DetalhesPecaScreen() {
               <Spec icon="car-sport-outline" label="Modelo" value={peca.modeloCarro} />
             )}
             <Spec icon="ribbon-outline" label="Estado" value={peca.estado} />
-            <Spec icon="location-outline" label="Local" value={peca.local} />
+            <Spec icon="location-outline" label="Local" value={[peca.bairro, peca.local].filter(Boolean).join(', ')} />
           </View>
 
           {!!peca.descricao && (

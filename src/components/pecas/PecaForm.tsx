@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, PencilSimple, UploadSimple, X, type Icon } from '@phosphor-icons/react';
 import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
@@ -8,25 +8,63 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import ImageCropper from '@/components/ui/ImageCropper';
 import { getCoordenadas } from '@/lib/geo';
+import { getActiveCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import Button from '@/components/ui/Button';
 import { pickDefined } from '@/lib/compatibility';
+import { clearAdDraft, hasPartDraftContent, saveAdDraft } from '@/lib/adDraft';
+import pendingUploadFiles, { isRestorableFoto, registerPendingFile, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
+import { useToast } from '@/components/ui/Toast';
+import { useAdDraft } from '@/hooks/useAdDraft';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
 import type { CompatibilityEntry } from '@/types/peca';
+
+type PecaFormState = {
+  tipo: string;
+  titulo: string;
+  categoria: string;
+  estado: string;
+  preco: string;
+  precoNovoReferencia: string;
+  numeroOEM: string;
+  descricao: string;
+  localizacao: string;
+  localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
+  vendedorTelefone: string;
+  vendedorWhatsApp: string;
+  vendedorEmail: string;
+};
+
+/** Serializable snapshot persisted as the part draft. */
+export interface PecaFormDraft {
+  form: PecaFormState;
+  compatibilidades: CompatibilityEntry[];
+  /** Photo URL; a blob: entry is only restorable within the same session. */
+  foto?: string | null;
+}
 
 interface PecaFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
+  /** Saved draft to resume from. Remount the form (key) when it changes. */
+  draft?: PecaFormDraft | null;
 }
 
-export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
+export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) {
   const { pecas, auth } = useApp();
   const { publicarPeca } = pecas;
   const { user } = auth;
+  const { country } = useCountry();
+  const toast = useToast();
 
   const telefoneInicial = user?.telefone || '';
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<PecaFormState>(() => ({
     tipo: 'venda',
     titulo: '',
     categoria: 'Motor e Transmissão',
@@ -37,27 +75,75 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
     descricao: '',
     localizacao: '',
     localizacaoDistrito: '',
+    bairro: '',
     vendedorTelefone: telefoneInicial,
     vendedorWhatsApp: telefoneInicial,
     vendedorEmail: user?.email || '',
-  });
+    ...draft?.form,
+  }));
 
-  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>([]);
+  const [compatibilidades, setCompatibilidades] = useState<CompatibilityEntry[]>(
+    () => draft?.compatibilidades ?? [],
+  );
   const [erro, setErro] = useState('');
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
 
-  const [fotoFile, setFotoFile] = useState<File | null>(null);
-  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  // A drafted blob photo whose backing File is still in the in-session
+  // registry restores synchronously; after a page reload it is recovered
+  // from IndexedDB by the effect below.
+  const draftFoto = draft?.foto && isRestorableFoto(draft.foto) ? draft.foto : null;
+  const [fotoFile, setFotoFile] = useState<File | null>(
+    () => (draftFoto ? pendingUploadFiles.get(draftFoto) ?? null : null),
+  );
+  const [fotoPreview, setFotoPreview] = useState<string | null>(draftFoto);
   const [fotoUploading, setFotoUploading] = useState(false);
   // Source image awaiting crop (object URL of the raw pick, or the current preview when re-editing).
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // The preview URL is deliberately NOT revoked on unmount: the draft keeps it
+  // alive in pendingUploadFiles so the photo survives leaving the page.
 
+  // Autosave-only draft instance: the resume prompt is handled by the parent
+  // (Anunciar / CriarPecaModal), which passes the resumed draft as a prop.
+  const draftSnapshot = useMemo<PecaFormDraft>(
+    () => ({ form, compatibilidades, foto: fotoPreview }),
+    [form, compatibilidades, fotoPreview],
+  );
+  useAdDraft<PecaFormDraft>({
+    kind: 'peca',
+    suspended: fotoUploading,
+    data: draftSnapshot,
+    hasContent: hasPartDraftContent(form, compatibilidades) || !!fotoPreview,
+  });
+
+  // Recover a drafted photo whose blob URL died in a previous session (page
+  // reload) from IndexedDB; warn when it is gone for good.
+  const deadDraftFoto = draft?.foto && !isRestorableFoto(draft.foto) ? draft.foto : null;
   useEffect(() => {
+    if (!deadDraftFoto) return;
+    let cancelled = false;
+    void restoreDraftPhotos([deadDraftFoto]).then(({ fotos, lostCount }) => {
+      // Persist the re-keyed URL right away — the stale one in the stored
+      // draft no longer resolves to anything. Runs even if unmounted.
+      saveAdDraft<PecaFormDraft>(
+        'peca',
+        { form, compatibilidades, foto: fotos[0] ?? null },
+        { uid: user?.uid ?? null },
+      );
+      if (cancelled) return;
+      if (fotos[0]) {
+        setFotoPreview(fotos[0]);
+        setFotoFile(pendingUploadFiles.get(fotos[0]) ?? null);
+      } else if (lostCount > 0) {
+        toast?.info('A foto do rascunho não pôde ser recuperada — adicione-a novamente.');
+      }
+    });
     return () => {
-      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+      cancelled = true;
     };
-  }, [fotoPreview]);
+    // Mount-only: the form remounts (key) whenever a different draft is resumed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const atualizar = (campo: string, valor: string) => {
     setForm((prev) => {
@@ -105,7 +191,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
         local: form.localizacao,
         distrito: form.localizacaoDistrito || undefined,
-        coordenadas: form.localizacao ? getCoordenadas(form.localizacao) : undefined,
+        bairro: getActiveCountry() === 'BR' ? form.bairro.trim() || undefined : undefined,
+        coordenadas: form.localizacao ? getCoordenadas(form.localizacao, getActiveCountry()) : undefined,
         preco: form.preco ? Number(form.preco) : null,
         foto: fotoUrl || undefined,
         criador: user?.email || '',
@@ -124,8 +211,9 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         })
         .catch(() => {});
 
-      if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+      if (fotoPreview) void unregisterPendingFile(fotoPreview);
 
+      clearAdDraft('peca');
       setForm({
         tipo: 'venda',
         titulo: '',
@@ -137,6 +225,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         descricao: '',
         localizacao: '',
         localizacaoDistrito: '',
+        bairro: '',
         vendedorTelefone: '',
         vendedorWhatsApp: '',
         vendedorEmail: '',
@@ -299,9 +388,25 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
           onChange={(d, c) => {
             atualizar('localizacaoDistrito', d);
             atualizar('localizacao', c);
+            atualizar('bairro', '');
           }}
         />
       </div>
+
+      {country === 'BR' && (
+        <div>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">Bairro (opcional)</label>
+          <input
+            type="text"
+            autoComplete="address-level3"
+            placeholder="Ex: Bela Vista"
+            maxLength={60}
+            value={form.bairro}
+            onChange={(e) => atualizar('bairro', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          />
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-bold text-fg-subtle mb-1">Descrição (opcional)</label>
@@ -336,7 +441,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
               <button
                 type="button"
                 onClick={() => {
-                  if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+                  if (fotoPreview) void unregisterPendingFile(fotoPreview);
                   setFotoPreview(null);
                   setFotoFile(null);
                   if (fileInputRef.current) fileInputRef.current.value = '';
@@ -385,9 +490,13 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
             onConfirm={(blob) => {
               const cropped = new File([blob], `foto_${Date.now()}.jpg`, { type: 'image/jpeg' });
               if (cropSrc !== fotoPreview) URL.revokeObjectURL(cropSrc);
-              if (fotoPreview) URL.revokeObjectURL(fotoPreview);
+              if (fotoPreview) void unregisterPendingFile(fotoPreview);
+              const previewUrl = URL.createObjectURL(cropped);
+              // Registered (Map + IndexedDB) so the photo survives leaving
+              // the page and even a reload (draft resume).
+              void registerPendingFile(previewUrl, cropped);
               setFotoFile(cropped);
-              setFotoPreview(URL.createObjectURL(cropped));
+              setFotoPreview(previewUrl);
               setCropSrc(null);
             }}
           />
@@ -401,7 +510,7 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
         </span>
         <div className="space-y-2">
           <div>
-            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">WhatsApp / Telefone</label>
+            <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">WhatsApp / {term('phoneLabel', country)}</label>
             <input
               type="tel"
               placeholder="912345678"
@@ -422,11 +531,11 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
               }}
               className="rounded text-accent focus:ring-accent"
             />
-            Telefone diferente do WhatsApp
+            {term('phoneLabel', country)} diferente do WhatsApp
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">Telefone</label>
+              <label className="block text-[10px] font-semibold text-fg-subtle mb-0.5">{term('phoneLabel', country)}</label>
               <input
                 type="tel"
                 placeholder="912345678"
@@ -452,6 +561,8 @@ export default function PecaForm({ onSuccess, onCancel }: PecaFormProps) {
       {erro && (
         <p className="text-xs text-red-500 font-semibold">{erro}</p>
       )}
+
+      <DraftSavedNote />
 
       <div className="flex gap-3">
         {onCancel && (

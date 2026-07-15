@@ -1,6 +1,12 @@
-export function formatarPreco(valor: number | string | null | undefined): string {
-  if (valor == null || isNaN(Number(valor))) return '0 €';
-  return Number(valor).toLocaleString('pt-PT') + ' €';
+import { COUNTRY_INFO, type Country } from '@/lib/country';
+
+// Formats a listing price in the currency of the listing's own market —
+// pass the doc's resolved country (docCountry), not the viewer's.
+export function formatarPreco(valor: number | string | null | undefined, country: Country = 'PT'): string {
+  const { locale } = COUNTRY_INFO[country];
+  const value = valor == null || isNaN(Number(valor)) ? 0 : Number(valor);
+  const formatted = value.toLocaleString(locale);
+  return country === 'BR' ? `R$ ${formatted}` : `${formatted} €`;
 }
 
 export function gerarId(): number {
@@ -11,22 +17,57 @@ export function validarEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export function validarTelefone(tel: string): boolean {
-  const digits = tel.replace(/\s/g, '');
+export function validarTelefone(tel: string, country: Country = 'PT'): boolean {
+  const digits = tel.replace(/[\s().-]/g, '');
+  if (country === 'BR') {
+    // DDD (two digits, no leading zero) + mobile (9xxxxxxxx) or landline (2-5 + 7 digits).
+    return /^[1-9][0-9](9\d{8}|[2-5]\d{7})$/.test(digits);
+  }
   return /^(9|2)\d{8}$/.test(digits);
 }
 
-export function validarCodigoPostal(cp: string): boolean {
+export function validarCodigoPostal(cp: string, country: Country = 'PT'): boolean {
+  if (country === 'BR') return /^\d{5}-?\d{3}$/.test(cp.trim());
   return /^\d{4}-\d{3}$/.test(cp.trim());
 }
 
-export function formatarCodigoPostal(cp: string): string {
+export function formatarCodigoPostal(cp: string, country: Country = 'PT'): string {
   const digits = cp.replace(/\D/g, '');
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4, 7)}`;
+  const prefixLength = country === 'BR' ? 5 : 4;
+  if (digits.length <= prefixLength) return digits;
+  return `${digits.slice(0, prefixLength)}-${digits.slice(prefixLength, prefixLength + 3)}`;
 }
 
-export function validarNif(nif: string): boolean {
+// Weighted check-digit calculation shared by CPF and CNPJ: multiply each digit
+// by its weight, and the check digit is 0 when the remainder mod 11 is < 2,
+// otherwise 11 - remainder.
+function checkDigitMod11(digits: string, weights: number[]): number {
+  const sum = weights.reduce((acc, weight, i) => acc + parseInt(digits[i], 10) * weight, 0);
+  const remainder = sum % 11;
+  return remainder < 2 ? 0 : 11 - remainder;
+}
+
+function validarCpf(digits: string): boolean {
+  if (!/^\d{11}$/.test(digits) || /^(\d)\1{10}$/.test(digits)) return false;
+  const d1 = checkDigitMod11(digits, [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const d2 = checkDigitMod11(digits, [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d1 === parseInt(digits[9], 10) && d2 === parseInt(digits[10], 10);
+}
+
+function validarCnpj(digits: string): boolean {
+  if (!/^\d{14}$/.test(digits) || /^(\d)\1{13}$/.test(digits)) return false;
+  const d1 = checkDigitMod11(digits, [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const d2 = checkDigitMod11(digits, [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return d1 === parseInt(digits[12], 10) && d2 === parseInt(digits[13], 10);
+}
+
+// PT: 9-digit NIF. BR: accepts CPF (11 digits) or CNPJ (14 digits), with or
+// without the usual punctuation.
+export function validarNif(nif: string, country: Country = 'PT'): boolean {
+  if (country === 'BR') {
+    const digits = nif.replace(/[\s./-]/g, '');
+    return digits.length === 14 ? validarCnpj(digits) : validarCpf(digits);
+  }
   const digits = nif.replace(/\s/g, '');
   if (!/^\d{9}$/.test(digits)) return false;
   const first = parseInt(digits[0], 10);
@@ -107,6 +148,45 @@ export function renderFoto(foto: string, classes = 'w-full h-full object-cover')
   return { type: 'emoji', emoji };
 }
 
+// Hosts whitelisted in next.config.ts images.remotePatterns. Anything else
+// (data:/blob: previews, pasted external hosts) must fall back to a plain
+// <img> so the next/image optimizer never throws on unconfigured domains.
+const OPTIMIZABLE_IMAGE_HOSTS = ['firebasestorage.googleapis.com', 'googleusercontent.com'];
+
+export function canOptimizeImage(src: string): boolean {
+  if (src.startsWith('/')) return true;
+  if (!src.startsWith('https://')) return false;
+  try {
+    const host = new URL(src).hostname;
+    return OPTIMIZABLE_IMAGE_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
+// Normalizes an image URL pasted by the user (listing photos can be added by
+// URL): trims, defaults the scheme to https, upgrades http and rejects anything
+// that is not a plain https web address. Returns null for invalid input.
+export function parseExternalImageUrl(input: string | null | undefined): string | null {
+  if (!input) return null;
+  let value = input.trim();
+  if (!value) return null;
+  if (/^http:\/\//i.test(value)) {
+    value = 'https://' + value.slice('http://'.length);
+  } else if (!/^https:\/\//i.test(value)) {
+    // Any other explicit scheme (javascript:, data:, blob:, ftp:, …) is rejected.
+    if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return null;
+    value = 'https://' + value;
+  }
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || !url.hostname.includes('.')) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 // Extracts the YouTube video id from the common URL forms (watch, youtu.be,
 // embed, shorts, live) and returns a privacy-friendly nocookie embed URL.
 // Returns null when the input is empty or not a recognizable YouTube link.
@@ -181,10 +261,16 @@ export function dataAtualISO(): string {
   return new Date().toISOString();
 }
 
-export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null): string | null {
+export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null, country: Country = 'PT'): string | null {
   if (whatsapp && whatsapp.trim()) return whatsapp.trim();
   if (!telefone) return null;
-  const digits = telefone.replace(/\s/g, '');
+  const digits = telefone.replace(/[\s().+-]/g, '');
+  if (country === 'BR') {
+    // Only mobiles (DDD + 9xxxxxxxx) receive WhatsApp links.
+    if (/^[1-9][0-9]9\d{8}$/.test(digits)) return '55' + digits;
+    if (/^55[1-9][0-9]9\d{8}$/.test(digits)) return digits;
+    return null;
+  }
   if (/^9\d{8}$/.test(digits)) return '351' + digits;
   if (/^3519\d{8}$/.test(digits)) return digits;
   return null;
@@ -195,30 +281,54 @@ export function gerarLinkWhatsApp(numero: string, tituloAnuncio: string): string
   return `https://wa.me/${numero}?text=${msg}`;
 }
 
-export function formatarData(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
-  if (!data) return '—';
-  if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT');
-  if (data instanceof Date) return data.toLocaleDateString('pt-PT');
-  if (typeof data.toDate === 'function') return data.toDate().toLocaleDateString('pt-PT');
-  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT');
-  return '—';
+type DateLike = { toDate?: () => Date; seconds?: number } | string | Date | null | undefined;
+
+function toDateValue(data: DateLike): Date | null {
+  if (!data) return null;
+  if (typeof data === 'string') return new Date(data);
+  if (data instanceof Date) return data;
+  if (typeof data.toDate === 'function') return data.toDate();
+  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000);
+  return null;
 }
 
-export function formatarDataHora(data: { toDate?: () => Date; seconds?: number } | string | Date | null | undefined): string {
-  if (!data) return '—';
+export function formatarData(data: DateLike): string {
+  const date = toDateValue(data);
+  return date ? date.toLocaleDateString('pt-PT') : '—';
+}
+
+export function formatarDataHora(data: DateLike): string {
   const opts: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-  if (typeof data === 'string') return new Date(data).toLocaleDateString('pt-PT', opts);
-  if (data instanceof Date) return data.toLocaleDateString('pt-PT', opts);
-  if (typeof data.toDate === 'function') return data.toDate().toLocaleDateString('pt-PT', opts);
-  if (typeof data.seconds === 'number') return new Date(data.seconds * 1000).toLocaleDateString('pt-PT', opts);
-  return '—';
+  const date = toDateValue(data);
+  return date ? date.toLocaleDateString('pt-PT', opts) : '—';
+}
+
+/**
+ * Compact chat-style timestamp (pt): time only for today, "Ontem" for
+ * yesterday, full date otherwise. Empty string while a serverTimestamp
+ * write is still pending (null snapshot value). Days are compared as
+ * calendar dates (not ms math) so DST transitions don't break "Ontem".
+ */
+export function formatMessageTime(data: DateLike): string {
+  const date = toDateValue(data);
+  if (!date || Number.isNaN(date.getTime())) return '';
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const time = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const now = new Date();
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (sameDay(date, now)) return time;
+  const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  if (sameDay(date, yesterday)) return `Ontem, ${time}`;
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}, ${time}`;
 }
 
 export function gerarTituloIntencao(dados: {
   categoria?: string;
   criterios?: { marca?: string; modelo?: string; precoMaximo?: number };
   descricao?: string;
-}): string {
+}, country: Country = 'PT'): string {
   const cat = dados.categoria || 'carro';
   const prefixos: Record<string, string> = {
     carro: 'Procuro carro',
@@ -233,7 +343,8 @@ export function gerarTituloIntencao(dados: {
   }
   const m = dados.criterios?.marca || '';
   const mo = dados.criterios?.modelo || '';
-  const p = dados.criterios?.precoMaximo ? ` até ${dados.criterios.precoMaximo}€` : '';
+  const maxPrice = dados.criterios?.precoMaximo;
+  const p = maxPrice ? ` até ${country === 'BR' ? `R$ ${maxPrice}` : `${maxPrice}€`}` : '';
   return `${prefixo}: ${m} ${mo}${p}`;
 }
 
@@ -275,4 +386,47 @@ export function validarIntencaoCompra(dados: Record<string, any>): { valido: boo
   if (dados.descricao && dados.descricao.length > 500) erros.push('Descrição não pode ter mais de 500 caracteres');
 
   return { valido: erros.length === 0, erros };
+}
+
+/** Immutable toggle: removes the item if present, appends it otherwise. */
+export function toggleInList<T>(list: readonly T[], item: T): T[] {
+  return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+}
+
+/**
+ * Parses an optional numeric form field (seats, power, cc…) into a positive
+ * integer, or null when empty/invalid — keeps nonsense like "-3" out of
+ * Firestore and the public JSON-LD.
+ */
+export function parsePositiveInt(value: string): number | null {
+  const n = Math.trunc(Number(value.trim()));
+  return value.trim() && Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Like parsePositiveInt but allows 0 as a valid value — for fields where zero is
+ * meaningful (previous owners, airbags, CO₂ emissions, warranty months, range).
+ */
+export function parseNonNegativeInt(value: string): number | null {
+  const n = Math.trunc(Number(value.trim()));
+  return value.trim() && Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+/**
+ * Keeps a decimal input to digits plus a single (comma) separator, so a user
+ * can type "5,6" for l/100 km without stray characters. Mirrors the digit-only
+ * sanitising the numeric fields already do.
+ */
+export function sanitizeDecimalInput(value: string): string {
+  const cleaned = value.replace(/[^0-9.,]/g, '');
+  const sep = cleaned.search(/[.,]/);
+  if (sep === -1) return cleaned;
+  return `${cleaned.slice(0, sep)},${cleaned.slice(sep + 1).replace(/[.,]/g, '')}`;
+}
+
+/** Parses a PT-style decimal form field (l/100 km…) into a number ≥ 0, or null. */
+export function parseDecimalOrNull(value: string): number | null {
+  if (!value.trim()) return null;
+  const n = Number(value.trim().replace(',', '.'));
+  return Number.isFinite(n) && n >= 0 ? n : null;
 }

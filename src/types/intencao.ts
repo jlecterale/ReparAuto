@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type CategoriaIntencao = 'carro' | 'moto' | 'viatura_comercial' | 'pecas';
 export type StatusIntencao = 'pendente' | 'ativa' | 'pausada' | 'expirada' | 'deletada';
@@ -11,6 +12,8 @@ export type TipoNotificacaoIntencao = 'nova_intencao_match' | 'intencao_recebeu_
 export interface IntencaoCompra {
   id: string;
   userId: string;
+  /** Market the intent belongs to (missing on legacy docs = PT). */
+  country?: Country;
   categoria: CategoriaIntencao;
   titulo: string;
   descricao?: string;

@@ -3,7 +3,10 @@
 import { IdentificationCard, Invoice, RoadHorizon, YoutubeLogo } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
+import { CAR_PRICE_MAX } from '@/lib/carSpec';
 import { isValidYoutubeUrl } from '@/lib/utils';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
@@ -19,6 +22,7 @@ interface StepPrecoProps {
 export default function StepPreco({ dados, setDados, onBack, onPublicar, carregando }: StepPrecoProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
+  const { country } = useCountry();
 
   const atualizar = (campo: string, valor: unknown) => {
     setDados((prev) => {
@@ -41,7 +45,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
 
   const validar = () => {
     const novosErros: Record<string, boolean> = {};
-    if (!dados.preco || Number(dados.preco) <= 0) novosErros.preco = true;
+    if (!dados.preco || Number(dados.preco) <= 0 || Number(dados.preco) > CAR_PRICE_MAX) novosErros.preco = true;
     if (!dados.descricao?.trim()) novosErros.descricao = true;
     if (dados.videoUrl?.trim() && !isValidYoutubeUrl(dados.videoUrl)) novosErros.videoUrl = true;
     if (dados.estadoVeiculo === 'manutencao' && (!dados.tiposManutencao || dados.tiposManutencao.length === 0)) {
@@ -76,15 +80,30 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
           Preço (€) <span className="text-red-500">*</span>
         </label>
         <input
-          type="number"
+          // Digit-only text input so maxLength actually caps length (type=number ignores it).
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           placeholder="Ex: 950 ou 15000"
+          maxLength={8}
           value={dados.preco || ''}
-          onChange={(e) => atualizar('preco', e.target.value)}
+          onChange={(e) => atualizar('preco', e.target.value.replace(/\D/g, '').slice(0, 8))}
+          onBlur={() => {
+            const n = Number(dados.preco);
+            setErros((prev) => ({
+              ...prev,
+              preco: !dados.preco || n <= 0 || n > CAR_PRICE_MAX,
+            }));
+          }}
           className={`w-full border rounded-xl p-3 text-sm focus:outline-none focus:border-accent font-bold text-lg ${
             erros.preco ? 'border-red-400' : 'border-gray-300'
           }`}
         />
-        {erros.preco && <span className="text-xs text-red-500 mt-1 block">O preço deve ser superior a 0.</span>}
+        {erros.preco && (
+          <span className="text-xs text-red-500 mt-1 block">
+            O preço deve estar entre 1 € e {CAR_PRICE_MAX.toLocaleString('pt-PT')} €.
+          </span>
+        )}
         <p className="text-xs text-fg-subtle mt-1">{getSugestaoPreco(dados.preco)}</p>
       </div>
 
@@ -293,7 +312,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
                 {dados.incluirMecanicoTelefone && (
                   <input
                     type="tel"
-                    placeholder="Telefone do mecânico"
+                    placeholder={`${term('phoneLabel', country)} do mecânico`}
                     value={dados.mecanicoTelefone || ''}
                     onChange={(e) => atualizar('mecanicoTelefone', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent"
@@ -312,7 +331,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
         <div className="space-y-2">
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-1">
-              WhatsApp / Telefone <span className="text-green-600">(recomendado)</span>
+              WhatsApp / {term('phoneLabel', country)} <span className="text-green-600">(recomendado)</span>
             </label>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-fg-muted">+</span>
@@ -338,11 +357,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
               }}
               className="rounded text-accent focus:ring-accent"
             />
-            Telefone diferente do WhatsApp
+            {term('phoneLabel', country)} diferente do WhatsApp
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-xs font-semibold text-fg-subtle mb-1">Telefone</label>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('phoneLabel', country)}</label>
               <input
                 type="tel"
                 placeholder="912 345 678"

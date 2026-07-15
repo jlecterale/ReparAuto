@@ -23,10 +23,28 @@ export interface CarrosContextValue {
   setAdvDistrito: (v: string) => void;
   advConcelho: string;
   setAdvConcelho: (v: string) => void;
+  advBairro: string;
+  setAdvBairro: (v: string) => void;
+  /** Neighbourhoods with active ads in the picked city (BR facet). */
+  bairroOpts: string[];
   advRaioCentro: string;
   setAdvRaioCentro: (v: string) => void;
   advRaioKm: number | null;
   setAdvRaioKm: (v: number | null) => void;
+  advBodyType: string;
+  setAdvBodyType: (v: string) => void;
+  advCondition: string;
+  setAdvCondition: (v: string) => void;
+  advCombustivel: string;
+  setAdvCombustivel: (v: string) => void;
+  advCambio: string;
+  setAdvCambio: (v: string) => void;
+  advSeatsMin: number | null;
+  setAdvSeatsMin: (v: number | null) => void;
+  advTraction: string;
+  setAdvTraction: (v: string) => void;
+  advFeatures: string[];
+  setAdvFeatures: (v: string[]) => void;
   sortOrdem: SortOrdem;
   setSortOrdem: (v: SortOrdem) => void;
   publicarCarro: (dados: any) => Promise<any>;
@@ -50,6 +68,10 @@ export interface PecasContextValue {
   setAdvDistrito: (v: string) => void;
   advConcelho: string;
   setAdvConcelho: (v: string) => void;
+  advBairro: string;
+  setAdvBairro: (v: string) => void;
+  /** Neighbourhoods with active ads in the picked city (BR facet). */
+  bairroOpts: string[];
   advRaioCentro: string;
   setAdvRaioCentro: (v: string) => void;
   advRaioKm: number | null;

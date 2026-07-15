@@ -1,16 +1,23 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { LocationSelect } from '@/components/ui/LocationSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
+import { trackPositiveAction } from '@/lib/appReview';
+import { clearAdDraft, type WorkshopDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { isValidYoutubeUrl } from '@/lib/youtube';
 import { colors } from '@/theme/colors';
 import { ESPECIALIDADES_LABELS, type EspecialidadeOficina } from '@/types';
@@ -20,9 +27,10 @@ const ESPECIALIDADES = (Object.keys(ESPECIALIDADES_LABELS) as EspecialidadeOfici
 );
 
 export default function RegistarOficinaScreen() {
-  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -37,11 +45,50 @@ export default function RegistarOficinaScreen() {
   const [videoUrl, setVideoUrl] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [descricao, setDescricao] = useState('');
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [enviando, setEnviando] = useState(false);
   const [carregando, setCarregando] = useState(!!editId);
+  // Set once the registration is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
+
+  const draftData = useMemo<WorkshopDraftData>(
+    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades }),
+    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades],
+  );
+  // Prefilled contacts (responsável/telefone/email) don't count as progress.
+  const hasDraftContent = !!(nome || descricao || morada || especialidades.length || logo.length);
+
+  function restoreDraft(d: WorkshopDraftData) {
+    setLogo(d.logo ?? []);
+    setNome(d.nome ?? '');
+    setResponsavel(d.responsavel ?? user?.nome ?? '');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+    setEmail(d.email ?? user?.email ?? '');
+    setWebsite(d.website ?? '');
+    setVideoUrl(d.videoUrl ?? '');
+    setDistrito(d.distrito ?? '');
+    setLocalidade(d.localidade ?? '');
+    setBairro(d.bairro ?? '');
+    setMorada(d.morada ?? '');
+    setDescricao(d.descricao ?? '');
+    setEspecialidades(d.especialidades ?? []);
+  }
+
+  useAdDraft<WorkshopDraftData>({
+    kind: 'oficina',
+    enabled: !editId,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'um registo de oficina',
+    onRestore: restoreDraft,
+  });
 
   useEffect(() => {
     if (!editId) return;
@@ -59,6 +106,7 @@ export default function RegistarOficinaScreen() {
         setVideoUrl(o.videoUrl ?? '');
         setDistrito(o.distrito ?? '');
         setLocalidade(o.localidade ?? '');
+        setBairro(o.bairro ?? '');
         setMorada(o.morada ?? '');
         setDescricao(o.descricao ?? '');
         setEspecialidades(o.especialidades ?? []);
@@ -82,7 +130,8 @@ export default function RegistarOficinaScreen() {
     if (!responsavel.trim()) return 'Indique o responsável.';
     if (!telefone.trim()) return 'Indique um telefone.';
     if (!email.trim()) return 'Indique um email.';
-    if (!distrito.trim() || !localidade.trim()) return 'Indique distrito e localidade.';
+    if (!distrito.trim() || !localidade.trim())
+      return `Indique ${term('districtAndMunicipality', country).toLowerCase()}.`;
     if (especialidades.length === 0) return 'Selecione pelo menos uma especialidade.';
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
       return 'O link do vídeo do YouTube é inválido.';
@@ -115,6 +164,7 @@ export default function RegistarOficinaScreen() {
         videoUrl: videoUrl.trim() || undefined,
         distrito: distrito.trim(),
         localidade: localidade.trim(),
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
         morada: morada.trim(),
         especialidades,
         logoUrl,
@@ -124,12 +174,22 @@ export default function RegistarOficinaScreen() {
         await updateOficina(editId, { ...dados, status: 'pendente' });
       } else {
         await addOficina({ ...dados, criador: user.email });
+        clearAdDraft('oficina');
       }
+      setSubmitted(true);
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
-        'O registo foi submetido e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        'O registo foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              if (!editId) trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível guardar. Tente novamente.', 'error');
@@ -178,20 +238,25 @@ export default function RegistarOficinaScreen() {
         />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Localização</Text>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <Input label="Distrito *" value={distrito} onChangeText={setDistrito} placeholder="Lisboa" />
-          </View>
-          <View className="flex-1">
-            <Input label="Localidade *" value={localidade} onChangeText={setLocalidade} placeholder="Amadora" />
-          </View>
-        </View>
-        <Input label="Morada" value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
+        <LocationSelect
+          distrito={distrito}
+          localidade={localidade}
+          onChange={(d, c) => {
+            setDistrito(d);
+            setLocalidade(c);
+            setBairro('');
+          }}
+          required
+        />
+        {country === 'BR' && (
+          <Input label="Bairro (opcional)" value={bairro} onChangeText={setBairro} placeholder="Ex: Bela Vista" />
+        )}
+        <Input label={term('addressLabel', country)} value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Telefone *" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={`${term('phoneLabel', country)} *`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />
@@ -210,6 +275,7 @@ export default function RegistarOficinaScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           O registo fica visível após aprovação da equipa.
         </Text>
+        {!editId && <DraftSavedNote />}
       </ScrollView>
     </KeyboardAvoider>
   );

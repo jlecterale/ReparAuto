@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import dados from '@/data/marcas-modelos.json';
 import { MARCAS_MODELOS_COLLECTION } from '@/lib/constants';
+import { fetchFipeBrands, fetchFipeModels, type FipeBrand } from '@/lib/fipe';
+import { useCountry } from '@/providers/CountryProvider';
 import type { MarcaModeloDoc, MarcasModelosCache, TipoVeiculo } from '@/types/marcas-modelos';
 
 export interface MarcaModelos {
@@ -35,7 +37,10 @@ function setCache(dados: MarcaModeloDoc[]): void {
 }
 
 function isCacheValid(cache: MarcasModelosCache): boolean {
-  return Date.now() - cache.timestamp < CACHE_TTL_MS;
+  // An empty cache is never usable: earlier versions persisted `[]` after a
+  // transient empty read, which then pinned an empty brand list for the whole
+  // TTL window. Treat it as absent so we re-fetch (and show the JSON fallback).
+  return cache.dados.length > 0 && Date.now() - cache.timestamp < CACHE_TTL_MS;
 }
 
 function getFallbackData(): MarcaModeloDoc[] {
@@ -63,19 +68,22 @@ interface UseMarcasModelosResult {
 
 export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasModelosResult {
   const { tipo } = options ?? {};
+  const { country } = useCountry();
   const [docs, setDocs] = useState<MarcaModeloDoc[]>(() => {
-    // Try cache first
+    // Seed synchronously so the brand list is populated on the very first
+    // paint (and during SSR): fresh cache if we have it, otherwise the
+    // bundled JSON. The Firestore read below only *upgrades* this baseline,
+    // so the dropdown never blocks on — or is emptied by — the network
+    // (blocked by CSP/adblocker, offline, hanging, or an empty snapshot).
     const cached = getCache();
-    if (cached && isCacheValid(cached)) {
-      return cached.dados;
-    }
-    return [];
+    if (cached && isCacheValid(cached)) return cached.dados;
+    return getFallbackData();
   });
-  const [loading, setLoading] = useState(() => {
-    const cached = getCache();
-    return !(cached && isCacheValid(cached));
-  });
-  const [error, setError] = useState<string | null>(null);
+  // PT: always have data to show synchronously, so there's no loading gate and
+  // no stuck skeleton. BR has no bundled fallback (FIPE has no offline dataset
+  // to seed from), so it gets a real loading/error state below.
+  const ptLoading = false;
+  const ptError = null;
 
   useEffect(() => {
     let cancelled = false;
@@ -84,10 +92,7 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
       // Check cache again (in case it was set between render and effect)
       const cached = getCache();
       if (cached && isCacheValid(cached)) {
-        if (!cancelled) {
-          setDocs(cached.dados);
-          setLoading(false);
-        }
+        if (!cancelled) setDocs(cached.dados);
         return;
       }
 
@@ -104,31 +109,80 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
           result.push({ ...data, nome: doc.id });
         });
 
-        if (!cancelled) {
+        // Only replace the seeded fallback with a non-empty server result. An
+        // empty snapshot (e.g. an offline persistentLocalCache read, which
+        // resolves rather than throws) keeps the bundled JSON in place.
+        if (!cancelled && result.length > 0) {
           setDocs(result);
           setCache(result);
-          setLoading(false);
         }
       } catch (err) {
+        // Keep the seeded fallback — the user doesn't need to know.
         console.warn('[useMarcasModelos] Erro ao buscar do Firestore, usando fallback:', err);
-        const fallback = getFallbackData();
-        if (!cancelled) {
-          setDocs(fallback);
-          setCache(fallback);
-          setLoading(false);
-          setError(null); // Fallback is silent — user doesn't need to know
-        }
       }
     }
 
-    fetchMarcas();
+    if (country === 'PT') fetchMarcas();
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [country]);
+
+  // Brazilian market: brands come from the official FIPE table instead of the
+  // European catalog. Models load lazily per brand (FIPE is one request per
+  // brand) and land in a map that getModelos reads synchronously.
+  const [fipeBrands, setFipeBrands] = useState<FipeBrand[]>([]);
+  const [fipeModelos, setFipeModelos] = useState<Record<string, string[]>>({});
+  const [fipeLoading, setFipeLoading] = useState(false);
+  const [fipeError, setFipeError] = useState<string | null>(null);
+  const fipePending = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (country !== 'BR') return;
+    let cancelled = false;
+    setFipeLoading(true);
+    fetchFipeBrands(tipo)
+      .then((brands) => {
+        if (cancelled) return;
+        setFipeBrands(brands);
+        setFipeError(null);
+      })
+      .catch((err) => {
+        console.warn('[useMarcasModelos] Erro ao buscar marcas FIPE:', err);
+        if (!cancelled) setFipeError('Não foi possível carregar as marcas.');
+      })
+      .finally(() => {
+        if (!cancelled) setFipeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [country, tipo]);
+
+  const requestFipeModelos = useCallback(
+    (marca: string) => {
+      const brand = fipeBrands.find((b) => b.nome.toLowerCase() === marca.toLowerCase());
+      if (!brand || fipePending.current.has(marca)) return;
+      fipePending.current.add(marca);
+      fetchFipeModels(brand.codigo, tipo)
+        .then((modelos) => {
+          setFipeModelos((prev) => ({ ...prev, [marca]: modelos }));
+        })
+        .catch((err) => {
+          // Keep the marca marked as pending so a failing (possibly
+          // rate-limited) endpoint isn't re-hit on every render; a fresh
+          // mount retries.
+          console.warn('[useMarcasModelos] Erro ao buscar modelos FIPE:', err);
+        });
+    },
+    [fipeBrands, tipo]
+  );
 
   const marcas = useMemo(() => {
+    if (country === 'BR') {
+      return fipeBrands.map((b) => b.nome).sort((a, b) => a.localeCompare(b, 'pt'));
+    }
     let filtered = docs;
     if (tipo) {
       filtered = docs.filter((d) => d.tipos.includes(tipo));
@@ -137,15 +191,25 @@ export function useMarcasModelos(options?: UseMarcasModelosOptions): UseMarcasMo
       .filter((d) => d.ativo)
       .map((d) => d.nome)
       .sort((a, b) => a.localeCompare(b));
-  }, [docs, tipo]);
+  }, [country, fipeBrands, docs, tipo]);
 
   const getModelos = useCallback(
     (marca: string): string[] => {
+      if (country === 'BR') {
+        const cached = fipeModelos[marca];
+        if (cached) return cached;
+        // Called during render — defer the fetch (and its setState) to a microtask.
+        queueMicrotask(() => requestFipeModelos(marca));
+        return [];
+      }
       const entry = docs.find((d) => d.nome.toLowerCase() === marca.toLowerCase());
       return entry?.modelos ?? [];
     },
-    [docs]
+    [country, fipeModelos, requestFipeModelos, docs]
   );
+
+  const loading = country === 'BR' ? fipeLoading : ptLoading;
+  const error = country === 'BR' ? fipeError : ptError;
 
   return { marcas, getModelos, loading, error, docs };
 }

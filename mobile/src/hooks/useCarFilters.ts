@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { getCoordenadas, getDistritoForConcelho, haversineKm } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { QUICK_PRICE_BANDS } from '@/lib/constants';
+import { useCountry } from '@/context/CountryContext';
 import type { Carro, Combustivel, EstadoVeiculo } from '@/types';
 
-export type QuickChip = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
+export type QuickChip = 'todos' | 'priceLow' | 'priceMid' | 'reparar';
 export type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
 export interface CarAdvFilters {
@@ -16,10 +19,17 @@ export interface CarAdvFilters {
   anoMax: string;
   combustiveis: Combustivel[];
   estado: '' | EstadoVeiculo;
+  bodyType: string;
+  condition: string;
+  seatsMin: string;
+  traction: string;
+  features: string[];
   /** false → filter by distrito/concelho; true → filter by radius. */
   raioMode: boolean;
   distrito: string;
   concelho: string;
+  /** BR only — narrows within the picked city; empty for PT. */
+  bairro: string;
   raioDist: string;
   raioCentro: string;
   raioKm: string;
@@ -36,9 +46,15 @@ const INITIAL: CarAdvFilters = {
   anoMax: '',
   combustiveis: [],
   estado: '',
+  bodyType: '',
+  condition: '',
+  seatsMin: '',
+  traction: '',
+  features: [],
   raioMode: false,
   distrito: '',
   concelho: '',
+  bairro: '',
   raioDist: '',
   raioCentro: '',
   raioKm: '',
@@ -49,12 +65,12 @@ function num(v: string): number | null {
   return v.trim() && !Number.isNaN(n) ? n : null;
 }
 
-function aplicaChip(carro: Carro, chip: QuickChip): boolean {
+function aplicaChip(carro: Carro, chip: QuickChip, bands: { low: number; mid: number }): boolean {
   switch (chip) {
-    case 'ate1000':
-      return carro.preco <= 1000;
-    case 'ate5000':
-      return carro.preco <= 5000;
+    case 'priceLow':
+      return carro.preco <= bands.low;
+    case 'priceMid':
+      return carro.preco <= bands.mid;
     case 'reparar':
       return carro.estadoVeiculo === 'manutencao';
     default:
@@ -63,6 +79,7 @@ function aplicaChip(carro: Carro, chip: QuickChip): boolean {
 }
 
 export function useCarFilters(carros: Carro[]) {
+  const { country } = useCountry();
   const [busca, setBusca] = useState('');
   const [chip, setChip] = useState<QuickChip>('todos');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
@@ -86,8 +103,22 @@ export function useCarFilters(carros: Carro[]) {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
   }, [carros, f.marca]);
 
+  // Like marca/modelo, bairro options come from the loaded listings so only
+  // neighbourhoods that actually have ads are offered (BR; scoped to the
+  // picked city, mirroring how modelos depend on the picked marca).
+  const bairroOpts = useMemo(() => {
+    if (!f.concelho) return [];
+    const set = new Set<string>();
+    for (const c of carros) {
+      if (c.bairro && (c.local ?? '').toLowerCase() === f.concelho.toLowerCase()) set.add(c.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros, f.concelho]);
+
   const filtersCount = useMemo(() => {
-    const localizacaoActive = f.raioMode ? !!(f.raioCentro && f.raioKm) : !!(f.concelho || f.distrito);
+    const localizacaoActive = f.raioMode
+      ? !!(f.raioCentro && f.raioKm)
+      : !!(f.concelho || f.distrito || f.bairro);
     return [
       f.marca || f.modelo,
       f.precoMin || f.precoMax,
@@ -95,6 +126,11 @@ export function useCarFilters(carros: Carro[]) {
       f.anoMin || f.anoMax,
       f.combustiveis.length > 0,
       f.estado,
+      f.bodyType,
+      f.condition,
+      f.seatsMin,
+      f.traction,
+      f.features.length > 0,
       localizacaoActive,
     ].filter(Boolean).length;
   }, [f]);
@@ -107,12 +143,16 @@ export function useCarFilters(carros: Carro[]) {
     const kmMax = num(f.kmMax);
     const anoMin = num(f.anoMin);
     const anoMax = num(f.anoMax);
+    const seatsMin = num(f.seatsMin);
     const raioKm = num(f.raioKm);
-    const centro = f.raioMode && f.raioCentro ? getCoordenadas(f.raioCentro) : null;
+    // The center is user-picked from the active market's dataset; per-doc
+    // lookups below are scoped to each listing's own market (names collide).
+    const centro = f.raioMode && f.raioCentro ? getCoordenadas(f.raioCentro, country) : null;
+    const bands = QUICK_PRICE_BANDS[country];
 
     let cs = carros.filter((c) => {
-      if (!aplicaChip(c, chip)) return false;
-      if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
+      if (!aplicaChip(c, chip, bands)) return false;
+      if (termo && !`${c.marca} ${c.modelo} ${c.local} ${c.bairro ?? ''}`.toLowerCase().includes(termo)) return false;
       if (f.marca && c.marca !== f.marca) return false;
       if (f.modelo && c.modelo !== f.modelo) return false;
       if (precoMin !== null && c.preco < precoMin) return false;
@@ -123,16 +163,26 @@ export function useCarFilters(carros: Carro[]) {
       if (anoMax !== null && c.anoFabricacao > anoMax) return false;
       if (f.combustiveis.length > 0 && !f.combustiveis.includes(c.combustivel)) return false;
       if (f.estado && c.estadoVeiculo !== f.estado) return false;
+      if (f.bodyType && c.bodyType !== f.bodyType) return false;
+      if (f.condition && c.condition !== f.condition) return false;
+      if (seatsMin !== null && (c.seats == null || c.seats < seatsMin)) return false;
+      if (f.traction && c.traction !== f.traction) return false;
+      if (f.features.length > 0) {
+        const owned = c.features ?? [];
+        if (!f.features.every((feat) => owned.includes(feat))) return false;
+      }
 
       // Location: radius takes precedence, then concelho, then distrito.
       if (centro && raioKm && raioKm > 0) {
-        const coords = c.coordenadas ?? getCoordenadas(c.local);
+        const coords = c.coordenadas ?? getCoordenadas(c.local, docCountry(c));
         if (!coords) return false;
         if (haversineKm(centro, coords) > raioKm) return false;
       } else if (f.concelho) {
         if ((c.local ?? '').toLowerCase() !== f.concelho.toLowerCase()) return false;
+        // Bairro (BR) narrows within the picked city.
+        if (f.bairro && (c.bairro ?? '').toLowerCase() !== f.bairro.toLowerCase()) return false;
       } else if (f.distrito) {
-        const cd = c.distrito ?? getDistritoForConcelho(c.local) ?? '';
+        const cd = c.distrito ?? getDistritoForConcelho(c.local, docCountry(c)) ?? '';
         if (cd !== f.distrito) return false;
       }
       return true;
@@ -141,7 +191,7 @@ export function useCarFilters(carros: Carro[]) {
     if (ordenar === 'preco_asc') cs = [...cs].sort((a, b) => a.preco - b.preco);
     else if (ordenar === 'preco_desc') cs = [...cs].sort((a, b) => b.preco - a.preco);
     return cs;
-  }, [carros, busca, chip, ordenar, f]);
+  }, [carros, busca, chip, ordenar, f, country]);
 
   return {
     busca,
@@ -157,5 +207,6 @@ export function useCarFilters(carros: Carro[]) {
     filtrados,
     marcaOpts,
     modeloOpts,
+    bairroOpts,
   };
 }

@@ -1,11 +1,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { DISTRITOS, getConcelhos } from '@/lib/geo';
+import { getDistritos, getConcelhos } from '@/lib/geo';
+import { useCountry } from '@/providers/CountryProvider';
 import type { ConcelhoDado } from '@/lib/geo';
 
+// Region pickers follow the active market: PT distritos/concelhos or BR
+// estados/cidades (same data shape — see geo.ts).
 export function useDistritosConcelhos() {
-  const distritos = useMemo(() => DISTRITOS, []);
+  const { country } = useCountry();
+  const distritos = useMemo(() => getDistritos(country), [country]);
 
   const getConcelhosDoDistrito = (distrito: string): ConcelhoDado[] =>
     getConcelhos(distrito);

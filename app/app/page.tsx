@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import Home from '@/screens/Home';
+import { getCarrosServer } from '@/lib/db.server';
+import { serializeCarro } from '@/lib/serializeCarro';
 
 export const revalidate = 60;
 
@@ -16,6 +18,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <Home />;
+export default async function Page() {
+  // Bake the approved listings into the ISR HTML so cards paint immediately;
+  // the client's realtime subscription takes over once connected.
+  const carros = await getCarrosServer().catch(() => []);
+  const initialCarros = carros
+    .map(serializeCarro)
+    .sort((a, b) => (b.dataCriacao ?? 0) - (a.dataCriacao ?? 0));
+
+  return <Home initialCarros={initialCarros} />;
 }

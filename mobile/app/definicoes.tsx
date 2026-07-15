@@ -4,7 +4,9 @@ import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import { Ionicons } from '@expo/vector-icons';
 import { LogoMark } from '@/components/ui/Logo';
+import { MarketSelector } from '@/components/settings/MarketSelector';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { requestNotificationPermission } from '@/lib/push';
 import { colors } from '@/theme/colors';
 
@@ -21,6 +23,9 @@ const LINKS: { label: string; path: string; icon: keyof typeof Ionicons.glyphMap
 export default function DefinicoesScreen() {
   const versao = Constants.expoConfig?.version ?? '1.0.0';
   const { user, updateProfile } = useAuth();
+  // The market itself is picked in <MarketSelector />; the country here only
+  // tags the policy links below.
+  const { country } = useCountry();
 
   // Defaults to on: the user doc seeds `notificacoes: true`.
   const notificacoesOn = user?.notificacoes !== false;
@@ -83,11 +88,17 @@ export default function DefinicoesScreen() {
         </View>
       )}
 
+      <MarketSelector className="mb-4" />
+
       <View className="overflow-hidden rounded-2xl bg-white">
         {LINKS.map((l, i) => (
           <Pressable
             key={l.path}
-            onPress={() => WebBrowser.openBrowserAsync(`${SITE}${l.path}`)}
+            // Carry the account market so the (client-rendered) policy pages —
+            // opened in a fresh browser with no stored preference — resolve the
+            // right variant (e.g. LGPD vs. RGPD privacy) instead of falling back
+            // to GeoIP, which misfires for a BR user physically in PT.
+            onPress={() => WebBrowser.openBrowserAsync(`${SITE}${l.path}?mercado=${country}`)}
             accessibilityRole="link"
             className={`flex-row items-center px-4 py-4 active:bg-neutral-50 ${
               i < LINKS.length - 1 ? 'border-b border-neutral-100' : ''

@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import ShareButton from '@/components/ui/ShareButton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { getUserByEmail, incrementCampo, recordDailyMetric, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
 import { formatCompatibilityEntry } from '@/lib/compatibility';
@@ -72,7 +73,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
   const config = tipoConfig[peca.tipo] || tipoConfig.venda;
   const telefone = peca.vendedorTelefone || peca.contacto;
   const email = peca.vendedorEmail || peca.criador;
-  const whatsapp = obterWhatsApp(peca.vendedorWhatsApp, telefone);
+  const whatsapp = obterWhatsApp(peca.vendedorWhatsApp, telefone, docCountry(peca));
   const temWhatsApp = !!whatsapp;
   const temTelefone = !!telefone;
   const temEmail = !!email;
@@ -87,7 +88,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           </Badge>
           {peca.preco && (
             <span className="text-2xl font-extrabold text-accent">
-              {formatarPreco(peca.preco)}
+              {formatarPreco(peca.preco, docCountry(peca))}
             </span>
           )}
         </div>
@@ -96,7 +97,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           <h3 className="text-xl font-extrabold text-fg-heading">{peca.titulo}</h3>
           <ShareButton
             title={`${peca.titulo} - RecarGarage`}
-            text={peca.preco ? `${peca.titulo} - ${formatarPreco(peca.preco)}` : peca.titulo}
+            text={peca.preco ? `${peca.titulo} - ${formatarPreco(peca.preco, docCountry(peca))}` : peca.titulo}
             url={typeof window !== 'undefined' ? `${window.location.origin}/pecas/${peca.id}` : `/pecas/${peca.id}`}
           />
         </div>
@@ -128,7 +129,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           </div>
           <div>
             <span className="text-xs font-semibold text-fg-subtle">Localização</span>
-            <p className="font-semibold text-fg-heading">{peca.local || 'Portugal'}</p>
+            <p className="font-semibold text-fg-heading">{[peca.bairro, peca.local].filter(Boolean).join(', ') || 'Portugal'}</p>
           </div>
           {peca.numeroOEM && (
             <div className="col-span-2">

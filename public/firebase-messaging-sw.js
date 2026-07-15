@@ -13,7 +13,7 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'ReparAuto';
+  const title = payload.notification?.title || 'RecarGarage';
   const options = {
     body: payload.notification?.body || '',
     icon: '/pwa-icon.svg',
@@ -25,7 +25,9 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || './';
+  // Cloud Functions send the in-app route as data.link (data.url kept for
+  // any older payloads still in flight).
+  const url = event.notification.data?.link || event.notification.data?.url || './';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (const client of windowClients) {

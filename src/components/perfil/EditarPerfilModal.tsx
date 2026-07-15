@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, CircleNotch, WarningCircle } from '@phosphor-icons/react';
+import { Check, CircleNotch, Lock, Storefront, User, WarningCircle } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
 import { useState, useEffect, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
@@ -10,13 +10,15 @@ import { useToast } from '@/components/ui/Toast';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { getDistritoForConcelho } from '@/lib/geo';
 import { useCodigoPostal } from '@/hooks/useCodigoPostal';
+import { useCepBr } from '@/hooks/useCepBr';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import {
   validarTelefone,
   validarCodigoPostal,
   validarNif,
   formatarCodigoPostal,
 } from '@/lib/utils';
-import type { TipoConta } from '@/types/usuario';
 
 interface EditarPerfilModalProps {
   show: boolean;
@@ -33,9 +35,9 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [localidade, setLocalidade] = useState('');
   const [distrito, setDistrito] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
-  const [tipoConta, setTipoConta] = useState<TipoConta>('particular');
   const [bio, setBio] = useState('');
   const [notificacoes, setNotificacoes] = useState(true);
   const [erro, setErro] = useState('');
@@ -43,19 +45,28 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const lookupTriggered = useRef(false);
 
-  const cpLookup = useCodigoPostal();
+  // Both lookups run; pick by market. PT derives the district from the city;
+  // BR gets the state directly from the CEP (BrasilAPI).
+  const { country } = useCountry();
+  const cpLookupPt = useCodigoPostal();
+  const cpLookupBr = useCepBr();
+  const cpLookup = country === 'BR' ? cpLookupBr : cpLookupPt;
 
   useEffect(() => {
     if (cpLookup.localidade && !lookupTriggered.current) {
       lookupTriggered.current = true;
       setLocalidade(cpLookup.localidade);
-      const d = getDistritoForConcelho(cpLookup.localidade);
+      const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade, 'PT');
       if (d) setDistrito(d);
+      // Only the BR lookup knows the neighbourhood ("bairro").
+      if (cpLookupBr.bairro) {
+        setBairro((prev) => prev || cpLookupBr.bairro);
+      }
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas, cpLookupBr.bairro]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -71,9 +82,9 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
     if (!touched[campo]) return null;
     switch (campo) {
       case 'nome': return nome.trim().length > 0;
-      case 'telefone': return !telefone.trim() || validarTelefone(telefone);
-      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal);
-      case 'nif': return !nif.trim() || validarNif(nif);
+      case 'telefone': return !telefone.trim() || validarTelefone(telefone, country);
+      case 'codigoPostal': return !codigoPostal.trim() || validarCodigoPostal(codigoPostal, country);
+      case 'nif': return !nif.trim() || validarNif(nif, country);
       default: return null;
     }
   };
@@ -94,9 +105,9 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setLocalidade(user.localidade || '');
       setDistrito(user.distrito || getDistritoForConcelho(user.localidade || '') || '');
       setCodigoPostal(user.codigoPostal || '');
+      setBairro(user.bairro || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
-      setTipoConta(user.tipoConta || 'particular');
       setBio(user.bio || '');
       setNotificacoes(user.notificacoes ?? true);
       setErro('');
@@ -112,16 +123,16 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setErro('O nome é obrigatório.');
       return;
     }
-    if (telefone.trim() && !validarTelefone(telefone)) {
-      setErro('Número de telemóvel inválido. Ex: 912345678 ou 253123456');
+    if (telefone.trim() && !validarTelefone(telefone, country)) {
+      setErro(term('phoneInvalid', country));
       return;
     }
-    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal)) {
-      setErro('Código postal inválido. Formato: XXXX-XXX');
+    if (codigoPostal.trim() && !validarCodigoPostal(codigoPostal, country)) {
+      setErro(term('postalCodeInvalid', country));
       return;
     }
-    if (nif.trim() && !validarNif(nif)) {
-      setErro('NIF inválido. Verifique o número.');
+    if (nif.trim() && !validarNif(nif, country)) {
+      setErro(term('taxIdInvalid', country));
       return;
     }
 
@@ -133,9 +144,9 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         localidade: localidade.trim(),
         distrito: distrito.trim() || undefined,
         codigoPostal: codigoPostal.trim(),
+        ...(country === 'BR' ? { bairro: bairro.trim() } : {}),
         morada: morada.trim(),
         nif: nif.trim(),
-        tipoConta,
         bio: bio.trim(),
         notificacoes,
       });
@@ -164,13 +175,14 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Telemóvel</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('phoneLabel', country)}</label>
           <input
             type="tel"
+            placeholder={term('phonePlaceholder', country)}
             value={telefone}
             onChange={(e) => setTelefone(e.target.value.replace(/\D/g, ''))}
             onBlur={() => handleBlur('telefone')}
-            maxLength={9}
+            maxLength={country === 'BR' ? 11 : 9}
             className={inputClasse('telefone')}
           />
         </div>
@@ -188,33 +200,35 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           />
           {cpLookup.localidade && localidade === cpLookup.localidade && !touched['localidade'] && (
             <p className="text-[10px] text-green-600 mt-1">
-              <Check className="mr-0.5" /> Preenchido automaticamente pelo código postal
+              <Check className="mr-0.5" /> Preenchido automaticamente pelo {term('postalCodeLabel', country)}
             </p>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">Código Postal</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('postalCodeLabel', country)}</label>
             <div className="relative">
               <input
                 type="text"
+                placeholder={term('postalCodePlaceholder', country)}
                 value={codigoPostal}
                 onChange={(e) => {
-                  const formatted = formatarCodigoPostal(e.target.value);
+                  const formatted = formatarCodigoPostal(e.target.value, country);
                   setCodigoPostal(formatted);
                   lookupTriggered.current = false;
-                  if (formatted.length === 8) {
+                  // Auto-fill address once the code is complete (BR CEP = 9 chars, PT = 8).
+                  if (formatted.length === (country === 'BR' ? 9 : 8)) {
                     cpLookup.buscar(formatted);
                   }
                 }}
                 onBlur={() => {
                   handleBlur('codigoPostal');
-                  if (validarCodigoPostal(codigoPostal)) {
+                  if (validarCodigoPostal(codigoPostal, country)) {
                     cpLookup.buscar(codigoPostal);
                   }
                 }}
-                maxLength={8}
+                maxLength={country === 'BR' ? 9 : 8}
                 className={inputClasse('codigoPostal', 'pr-10')}
               />
               {cpLookup.loading && (
@@ -223,24 +237,27 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-fg-subtle mb-1">NIF</label>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('taxIdLabel', country)}</label>
             <input
               type="text"
+              placeholder={term('taxIdPlaceholder', country)}
               value={nif}
               onChange={(e) => setNif(e.target.value.replace(/\D/g, ''))}
               onBlur={() => handleBlur('nif')}
-              maxLength={9}
+              maxLength={country === 'BR' ? 14 : 9}
               className={inputClasse('nif')}
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-fg-subtle mb-1">Morada</label>
+          <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('addressLabel', country)}</label>
           <div className="relative">
             <input
               type="text"
               list="modal-ruas-list"
+              autoComplete="street-address"
+              placeholder={term('addressPlaceholder', country)}
               value={morada}
               onChange={(e) => setMorada(e.target.value)}
               className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
@@ -253,32 +270,32 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           </div>
         </div>
 
+        {country === 'BR' && (
+          <div>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">Bairro</label>
+            <input
+              type="text"
+              autoComplete="address-level3"
+              placeholder="Ex: Bela Vista"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
+            />
+          </div>
+        )}
+
         <div>
           <label className="block text-xs font-semibold text-fg-subtle mb-2">Tipo de Conta</label>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => setTipoConta('particular')}
-              className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
-                tipoConta === 'particular'
-                  ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-fg-subtle'
-              }`}
-            >
-              Particular
-            </button>
-            <button
-              type="button"
-              onClick={() => setTipoConta('profissional')}
-              className={`flex-1 border-2 rounded-xl p-3 text-sm font-bold transition ${
-                tipoConta === 'profissional'
-                  ? 'border-accent bg-accent/5 text-accent'
-                  : 'border-gray-200 text-fg-subtle'
-              }`}
-            >
-              Profissional
-            </button>
+          <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl p-3 bg-slate-100 text-fg-muted cursor-not-allowed">
+            {user?.tipoConta === 'profissional' ? <Storefront weight="fill" /> : <User weight="fill" />}
+            <span className="text-sm font-bold">
+              {user?.tipoConta === 'profissional' ? 'Profissional' : 'Particular'}
+            </span>
+            <Lock className="ml-auto text-fg-subtle" />
           </div>
+          <p className="text-[11px] text-fg-subtle mt-1">
+            O tipo de conta é definido no registo e não pode ser alterado.
+          </p>
         </div>
 
         <div>

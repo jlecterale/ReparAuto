@@ -15,6 +15,13 @@ const FIREBASE_HOSTS = [
   'https://*.google-analytics.com',
 ];
 
+// Google Ads (gtag.js conversion tracking & remarketing)
+const GOOGLE_ADS_HOSTS = [
+  'https://www.googleadservices.com',
+  'https://googleads.g.doubleclick.net',
+  'https://www.google.com',
+];
+
 const isDev = process.env.NODE_ENV !== 'production';
 
 const scriptSrc = [
@@ -24,15 +31,19 @@ const scriptSrc = [
   ...(isDev ? ["'unsafe-eval'"] : []),
   'https://fonts.googleapis.com',
   ...FIREBASE_HOSTS,
+  ...GOOGLE_ADS_HOSTS,
 ].join(' ');
 
 const cspDirectives = [
   "default-src 'self'",
   `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*.googleapis.com https://*.gstatic.com https://firebasestorage.googleapis.com https://lh3.googleusercontent.com https://*.tile.openstreetmap.org https://www.google-analytics.com https://*.google-analytics.com",
+  // `https:` is deliberate: listing photos can be added by pasting any https
+  // image URL, so img-src cannot be a fixed host allowlist.
+  "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com",
-  `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org`,
+  // api.country.is: first-visit GeoIP market detection. parallelum.com.br / brasilapi.com.br: FIPE brands/models for Brazilian listings.
+  `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} ${GOOGLE_ADS_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org https://api.country.is https://parallelum.com.br https://brasilapi.com.br`,
   "frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://www.youtube-nocookie.com https://www.youtube.com",
   "frame-ancestors 'none'",
   "form-action 'self'",

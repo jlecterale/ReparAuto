@@ -24,6 +24,7 @@ function OficinaCardBase({ oficina, onPress }: OficinaCardProps) {
           source={capa}
           contentFit="cover"
           transition={200}
+          recyclingKey={oficina.id}
           style={{ width: 64, height: 64, borderRadius: 12 }}
         />
       ) : (
@@ -46,7 +47,7 @@ function OficinaCardBase({ oficina, onPress }: OficinaCardProps) {
           <View className="flex-row items-center">
             <Ionicons name="location-outline" size={13} color={colors.fg.subtle} />
             <Text className="ml-0.5 text-xs text-fg-subtle" numberOfLines={1}>
-              {[oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}
+              {[oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}
             </Text>
           </View>
           {!!oficina.totalAvaliacoes && oficina.totalAvaliacoes > 0 && (
