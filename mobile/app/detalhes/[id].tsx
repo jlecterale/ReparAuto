@@ -14,6 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
@@ -168,6 +169,7 @@ export default function DetalhesCarroScreen() {
         </View>
 
         <View className="p-4">
+          <ListingStatusBanner status={carro.status} isOwner={ehDono} />
           <Text className="text-2xl font-extrabold text-fg-heading">
             {carro.marca} {carro.modelo}
           </Text>

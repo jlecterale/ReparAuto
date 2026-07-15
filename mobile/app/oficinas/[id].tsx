@@ -13,10 +13,12 @@ import { useLocalSearchParams, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { StarRating } from '@/components/ui/StarRating';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getOficinaById } from '@/lib/db';
 import { subscribeReviews } from '@/lib/trust';
+import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { ESPECIALIDADES_LABELS, type Oficina, type Review } from '@/types';
 import { colors } from '@/theme/colors';
@@ -25,6 +27,7 @@ export default function DetalhesOficinaScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const requireAuth = useRequireAuth();
   const [oficina, setOficina] = useState<Oficina | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -62,6 +65,8 @@ export default function DetalhesOficinaScreen() {
     );
   }
 
+  // Workshops store the creator's email (no uid field, mirroring the web).
+  const ehDono = !!user?.email && oficina.criador === user.email;
   const capa = oficina.fotos?.[0] || oficina.logoUrl;
   const morada = [oficina.morada, oficina.localidade, oficina.distrito]
     .filter(Boolean)
@@ -115,6 +120,7 @@ export default function DetalhesOficinaScreen() {
         )}
 
         <View className="p-4">
+          <ListingStatusBanner status={oficina.status} isOwner={ehDono} />
           <Text className="text-2xl font-extrabold text-fg-heading">{oficina.nome}</Text>
           {!!oficina.totalAvaliacoes && oficina.totalAvaliacoes > 0 && (
             <View className="mt-1 flex-row items-center">
