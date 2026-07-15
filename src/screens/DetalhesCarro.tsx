@@ -13,6 +13,7 @@ import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
 import GalleryModal from '@/components/detalhes/GalleryModal';
+import DamageAnalysisButton from '@/components/detalhes/DamageAnalysisButton';
 import Spin360Viewer from '@/components/detalhes/Spin360Viewer';
 import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
@@ -276,9 +277,14 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
 
         <div className="mb-6">
           {carro.estadoVeiculo === 'manutencao' && (
-            <Alert tipo="aviso" icone={<Wrench size={18} />} className="!p-3 !rounded-lg !items-center font-semibold">
-              Este veículo precisa de manutenção/reparações
-            </Alert>
+            <>
+              <Alert tipo="aviso" icone={<Wrench size={18} />} className="!p-3 !rounded-lg !items-center font-semibold">
+                Este veículo precisa de manutenção/reparações
+              </Alert>
+              <div className="mt-3">
+                <DamageAnalysisButton carro={carro} isAuthenticated={!!user} />
+              </div>
+            </>
           )}
         </div>
 

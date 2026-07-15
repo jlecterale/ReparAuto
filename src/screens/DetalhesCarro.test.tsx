@@ -27,6 +27,7 @@ jest.mock('../lib/db', () => ({
 jest.mock('../components/detalhes/ContactSection', () => () => null);
 jest.mock('../components/detalhes/GalleryModal', () => () => null);
 jest.mock('../components/detalhes/FinanciamentoSeguroWidget', () => () => null);
+jest.mock('../components/detalhes/DamageAnalysisButton', () => () => null);
 jest.mock('../components/pecas/CompatibleParts', () => () => null);
 jest.mock('../components/trust/VinCheckPanel', () => () => null);
 jest.mock('../components/admin/EditarCarroModal', () => () => null);

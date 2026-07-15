@@ -43,6 +43,7 @@ export const EMPTY_CARRO_FORM_DATA: CarroFormData = {
   bairro: '',
   preco: '',
   descricao: '',
+  descricaoGeradaIA: false,
   videoUrl: '',
   estadoVeiculo: 'pronto',
   rodando: 'sim',

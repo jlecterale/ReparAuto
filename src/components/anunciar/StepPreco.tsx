@@ -8,6 +8,9 @@ import { isValidYoutubeUrl } from '@/lib/utils';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
+import AIDescriptionButton from '@/components/anunciar/AIDescriptionButton';
+import AIPriceSuggestion from '@/components/anunciar/AIPriceSuggestion';
+import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 
@@ -17,9 +20,11 @@ interface StepPrecoProps {
   onBack: () => void;
   onPublicar: () => void;
   carregando?: boolean;
+  /** Signed-in user id — enables the AI assistant buttons. */
+  uid?: string;
 }
 
-export default function StepPreco({ dados, setDados, onBack, onPublicar, carregando }: StepPrecoProps) {
+export default function StepPreco({ dados, setDados, onBack, onPublicar, carregando, uid }: StepPrecoProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
   const { country } = useCountry();
@@ -105,12 +110,29 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
           </span>
         )}
         <p className="text-xs text-fg-subtle mt-1">{getSugestaoPreco(dados.preco)}</p>
+        <AIPriceSuggestion
+          dados={dados}
+          uid={uid}
+          onUsePrice={(price) => atualizar('preco', String(price))}
+        />
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-semibold text-fg-heading mb-1">
-          Descrição do Carro <span className="text-red-500">*</span>
-        </label>
+        <div className="flex items-end justify-between gap-2 mb-1">
+          <label className="block text-sm font-semibold text-fg-heading">
+            Descrição do Carro <span className="text-red-500">*</span>
+            {dados.descricaoGeradaIA && (
+              <Badge cor="blue" variante="soft" className="ml-2">Gerada com IA</Badge>
+            )}
+          </label>
+          <AIDescriptionButton
+            dados={dados}
+            uid={uid}
+            onGenerated={(description) =>
+              setDados((prev) => ({ ...prev, descricao: description, descricaoGeradaIA: true }))
+            }
+          />
+        </div>
         <textarea
           rows={6}
           placeholder="Descreva os detalhes do veículo..."
@@ -121,6 +143,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
           }`}
         />
         {erros.descricao && <span className="text-xs text-red-500 mt-1 block">A descrição do carro é obrigatória.</span>}
+        {dados.descricaoGeradaIA && (
+          <p className="text-[11px] text-fg-subtle mt-1">
+            Resultado gerado por IA — verifique e ajuste antes de publicar.
+          </p>
+        )}
       </div>
 
       <div className="mb-4">

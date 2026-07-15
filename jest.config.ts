@@ -9,13 +9,13 @@ const config: Config = {
   testEnvironment: 'jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   // Only run our own tests — never the separate mobile/ app or node_modules.
-  // functions/src pure logic (matching, prefs) IS covered by this suite;
-  // its build output and deps are not.
+  // functions/src pure logic (sanitize/validate/week, matching, prefs) IS
+  // covered by this suite; its build output and deps are not.
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/',
     '<rootDir>/mobile/',
-    '<rootDir>/functions/node_modules/',
     '<rootDir>/functions/lib/',
+    '<rootDir>/functions/node_modules/',
     '<rootDir>/.next/',
   ],
   testMatch: ['**/*.test.ts', '**/*.test.tsx'],

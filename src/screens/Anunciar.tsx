@@ -256,7 +256,7 @@ export default function Anunciar() {
     setFotos([]);
     setAngleByPhoto({});
     setPecaDraft(null);
-    const nextDados: CarroFormData = { ...dados, preco: '', descricao: '', videoUrl: '', tiposManutencao: [], features: [] };
+    const nextDados: CarroFormData = { ...dados, preco: '', descricao: '', descricaoGeradaIA: false, videoUrl: '', tiposManutencao: [], features: [] };
     setDados(nextDados);
     // The kept fields (marca/modelo/…) are a convenience prefill, not user
     // progress — re-anchor the baseline so they don't autosave as a ghost
@@ -352,6 +352,7 @@ export default function Anunciar() {
                 onBack={() => setPasso(2)}
                 onPublicar={handlePublicar}
                 carregando={uploading}
+                uid={user?.uid}
               />
             )}
           </>

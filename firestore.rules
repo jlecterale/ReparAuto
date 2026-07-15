@@ -98,8 +98,13 @@ service cloud.firestore {
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(20) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
-      allow update: if (isOwnerByEmail() && hasValidImageCount(20) && keepsCountry()) || isAdmin()
+      // damageAnalysis is the server-written AI cache (plan 4.1) — owners must
+      // not be able to forge or scrub it; only the Cloud Function (Admin SDK,
+      // bypasses rules) and admins may touch it.
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(20) && hasValidCountry() && (matchesAccountCountry() || isAdmin())
+        && !('damageAnalysis' in request.resource.data);
+      allow update: if (isOwnerByEmail() && hasValidImageCount(20) && keepsCountry()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['damageAnalysis'])) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['visualizacoes'])
@@ -286,6 +291,19 @@ service cloud.firestore {
     match /banners/{bannerId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // AI quota counters (plan 4.1). Written ONLY by the Cloud Function proxy
+    // via the Admin SDK (which bypasses rules); clients must never read or
+    // tamper with their own quota window.
+    match /aiUsage/{usageId} {
+      allow read, write: if false;
+    }
+
+    // Image-moderation abuse trail (plan 4.1) — server-written, admin-readable.
+    match /aiModerationLog/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
   }
 }
