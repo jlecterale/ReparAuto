@@ -63,7 +63,7 @@ function PecaCardBase({ peca, onPress }: PecaCardProps) {
             <View className="flex-row items-center">
               <Ionicons name="location-outline" size={13} color={colors.fg.subtle} />
               <Text className="ml-0.5 text-xs text-fg-subtle" numberOfLines={1}>
-                {peca.local}
+                {[peca.bairro, peca.local].filter(Boolean).join(', ')}
               </Text>
             </View>
           )}

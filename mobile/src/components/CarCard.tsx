@@ -60,7 +60,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
           <View className="mt-2 flex-row items-center">
             <Ionicons name="location-outline" size={14} color={colors.fg.subtle} />
             <Text className="ml-1 text-sm text-fg-subtle" numberOfLines={1}>
-              {carro.local}
+              {[carro.bairro, carro.local].filter(Boolean).join(', ')}
             </Text>
           </View>
         )}

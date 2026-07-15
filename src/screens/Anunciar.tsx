@@ -171,6 +171,7 @@ export default function Anunciar() {
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
+        bairro: getActiveCountry() === 'BR' ? dados.bairro.trim() || undefined : undefined,
         coordenadas: localizacao ? getCoordenadas(localizacao, getActiveCountry()) : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,

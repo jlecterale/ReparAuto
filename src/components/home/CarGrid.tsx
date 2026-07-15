@@ -89,6 +89,9 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -128,6 +131,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
     setAdvPriceMax(null);
     setAdvDistrito('');
     setAdvConcelho('');
+    setAdvBairro('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
     setAdvBodyType('');
@@ -145,6 +149,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   const handleDistritoChange = (d: string) => {
     setAdvDistrito(d);
     setAdvConcelho('');
+    setAdvBairro('');
   };
 
   const handleRaioDistChange = (d: string) => {
@@ -205,10 +210,11 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
         (o.descricao && o.descricao.toLowerCase().includes(busca));
 
       const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+      const correspondeBairro = !advBairro || (o.bairro ?? '').toLowerCase() === advBairro.toLowerCase();
 
-      return correspondeBusca && correspondeDistrito;
+      return correspondeBusca && correspondeDistrito && correspondeBairro;
     });
-  }, [oficinas, searchQuery, advDistrito]);
+  }, [oficinas, searchQuery, advDistrito, advBairro]);
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -374,7 +380,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
               </div>
               <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
                 <input type="checkbox" checked={raioMode}
-                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
+                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); setAdvBairro(''); } }}
                   className="rounded text-accent focus:ring-accent" />
                 Pesquisar por raio
               </label>
@@ -385,12 +391,20 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                     <option value="">{term('districtAllOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
-                  <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
+                  <select value={advConcelho} onChange={(e) => { setAdvConcelho(e.target.value); setAdvBairro(''); }}
                     disabled={!advDistrito}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
                     <option value="">{advDistrito ? term('municipalityAllOption', country) : term('districtSelectOption', country)}</option>
                     {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
+                  {country === 'BR' && advConcelho && bairroOpts.length > 0 && (
+                    // Only neighbourhoods with active ads are offered (marca-facet pattern).
+                    <select value={advBairro} onChange={(e) => setAdvBairro(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                      <option value="">Todos os bairros</option>
+                      {bairroOpts.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -538,7 +552,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                           </Link>
                           <div className="flex items-center gap-1 text-[11px] text-fg-muted mt-0.5">
                             <MapPin size={12} className="text-slate-400" />
-                            <span className="truncate">{oficina.localidade || ''}, {oficina.distrito || ''}</span>
+                            <span className="truncate">{[oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                           </div>
                         </div>
                       </div>

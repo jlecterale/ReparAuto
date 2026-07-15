@@ -112,6 +112,8 @@ export interface Carro {
   acceptsExchange?: boolean;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
   videoUrl?: string;
@@ -158,6 +160,8 @@ export interface Peca {
   estado: string;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   contacto?: string;
   vendedorTelefone?: string;
@@ -497,6 +501,8 @@ export interface Oficina {
   website?: string;
   distrito: string;
   localidade: string;
+  /** Neighbourhood — Brazilian workshops only ("bairro"); unused for PT. */
+  bairro?: string;
   morada: string;
   coordenadas?: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];

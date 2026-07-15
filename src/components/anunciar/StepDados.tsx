@@ -167,10 +167,16 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             onChange={(d, c) => {
               atualizar('localizacaoDistrito', d);
               atualizar('localizacao', c);
+              atualizar('bairro', '');
             }}
             obrigatorio
           />
         </div>
+        {country === 'BR' && (
+          <div className="col-span-2">
+            {campo('Bairro', 'bairro', { placeholder: 'Ex: Bela Vista', required: false, maxLength: 60 })}
+          </div>
+        )}
       </div>
 
       {/* Advanced specs — collapsed by default to keep the core form short */}

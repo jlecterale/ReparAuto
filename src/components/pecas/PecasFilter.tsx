@@ -31,6 +31,9 @@ export default function PecasFilter({ total }: { total: number }) {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -44,7 +47,7 @@ export default function PecasFilter({ total }: { total: number }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const hasActiveFilters =
-    searchTerm.trim() || filtroCategoria || filtroEstado || advDistrito || advConcelho || (advRaioCentro && advRaioKm);
+    searchTerm.trim() || filtroCategoria || filtroEstado || advDistrito || advConcelho || advBairro || (advRaioCentro && advRaioKm);
 
   const limparFiltros = () => {
     setSearchTerm('');
@@ -52,6 +55,7 @@ export default function PecasFilter({ total }: { total: number }) {
     setFiltroEstado('');
     setAdvDistrito('');
     setAdvConcelho('');
+    setAdvBairro('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
     setRaioMode(false);
@@ -164,6 +168,7 @@ export default function PecasFilter({ total }: { total: number }) {
                   } else {
                     setAdvDistrito('');
                     setAdvConcelho('');
+                    setAdvBairro('');
                   }
                 }}
                 className="rounded text-accent focus:ring-accent"
@@ -175,7 +180,7 @@ export default function PecasFilter({ total }: { total: number }) {
               <div className="space-y-2">
                 <select
                   value={advDistrito}
-                  onChange={(e) => { setAdvDistrito(e.target.value); setAdvConcelho(''); }}
+                  onChange={(e) => { setAdvDistrito(e.target.value); setAdvConcelho(''); setAdvBairro(''); }}
                   className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent"
                 >
                   <option value="">{term('districtAllOption', country)}</option>
@@ -185,7 +190,7 @@ export default function PecasFilter({ total }: { total: number }) {
                 </select>
                 <select
                   value={advConcelho}
-                  onChange={(e) => setAdvConcelho(e.target.value)}
+                  onChange={(e) => { setAdvConcelho(e.target.value); setAdvBairro(''); }}
                   disabled={!advDistrito}
                   className={`w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : ''}`}
                 >
@@ -194,6 +199,19 @@ export default function PecasFilter({ total }: { total: number }) {
                     <option key={c.nome} value={c.nome}>{c.nome}</option>
                   ))}
                 </select>
+                {country === 'BR' && advConcelho && bairroOpts.length > 0 && (
+                  // Only neighbourhoods with active ads are offered (marca-facet pattern).
+                  <select
+                    value={advBairro}
+                    onChange={(e) => setAdvBairro(e.target.value)}
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white text-fg focus:outline-none focus:border-accent"
+                  >
+                    <option value="">Todos os bairros</option>
+                    {bairroOpts.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                )}
               </div>
             ) : (
               <div className="space-y-2">

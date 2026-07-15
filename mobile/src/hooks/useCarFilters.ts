@@ -28,6 +28,8 @@ export interface CarAdvFilters {
   raioMode: boolean;
   distrito: string;
   concelho: string;
+  /** BR only — narrows within the picked city; empty for PT. */
+  bairro: string;
   raioDist: string;
   raioCentro: string;
   raioKm: string;
@@ -52,6 +54,7 @@ const INITIAL: CarAdvFilters = {
   raioMode: false,
   distrito: '',
   concelho: '',
+  bairro: '',
   raioDist: '',
   raioCentro: '',
   raioKm: '',
@@ -100,8 +103,22 @@ export function useCarFilters(carros: Carro[]) {
     return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
   }, [carros, f.marca]);
 
+  // Like marca/modelo, bairro options come from the loaded listings so only
+  // neighbourhoods that actually have ads are offered (BR; scoped to the
+  // picked city, mirroring how modelos depend on the picked marca).
+  const bairroOpts = useMemo(() => {
+    if (!f.concelho) return [];
+    const set = new Set<string>();
+    for (const c of carros) {
+      if (c.bairro && (c.local ?? '').toLowerCase() === f.concelho.toLowerCase()) set.add(c.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros, f.concelho]);
+
   const filtersCount = useMemo(() => {
-    const localizacaoActive = f.raioMode ? !!(f.raioCentro && f.raioKm) : !!(f.concelho || f.distrito);
+    const localizacaoActive = f.raioMode
+      ? !!(f.raioCentro && f.raioKm)
+      : !!(f.concelho || f.distrito || f.bairro);
     return [
       f.marca || f.modelo,
       f.precoMin || f.precoMax,
@@ -135,7 +152,7 @@ export function useCarFilters(carros: Carro[]) {
 
     let cs = carros.filter((c) => {
       if (!aplicaChip(c, chip, bands)) return false;
-      if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
+      if (termo && !`${c.marca} ${c.modelo} ${c.local} ${c.bairro ?? ''}`.toLowerCase().includes(termo)) return false;
       if (f.marca && c.marca !== f.marca) return false;
       if (f.modelo && c.modelo !== f.modelo) return false;
       if (precoMin !== null && c.preco < precoMin) return false;
@@ -162,6 +179,8 @@ export function useCarFilters(carros: Carro[]) {
         if (haversineKm(centro, coords) > raioKm) return false;
       } else if (f.concelho) {
         if ((c.local ?? '').toLowerCase() !== f.concelho.toLowerCase()) return false;
+        // Bairro (BR) narrows within the picked city.
+        if (f.bairro && (c.bairro ?? '').toLowerCase() !== f.bairro.toLowerCase()) return false;
       } else if (f.distrito) {
         const cd = c.distrito ?? getDistritoForConcelho(c.local, docCountry(c)) ?? '';
         if (cd !== f.distrito) return false;
@@ -188,5 +207,6 @@ export function useCarFilters(carros: Carro[]) {
     filtrados,
     marcaOpts,
     modeloOpts,
+    bairroOpts,
   };
 }

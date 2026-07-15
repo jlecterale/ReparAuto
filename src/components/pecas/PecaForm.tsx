@@ -33,6 +33,8 @@ type PecaFormState = {
   descricao: string;
   localizacao: string;
   localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
   vendedorTelefone: string;
   vendedorWhatsApp: string;
   vendedorEmail: string;
@@ -73,6 +75,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
     descricao: '',
     localizacao: '',
     localizacaoDistrito: '',
+    bairro: '',
     vendedorTelefone: telefoneInicial,
     vendedorWhatsApp: telefoneInicial,
     vendedorEmail: user?.email || '',
@@ -188,6 +191,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         precoNovoReferencia: precoNovoNum && precoNovoNum > 0 ? precoNovoNum : undefined,
         local: form.localizacao,
         distrito: form.localizacaoDistrito || undefined,
+        bairro: getActiveCountry() === 'BR' ? form.bairro.trim() || undefined : undefined,
         coordenadas: form.localizacao ? getCoordenadas(form.localizacao, getActiveCountry()) : undefined,
         preco: form.preco ? Number(form.preco) : null,
         foto: fotoUrl || undefined,
@@ -221,6 +225,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
         descricao: '',
         localizacao: '',
         localizacaoDistrito: '',
+        bairro: '',
         vendedorTelefone: '',
         vendedorWhatsApp: '',
         vendedorEmail: '',
@@ -383,9 +388,25 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
           onChange={(d, c) => {
             atualizar('localizacaoDistrito', d);
             atualizar('localizacao', c);
+            atualizar('bairro', '');
           }}
         />
       </div>
+
+      {country === 'BR' && (
+        <div>
+          <label className="block text-xs font-bold text-fg-subtle mb-1">Bairro (opcional)</label>
+          <input
+            type="text"
+            autoComplete="address-level3"
+            placeholder="Ex: Bela Vista"
+            maxLength={60}
+            value={form.bairro}
+            onChange={(e) => atualizar('bairro', e.target.value)}
+            className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+          />
+        </div>
+      )}
 
       <div>
         <label className="block text-xs font-bold text-fg-subtle mb-1">Descrição (opcional)</label>

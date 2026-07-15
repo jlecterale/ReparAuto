@@ -22,6 +22,10 @@ interface PecaFiltersSheetProps {
   setEstado: (v: string) => void;
   distrito: string;
   setDistrito: (v: string) => void;
+  bairro: string;
+  setBairro: (v: string) => void;
+  /** Neighbourhoods that actually have listings (BR only). */
+  bairroOpts: string[];
   marca: string;
   setMarca: (v: string) => void;
   modelo: string;
@@ -39,6 +43,9 @@ export function PecaFiltersSheet({
   setEstado,
   distrito,
   setDistrito,
+  bairro,
+  setBairro,
+  bairroOpts,
   marca,
   setMarca,
   modelo,
@@ -98,6 +105,15 @@ export function PecaFiltersSheet({
       <SheetSection title={country === 'BR' ? 'Estado' : 'Distrito'}>
         <ChipSelect options={distritoOpts} value={distrito} onChange={setDistrito} />
       </SheetSection>
+      {country === 'BR' && bairroOpts.length > 0 && (
+        <SheetSection title="Bairro">
+          <ChipSelect
+            options={[{ value: '', label: 'Todos' }, ...bairroOpts.map((b) => ({ value: b, label: b }))]}
+            value={bairro}
+            onChange={setBairro}
+          />
+        </SheetSection>
+      )}
     </BottomSheet>
   );
 }

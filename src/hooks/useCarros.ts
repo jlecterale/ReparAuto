@@ -22,6 +22,7 @@ export default function useCarros(active: boolean = true) {
   const [advPriceMax, setAdvPriceMax] = useState<number | null>(null);
   const [advDistrito, setAdvDistrito] = useState('');
   const [advConcelho, setAdvConcelho] = useState('');
+  const [advBairro, setAdvBairro] = useState('');
   const [advRaioCentro, setAdvRaioCentro] = useState('');
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
   const [advBodyType, setAdvBodyType] = useState('');
@@ -73,7 +74,8 @@ export default function useCarros(active: boolean = true) {
         (c) =>
           c.marca?.toLowerCase().includes(q) ||
           c.modelo?.toLowerCase().includes(q) ||
-          c.local?.toLowerCase().includes(q)
+          c.local?.toLowerCase().includes(q) ||
+          c.bairro?.toLowerCase().includes(q)
       );
     }
 
@@ -109,6 +111,10 @@ export default function useCarros(active: boolean = true) {
       }
     } else if (advConcelho) {
       cs = cs.filter((c) => c.local?.toLowerCase() === advConcelho.toLowerCase());
+      // Bairro (BR) narrows within the picked city.
+      if (advBairro) {
+        cs = cs.filter((c) => (c.bairro ?? '').toLowerCase() === advBairro.toLowerCase());
+      }
     } else if (advDistrito) {
       cs = cs.filter(
         (c) => (c.distrito ?? getDistritoForConcelho(c.local, country)) === advDistrito
@@ -122,7 +128,19 @@ export default function useCarros(active: boolean = true) {
     }
 
     return cs;
-  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
+  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advBairro, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
+
+  // Like the marca facet on mobile, bairro options come from the loaded
+  // listings so only neighbourhoods that actually have ads are offered
+  // (BR; scoped to the picked city).
+  const bairroOpts = useMemo(() => {
+    if (!advConcelho) return [];
+    const set = new Set<string>();
+    for (const c of carros) {
+      if (c.bairro && c.local?.toLowerCase() === advConcelho.toLowerCase()) set.add(c.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros, advConcelho]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -161,6 +179,9 @@ export default function useCarros(active: boolean = true) {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -194,6 +215,8 @@ export default function useCarros(active: boolean = true) {
     advPriceMax,
     advDistrito,
     advConcelho,
+    advBairro,
+    bairroOpts,
     advRaioCentro,
     advRaioKm,
     advBodyType,

@@ -39,6 +39,8 @@ export interface OficinaMecanico {
   website?: string;
   distrito: string;
   localidade: string;
+  /** Neighbourhood — Brazilian workshops only ("bairro"); unused for PT. */
+  bairro?: string;
   morada: string;
   /** Market the workshop belongs to (missing on legacy docs = PT). */
   country?: Country;

@@ -151,7 +151,7 @@ export default function DetalhesPecaScreen() {
               <Spec icon="car-sport-outline" label="Modelo" value={peca.modeloCarro} />
             )}
             <Spec icon="ribbon-outline" label="Estado" value={peca.estado} />
-            <Spec icon="location-outline" label="Local" value={peca.local} />
+            <Spec icon="location-outline" label="Local" value={[peca.bairro, peca.local].filter(Boolean).join(', ')} />
           </View>
 
           {!!peca.descricao && (

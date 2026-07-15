@@ -72,6 +72,8 @@ export interface Carro {
   acceptsExchange?: boolean;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   /** Market the listing belongs to. Docs created before the Brazil launch have none — resolve with docCountry() (missing = PT). */
   country?: Country;
@@ -156,6 +158,8 @@ export interface CarroFormData {
   acceptsExchange: boolean;
   localizacao: string;
   localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
   preco: string;
   descricao: string;
   videoUrl: string;

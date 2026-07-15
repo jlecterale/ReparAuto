@@ -43,7 +43,7 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
     { label: 'Consumo extra-urbano', value: consumo(carro.consumptionExtraUrban) },
     { label: 'Consumo combinado', value: consumo(carro.consumptionCombined) },
     { label: 'Garantia', value: carro.warrantyMonths != null ? `${carro.warrantyMonths} meses` : undefined },
-    { label: 'Localização', value: carro.local || 'Portugal' },
+    { label: 'Localização', value: [carro.bairro, carro.local].filter(Boolean).join(', ') || 'Portugal' },
   ].filter((s) => s.value !== undefined && s.value !== null && s.value !== '');
 
   const comercial = [

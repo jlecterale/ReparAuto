@@ -217,7 +217,7 @@ export default function DetalhesCarroScreen() {
             {carro.numberOfAirbags != null && <Spec icon="shield-checkmark-outline" label="Airbags" value={String(carro.numberOfAirbags)} />}
             {carro.warrantyMonths != null && <Spec icon="shield-outline" label="Garantia" value={`${carro.warrantyMonths} meses`} />}
             <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
-            <Spec icon="location-outline" label="Local" value={carro.local} />
+            <Spec icon="location-outline" label="Local" value={[carro.bairro, carro.local].filter(Boolean).join(', ')} />
           </View>
 
           {comercial.length > 0 && (

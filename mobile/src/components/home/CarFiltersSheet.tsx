@@ -50,6 +50,7 @@ interface CarFiltersSheetProps {
   resultCount: number;
   marcaOpts: string[];
   modeloOpts: string[];
+  bairroOpts: string[];
 }
 
 export function CarFiltersSheet({
@@ -62,6 +63,7 @@ export function CarFiltersSheet({
   resultCount,
   marcaOpts,
   modeloOpts,
+  bairroOpts,
 }: CarFiltersSheetProps) {
   const { country } = useCountry();
   // Market vocabulary: PT says distrito/concelho, BR says estado/cidade.
@@ -71,6 +73,7 @@ export function CarFiltersSheet({
   const [showMore, setShowMore] = useState(false);
   const marcaSelectOpts = [TODOS, ...marcaOpts.map((m) => ({ value: m, label: m }))];
   const modeloSelectOpts = [TODOS, ...modeloOpts.map((m) => ({ value: m, label: m }))];
+  const bairroSelectOpts = [TODOS, ...bairroOpts.map((b) => ({ value: b, label: b }))];
   const concelhoOpts = [TODOS, ...getConcelhos(f.distrito, country).map((c) => ({ value: c.nome, label: c.nome }))];
   const centroOpts = getConcelhos(f.raioDist, country).map((c) => ({ value: c.nome, label: c.nome }));
 
@@ -173,7 +176,7 @@ export function CarFiltersSheet({
           <ModeTab
             label="Raio"
             active={f.raioMode}
-            onPress={() => update({ raioMode: true, distrito: '', concelho: '' })}
+            onPress={() => update({ raioMode: true, distrito: '', concelho: '', bairro: '' })}
           />
         </View>
 
@@ -183,12 +186,21 @@ export function CarFiltersSheet({
               <ChipSelect
                 options={distritoOpts}
                 value={f.distrito}
-                onChange={(v) => update({ distrito: v, concelho: '' })}
+                onChange={(v) => update({ distrito: v, concelho: '', bairro: '' })}
               />
             </Sub>
             {!!f.distrito && (
               <Sub label={placeLabel}>
-                <ChipSelect options={concelhoOpts} value={f.concelho} onChange={(v) => update({ concelho: v })} />
+                <ChipSelect
+                  options={concelhoOpts}
+                  value={f.concelho}
+                  onChange={(v) => update({ concelho: v, bairro: '' })}
+                />
+              </Sub>
+            )}
+            {country === 'BR' && !!f.concelho && bairroOpts.length > 0 && (
+              <Sub label="Bairro">
+                <ChipSelect options={bairroSelectOpts} value={f.bairro} onChange={(v) => update({ bairro: v })} />
               </Sub>
             )}
           </View>

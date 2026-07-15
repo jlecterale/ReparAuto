@@ -23,6 +23,10 @@ export interface CarrosContextValue {
   setAdvDistrito: (v: string) => void;
   advConcelho: string;
   setAdvConcelho: (v: string) => void;
+  advBairro: string;
+  setAdvBairro: (v: string) => void;
+  /** Neighbourhoods with active ads in the picked city (BR facet). */
+  bairroOpts: string[];
   advRaioCentro: string;
   setAdvRaioCentro: (v: string) => void;
   advRaioKm: number | null;
@@ -64,6 +68,10 @@ export interface PecasContextValue {
   setAdvDistrito: (v: string) => void;
   advConcelho: string;
   setAdvConcelho: (v: string) => void;
+  advBairro: string;
+  setAdvBairro: (v: string) => void;
+  /** Neighbourhoods with active ads in the picked city (BR facet). */
+  bairroOpts: string[];
   advRaioCentro: string;
   setAdvRaioCentro: (v: string) => void;
   advRaioKm: number | null;

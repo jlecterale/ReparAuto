@@ -45,6 +45,7 @@ export default function RegistarOficinaScreen() {
   const [videoUrl, setVideoUrl] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [descricao, setDescricao] = useState('');
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
@@ -54,8 +55,8 @@ export default function RegistarOficinaScreen() {
   const [submitted, setSubmitted] = useState(false);
 
   const draftData = useMemo<WorkshopDraftData>(
-    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades }),
-    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades],
+    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades }),
+    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades],
   );
   // Prefilled contacts (responsável/telefone/email) don't count as progress.
   const hasDraftContent = !!(nome || descricao || morada || especialidades.length || logo.length);
@@ -71,6 +72,7 @@ export default function RegistarOficinaScreen() {
     setVideoUrl(d.videoUrl ?? '');
     setDistrito(d.distrito ?? '');
     setLocalidade(d.localidade ?? '');
+    setBairro(d.bairro ?? '');
     setMorada(d.morada ?? '');
     setDescricao(d.descricao ?? '');
     setEspecialidades(d.especialidades ?? []);
@@ -104,6 +106,7 @@ export default function RegistarOficinaScreen() {
         setVideoUrl(o.videoUrl ?? '');
         setDistrito(o.distrito ?? '');
         setLocalidade(o.localidade ?? '');
+        setBairro(o.bairro ?? '');
         setMorada(o.morada ?? '');
         setDescricao(o.descricao ?? '');
         setEspecialidades(o.especialidades ?? []);
@@ -161,6 +164,7 @@ export default function RegistarOficinaScreen() {
         videoUrl: videoUrl.trim() || undefined,
         distrito: distrito.trim(),
         localidade: localidade.trim(),
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
         morada: morada.trim(),
         especialidades,
         logoUrl,
@@ -240,9 +244,13 @@ export default function RegistarOficinaScreen() {
           onChange={(d, c) => {
             setDistrito(d);
             setLocalidade(c);
+            setBairro('');
           }}
           required
         />
+        {country === 'BR' && (
+          <Input label="Bairro (opcional)" value={bairro} onChangeText={setBairro} placeholder="Ex: Bela Vista" />
+        )}
         <Input label={term('addressLabel', country)} value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>

@@ -63,7 +63,7 @@ export default function DetalhesOficinaScreen() {
   }
 
   const capa = oficina.fotos?.[0] || oficina.logoUrl;
-  const morada = [oficina.morada, oficina.localidade, oficina.distrito]
+  const morada = [oficina.morada, oficina.bairro, oficina.localidade, oficina.distrito]
     .filter(Boolean)
     .join(', ');
   // Universal Google Maps link — opens the Maps app if installed, else the

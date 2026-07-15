@@ -87,7 +87,7 @@ function CarCard({ carro }: { carro: Carro }) {
           </span>
           <span className="text-xs text-fg-muted flex items-center gap-1">
             <MapPin />
-            {carro.local || 'Portugal'}
+            {[carro.bairro, carro.local].filter(Boolean).join(', ') || 'Portugal'}
           </span>
         </div>
         {carro.estadoVeiculo === 'manutencao' && (
