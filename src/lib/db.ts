@@ -19,7 +19,7 @@ import {
   type DocumentReference,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
-import { db, storage } from './firebase';
+import { db, storage, auth } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
 import { docCountry, getActiveCountry } from '@/lib/country';
 import { contemProfanity } from './profanity';
@@ -869,10 +869,14 @@ export async function getIntencaoCompra(id: string): Promise<IntencaoCompra | nu
     const docRef = doc(db, INTENCOES_COLLECTION, id);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
-    updateDoc(docRef, {
-      'stats.visualizacoes': increment(1),
-      'stats.visualizacoes7Dias': increment(1),
-    }).catch(() => {});
+    // Rules only allow the stats bump for signed-in users — skip the
+    // guaranteed-denied write for anonymous visitors.
+    if (auth.currentUser) {
+      updateDoc(docRef, {
+        'stats.visualizacoes': increment(1),
+        'stats.visualizacoes7Dias': increment(1),
+      }).catch(() => {});
+    }
     return { id: snap.id, ...snap.data() } as IntencaoCompra;
   } catch (err) {
     console.error('[DB] Erro ao buscar intenção:', err);

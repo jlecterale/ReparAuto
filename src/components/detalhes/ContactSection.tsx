@@ -209,7 +209,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
           media={media}
           total={total}
           currentUserUid={user?.uid}
-          onDelete={vendedorProfile ? (id) => removerReview(id, vendedorProfile.uid, vendedorEmail!) : undefined}
+          onDelete={removerReview}
         />
       </div>
 
