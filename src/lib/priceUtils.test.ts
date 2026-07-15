@@ -258,6 +258,28 @@ describe('filtrarCarrosSimilares', () => {
     });
     expect(filtrarCarrosSimilares([same, forParts], target).map((c) => c.id)).toEqual(['s1']);
   });
+
+  it('excludes listings from a different market when a country is given', () => {
+    // PT and BR share the same marca/modelo vocabulary in places (e.g. VW
+    // Golf sold in both), but their prices are in different currencies
+    // (EUR vs BRL). calculatePriceIndicator does plain number arithmetic, so
+    // mixing them produces a meaningless deviation.
+    const pt = carro({ id: 'pt1', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003, country: 'PT' });
+    const br = carro({ id: 'br1', marca: 'VW', modelo: 'Golf IV', preco: 80000, anoFabricacao: 2003, country: 'BR' });
+    // A doc with no `country` field predates the Brazil launch and resolves to PT.
+    const legacy = carro({ id: 'legacy1', marca: 'VW', modelo: 'Golf IV', preco: 4900, anoFabricacao: 2003 });
+
+    expect(
+      filtrarCarrosSimilares([pt, br, legacy], { ...target, country: 'PT' }).map((c) => c.id).sort(),
+    ).toEqual(['legacy1', 'pt1']);
+    expect(filtrarCarrosSimilares([pt, br, legacy], { ...target, country: 'BR' }).map((c) => c.id)).toEqual(['br1']);
+  });
+
+  it('does not filter by country when none is given (back-compat)', () => {
+    const pt = carro({ id: 'pt1', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003, country: 'PT' });
+    const br = carro({ id: 'br1', marca: 'VW', modelo: 'Golf IV', preco: 80000, anoFabricacao: 2003, country: 'BR' });
+    expect(filtrarCarrosSimilares([pt, br], target).map((c) => c.id).sort()).toEqual(['br1', 'pt1']);
+  });
 });
 
 describe('calculatePriceEstimate', () => {

@@ -134,6 +134,45 @@ describe('usePriceIndicator', () => {
     expect(result.current.sampleSize).toBe(5);
   });
 
+  it('never compares a listing against a different market\'s prices', () => {
+    // The viewer's active session can differ from a specific listing's
+    // market (e.g. a shared link opened while browsing PT), and carros.carros
+    // is scoped to the viewer's session, not the target's. A BR listing
+    // (BRL) landing here must not be compared against a PT-only comps pool
+    // (EUR) even if marca/modelo happen to match — the math is currency-
+    // agnostic and would produce a nonsense indicator.
+    const target = carro({
+      id: 'br-target',
+      marca: 'VW',
+      modelo: 'Golf IV',
+      preco: 80000,
+      anoFabricacao: 2003,
+      country: 'BR',
+    });
+    // "carros.carros" here simulates the viewer's active market (PT) —
+    // it contains no BR listings at all, same as the real filterByCountry.
+    mockCarrosRef.list = [4700, 4800, 4900, 5000, 5100, 5200].map((p, i) =>
+      carro({ id: `pt${i}`, marca: 'VW', modelo: 'Golf IV', preco: p, anoFabricacao: 2003, country: 'PT' }),
+    );
+    const { result } = renderHook(() => usePriceIndicator(target));
+    expect(result.current.indicator).toBe('indisponivel');
+    expect(result.current.sampleSize).toBe(0);
+  });
+
+  it('compares a listing only against same-market comparables when both are present', () => {
+    const target = carro({ id: 'pt-target', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003, country: 'PT' });
+    const ptComps = [4700, 4800, 4900, 5100, 5200].map((p, i) =>
+      carro({ id: `pt${i}`, marca: 'VW', modelo: 'Golf IV', preco: p, anoFabricacao: 2003, country: 'PT' }),
+    );
+    const brNoise = [70000, 71000, 72000, 73000, 74000].map((p, i) =>
+      carro({ id: `br${i}`, marca: 'VW', modelo: 'Golf IV', preco: p, anoFabricacao: 2003, country: 'BR' }),
+    );
+    mockCarrosRef.list = [...ptComps, ...brNoise];
+    const { result } = renderHook(() => usePriceIndicator(target));
+    expect(result.current.sampleSize).toBe(5);
+    expect(result.current.indicator).toBe('justo');
+  });
+
   it('recomputes when the carros list reference changes (WeakMap invalidation)', () => {
     const target = carro({ id: 'me', marca: 'VW', modelo: 'Golf IV', preco: 5000, anoFabricacao: 2003 });
     const listA = [4700, 4800, 4900, 5000, 5100, 5200].map((p, i) =>
