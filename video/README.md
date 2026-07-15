@@ -70,6 +70,7 @@ brasileiras. Renderiza todas com `npm run render:reels:br`
 ```sh
 npm install       # uma vez
 npm run studio    # Remotion Studio (pré-visualização) → http://localhost:3000
+# ou, a partir da raiz do repositório: npm run studio → http://localhost:4000
 npm run render:all # exporta os três formatos para out/
 ```
 
