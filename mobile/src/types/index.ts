@@ -17,6 +17,8 @@ export interface Usuario {
   distrito?: string;
   codigoPostal: string;
   morada: string;
+  /** Neighbourhood — Brazilian addresses only ("bairro"); unused for PT. */
+  bairro?: string;
   nif: string;
   tipoConta: TipoConta;
   role: Role;

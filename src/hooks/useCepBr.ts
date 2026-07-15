@@ -12,6 +12,8 @@ interface CepBrResult {
   localidade: string;
   distrito: string;
   concelho: string;
+  /** Neighbourhood ("bairro") — first-class in BR addresses; empty on CEP geral. */
+  bairro: string;
   ruas: string[];
   erro: string;
   buscar: (cep: string) => Promise<void>;
@@ -21,6 +23,7 @@ export function useCepBr(): CepBrResult {
   const [loading, setLoading] = useState(false);
   const [localidade, setLocalidade] = useState('');
   const [distrito, setDistrito] = useState('');
+  const [bairro, setBairro] = useState('');
   const [ruas, setRuas] = useState<string[]>([]);
   const [erro, setErro] = useState('');
   const lastCep = useRef('');
@@ -48,8 +51,8 @@ export function useCepBr(): CepBrResult {
       const estado = data.state ? estadoForUf(data.state) : undefined;
       if (estado) setDistrito(estado);
       if (data.city) setLocalidade(toTitleCasePt(data.city));
-      const rua = [data.street, data.neighborhood].filter(Boolean).join(', ');
-      setRuas(rua ? [rua] : []);
+      setBairro(data.neighborhood ?? '');
+      setRuas(data.street ? [data.street] : []);
     } catch {
       // Unknown/invalid CEP — leave the fields for manual entry.
       setErro('CEP não encontrado. Preencha manualmente.');
@@ -59,5 +62,5 @@ export function useCepBr(): CepBrResult {
     }
   }, []);
 
-  return { loading, localidade, distrito, concelho: localidade, ruas, erro, buscar };
+  return { loading, localidade, distrito, concelho: localidade, bairro, ruas, erro, buscar };
 }

@@ -23,7 +23,7 @@ const TERMS = {
     BR: 'Informe um CPF ou CNPJ válido.',
   },
   addressLabel: { PT: 'Morada', BR: 'Endereço' },
-  addressPlaceholder: { PT: 'Rua, número, andar…', BR: 'Rua, número, bairro…' },
+  addressPlaceholder: { PT: 'Rua, número, andar…', BR: 'Rua, número…' },
   districtLabel: { PT: 'Distrito', BR: 'Estado' },
   districtAndMunicipality: { PT: 'Distrito e Concelho', BR: 'Estado e Cidade' },
   districtAllOption: { PT: 'Todos os distritos', BR: 'Todos os estados' },

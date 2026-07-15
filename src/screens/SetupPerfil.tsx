@@ -33,6 +33,7 @@ export default function SetupPerfil() {
   const [localidade, setLocalidade] = useState('');
   const [distrito, setDistrito] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
   const [tipoConta, setTipoConta] = useState<TipoConta>('particular');
@@ -57,11 +58,15 @@ export default function SetupPerfil() {
       // The BR lookup returns the state directly; PT derives it from the city.
       const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade);
       if (d) setDistrito(d);
+      // Only the BR lookup knows the neighbourhood ("bairro").
+      if (cpLookupBr.bairro) {
+        setBairro((prev) => prev || cpLookupBr.bairro);
+      }
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas, cpLookupBr.bairro]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -89,6 +94,7 @@ export default function SetupPerfil() {
       setLocalidade(user.localidade || '');
       setDistrito(user.distrito || getDistritoForConcelho(user.localidade || '') || '');
       setCodigoPostal(user.codigoPostal || '');
+      setBairro(user.bairro || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
       setTipoConta(user.tipoConta || 'particular');
@@ -162,6 +168,7 @@ export default function SetupPerfil() {
         localidade: localidade.trim(),
         distrito: distrito.trim() || undefined,
         codigoPostal: codigoPostal.trim(),
+        ...(country === 'BR' ? { bairro: bairro.trim() } : {}),
         morada: morada.trim(),
         nif: nif.trim(),
         tipoConta,
@@ -330,11 +337,12 @@ export default function SetupPerfil() {
               />
             </div>
 
-            <div className="sm:col-span-2">
+            <div className={country === 'BR' ? undefined : 'sm:col-span-2'}>
               <label className={labelCls}>{term('addressLabel', country)} {opcional}</label>
               <input
                 type="text"
                 list="ruas-list"
+                autoComplete="street-address"
                 placeholder={term('addressPlaceholder', country)}
                 value={morada}
                 onChange={(e) => setMorada(e.target.value)}
@@ -346,6 +354,20 @@ export default function SetupPerfil() {
                 ))}
               </datalist>
             </div>
+
+            {country === 'BR' && (
+              <div>
+                <label className={labelCls}>Bairro {opcional}</label>
+                <input
+                  type="text"
+                  autoComplete="address-level3"
+                  placeholder="Ex: Bela Vista"
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                  className={inputClasse('bairro')}
+                />
+              </div>
+            )}
           </div>
         </section>
 
