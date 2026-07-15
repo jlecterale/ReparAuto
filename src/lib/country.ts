@@ -35,6 +35,19 @@ export function docCountry(doc: { country?: string | null }): Country {
   return doc.country === 'BR' ? 'BR' : 'PT';
 }
 
+/**
+ * The market a signed-in account locks the selector to, or null when nothing
+ * should lock. Regular accounts belong to one market (legacy accounts resolve
+ * to PT); admins moderate every market, so they keep the free selector and
+ * are never locked. Anonymous visitors (null) aren't locked either.
+ */
+export function accountLockCountry(
+  user: { country?: string | null; role?: string | null } | null | undefined,
+): Country | null {
+  if (!user || user.role === 'admin') return null;
+  return docCountry(user);
+}
+
 /** Market isolation: keep only the docs that belong to the given market. */
 export function filterByCountry<T extends { country?: string | null }>(items: T[], country: Country): T[] {
   return items.filter((item) => docCountry(item) === country);

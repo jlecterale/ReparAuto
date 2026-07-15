@@ -40,6 +40,10 @@ export interface Usuario {
   profileCompleted: boolean;
   emailVerified?: boolean;
   verificado?: boolean;
+  /** Admin ban (plan: admin moderation). Blocks posting/messaging via firestore.rules; reversible. */
+  banned?: boolean;
+  bannedAt?: Timestamp;
+  bannedReason?: string;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];

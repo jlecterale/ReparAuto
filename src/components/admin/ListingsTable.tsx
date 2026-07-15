@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Funnel, PencilSimpleLine, Check, X, Trash, Lightning } from '@phosphor-icons/react';
+import Link from 'next/link';
+import { Funnel, PencilSimpleLine, Check, X, Trash, Lightning, ArrowSquareOut } from '@phosphor-icons/react';
 import type { Carro, StatusAnuncio } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import { Timestamp } from 'firebase/firestore';
 import { formatarPreco, formatarData } from '@/lib/utils';
-import { docCountry } from '@/lib/country';
+import { COUNTRIES, COUNTRY_INFO, docCountry, filterByCountry, type Country } from '@/lib/country';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import type { BadgeCor } from '@/types/ui';
@@ -39,11 +40,17 @@ type TabAnuncios = 'carros' | 'pecas';
 
 export default function ListingsTable({ carros, pecas, defaultTab = 'carros', statusFilter, onDeleteCarro, onDeletePeca, onApproveCarro, onRejectCarro, onApprovePeca, onRejectPeca, onUpdateCarro, onUpdatePeca, onBulkAction }: ListingsTableProps) {
   const [tab, setTab] = useState<TabAnuncios>(defaultTab);
+  // null = both markets; admins see everything and narrow down on demand.
+  const [countryFilter, setCountryFilter] = useState<Country | null>(null);
 
   useEffect(() => { setTab(defaultTab); }, [defaultTab]);
 
-  const carrosFiltrados = statusFilter ? carros.filter((c) => c.status === statusFilter) : carros;
-  const pecasFiltrados = statusFilter ? pecas.filter((p) => p.status === statusFilter) : pecas;
+  const carrosStatus = statusFilter ? carros.filter((c) => c.status === statusFilter) : carros;
+  const pecasStatus = statusFilter ? pecas.filter((p) => p.status === statusFilter) : pecas;
+  const carrosFiltrados = countryFilter ? filterByCountry(carrosStatus, countryFilter) : carrosStatus;
+  const pecasFiltrados = countryFilter ? filterByCountry(pecasStatus, countryFilter) : pecasStatus;
+  // Counts on the market chips follow the active tab + status filter.
+  const listaAtiva: Array<{ country?: string | null }> = tab === 'carros' ? carrosStatus : pecasStatus;
   const [confirmDelete, setConfirmDelete] = useState<{ tipo: 'carro' | 'peca'; id: string; titulo: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [editCarro, setEditCarro] = useState<Carro | null>(null);
@@ -55,7 +62,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
-  useEffect(() => { setSelected(new Set()); }, [tab, statusFilter]);
+  useEffect(() => { setSelected(new Set()); }, [tab, statusFilter, countryFilter]);
   const allSelected = idsVisiveis.length > 0 && idsVisiveis.every((id) => selected.has(id));
   const someSelected = idsVisiveis.some((id) => selected.has(id));
   const toggleOne = (id: string) => setSelected((prev) => {
@@ -111,6 +118,33 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
         >
           Peças ({pecasFiltrados.length})
         </button>
+
+        {/* Market filter — the admin table shows both markets by default. */}
+        <div className="flex items-center gap-1.5 sm:ml-3 sm:pl-3 sm:border-l sm:border-slate-200">
+          <button
+            onClick={() => setCountryFilter(null)}
+            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${
+              countryFilter === null ? 'bg-primary-600 text-white' : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
+            }`}
+          >
+            Todos
+          </button>
+          {COUNTRIES.map((code) => {
+            const info = COUNTRY_INFO[code];
+            return (
+              <button
+                key={code}
+                onClick={() => setCountryFilter(code)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition ${
+                  countryFilter === code ? 'bg-primary-600 text-white' : 'bg-slate-100 text-fg-muted hover:bg-slate-200'
+                }`}
+              >
+                <span aria-hidden="true">{info.flag}</span> {info.name} ({filterByCountry(listaAtiva, code).length})
+              </button>
+            );
+          })}
+        </div>
+
         {statusFilter && (
           <Badge cor="yellow" tamanho="md" className="ml-auto">
             <Funnel /> Filtrando: {statusFilter === 'pendente' ? 'Pendentes' : statusFilter === 'aprovado' ? 'Aprovados' : 'Rejeitados'}
@@ -160,6 +194,8 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
               <th className="pb-3 pr-4">ID</th>
               <th className="pb-3 pr-4">Título</th>
               <th className="pb-3 pr-4">Preço</th>
+              <th className="pb-3 pr-4">Local</th>
+              <th className="pb-3 pr-4">Views</th>
               <th className="pb-3 pr-4">Criador</th>
               <th className="pb-3 pr-4">Data</th>
               <th className="pb-3 pr-4">Status</th>
@@ -189,8 +225,15 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                           </span>
                         )}
                       </div>
+                      <p className="text-[11px] font-normal text-fg-subtle mt-0.5">
+                        {c.anoFabricacao} • {c.km.toLocaleString('pt-PT')} km • {c.combustivel} • {c.cambio}
+                      </p>
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco, docCountry(c))}</td>
+                    <td className="py-3 pr-4 text-fg-muted text-xs whitespace-nowrap">
+                      <span aria-hidden="true" title={COUNTRY_INFO[docCountry(c)].name}>{COUNTRY_INFO[docCountry(c)].flag}</span> {c.local}
+                    </td>
+                    <td className="py-3 pr-4 text-fg-subtle text-xs">{c.visualizacoes ?? 0}</td>
                     <td className="py-3 pr-4 text-fg-muted text-xs">{c.criador}</td>
                     <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(c.dataCriacao)}</td>
                     <td className="py-3 pr-4">
@@ -198,6 +241,16 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-1 flex-wrap">
+                        <Link
+                          href={`/detalhes/${c.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Abrir anúncio ${c.marca} ${c.modelo}`}
+                          title="Abrir anúncio no site"
+                          className="px-3.5 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-2 no-underline text-primary-700 hover:bg-primary-50 active:bg-primary-100"
+                        >
+                          <ArrowSquareOut /> Abrir
+                        </Link>
                         <Button
                           tipo="terciario"
                           tamanho="sm"
@@ -299,10 +352,17 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                           </span>
                         )}
                       </div>
+                      <p className="text-[11px] font-normal text-fg-subtle mt-0.5">
+                        {p.categoria} • {p.marcaCarro}{p.modeloCarro ? ` ${p.modeloCarro}` : ''} • {p.estado}
+                      </p>
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">
                       {p.preco != null && p.preco > 0 ? formatarPreco(p.preco, docCountry(p)) : '—'}
                     </td>
+                    <td className="py-3 pr-4 text-fg-muted text-xs whitespace-nowrap">
+                      <span aria-hidden="true" title={COUNTRY_INFO[docCountry(p)].name}>{COUNTRY_INFO[docCountry(p)].flag}</span> {p.local}
+                    </td>
+                    <td className="py-3 pr-4 text-fg-subtle text-xs">{p.visualizacoes ?? 0}</td>
                     <td className="py-3 pr-4 text-fg-muted text-xs">{p.criador}</td>
                     <td className="py-3 pr-4 text-fg-subtle text-xs">{formatarData(p.dataCriacao)}</td>
                     <td className="py-3 pr-4">
@@ -310,6 +370,16 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                     </td>
                     <td className="py-3">
                       <div className="flex items-center gap-1 flex-wrap">
+                        <Link
+                          href={`/pecas/${p.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={`Abrir anúncio ${p.titulo}`}
+                          title="Abrir anúncio no site"
+                          className="px-3.5 py-1.5 text-xs font-bold rounded-xl transition flex items-center gap-2 no-underline text-primary-700 hover:bg-primary-50 active:bg-primary-100"
+                        >
+                          <ArrowSquareOut /> Abrir
+                        </Link>
                         <Button
                           tipo="terciario"
                           tamanho="sm"
@@ -392,7 +462,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                 ))}
             {(tab === 'carros' ? carrosFiltrados.length === 0 : pecasFiltrados.length === 0) && (
               <tr>
-                <td colSpan={8} className="py-8 text-center text-fg-subtle text-sm">
+                <td colSpan={10} className="py-8 text-center text-fg-subtle text-sm">
                   Nenhum anúncio encontrado.
                 </td>
               </tr>

@@ -287,6 +287,30 @@ export async function setUserRole(uid: string, role: Role): Promise<void> {
   }
 }
 
+/**
+ * Admin ban toggle. Sets the `banned` flag on the user doc; firestore.rules
+ * (isNotBanned) then blocks the account from posting listings, messaging and
+ * reviewing. Reversible — unbanning clears the timestamp and reason.
+ */
+export async function setUserBanned(uid: string, banned: boolean, reason?: string): Promise<void> {
+  try {
+    const userRef = doc(db, USERS_COLLECTION, uid);
+    await setDoc(
+      userRef,
+      {
+        banned,
+        bannedAt: banned ? Timestamp.now() : null,
+        bannedReason: banned ? (reason ?? null) : null,
+        dataAtualizacao: Timestamp.now(),
+      },
+      { merge: true },
+    );
+  } catch (err) {
+    console.error('[DB] Erro ao banir/desbanir utilizador:', err);
+    throw err;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Planos Premium (admin-managed)
 // ---------------------------------------------------------------------------

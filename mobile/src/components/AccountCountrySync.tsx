@@ -1,18 +1,20 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCountry } from '@/context/CountryContext';
-import { docCountry } from '@/lib/country';
+import { accountLockCountry } from '@/lib/country';
 
 /**
  * Accounts belong to one market (mirrors the web AppProvider sync): while
  * signed in, the active country is bound to the account's country (legacy
  * accounts resolve to PT) and the selector locks. Anonymous users keep the
- * free selector. Renders nothing — it only bridges Auth → Country.
+ * free selector — and so do admins, who moderate every market
+ * (accountLockCountry returns null). Renders nothing — it only bridges
+ * Auth → Country.
  */
 export function AccountCountrySync() {
   const { user, loading } = useAuth();
   const { setCountry, setLocked } = useCountry();
-  const accountCountry = user ? docCountry(user) : null;
+  const accountCountry = accountLockCountry(user);
 
   useEffect(() => {
     if (loading) return;
