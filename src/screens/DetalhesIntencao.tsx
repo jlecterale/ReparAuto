@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getIntencaoCompra, getUserByEmail } from '@/lib/db';
 import { formatarPreco, formatarData, obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import SellerBadges from '@/components/trust/SellerBadges';
@@ -62,7 +63,7 @@ export default function DetalhesIntencao() {
   }
 
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
   const telefone = intencao.vendedorTelefone;
   const email = intencao.vendedorEmail || '';
   const temWhatsApp = !!whatsapp;
@@ -113,7 +114,7 @@ export default function DetalhesIntencao() {
             <div>
               <span className="text-xs font-semibold text-fg-subtle flex items-center gap-1"><Money /> Orçamento</span>
               <p className="font-semibold text-accent">
-                {c.precoMinimo ? `${formatarPreco(c.precoMinimo)} – ` : 'Até '}{formatarPreco(c.precoMaximo)}
+                {c.precoMinimo ? `${formatarPreco(c.precoMinimo, docCountry(intencao))} – ` : 'Até '}{formatarPreco(c.precoMaximo, docCountry(intencao))}
               </p>
             </div>
             <div>

@@ -2,6 +2,7 @@
 
 import { formatarPreco } from '@/lib/utils';
 import { CATEGORIAS_INTENCAO } from '@/lib/constants';
+import { useCountry } from '@/providers/CountryProvider';
 
 interface StepResumoProps {
   form: Record<string, any>;
@@ -20,6 +21,9 @@ function Detail({ label, value }: { label: string; value: string }) {
 }
 
 export default function StepResumo({ form, aceiteTermos, onToggleTermos }: StepResumoProps) {
+  // The intent is being created in the active market, so its budget previews
+  // in that market's currency.
+  const { country } = useCountry();
   const c = form.criterios || {};
   const p = form.preferencias || {};
   const cat = form.categoria;
@@ -38,7 +42,7 @@ export default function StepResumo({ form, aceiteTermos, onToggleTermos }: StepR
             <Detail label="Ano" value={c.anoMaximo ? `${c.anoMinimo} – ${c.anoMaximo}` : `A partir de ${c.anoMinimo}`} />
           </>
         )}
-        <Detail label="Orçamento" value={c.precoMinimo ? `${formatarPreco(c.precoMinimo)} – ${formatarPreco(c.precoMaximo)}` : `Até ${formatarPreco(c.precoMaximo)}`} />
+        <Detail label="Orçamento" value={c.precoMinimo ? `${formatarPreco(c.precoMinimo, country)} – ${formatarPreco(c.precoMaximo, country)}` : `Até ${formatarPreco(c.precoMaximo, country)}`} />
         {cat !== 'pecas' && (
           <>
             <Detail label="Combustível" value={c.combustivel?.join(', ')} />

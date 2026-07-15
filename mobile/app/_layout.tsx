@@ -2,12 +2,13 @@ import '../global.css';
 
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, usePathname, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CountryProvider } from '@/context/CountryContext';
 import { FavoritosProvider } from '@/context/FavoritosContext';
 import { ChatProvider } from '@/context/ChatContext';
 import { NotificacoesProvider } from '@/context/NotificacoesContext';
@@ -20,8 +21,10 @@ import {
   unregisterPush,
   watchTokenRefresh,
 } from '@/lib/push';
+import { logScreenView } from '@/lib/analytics';
 import { useOTAUpdates } from '@/hooks/useOTAUpdates';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { AccountCountrySync } from '@/components/AccountCountrySync';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
 import { UpdateBanner } from '@/components/ui/UpdateBanner';
 import { EmailVerificationBanner } from '@/components/auth/EmailVerificationBanner';
@@ -39,6 +42,16 @@ function RootNavigator() {
 
   // Silently check for and download OTA updates (applied on next launch).
   useOTAUpdates();
+
+  // Log a GA4 screen_view on every navigation. screen_name is the route
+  // *pattern* (e.g. "/detalhes/[id]"), keeping it low-cardinality; pathname is
+  // in the deps so navigating between two ids of the same route still logs.
+  const pathname = usePathname();
+  const segments = useSegments();
+  const screenName = segments.length ? `/${segments.join('/')}` : '/';
+  useEffect(() => {
+    logScreenView(screenName);
+  }, [screenName, pathname]);
 
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
@@ -107,6 +120,7 @@ function RootNavigator() {
       <Stack.Screen name="notificacoes" options={{ headerShown: true, title: 'Notificações' }} />
       <Stack.Screen name="anunciar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="perfil/editar" options={{ headerShown: true, title: 'Editar perfil' }} />
+      <Stack.Screen name="verificar-conta" options={{ headerShown: true, title: 'Verificação de conta' }} />
       <Stack.Screen name="meus-anuncios" options={{ headerShown: true, title: 'Os meus anúncios' }} />
       <Stack.Screen name="meus-alertas" options={{ headerShown: true, title: 'Meus Alertas' }} />
       <Stack.Screen name="definicoes" options={{ headerShown: true, title: 'Definições' }} />
@@ -120,24 +134,27 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <FavoritosProvider>
-            <ChatProvider>
-              <NotificacoesProvider>
-                <ToastProvider>
-                  <OnboardingProvider>
-                    <StatusBar style="dark" />
-                    <UpdateBanner />
-                    <OfflineBanner />
-                    <EmailVerificationBanner />
-                    <RootNavigator />
-                    <OnboardingGate />
-                  </OnboardingProvider>
-                </ToastProvider>
-              </NotificacoesProvider>
-            </ChatProvider>
-          </FavoritosProvider>
-        </AuthProvider>
+        <CountryProvider>
+          <AuthProvider>
+            <FavoritosProvider>
+              <ChatProvider>
+                <NotificacoesProvider>
+                  <ToastProvider>
+                    <OnboardingProvider>
+                      <StatusBar style="dark" />
+                      <AccountCountrySync />
+                      <UpdateBanner />
+                      <OfflineBanner />
+                      <EmailVerificationBanner />
+                      <RootNavigator />
+                      <OnboardingGate />
+                    </OnboardingProvider>
+                  </ToastProvider>
+                </NotificacoesProvider>
+              </ChatProvider>
+            </FavoritosProvider>
+          </AuthProvider>
+        </CountryProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

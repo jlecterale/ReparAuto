@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 import type { StatusAnuncio } from './carro';
 
 export type TipoPeca = 'venda' | 'desmonte' | 'procura';
@@ -36,7 +37,11 @@ export interface Peca {
   estado: string;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
+  /** Market the listing belongs to (missing on legacy docs = PT). */
+  country?: Country;
   contacto?: string;
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;
@@ -71,6 +76,8 @@ export interface PecaFormData {
   descricao: string;
   localizacao: string;
   localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
   vendedorTelefone: string;
   vendedorWhatsApp: string;
   vendedorEmail: string;

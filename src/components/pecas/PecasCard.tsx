@@ -3,6 +3,7 @@
 import { GearSix, Car, MagnifyingGlass, MapPin, Heart, type Icon } from '@phosphor-icons/react';
 import { memo } from 'react';
 import { formatarPreco, renderFoto } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { useApp } from '@/providers/AppProvider';
 import Badge from '@/components/ui/Badge';
 import LazyImage from '@/components/ui/LazyImage';
@@ -66,7 +67,7 @@ function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) 
           </div>
           {peca.preco && (
             <span className="text-lg font-extrabold text-accent">
-              {formatarPreco(peca.preco)}
+              {formatarPreco(peca.preco, docCountry(peca))}
             </span>
           )}
         </div>
@@ -96,7 +97,7 @@ function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) 
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-neutral-100">
           <span className="text-xs text-fg-muted flex items-center gap-1">
             <MapPin />
-            {peca.local || 'Portugal'}
+            {[peca.bairro, peca.local].filter(Boolean).join(', ') || 'Portugal'}
           </span>
         </div>
       </div>

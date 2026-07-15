@@ -9,10 +9,15 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
+import { LocationSelect } from '@/components/ui/LocationSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import { getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { addPeca, getPecaById, updatePeca, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type PartDraftData } from '@/lib/draft';
@@ -31,10 +36,13 @@ export default function AnunciarPecaScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
+  // Listings are priced in the active market's currency.
+  const currencySymbol = getCurrencySymbol(country);
 
   const [foto, setFoto] = useState<string[]>([]);
   const [tipo, setTipo] = useState<TipoPeca>('venda');
@@ -44,7 +52,9 @@ export default function AnunciarPecaScreen() {
   const [modelo, setModelo] = useState('');
   const [preco, setPreco] = useState('');
   const [estado, setEstado] = useState<string>('Usado');
+  const [distrito, setDistrito] = useState('');
   const [local, setLocal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [descricao, setDescricao] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [whatsapp, setWhatsapp] = useState('');
@@ -57,8 +67,8 @@ export default function AnunciarPecaScreen() {
   const precisaPreco = tipo !== 'procura';
 
   const draftData = useMemo<PartDraftData>(
-    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp }),
-    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, local, descricao, telefone, whatsapp],
+    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, bairro, descricao, telefone, whatsapp }),
+    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, bairro, descricao, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(titulo || marca || preco || descricao || foto.length);
@@ -73,6 +83,9 @@ export default function AnunciarPecaScreen() {
     setPreco(d.preco ?? '');
     setEstado(d.estado ?? 'Usado');
     setLocal(d.local ?? '');
+    setBairro(d.bairro ?? '');
+    // Drafts saved before the picker only carry the city; recover its region.
+    setDistrito(d.distrito ?? (d.local ? getDistritoForConcelho(d.local, country) ?? '' : ''));
     setDescricao(d.descricao ?? '');
     setTelefone(d.telefone ?? user?.telefone ?? '');
     setWhatsapp(d.whatsapp ?? '');
@@ -105,6 +118,9 @@ export default function AnunciarPecaScreen() {
         setPreco(p.preco != null ? String(p.preco) : '');
         setEstado(p.estado ?? 'Usado');
         setLocal(p.local ?? '');
+        setBairro(p.bairro ?? '');
+        // Old listings only carry the city; recover its region for the pickers.
+        setDistrito(p.distrito ?? (p.local ? getDistritoForConcelho(p.local, country) ?? '' : ''));
         setDescricao(p.descricao ?? '');
         setTelefone(p.vendedorTelefone ?? user?.telefone ?? '');
         setWhatsapp(p.vendedorWhatsApp ?? '');
@@ -115,7 +131,7 @@ export default function AnunciarPecaScreen() {
     return () => {
       cancelled = true;
     };
-  }, [editId, user?.telefone]);
+  }, [editId, user?.telefone, country]);
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título.';
@@ -123,7 +139,8 @@ export default function AnunciarPecaScreen() {
     if (!marca.trim()) return 'Indique a marca do carro.';
     if (precisaPreco && (!preco.trim() || Number.isNaN(Number(preco))))
       return 'Indique um preço válido.';
-    if (!local.trim()) return 'Indique a localidade.';
+    if (!distrito.trim() || !local.trim())
+      return `Indique ${term('districtAndMunicipality', country).toLowerCase()}.`;
     return null;
   }
 
@@ -151,6 +168,10 @@ export default function AnunciarPecaScreen() {
         preco: precisaPreco ? Number(preco) : null,
         estado,
         local: local.trim(),
+        distrito: distrito.trim() || undefined,
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
+        // City-derived coordinates power the radius search (mirrors the web).
+        coordenadas: getCoordenadas(local.trim(), country),
         descricao: descricao.trim(),
         foto: fotoUrl,
         vendedorNome: user.nome,
@@ -173,7 +194,7 @@ export default function AnunciarPecaScreen() {
 
       Alert.alert(
         editId ? 'Peça atualizada' : 'Anúncio enviado',
-        'A sua peça foi submetida e ficará visível após aprovação.',
+        'A sua peça foi submetida e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',
@@ -239,7 +260,7 @@ export default function AnunciarPecaScreen() {
 
         {precisaPreco && (
           <Input
-            label="Preço (€) *"
+            label={`Preço (${currencySymbol}) *`}
             value={preco}
             onChangeText={setPreco}
             placeholder="60"
@@ -247,8 +268,26 @@ export default function AnunciarPecaScreen() {
           />
         )}
 
-        <ChipSelect label="Estado" options={ESTADOS} value={estado} onChange={setEstado} />
-        <Input label="Localidade *" value={local} onChangeText={setLocal} placeholder="Porto" />
+        {/* "da peça" disambiguates from the BR region picker ("Estado") below. */}
+        <ChipSelect label="Estado da peça" options={ESTADOS} value={estado} onChange={setEstado} />
+        <LocationSelect
+          distrito={distrito}
+          localidade={local}
+          onChange={(d, c) => {
+            setDistrito(d);
+            setLocal(c);
+            setBairro('');
+          }}
+          required
+        />
+        {country === 'BR' && (
+          <Input
+            label="Bairro (opcional)"
+            value={bairro}
+            onChangeText={setBairro}
+            placeholder="Ex: Bela Vista"
+          />
+        )}
         <Input
           label="Descrição"
           value={descricao}
@@ -263,7 +302,7 @@ export default function AnunciarPecaScreen() {
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Telefone" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={term('phoneLabel', country)} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />

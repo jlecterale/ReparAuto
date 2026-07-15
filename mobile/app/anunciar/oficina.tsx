@@ -8,8 +8,11 @@ import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { LocationSelect } from '@/components/ui/LocationSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { addOficina, getOficinaById, updateOficina, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
@@ -27,6 +30,7 @@ export default function RegistarOficinaScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
@@ -41,6 +45,7 @@ export default function RegistarOficinaScreen() {
   const [videoUrl, setVideoUrl] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [descricao, setDescricao] = useState('');
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
@@ -50,8 +55,8 @@ export default function RegistarOficinaScreen() {
   const [submitted, setSubmitted] = useState(false);
 
   const draftData = useMemo<WorkshopDraftData>(
-    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades }),
-    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, morada, descricao, especialidades],
+    () => ({ logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades }),
+    [logo, nome, responsavel, telefone, whatsapp, email, website, videoUrl, distrito, localidade, bairro, morada, descricao, especialidades],
   );
   // Prefilled contacts (responsável/telefone/email) don't count as progress.
   const hasDraftContent = !!(nome || descricao || morada || especialidades.length || logo.length);
@@ -67,6 +72,7 @@ export default function RegistarOficinaScreen() {
     setVideoUrl(d.videoUrl ?? '');
     setDistrito(d.distrito ?? '');
     setLocalidade(d.localidade ?? '');
+    setBairro(d.bairro ?? '');
     setMorada(d.morada ?? '');
     setDescricao(d.descricao ?? '');
     setEspecialidades(d.especialidades ?? []);
@@ -100,6 +106,7 @@ export default function RegistarOficinaScreen() {
         setVideoUrl(o.videoUrl ?? '');
         setDistrito(o.distrito ?? '');
         setLocalidade(o.localidade ?? '');
+        setBairro(o.bairro ?? '');
         setMorada(o.morada ?? '');
         setDescricao(o.descricao ?? '');
         setEspecialidades(o.especialidades ?? []);
@@ -123,7 +130,8 @@ export default function RegistarOficinaScreen() {
     if (!responsavel.trim()) return 'Indique o responsável.';
     if (!telefone.trim()) return 'Indique um telefone.';
     if (!email.trim()) return 'Indique um email.';
-    if (!distrito.trim() || !localidade.trim()) return 'Indique distrito e localidade.';
+    if (!distrito.trim() || !localidade.trim())
+      return `Indique ${term('districtAndMunicipality', country).toLowerCase()}.`;
     if (especialidades.length === 0) return 'Selecione pelo menos uma especialidade.';
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
       return 'O link do vídeo do YouTube é inválido.';
@@ -156,6 +164,7 @@ export default function RegistarOficinaScreen() {
         videoUrl: videoUrl.trim() || undefined,
         distrito: distrito.trim(),
         localidade: localidade.trim(),
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
         morada: morada.trim(),
         especialidades,
         logoUrl,
@@ -171,7 +180,7 @@ export default function RegistarOficinaScreen() {
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
-        'O registo foi submetido e ficará visível após aprovação.',
+        'O registo foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',
@@ -229,20 +238,25 @@ export default function RegistarOficinaScreen() {
         />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Localização</Text>
-        <View className="flex-row gap-3">
-          <View className="flex-1">
-            <Input label="Distrito *" value={distrito} onChangeText={setDistrito} placeholder="Lisboa" />
-          </View>
-          <View className="flex-1">
-            <Input label="Localidade *" value={localidade} onChangeText={setLocalidade} placeholder="Amadora" />
-          </View>
-        </View>
-        <Input label="Morada" value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
+        <LocationSelect
+          distrito={distrito}
+          localidade={localidade}
+          onChange={(d, c) => {
+            setDistrito(d);
+            setLocalidade(c);
+            setBairro('');
+          }}
+          required
+        />
+        {country === 'BR' && (
+          <Input label="Bairro (opcional)" value={bairro} onChangeText={setBairro} placeholder="Ex: Bela Vista" />
+        )}
+        <Input label={term('addressLabel', country)} value={morada} onChangeText={setMorada} placeholder="Rua, nº" />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Telefone *" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={`${term('phoneLabel', country)} *`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />

@@ -123,9 +123,6 @@ Without the VAPID key, `requestNotificationPermission()` in `src/lib/fcm.ts` ret
 - `src/lib/fcm.ts` — FCM token request + foreground message listener
 - `src/lib/lqip.ts` — LQIP blur-up placeholder generation + cache
 - `src/lib/offlineQueue.ts` — localStorage action queue for offline writes
-- `src/hooks/useInstallPrompt.ts` — PWA install prompt (engagement-based)
-- `src/hooks/useOnlineStatus.ts` — online/offline detection
-- `src/hooks/useNetworkStatus.ts` — Network Information API (speed detection)
 - `src/hooks/useSwipe.ts` — touch swipe with drag feedback
 - `src/hooks/useImageZoom.ts` — fullscreen gallery lightbox controller (pinch/wheel/double-tap zoom, pan, swipe-to-navigate, drag-down-to-close)
 - `public/firebase-messaging-sw.js` — FCM background message service worker
@@ -169,11 +166,19 @@ Consolidate findings into the plan — don't jump straight to code on non-trivia
 
 ### Plans
 
-Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), the commit sequence, edge cases, and verification steps.
+Plans live in `docs/plans/` — **always authored as a self-contained interactive HTML page (`NN-<slug>.html`), never as a `.md` file.** The HTML page carries the full written analysis (not just a visual summary): it should cover context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), the commit sequence, edge cases, and verification steps. Match the layout of the existing HTML plans (`docs/plans/20-expansao-brasil.html`, `24-importacao-anuncios-standvirtual.html`): Tailwind CDN + the dark glass theme, header, metrics strip, numbered sections, and a sidebar (benchmark / scope / risks / next steps). Legacy plans still exist as `.md` — leave them as-is, but every **new** plan is `.html`.
 
 - **Number new plans sequentially** (continue from the highest existing `NN`).
 - **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
 - `docs/plans/index.html` is the **canonical roadmap** (shipped vs. queued) — keep it the source of truth, trust it over prose scattered elsewhere.
+
+### User guides for new features (`docs/guias` → `/guias`)
+
+For every new user-facing feature, **if relevant, write a companion guide** in the `/guias` section (`src/data/guias.ts`, rendered by `app/guias/page.tsx` and `app/guias/[slug]/page.tsx`). A guide is relevant when the feature adds a new user workflow, decision point, or "how do I…" moment (e.g., comparing vehicles, checking a seller's verification, using a new filter, a new financing/insurance flow). Skip it for internal/admin-only tooling, infra/i18n plumbing, or minor UI tweaks with no new behavior to explain.
+
+- Add an entry to the `GUIDES` array following the existing `Guide` shape (`slug`, `title`, `description`, `category`, `readingMinutes`, `updatedAt`, `intro`, `sections`) — PT-PT content, English identifiers, no mention of "ReparAuto".
+- It must pass `src/data/guias.test.ts` (unique url-safe slug, description within SEO bounds, valid category, non-empty sections, no internal brand name leakage).
+- The index page, per-guide `generateMetadata`/JSON-LD, and `app/sitemap.ts` pick up new entries automatically — no extra wiring needed.
 
 ### Closing out a plan (after it ships)
 

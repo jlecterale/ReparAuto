@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Wrench,
@@ -19,6 +19,7 @@ import { useApp } from '@/providers/AppProvider';
 import { subscribeBanners } from '@/lib/db';
 import type { Banner } from '@/types/banner';
 import { formatarPreco, renderFoto } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 
 const DISMISS_KEY = 'monetization_carousel_dismissed';
 
@@ -36,67 +37,67 @@ interface Slide {
   link: string;
 }
 
+const FALLBACK_SLIDES: Slide[] = [
+  {
+    id: 'fb-1',
+    title: 'Destaque a sua Oficina e Receba Mais Clientes',
+    description: 'Adira ao plano "Oficina Verificada" para aparecer no topo das buscas geográficas na sua região, ganhar selo de confiança e chat ilimitado.',
+    badge: 'B2B Profissionais',
+    badgeCor: 'brand',
+    price: 'Desde €15/mês',
+    ctaText: 'Ver Planos Profissionais',
+    icon: <Wrench size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
+    gradient: 'from-brand-600 via-brand-700 to-brand-900',
+    link: '/oficinas/registar',
+  },
+  {
+    id: 'fb-2',
+    title: 'Acesso Prioritário a Leads de Intenção de Compra',
+    description: 'Seja o primeiro a enviar propostas! Stands e Lojas premium recebem notificações exclusivas com 24 horas de vantagem sobre a concorrência.',
+    badge: 'Stands & Lojas',
+    badgeCor: 'accent',
+    price: '€50/mês',
+    ctaText: 'Ativar Acesso Prioritário',
+    icon: <Clock size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 -rotate-12" />,
+    gradient: 'from-amber-600 via-orange-700 to-orange-950',
+    link: '/minhas-intencoes',
+  },
+  {
+    id: 'fb-3',
+    title: 'Venda o seu Carro 30% Mais Rápido',
+    description: 'Adicione um Relatório de Histórico Verificado CarVertical ao seu anúncio. Reduza dúvidas dos compradores e destaque-se instantaneamente.',
+    badge: 'Segurança & Confiança',
+    badgeCor: 'green',
+    price: '€5 por relatório',
+    ctaText: 'Adicionar Relatório',
+    icon: <FileText size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150" />,
+    gradient: 'from-blue-600 via-blue-700 to-indigo-900',
+    link: '/anunciar',
+  },
+  {
+    id: 'fb-4',
+    title: 'Crédito e Seguro Automóvel Integrados',
+    description: 'Parcerias com as melhores instituições financeiras e seguradoras. Faça simulações gratuitas na página de qualquer veículo e consiga aprovação na hora.',
+    badge: 'Serviços Financeiros',
+    badgeCor: 'yellow',
+    price: 'Simulação Grátis',
+    ctaText: 'Simular Agora',
+    icon: <Coins size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 rotate-45" />,
+    gradient: 'from-emerald-600 via-teal-700 to-emerald-900',
+    link: '#',
+  },
+];
+
 export default function MonetizationCarousel() {
   const router = useRouter();
   const { carros } = useApp();
-  const allCars = carros?.carros || [];
-  
+  const allCars = carros?.carros;
+
   const [dbBanners, setDbBanners] = useState<Banner[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [visible, setVisible] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  const fallbackSlides: Slide[] = [
-    {
-      id: 'fb-1',
-      title: 'Destaque a sua Oficina e Receba Mais Clientes',
-      description: 'Adira ao plano "Oficina Verificada" para aparecer no topo das buscas geográficas na sua região, ganhar selo de confiança e chat ilimitado.',
-      badge: 'B2B Profissionais',
-      badgeCor: 'brand',
-      price: 'Desde €15/mês',
-      ctaText: 'Ver Planos Profissionais',
-      icon: <Wrench size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
-      gradient: 'from-brand-600 via-brand-700 to-brand-900',
-      link: '/oficinas/registar',
-    },
-    {
-      id: 'fb-2',
-      title: 'Acesso Prioritário a Leads de Intenção de Compra',
-      description: 'Seja o primeiro a enviar propostas! Stands e Lojas premium recebem notificações exclusivas com 24 horas de vantagem sobre a concorrência.',
-      badge: 'Stands & Lojas',
-      badgeCor: 'accent',
-      price: '€50/mês',
-      ctaText: 'Ativar Acesso Prioritário',
-      icon: <Clock size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 -rotate-12" />,
-      gradient: 'from-amber-600 via-orange-700 to-orange-950',
-      link: '/minhas-intencoes',
-    },
-    {
-      id: 'fb-3',
-      title: 'Venda o seu Carro 30% Mais Rápido',
-      description: 'Adicione um Relatório de Histórico Verificado CarVertical ao seu anúncio. Reduza dúvidas dos compradores e destaque-se instantaneamente.',
-      badge: 'Segurança & Confiança',
-      badgeCor: 'green',
-      price: '€5 por relatório',
-      ctaText: 'Adicionar Relatório',
-      icon: <FileText size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150" />,
-      gradient: 'from-blue-600 via-blue-700 to-indigo-900',
-      link: '/anunciar',
-    },
-    {
-      id: 'fb-4',
-      title: 'Crédito e Seguro Automóvel Integrados',
-      description: 'Parcerias com as melhores instituições financeiras e seguradoras. Faça simulações gratuitas na página de qualquer veículo e consiga aprovação na hora.',
-      badge: 'Serviços Financeiros',
-      badgeCor: 'yellow',
-      price: 'Simulação Grátis',
-      ctaText: 'Simular Agora',
-      icon: <Coins size={48} className="text-white/20 absolute right-4 bottom-4 transform scale-150 rotate-45" />,
-      gradient: 'from-emerald-600 via-teal-700 to-emerald-900',
-      link: '#',
-    },
-  ];
 
   // Subscribe to DB banners
   useEffect(() => {
@@ -111,41 +112,45 @@ export default function MonetizationCarousel() {
     return unsub;
   }, []);
 
-  // Merge db active banners and premium cars
-  const activeDbBanners = dbBanners.filter((b) => b.ativo);
-  const promotionalSlides: Slide[] = activeDbBanners.length > 0
-    ? activeDbBanners.map((b) => ({
-        id: `banner-${b.id}`,
-        title: b.title,
-        description: b.description,
-        badge: b.badge,
-        badgeCor: b.badgeCor,
-        price: b.price,
-        ctaText: b.ctaText,
-        gradient: b.gradient,
-        link: b.link,
-      }))
-    : fallbackSlides;
+  // Merge db active banners and premium cars. Memoized so the interval tick
+  // (setCurrentSlide every 6s) doesn't re-filter and re-format the whole car
+  // list on each render.
+  const slides = useMemo<Slide[]>(() => {
+    const activeDbBanners = dbBanners.filter((b) => b.ativo);
+    const promotionalSlides: Slide[] = activeDbBanners.length > 0
+      ? activeDbBanners.map((b) => ({
+          id: `banner-${b.id}`,
+          title: b.title,
+          description: b.description,
+          badge: b.badge,
+          badgeCor: b.badgeCor,
+          price: b.price,
+          ctaText: b.ctaText,
+          gradient: b.gradient,
+          link: b.link,
+        }))
+      : FALLBACK_SLIDES;
 
-  const premiumCars = allCars.filter((c) => c.status === 'aprovado' && c.impulso?.ativo === true);
-  const mappedCarSlides: Slide[] = premiumCars.map((c) => {
-    const firstPhoto = c.fotos && c.fotos.length > 0 ? c.fotos[0] : undefined;
-    return {
-      id: `carro-${c.id}`,
-      title: `${c.marca} ${c.modelo} • ${formatarPreco(c.preco)}`,
-      description: `Ano ${c.anoFabricacao} • ${c.km.toLocaleString('pt-PT')} km • ${c.combustivel} • ${c.local}. ${c.descricao}`,
-      badge: 'Destaque Turbo',
-      badgeCor: 'accent',
-      price: formatarPreco(c.preco),
-      ctaText: 'Ver Veículo',
-      icon: <Lightning size={48} className="text-amber-500/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
-      imageUrl: firstPhoto,
-      gradient: 'from-slate-900 via-slate-800 to-indigo-950',
-      link: `/detalhes/${c.id}`,
-    };
-  });
+    const premiumCars = (allCars || []).filter((c) => c.status === 'aprovado' && c.impulso?.ativo === true);
+    const mappedCarSlides: Slide[] = premiumCars.map((c) => {
+      const firstPhoto = c.fotos && c.fotos.length > 0 ? c.fotos[0] : undefined;
+      return {
+        id: `carro-${c.id}`,
+        title: `${c.marca} ${c.modelo} • ${formatarPreco(c.preco, docCountry(c))}`,
+        description: `Ano ${c.anoFabricacao} • ${c.km.toLocaleString('pt-PT')} km • ${c.combustivel} • ${c.local}. ${c.descricao}`,
+        badge: 'Destaque Turbo',
+        badgeCor: 'accent',
+        price: formatarPreco(c.preco, docCountry(c)),
+        ctaText: 'Ver Veículo',
+        icon: <Lightning size={48} className="text-amber-500/20 absolute right-4 bottom-4 transform scale-150 rotate-12" />,
+        imageUrl: firstPhoto,
+        gradient: 'from-slate-900 via-slate-800 to-indigo-950',
+        link: `/detalhes/${c.id}`,
+      };
+    });
 
-  const slides = [...promotionalSlides, ...mappedCarSlides];
+    return [...promotionalSlides, ...mappedCarSlides];
+  }, [dbBanners, allCars]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem(DISMISS_KEY) === '1') {
@@ -214,7 +219,7 @@ export default function MonetizationCarousel() {
       onMouseLeave={() => setIsHovered(false)}
       {...swipe}
       role="region"
-      aria-label="Campanhas de Monetização Recar Garage"
+      aria-label="Campanhas de Monetização RecarGarage"
     >
       {/* Slides Container */}
       <div

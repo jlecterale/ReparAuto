@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
-import { CATEGORIAS_PECAS, DISTRITOS, ESTADOS_PECA } from '@/lib/constants';
+import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
+import { getDistritos } from '@/lib/geo';
+import { useCountry } from '@/context/CountryContext';
 
 const CATEGORIA_OPTS = [{ value: '', label: 'Todas' }, ...CATEGORIAS_PECAS.map((c) => ({ value: c, label: c }))];
 const ESTADO_OPTS = [{ value: '', label: 'Todos' }, ...ESTADOS_PECA.map((e) => ({ value: e, label: e }))];
-const DISTRITO_OPTS = [{ value: '', label: 'Todos' }, ...DISTRITOS.map((d) => ({ value: d, label: d }))];
 
 interface PecaFiltersSheetProps {
   visible: boolean;
@@ -21,6 +22,10 @@ interface PecaFiltersSheetProps {
   setEstado: (v: string) => void;
   distrito: string;
   setDistrito: (v: string) => void;
+  bairro: string;
+  setBairro: (v: string) => void;
+  /** Neighbourhoods that actually have listings (BR only). */
+  bairroOpts: string[];
   marca: string;
   setMarca: (v: string) => void;
   modelo: string;
@@ -38,6 +43,9 @@ export function PecaFiltersSheet({
   setEstado,
   distrito,
   setDistrito,
+  bairro,
+  setBairro,
+  bairroOpts,
   marca,
   setMarca,
   modelo,
@@ -45,8 +53,10 @@ export function PecaFiltersSheet({
   onClear,
   resultCount,
 }: PecaFiltersSheetProps) {
+  const { country } = useCountry();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
+  const distritoOpts = [{ value: '', label: 'Todos' }, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
   return (
     <BottomSheet
       visible={visible}
@@ -92,9 +102,18 @@ export function PecaFiltersSheet({
       <SheetSection title="Estado">
         <ChipSelect options={ESTADO_OPTS} value={estado} onChange={setEstado} />
       </SheetSection>
-      <SheetSection title="Distrito">
-        <ChipSelect options={DISTRITO_OPTS} value={distrito} onChange={setDistrito} />
+      <SheetSection title={country === 'BR' ? 'Estado' : 'Distrito'}>
+        <ChipSelect options={distritoOpts} value={distrito} onChange={setDistrito} />
       </SheetSection>
+      {country === 'BR' && bairroOpts.length > 0 && (
+        <SheetSection title="Bairro">
+          <ChipSelect
+            options={[{ value: '', label: 'Todos' }, ...bairroOpts.map((b) => ({ value: b, label: b }))]}
+            value={bairro}
+            onChange={setBairro}
+          />
+        </SheetSection>
+      )}
     </BottomSheet>
   );
 }

@@ -1,9 +1,11 @@
 'use client';
 
-import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
+import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, DownloadSimple, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
+import { statusAfterOwnerEdit } from '@/lib/listingModeration';
+import { pickChangedFields } from '@/lib/changedFields';
 import { loadAdDraft, clearAdDraft, type AdDraft, type AdDraftKind, type CarAdDraftData } from '@/lib/adDraft';
 import { releasePendingFiles } from '@/lib/pendingUploadFiles';
 import type { PecaFormDraft } from '@/components/pecas/PecaForm';
@@ -11,6 +13,8 @@ import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompr
 import type { OficinaFormDraft } from '@/screens/RegistarOficina';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth as firebaseAuth } from '@/lib/firebase';
@@ -68,6 +72,7 @@ function DraftCard({ titulo, savedAt, onContinue, onDiscard }: {
 
 export default function ProfileLoggedIn() {
   const { auth } = useApp();
+  const { country } = useCountry();
   const { user, logout, isAdmin, updateProfile, refreshProfile } = auth;
   const router = useRouter();
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -212,13 +217,31 @@ export default function ProfileLoggedIn() {
   };
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
-    await updateCarro(id, { ...dados, status: 'pendente' });
+    // Only a photo change re-queues the ad for approval; other edits keep the
+    // listing's current status so an approved ad stays live.
+    const status = statusAfterOwnerEdit(
+      editCarro?.status ?? 'pendente',
+      editCarro?.fotos ?? [],
+      (dados.fotos as string[] | undefined) ?? [],
+    );
+    const changed = pickChangedFields(editCarro ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updateCarro(id, changed);
+    }
     setEditCarro(null);
     await carregar();
   };
 
   const handleSavePeca = async (id: string, dados: Record<string, unknown>) => {
-    await updatePeca(id, { ...dados, status: 'pendente' });
+    const status = statusAfterOwnerEdit(
+      editPeca?.status ?? 'pendente',
+      editPeca?.foto ? [editPeca.foto] : [],
+      dados.foto ? [dados.foto as string] : [],
+    );
+    const changed = pickChangedFields(editPeca ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updatePeca(id, changed);
+    }
     setEditPeca(null);
     await carregar();
   };
@@ -402,9 +425,22 @@ export default function ProfileLoggedIn() {
         <>
       {/* My Cars */}
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h4 className="font-extrabold text-fg-heading mb-4 flex items-center gap-2">
-          <ListChecks className="text-accent" /> Os Seus Carros Anunciados
-        </h4>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <h4 className="font-extrabold text-fg-heading flex items-center gap-2">
+            <ListChecks className="text-accent" /> Os Seus Carros Anunciados
+          </h4>
+          {/* Standvirtual import is Portugal-only (no Brazilian equivalent yet). */}
+          {country === 'PT' && (
+            <Button
+              tipo="secundario"
+              tamanho="sm"
+              icone={<DownloadSimple weight="bold" />}
+              onClick={() => router.push('/importar')}
+            >
+              Importar do Standvirtual
+            </Button>
+          )}
+        </div>
 
         {carDraft && (
           <DraftCard
@@ -450,7 +486,7 @@ export default function ProfileLoggedIn() {
                     <p className="text-xs text-fg-subtle">{carro.km?.toLocaleString('pt-PT')} km</p>
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco)}</span>
+                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco, docCountry(carro))}</span>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditCarro(carro); }}
                       className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
@@ -516,7 +552,7 @@ export default function ProfileLoggedIn() {
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     {peca.preco != null && (
-                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco)}</span>
+                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco, docCountry(peca))}</span>
                     )}
                     <button
                       onClick={() => setEditPeca(peca)}
@@ -573,7 +609,7 @@ export default function ProfileLoggedIn() {
                     categoria: intentDraft.data.form.categoria || undefined,
                     criterios: intentDraft.data.form.criterios,
                     descricao: intentDraft.data.form.descricao,
-                  })
+                  }, country)
                 : 'Intenção de compra'
             }
             savedAt={intentDraft.savedAt}
@@ -645,6 +681,7 @@ export default function ProfileLoggedIn() {
             email={user.email}
             nome={user.nome}
             nif={user.nif}
+            tipoConta={user.tipoConta}
             verificado={user.verificado}
             verification={verification}
             loading={verificationLoading}

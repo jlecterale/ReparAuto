@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, View } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IntencaoCard } from '@/components/IntencaoCard';
 import { subscribeIntencoesAtivas } from '@/lib/trust';
+import { filterByCountry } from '@/lib/country';
+import { useCountry } from '@/context/CountryContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { IntencaoCompra } from '@/types';
 import { colors } from '@/theme/colors';
@@ -14,6 +16,7 @@ const openIntencao = (id: string) => router.push(`/intencoes/${id}`);
 
 export default function IntencoesScreen() {
   const requireAuth = useRequireAuth();
+  const { country } = useCountry();
   const [intencoes, setIntencoes] = useState<IntencaoCompra[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,6 +30,9 @@ export default function IntencoesScreen() {
     );
     return unsub;
   }, []);
+
+  // The subscription is market-agnostic; the active market is applied in memory.
+  const filtered = useMemo(() => filterByCountry(intencoes, country), [intencoes, country]);
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -51,7 +57,7 @@ export default function IntencoesScreen() {
         </View>
       ) : (
         <FlatList
-          data={intencoes}
+          data={filtered}
           keyExtractor={(item) => item.id}
           contentContainerClassName="p-4"
           renderItem={({ item }) => <IntencaoCard intencao={item} onPress={openIntencao} />}

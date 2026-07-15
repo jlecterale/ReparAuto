@@ -16,6 +16,17 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://recargarage.com';
+
+// Bring the user back to our own domain after they confirm their email, so the
+// link in the message points at recargarage.com instead of the default
+// firebaseapp.com handler. A branded continue URL both looks less like phishing
+// (helping deliverability) and keeps the post-verification landing on-brand.
+const verificationSettings = {
+  url: `${SITE_URL}/perfil`,
+  handleCodeInApp: false,
+};
+
 export async function loginComEmail(email: string, password: string): Promise<User> {
   const result = await signInWithEmailAndPassword(auth, email, password);
   return result.user;
@@ -26,13 +37,13 @@ export async function criarConta(email: string, password: string, nome: string):
   if (nome) {
     await updateProfile(result.user, { displayName: nome });
   }
-  await sendEmailVerification(result.user);
+  await sendEmailVerification(result.user, verificationSettings);
   return result.user;
 }
 
 export async function enviarVerificacaoEmail(): Promise<void> {
   if (auth.currentUser) {
-    await sendEmailVerification(auth.currentUser);
+    await sendEmailVerification(auth.currentUser, verificationSettings);
   }
 }
 

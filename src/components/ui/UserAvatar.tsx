@@ -1,5 +1,7 @@
 import { User } from '@phosphor-icons/react';
+import NextImage from 'next/image';
 import type { Usuario } from '@/types/usuario';
+import { canOptimizeImage } from '@/lib/utils';
 
 const AVATAR_COLORS = [
   'bg-blue-500',
@@ -34,14 +36,24 @@ const sizeClasses = {
   lg: 'w-20 h-20 text-3xl',
 };
 
+const sizePx = {
+  sm: 32,
+  md: 64,
+  lg: 80,
+};
+
 export default function UserAvatar({ user, size = 'md', className = '' }: UserAvatarProps) {
   const nome = user?.nome || 'U';
   const cor = getColor(nome);
 
   if (user?.foto) {
     return (
-      <div className={`${sizeClasses[size]} rounded-full flex-shrink-0 overflow-hidden ${className}`}>
-        <img src={user.foto} alt={nome} className="w-full h-full object-cover" />
+      <div className={`${sizeClasses[size]} relative rounded-full flex-shrink-0 overflow-hidden ${className}`}>
+        {canOptimizeImage(user.foto) ? (
+          <NextImage src={user.foto} alt={nome} fill sizes={`${sizePx[size]}px`} className="object-cover" />
+        ) : (
+          <img src={user.foto} alt={nome} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        )}
       </div>
     );
   }

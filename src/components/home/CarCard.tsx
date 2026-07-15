@@ -4,6 +4,7 @@ import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
 import { memo } from 'react';
 import Link from 'next/link';
 import { formatarPreco, renderFoto } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
 import Badge from '@/components/ui/Badge';
@@ -42,6 +43,9 @@ function CarCard({ carro }: { carro: Carro }) {
         <div className="absolute top-2 left-2 flex flex-col gap-1">
           {isNovo && <Badge cor="green" variante="solid" className="shadow">Novidade</Badge>}
           {isLowCost && <Badge cor="accent" variante="solid" className="shadow">Low-Cost</Badge>}
+          {carro.origem === 'standvirtual' && (
+            <Badge cor="blue" variante="solid" className="shadow">Importado</Badge>
+          )}
         </div>
         <button
           onClick={(e) => {
@@ -79,11 +83,11 @@ function CarCard({ carro }: { carro: Carro }) {
         )}
         <div className="mt-auto flex items-center justify-between">
           <span className="text-xl font-extrabold text-accent">
-            {formatarPreco(carro.preco)}
+            {formatarPreco(carro.preco, docCountry(carro))}
           </span>
           <span className="text-xs text-fg-muted flex items-center gap-1">
             <MapPin />
-            {carro.local || 'Portugal'}
+            {[carro.bairro, carro.local].filter(Boolean).join(', ') || 'Portugal'}
           </span>
         </div>
         {carro.estadoVeiculo === 'manutencao' && (
