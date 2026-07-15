@@ -296,6 +296,9 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               >
                 <span aria-hidden="true" className="text-base leading-none">{COUNTRY_INFO[country].flag}</span>
                 <span className="text-sm font-semibold">{COUNTRY_INFO[country].name}</span>
+                {isAdmin && (
+                  <Badge cor="accent" variante="solid" className="!text-[9px] !px-1.5 !py-0">ADMIN</Badge>
+                )}
                 <CaretDown
                   size={13}
                   weight="bold"
