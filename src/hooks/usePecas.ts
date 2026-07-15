@@ -20,6 +20,7 @@ export default function usePecas(active: boolean = true) {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [advDistrito, setAdvDistrito] = useState('');
   const [advConcelho, setAdvConcelho] = useState('');
+  const [advBairro, setAdvBairro] = useState('');
   const [advRaioCentro, setAdvRaioCentro] = useState('');
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
 
@@ -57,7 +58,8 @@ export default function usePecas(active: boolean = true) {
           p.descricao.toLowerCase().includes(term) ||
           p.marcaCarro.toLowerCase().includes(term) ||
           (p.modeloCarro?.toLowerCase().includes(term) ?? false) ||
-          p.categoria.toLowerCase().includes(term)
+          p.categoria.toLowerCase().includes(term) ||
+          (p.bairro?.toLowerCase().includes(term) ?? false)
       );
     }
 
@@ -81,6 +83,10 @@ export default function usePecas(active: boolean = true) {
       }
     } else if (advConcelho) {
       lista = lista.filter((p) => p.local?.toLowerCase() === advConcelho.toLowerCase());
+      // Bairro (BR) narrows within the picked city.
+      if (advBairro) {
+        lista = lista.filter((p) => (p.bairro ?? '').toLowerCase() === advBairro.toLowerCase());
+      }
     } else if (advDistrito) {
       lista = lista.filter(
         (p) => (p.distrito ?? getDistritoForConcelho(p.local, country)) === advDistrito
@@ -88,7 +94,19 @@ export default function usePecas(active: boolean = true) {
     }
 
     return lista;
-  }, [pecas, country, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+  }, [pecas, country, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advBairro, advRaioCentro, advRaioKm]);
+
+  // Like the marca facet on mobile, bairro options come from the loaded
+  // listings so only neighbourhoods that actually have ads are offered
+  // (BR; scoped to the picked city).
+  const bairroOpts = useMemo(() => {
+    if (!advConcelho) return [];
+    const set = new Set<string>();
+    for (const p of pecas) {
+      if (p.bairro && p.local?.toLowerCase() === advConcelho.toLowerCase()) set.add(p.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [pecas, advConcelho]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -127,6 +145,9 @@ export default function usePecas(active: boolean = true) {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -144,6 +165,8 @@ export default function usePecas(active: boolean = true) {
     filtroEstado,
     advDistrito,
     advConcelho,
+    advBairro,
+    bairroOpts,
     advRaioCentro,
     advRaioKm,
     publicarPeca,

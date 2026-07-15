@@ -125,7 +125,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
           </div>
           <div>
             <span className="text-xs font-semibold text-fg-subtle">Localização</span>
-            <p className="font-semibold text-fg-heading">{peca.local || 'Portugal'}</p>
+            <p className="font-semibold text-fg-heading">{[peca.bairro, peca.local].filter(Boolean).join(', ') || 'Portugal'}</p>
           </div>
           {peca.numeroOEM && (
             <div className="col-span-2">

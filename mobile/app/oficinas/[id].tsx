@@ -68,7 +68,7 @@ export default function DetalhesOficinaScreen() {
   // Workshops store the creator's email (no uid field, mirroring the web).
   const ehDono = !!user?.email && oficina.criador === user.email;
   const capa = oficina.fotos?.[0] || oficina.logoUrl;
-  const morada = [oficina.morada, oficina.localidade, oficina.distrito]
+  const morada = [oficina.morada, oficina.bairro, oficina.localidade, oficina.distrito]
     .filter(Boolean)
     .join(', ');
   // Universal Google Maps link — opens the Maps app if installed, else the

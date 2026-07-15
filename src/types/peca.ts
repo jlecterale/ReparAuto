@@ -37,6 +37,8 @@ export interface Peca {
   estado: string;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   /** Market the listing belongs to (missing on legacy docs = PT). */
   country?: Country;
@@ -74,6 +76,8 @@ export interface PecaFormData {
   descricao: string;
   localizacao: string;
   localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
   vendedorTelefone: string;
   vendedorWhatsApp: string;
   vendedorEmail: string;

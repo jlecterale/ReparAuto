@@ -19,6 +19,10 @@ interface OficinaFiltersSheetProps {
   onClose: () => void;
   distrito: string;
   setDistrito: (v: string) => void;
+  bairro: string;
+  setBairro: (v: string) => void;
+  /** Neighbourhoods that actually have workshops (BR only). */
+  bairroOpts: string[];
   especialidade: string;
   setEspecialidade: (v: string) => void;
   onClear: () => void;
@@ -30,6 +34,9 @@ export function OficinaFiltersSheet({
   onClose,
   distrito,
   setDistrito,
+  bairro,
+  setBairro,
+  bairroOpts,
   especialidade,
   setEspecialidade,
   onClear,
@@ -55,6 +62,15 @@ export function OficinaFiltersSheet({
       <SheetSection title={country === 'BR' ? 'Estado' : 'Distrito'}>
         <ChipSelect options={distritoOpts} value={distrito} onChange={setDistrito} />
       </SheetSection>
+      {country === 'BR' && bairroOpts.length > 0 && (
+        <SheetSection title="Bairro">
+          <ChipSelect
+            options={[{ value: '', label: 'Todos' }, ...bairroOpts.map((b) => ({ value: b, label: b }))]}
+            value={bairro}
+            onChange={setBairro}
+          />
+        </SheetSection>
+      )}
     </BottomSheet>
   );
 }

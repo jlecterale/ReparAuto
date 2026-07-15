@@ -35,6 +35,18 @@ describe('CarCard', () => {
     expect(link).toHaveTextContent('Renault Clio');
   });
 
+  it('mostra "bairro, cidade" quando o anúncio brasileiro tem bairro', () => {
+    render(<CarCard carro={buildCarro({ local: 'São Paulo', bairro: 'Bela Vista', country: 'BR' })} />);
+
+    expect(screen.getByText('Bela Vista, São Paulo')).toBeInTheDocument();
+  });
+
+  it('mostra só a cidade quando não há bairro', () => {
+    render(<CarCard carro={buildCarro({ local: 'Braga' })} />);
+
+    expect(screen.getByText('Braga')).toBeInTheDocument();
+  });
+
   it('toggles the favourite without triggering the card navigation', () => {
     render(<CarCard carro={buildCarro({ id: 'abc123' })} />);
 

@@ -120,6 +120,7 @@ export default function AnunciarCarroScreen() {
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
   const [distrito, setDistrito] = useState('');
   const [local, setLocal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [descricao, setDescricao] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
@@ -137,13 +138,13 @@ export default function AnunciarCarroScreen() {
       seats, condition, power, displacement, traction, features, version, firstRegistrationMonth: firstRegMonth,
       origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
       consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
-      ...comercial, estado, distrito, local, descricao, videoUrl, telefone, whatsapp,
+      ...comercial, estado, distrito, local, bairro, descricao, videoUrl, telefone, whatsapp,
     }),
     [fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
      seats, condition, power, displacement, traction, features, version, firstRegMonth,
      origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
      consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
-     comercial, estado, distrito, local, descricao, videoUrl, telefone, whatsapp],
+     comercial, estado, distrito, local, bairro, descricao, videoUrl, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(marca || modelo || km || preco || descricao || fotos.length);
@@ -186,6 +187,7 @@ export default function AnunciarCarroScreen() {
     });
     setEstado(d.estado ?? 'pronto');
     setLocal(d.local ?? '');
+    setBairro(d.bairro ?? '');
     // Drafts saved before the picker only carry the city; recover its region.
     setDistrito(d.distrito ?? (d.local ? getDistritoForConcelho(d.local, country) ?? '' : ''));
     setDescricao(d.descricao ?? '');
@@ -251,6 +253,7 @@ export default function AnunciarCarroScreen() {
         });
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
+        setBairro(c.bairro ?? '');
         // Old listings only carry the city; recover its region for the pickers.
         setDistrito(c.distrito ?? (c.local ? getDistritoForConcelho(c.local, country) ?? '' : ''));
         setDescricao(c.descricao ?? '');
@@ -399,6 +402,7 @@ export default function AnunciarCarroScreen() {
         estadoVeiculo: estado,
         local: local.trim(),
         distrito: distrito.trim() || undefined,
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
         // City-derived coordinates power the radius search (mirrors the web).
         coordenadas: getCoordenadas(local.trim(), country),
         descricao: descricao.trim(),
@@ -765,9 +769,18 @@ export default function AnunciarCarroScreen() {
           onChange={(d, c) => {
             setDistrito(d);
             setLocal(c);
+            setBairro('');
           }}
           required
         />
+        {country === 'BR' && (
+          <Input
+            label="Bairro (opcional)"
+            value={bairro}
+            onChangeText={setBairro}
+            placeholder="Ex: Bela Vista"
+          />
+        )}
 
         <Input
           label="Descrição"

@@ -30,6 +30,7 @@ export interface OficinaFormDraft {
   website: string;
   distrito: string;
   localidade: string;
+  bairro: string;
   morada: string;
   coordenadas: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];
@@ -66,6 +67,7 @@ export default function RegistarOficina() {
   const [website, setWebsite] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [coordenadas, setCoordenadas] = useState<{ latitude: number; longitude: number }>({
     latitude: 38.7436,
@@ -81,10 +83,10 @@ export default function RegistarOficina() {
   const draftSnapshot = useMemo<OficinaFormDraft>(
     () => ({
       nome, descricao, responsavel, telefone, whatsapp, email, website,
-      distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl,
+      distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl,
     }),
     [nome, descricao, responsavel, telefone, whatsapp, email, website,
-     distrito, localidade, morada, coordenadas, especialidades, logoUrl, videoUrl],
+     distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl],
   );
 
   const applyDraft = (d: OficinaFormDraft) => {
@@ -97,6 +99,7 @@ export default function RegistarOficina() {
     setWebsite(d.website ?? '');
     setDistrito(d.distrito ?? '');
     setLocalidade(d.localidade ?? '');
+    setBairro(d.bairro ?? '');
     setMorada(d.morada ?? '');
     if (d.coordenadas) {
       setCoordenadas(d.coordenadas);
@@ -162,6 +165,7 @@ export default function RegistarOficina() {
         website: website || null,
         distrito,
         localidade,
+        bairro: country === 'BR' ? bairro.trim() || null : null,
         morada,
         coordenadas,
         especialidades,
@@ -435,9 +439,25 @@ export default function RegistarOficina() {
               onChange={(dist, conc) => {
                 setDistrito(dist);
                 setLocalidade(conc);
+                setBairro('');
               }}
               obrigatorio={true}
             />
+
+            {country === 'BR' && (
+              <div>
+                <label className="block text-xs font-bold text-fg mb-1.5">Bairro (opcional)</label>
+                <input
+                  type="text"
+                  autoComplete="address-level3"
+                  placeholder="Ex: Bela Vista"
+                  maxLength={60}
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">

@@ -35,6 +35,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
   const [localidade, setLocalidade] = useState('');
   const [distrito, setDistrito] = useState('');
   const [codigoPostal, setCodigoPostal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [nif, setNif] = useState('');
   const [bio, setBio] = useState('');
@@ -57,11 +58,15 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setLocalidade(cpLookup.localidade);
       const d = cpLookup.distrito || getDistritoForConcelho(cpLookup.localidade, 'PT');
       if (d) setDistrito(d);
+      // Only the BR lookup knows the neighbourhood ("bairro").
+      if (cpLookupBr.bairro) {
+        setBairro((prev) => prev || cpLookupBr.bairro);
+      }
       if (cpLookup.ruas.length > 0) {
         setMorada((prev) => prev || cpLookup.ruas[0]);
       }
     }
-  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas]);
+  }, [cpLookup.localidade, cpLookup.distrito, cpLookup.ruas, cpLookupBr.bairro]);
 
   useEffect(() => {
     if (cpLookup.erro) {
@@ -100,6 +105,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
       setLocalidade(user.localidade || '');
       setDistrito(user.distrito || getDistritoForConcelho(user.localidade || '') || '');
       setCodigoPostal(user.codigoPostal || '');
+      setBairro(user.bairro || '');
       setMorada(user.morada || '');
       setNif(user.nif || '');
       setBio(user.bio || '');
@@ -138,6 +144,7 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
         localidade: localidade.trim(),
         distrito: distrito.trim() || undefined,
         codigoPostal: codigoPostal.trim(),
+        ...(country === 'BR' ? { bairro: bairro.trim() } : {}),
         morada: morada.trim(),
         nif: nif.trim(),
         bio: bio.trim(),
@@ -249,6 +256,8 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             <input
               type="text"
               list="modal-ruas-list"
+              autoComplete="street-address"
+              placeholder={term('addressPlaceholder', country)}
               value={morada}
               onChange={(e) => setMorada(e.target.value)}
               className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
@@ -260,6 +269,20 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
             </datalist>
           </div>
         </div>
+
+        {country === 'BR' && (
+          <div>
+            <label className="block text-xs font-semibold text-fg-subtle mb-1">Bairro</label>
+            <input
+              type="text"
+              autoComplete="address-level3"
+              placeholder="Ex: Bela Vista"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
+              className="w-full border border-gray-300 rounded-xl p-3 text-sm focus:outline-none focus:border-accent"
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-xs font-semibold text-fg-subtle mb-2">Tipo de Conta</label>

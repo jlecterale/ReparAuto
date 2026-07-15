@@ -54,6 +54,7 @@ export default function AnunciarPecaScreen() {
   const [estado, setEstado] = useState<string>('Usado');
   const [distrito, setDistrito] = useState('');
   const [local, setLocal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [descricao, setDescricao] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [whatsapp, setWhatsapp] = useState('');
@@ -66,8 +67,8 @@ export default function AnunciarPecaScreen() {
   const precisaPreco = tipo !== 'procura';
 
   const draftData = useMemo<PartDraftData>(
-    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, descricao, telefone, whatsapp }),
-    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, descricao, telefone, whatsapp],
+    () => ({ foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, bairro, descricao, telefone, whatsapp }),
+    [foto, tipo, titulo, categoria, marca, modelo, preco, estado, distrito, local, bairro, descricao, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(titulo || marca || preco || descricao || foto.length);
@@ -82,6 +83,7 @@ export default function AnunciarPecaScreen() {
     setPreco(d.preco ?? '');
     setEstado(d.estado ?? 'Usado');
     setLocal(d.local ?? '');
+    setBairro(d.bairro ?? '');
     // Drafts saved before the picker only carry the city; recover its region.
     setDistrito(d.distrito ?? (d.local ? getDistritoForConcelho(d.local, country) ?? '' : ''));
     setDescricao(d.descricao ?? '');
@@ -116,6 +118,7 @@ export default function AnunciarPecaScreen() {
         setPreco(p.preco != null ? String(p.preco) : '');
         setEstado(p.estado ?? 'Usado');
         setLocal(p.local ?? '');
+        setBairro(p.bairro ?? '');
         // Old listings only carry the city; recover its region for the pickers.
         setDistrito(p.distrito ?? (p.local ? getDistritoForConcelho(p.local, country) ?? '' : ''));
         setDescricao(p.descricao ?? '');
@@ -166,6 +169,7 @@ export default function AnunciarPecaScreen() {
         estado,
         local: local.trim(),
         distrito: distrito.trim() || undefined,
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
         // City-derived coordinates power the radius search (mirrors the web).
         coordenadas: getCoordenadas(local.trim(), country),
         descricao: descricao.trim(),
@@ -272,9 +276,18 @@ export default function AnunciarPecaScreen() {
           onChange={(d, c) => {
             setDistrito(d);
             setLocal(c);
+            setBairro('');
           }}
           required
         />
+        {country === 'BR' && (
+          <Input
+            label="Bairro (opcional)"
+            value={bairro}
+            onChangeText={setBairro}
+            placeholder="Ex: Bela Vista"
+          />
+        )}
         <Input
           label="Descrição"
           value={descricao}

@@ -39,6 +39,7 @@ export default function EditarPerfilScreen() {
     user?.distrito || (user?.localidade ? getDistritoForConcelho(user.localidade) ?? '' : ''),
   );
   const [codigoPostal, setCodigoPostal] = useState(user?.codigoPostal ?? '');
+  const [bairro, setBairro] = useState(user?.bairro ?? '');
   const [morada, setMorada] = useState(user?.morada ?? '');
   const [nif, setNif] = useState(user?.nif ?? '');
   const [bio, setBio] = useState(user?.bio ?? '');
@@ -62,8 +63,9 @@ export default function EditarPerfilScreen() {
     lookupTriggered.current = true;
     setLocalidade(cep.localidade);
     if (cep.distrito) setDistrito(cep.distrito);
+    if (cep.bairro) setBairro((prev) => prev || cep.bairro);
     if (cep.ruas.length > 0) setMorada((prev) => prev || cep.ruas[0]);
-  }, [country, cep.localidade, cep.distrito, cep.ruas]);
+  }, [country, cep.localidade, cep.distrito, cep.bairro, cep.ruas]);
 
   const cepPreenchido = country === 'BR' && !!cep.localidade && localidade === cep.localidade;
 
@@ -80,6 +82,7 @@ export default function EditarPerfilScreen() {
         localidade: localidade.trim(),
         distrito: distrito.trim(),
         codigoPostal: codigoPostal.trim(),
+        ...(country === 'BR' ? { bairro: bairro.trim() } : {}),
         morada: morada.trim(),
         nif: nif.trim(),
         bio: bio.trim(),
@@ -204,6 +207,14 @@ export default function EditarPerfilScreen() {
           <Text className="-mt-2 text-xs text-danger-600">{cep.erro}</Text>
         )}
 
+        {country === 'BR' && (
+          <Input
+            label="Bairro"
+            value={bairro}
+            onChangeText={setBairro}
+            placeholder="Ex: Bela Vista"
+          />
+        )}
         <Input
           label={term('addressLabel', country)}
           value={morada}
