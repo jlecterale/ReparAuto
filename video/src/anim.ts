@@ -42,11 +42,12 @@ export const typeText = (frame: number, delay: number, text: string, charsPerFra
 };
 
 /**
- * "1 284"-style thousands separator (pt-PT). Manual because the render
- * browser may lack the pt-PT ICU locale and silently fall back to "1284".
+ * Thousands separator — "1 284" (pt-PT space) or "1.284" (pt-BR dot).
+ * Manual because the render browser may lack the pt ICU locales and would
+ * silently fall back to "1284".
  */
-export const formatThousands = (value: number) =>
-  value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+export const formatThousands = (value: number, separator = "\u2009") =>
+  value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, separator);
 
 /** Progress 0→1 with the brand ease, for bars/gauges/chart draws. */
 export const easeProgress = (frame: number, delay: number, duration = 45) =>

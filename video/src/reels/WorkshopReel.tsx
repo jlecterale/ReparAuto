@@ -9,6 +9,7 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress } from "../anim";
 
 const PINS = [
@@ -17,8 +18,85 @@ const PINS = [
   { left: 180, top: 400 },
 ] as const;
 
+const COPY = {
+  pt: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "Há condutores",
+      "à tua procura",
+      <Accent key="l3">agora mesmo.</Accent>,
+    ],
+    mapLabel: "A tua oficina",
+    mapEyebrow: "Perto de ti",
+    mapHeadline: (
+      <>
+        Aparece a quem
+        <br />
+        está na tua zona
+      </>
+    ),
+    workshopName: "Oficina Central",
+    rating: "4,9 · 132 avaliações",
+    services: ["Travões", "Suspensão", "Revisões"],
+    contact: "Pedir orçamento",
+    profileEyebrow: "Reputação",
+    profileHeadline: (
+      <>
+        Avaliações que
+        <br />
+        trabalham por ti
+      </>
+    ),
+    endHeadline: (
+      <>
+        Regista a tua oficina.
+        <br />É grátis.
+      </>
+    ),
+    endCta: "Cria o perfil da tua oficina",
+  },
+  br: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "Tem motorista",
+      "procurando você",
+      <Accent key="l3">agora mesmo.</Accent>,
+    ],
+    mapLabel: "Sua oficina",
+    mapEyebrow: "Perto de você",
+    mapHeadline: (
+      <>
+        Apareça para
+        <br />
+        quem está perto
+      </>
+    ),
+    workshopName: "Oficina Central",
+    rating: "4,9 · 132 avaliações",
+    services: ["Freios", "Suspensão", "Revisões"],
+    contact: "Pedir orçamento",
+    profileEyebrow: "Reputação",
+    profileHeadline: (
+      <>
+        Avaliações que
+        <br />
+        trabalham por você
+      </>
+    ),
+    endHeadline: (
+      <>
+        Cadastre sua oficina.
+        <br />É grátis.
+      </>
+    ),
+    endCta: "Crie o perfil da sua oficina",
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
+
 /** Stylised map with driver pins popping around the workshop. */
-const MapMock: React.FC = () => {
+const MapMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const enter = fadeUp(frame, 10, 50);
   const scale = popIn(frame, 10);
@@ -100,7 +178,7 @@ const MapMock: React.FC = () => {
             boxShadow: "0 12px 30px rgba(0,0,0,0.2)",
           }}
         >
-          A tua oficina
+          {c.mapLabel}
         </div>
       </div>
 
@@ -127,10 +205,8 @@ const MapMock: React.FC = () => {
   );
 };
 
-const SERVICES = ["Travões", "Suspensão", "Revisões"];
-
 /** Workshop profile card: stars, review count, services, contact button. */
-const ProfileMock: React.FC = () => {
+const ProfileMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const enter = fadeUp(frame, 12, 55);
   const scale = popIn(frame, 12);
@@ -167,7 +243,7 @@ const ProfileMock: React.FC = () => {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           <span style={{ fontWeight: 800, fontSize: 44, color: colors.ink }}>
-            Oficina Central
+            {c.workshopName}
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {[0, 1, 2, 3, 4].map((i) => {
@@ -180,14 +256,14 @@ const ProfileMock: React.FC = () => {
               );
             })}
             <span style={{ fontWeight: 700, fontSize: 30, color: "#6c6e72", marginLeft: 10 }}>
-              4,9 · 132 avaliações
+              {c.rating}
             </span>
           </div>
         </div>
       </div>
 
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-        {SERVICES.map((service, i) => {
+        {c.services.map((service, i) => {
           const chipEnter = fadeUp(frame, 60 + i * 10, 30);
           return (
             <div
@@ -228,86 +304,55 @@ const ProfileMock: React.FC = () => {
         }}
       >
         <ChatCircleDots size={44} weight="fill" />
-        Pedir orçamento
+        {c.contact}
       </div>
     </UiCard>
   );
 };
 
-export const workshopScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para oficinas"
-        tint="orange"
-        lines={[
-          "Há condutores",
-          "à tua procura",
-          <Accent key="a">agora mesmo.</Accent>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Perto de ti"
-            headline={
-              <>
-                Aparece a quem
-                <br />
-                está na tua zona
-              </>
-            }
-          />
-        }
-        visual={<MapMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Reputação"
-            headline={
-              <>
-                Avaliações que
-                <br />
-                trabalham por ti
-              </>
-            }
-          />
-        }
-        visual={<ProfileMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Regista a tua oficina.
-            <br />É grátis.
-          </>
-        }
-        cta="Cria o perfil da tua oficina"
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} tint="orange" lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.mapEyebrow} headline={c.mapHeadline} />}
+          visual={<MapMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.profileEyebrow} headline={c.profileHeadline} />}
+          visual={<ProfileMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} cta={c.endCta} locale={locale} />,
+    },
+  ];
+};
+
+export const workshopScenes = makeScenes("pt");
+export const workshopScenesBR = makeScenes("br");
 
 /** Reel 07 — workshop visibility: map presence + reviews/reputation. */
 export const WorkshopReel: React.FC = () => (
   <Reel scenes={workshopScenes} musicOffsetSeconds={4} />
+);
+
+/** Reel 07 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const WorkshopReelBR: React.FC = () => (
+  <Reel scenes={workshopScenesBR} musicOffsetSeconds={4} />
 );

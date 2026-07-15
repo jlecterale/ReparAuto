@@ -9,13 +9,106 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, typeText, countUp, formatThousands } from "../anim";
 
-const AI_DESCRIPTION =
-  "BMW Série 3 em excelente estado, revisões na marca e pneus novos. Interior impecável, ideal para quem procura conforto e fiabilidade.";
+const COPY = {
+  pt: {
+    kicker: "Para stands",
+    hookLines: [
+      "Anuncia um carro",
+      <React.Fragment key="l2">
+        em <Accent>60 segundos.</Accent>
+      </React.Fragment>,
+    ],
+    description:
+      "BMW Série 3 em excelente estado, revisões na marca e pneus novos. Interior impecável, ideal para quem procura conforto e fiabilidade.",
+    generate: "Gerar com IA",
+    generatedBadge: "Gerada com IA — edita à vontade",
+    descriptionEyebrow: "Anúncios com IA",
+    descriptionHeadline: (
+      <>
+        A descrição
+        <br />
+        escreve-se sozinha
+      </>
+    ),
+    tiers: [
+      { label: "Mínimo", value: 11900, highlight: false },
+      { label: "Recomendado", value: 13400, highlight: true },
+      { label: "Máximo", value: 14800, highlight: false },
+    ],
+    currency: (v: string) => `${v} €`,
+    thousands: "\u2009",
+    usePrice: "Usar este preço",
+    priceNote: "Baseado em anúncios reais comparáveis",
+    priceEyebrow: "Sugestão de preço",
+    priceHeadline: (
+      <>
+        Ancorada no
+        <br />
+        mercado real
+      </>
+    ),
+    endHeadline: (
+      <>
+        Menos tempo a escrever.
+        <br />
+        Mais tempo a vender.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas",
+    hookLines: [
+      "Anuncie um carro",
+      <React.Fragment key="l2">
+        em <Accent>60 segundos.</Accent>
+      </React.Fragment>,
+    ],
+    description:
+      "BMW Série 3 em excelente estado, revisões na concessionária e pneus novos. Interior impecável, ideal para quem busca conforto e confiabilidade.",
+    generate: "Gerar com IA",
+    generatedBadge: "Gerada com IA — edite à vontade",
+    descriptionEyebrow: "Anúncios com IA",
+    descriptionHeadline: (
+      <>
+        A descrição
+        <br />
+        se escreve sozinha
+      </>
+    ),
+    tiers: [
+      { label: "Mínimo", value: 78900, highlight: false },
+      { label: "Recomendado", value: 84500, highlight: true },
+      { label: "Máximo", value: 89900, highlight: false },
+    ],
+    currency: (v: string) => `R$ ${v}`,
+    thousands: ".",
+    usePrice: "Usar este preço",
+    priceNote: "Baseado em anúncios reais comparáveis",
+    priceEyebrow: "Sugestão de preço",
+    priceHeadline: (
+      <>
+        Ancorada no
+        <br />
+        mercado real
+      </>
+    ),
+    endHeadline: (
+      <>
+        Menos tempo escrevendo.
+        <br />
+        Mais tempo vendendo.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** Listing form: photo + "Gerar com IA" button + typewriter description. */
-const AiDescriptionMock: React.FC = () => {
+const AiDescriptionMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 10, 55);
   const cardScale = popIn(frame, 10);
@@ -24,7 +117,7 @@ const AiDescriptionMock: React.FC = () => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const typed = typeText(frame, 64, AI_DESCRIPTION, 1.6);
+  const typed = typeText(frame, 64, c.description, 1.6);
   const badge = popIn(frame, 168);
   const badgeOpacity = interpolate(frame, [168, 180], [0, 1], {
     extrapolateLeft: "clamp",
@@ -63,7 +156,7 @@ const AiDescriptionMock: React.FC = () => {
           }}
         >
           <Sparkle size={42} weight="fill" />
-          Gerar com IA
+          {c.generate}
         </div>
 
         <div
@@ -79,7 +172,7 @@ const AiDescriptionMock: React.FC = () => {
           }}
         >
           {typed}
-          <span style={{ opacity: frame % 20 < 10 && typed.length < AI_DESCRIPTION.length ? 1 : 0 }}>
+          <span style={{ opacity: frame % 20 < 10 && typed.length < c.description.length ? 1 : 0 }}>
             |
           </span>
         </div>
@@ -101,21 +194,15 @@ const AiDescriptionMock: React.FC = () => {
           }}
         >
           <Sparkle size={32} weight="fill" />
-          Gerada com IA — edita à vontade
+          {c.generatedBadge}
         </div>
       </div>
     </UiCard>
   );
 };
 
-const PRICE_TIERS = [
-  { label: "Mínimo", value: 11900, highlight: false },
-  { label: "Recomendado", value: 13400, highlight: true },
-  { label: "Máximo", value: 14800, highlight: false },
-] as const;
-
 /** Price suggestion widget anchored on real market medians. */
-const PriceSuggestionMock: React.FC = () => {
+const PriceSuggestionMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const cta = fadeUp(frame, 96, 40);
   const ctaScale = popIn(frame, 96);
@@ -123,7 +210,7 @@ const PriceSuggestionMock: React.FC = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 30 }}>
       <div style={{ display: "flex", gap: 22 }}>
-        {PRICE_TIERS.map((tier, i) => {
+        {c.tiers.map((tier, i) => {
           const enter = fadeUp(frame, 14 + i * 14, 50);
           const scale = popIn(frame, 14 + i * 14);
           const value = countUp(frame, 24 + i * 14, tier.value, 45);
@@ -157,11 +244,11 @@ const PriceSuggestionMock: React.FC = () => {
               <span
                 style={{
                   fontWeight: 800,
-                  fontSize: tier.highlight ? 54 : 42,
+                  fontSize: tier.highlight ? 50 : 40,
                   color: colors.ink,
                 }}
               >
-                {formatThousands(value)} €
+                {c.currency(formatThousands(value, c.thousands))}
               </span>
             </UiCard>
           );
@@ -187,7 +274,7 @@ const PriceSuggestionMock: React.FC = () => {
         }}
       >
         <CheckCircle size={44} weight="fill" />
-        Usar este preço
+        {c.usePrice}
       </div>
 
       <div
@@ -200,88 +287,63 @@ const PriceSuggestionMock: React.FC = () => {
           textAlign: "center",
         }}
       >
-        Baseado em anúncios reais comparáveis
+        {c.priceNote}
       </div>
     </div>
   );
 };
 
-export const aiListingScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands"
-        tint="orange"
-        lines={[
-          "Anuncia um carro",
-          <>
-            em <Accent>60 segundos.</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 230,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Anúncios com IA"
-            headline={
-              <>
-                A descrição
-                <br />
-                escreve-se sozinha
-              </>
-            }
-          />
-        }
-        visual={<AiDescriptionMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Sugestão de preço"
-            headline={
-              <>
-                Ancorada no
-                <br />
-                mercado real
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<PriceSuggestionMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Menos tempo a escrever.
-            <br />
-            Mais tempo a vender.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} tint="orange" lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 230,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={
+            <SceneHeading eyebrow={c.descriptionEyebrow} headline={c.descriptionHeadline} />
+          }
+          visual={<AiDescriptionMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.priceEyebrow}
+              headline={c.priceHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<PriceSuggestionMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const aiListingScenes = makeScenes("pt");
+export const aiListingScenesBR = makeScenes("br");
 
 /** Reel 05 — AI-assisted listings: generated description + price suggestion. */
 export const AiListingReel: React.FC = () => (
   <Reel scenes={aiListingScenes} musicOffsetSeconds={7} />
+);
+
+/** Reel 05 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const AiListingReelBR: React.FC = () => (
+  <Reel scenes={aiListingScenesBR} musicOffsetSeconds={7} />
 );

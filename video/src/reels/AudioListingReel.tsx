@@ -15,10 +15,107 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress, typeText } from "../anim";
 
-const SPOKEN_QUOTE =
-  "“É um Renault Clio de 2012, gasolina, 180 mil quilómetros, em Lisboa… quero 4 500 euros.”";
+const COPY = {
+  pt: {
+    kicker: "Para stands e oficinas",
+    hookLines: [
+      "E se anunciar",
+      "um carro fosse",
+      <React.Fragment key="l3">
+        só… <Accent>falar?</Accent>
+      </React.Fragment>,
+    ],
+    quote:
+      "“É um Renault Clio de 2012, gasolina, 180 mil quilómetros, em Lisboa… quero 4 500 euros.”",
+    recording: (s: string) => `A gravar… 0:${s}`,
+    whatsapp: "Ou envia um áudio — até voice note serve",
+    voiceEyebrow: "Anúncio por áudio",
+    voiceHeadline: (
+      <>
+        Descreve o carro
+        <br />
+        com a tua voz
+      </>
+    ),
+    fillButton: "Preencher com IA",
+    fields: [
+      { label: "Marca", value: "Renault" },
+      { label: "Modelo", value: "Clio" },
+      { label: "Ano", value: "2012" },
+      { label: "Quilómetros", value: "180 000 km" },
+      { label: "Combustível", value: "Gasolina" },
+      { label: "Preço", value: "4 500 €" },
+    ],
+    photosNote: "Só falta rever e juntar as fotos",
+    fillEyebrow: "A IA escreve",
+    fillHeadline: (
+      <>
+        O formulário
+        <br />
+        preenche-se sozinho
+      </>
+    ),
+    endHeadline: (
+      <>
+        Fala. Revê.
+        <br />
+        Publica.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas e oficinas",
+    hookLines: [
+      "E se anunciar",
+      "um carro fosse",
+      <React.Fragment key="l3">
+        só… <Accent>falar?</Accent>
+      </React.Fragment>,
+    ],
+    quote:
+      "“É um Fiat Argo 2020, flex, 60 mil quilômetros, em São Paulo… quero 62 mil reais.”",
+    recording: (s: string) => `Gravando… 0:${s}`,
+    whatsapp: "Ou envie um áudio — até áudio do WhatsApp serve",
+    voiceEyebrow: "Anúncio por áudio",
+    voiceHeadline: (
+      <>
+        Descreva o carro
+        <br />
+        com a sua voz
+      </>
+    ),
+    fillButton: "Preencher com IA",
+    fields: [
+      { label: "Marca", value: "Fiat" },
+      { label: "Modelo", value: "Argo" },
+      { label: "Ano", value: "2020" },
+      { label: "Quilômetros", value: "60 000 km" },
+      { label: "Combustível", value: "Flex" },
+      { label: "Preço", value: "R$ 62.000" },
+    ],
+    photosNote: "Só falta revisar e adicionar as fotos",
+    fillEyebrow: "A IA escreve",
+    fillHeadline: (
+      <>
+        O formulário
+        <br />
+        se preenche sozinho
+      </>
+    ),
+    endHeadline: (
+      <>
+        Fale. Revise.
+        <br />
+        Publique.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 const WAVE_BARS = 24;
 
@@ -26,7 +123,7 @@ const WAVE_BARS = 24;
  * "Preencher por voz" card: pulsing mic, live waveform, timer, the spoken
  * sentence appearing as it's said, and the WhatsApp voice-note pill.
  */
-const VoiceRecorderMock: React.FC = () => {
+const VoiceRecorderMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 10, 55);
   const cardScale = popIn(frame, 10);
@@ -35,7 +132,7 @@ const VoiceRecorderMock: React.FC = () => {
   const ring = 1 + ((frame % 40) / 40) * 0.5;
   const ringOpacity = 0.5 - ((frame % 40) / 40) * 0.5;
   const seconds = Math.min(23, Math.floor(easeProgress(frame, 24, 150) * 23));
-  const typed = typeText(frame, 34, SPOKEN_QUOTE, 0.85);
+  const typed = typeText(frame, 34, c.quote, 0.85);
   const whatsapp = fadeUp(frame, 150, 40);
 
   return (
@@ -81,7 +178,7 @@ const VoiceRecorderMock: React.FC = () => {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
             <span style={{ fontWeight: 800, fontSize: 40, color: colors.ink }}>
-              A gravar… 0:{String(seconds).padStart(2, "0")}
+              {c.recording(String(seconds).padStart(2, "0"))}
             </span>
             {/* Live waveform */}
             <div style={{ display: "flex", alignItems: "center", gap: 7, height: 64 }}>
@@ -145,23 +242,14 @@ const VoiceRecorderMock: React.FC = () => {
         }}
       >
         <WhatsappLogo size={40} weight="bold" color={colors.mist} />
-        Ou envia um áudio — até voice note serve
+        {c.whatsapp}
       </div>
     </div>
   );
 };
 
-const FIELDS = [
-  { label: "Marca", value: "Renault" },
-  { label: "Modelo", value: "Clio" },
-  { label: "Ano", value: "2012" },
-  { label: "Quilómetros", value: "180 000 km" },
-  { label: "Combustível", value: "Gasolina" },
-  { label: "Preço", value: "4 500 €" },
-] as const;
-
 /** The listing form filling itself, field by field, from the audio. */
-const FormFillMock: React.FC = () => {
+const FormFillMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const button = fadeUp(frame, 6, 40);
   const buttonScale = popIn(frame, 6);
@@ -188,14 +276,14 @@ const FormFillMock: React.FC = () => {
         }}
       >
         <Sparkle size={44} weight="fill" />
-        Preencher com IA
+        {c.fillButton}
       </div>
 
       <UiCard
         width={760}
         style={{ padding: "34px 40px", display: "flex", flexDirection: "column", gap: 20 }}
       >
-        {FIELDS.map((field, i) => {
+        {c.fields.map((field, i) => {
           const enter = fadeUp(frame, 26 + i * 14, 35);
           const check = popIn(frame, 34 + i * 14);
           const checkOpacity = easeProgress(frame, 34 + i * 14, 10);
@@ -244,89 +332,61 @@ const FormFillMock: React.FC = () => {
         }}
       >
         <Camera size={40} weight="bold" />
-        Só falta rever e juntar as fotos
+        {c.photosNote}
       </div>
     </div>
   );
 };
 
-export const audioListingScenes: ReelScene[] = [
-  {
-    durationInFrames: 105,
-    content: (
-      <HookScene
-        kicker="Para stands e oficinas"
-        tint="orange"
-        lines={[
-          "E se anunciar",
-          "um carro fosse",
-          <>
-            só… <Accent>falar?</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 230,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Anúncio por áudio"
-            headline={
-              <>
-                Descreve o carro
-                <br />
-                com a tua voz
-              </>
-            }
-          />
-        }
-        visual={<VoiceRecorderMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 220,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="A IA escreve"
-            headline={
-              <>
-                O formulário
-                <br />
-                preenche-se sozinho
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<FormFillMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Fala. Revê.
-            <br />
-            Publica.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 105,
+      content: <HookScene kicker={c.kicker} tint="orange" lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 230,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.voiceEyebrow} headline={c.voiceHeadline} />}
+          visual={<VoiceRecorderMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 220,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.fillEyebrow}
+              headline={c.fillHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<FormFillMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const audioListingScenes = makeScenes("pt");
+export const audioListingScenesBR = makeScenes("br");
 
 /** Reel 14 — audio listings: speak, Gemini fills the form (PR #69). */
 export const AudioListingReel: React.FC = () => (
   <Reel scenes={audioListingScenes} musicOffsetSeconds={0} />
+);
+
+/** Reel 14 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const AudioListingReelBR: React.FC = () => (
+  <Reel scenes={audioListingScenesBR} musicOffsetSeconds={0} />
 );

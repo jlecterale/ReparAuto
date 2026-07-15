@@ -7,6 +7,13 @@ import { colors } from "../theme";
 import { brandFont } from "../fonts";
 import { fadeUp, popIn } from "../anim";
 
+import { Locale } from "../copy";
+
+const DEFAULT_CTA: Record<Locale, string> = {
+  pt: "Cria a tua conta profissional grátis",
+  br: "Crie sua conta profissional grátis",
+};
+
 /**
  * Closing CTA shared by every reel: logo, a per-reel closing line, the
  * "free professional account" pill, store badges and the domain.
@@ -14,7 +21,9 @@ import { fadeUp, popIn } from "../anim";
 export const EndCard: React.FC<{
   headline: React.ReactNode;
   cta?: string;
-}> = ({ headline, cta = "Cria a tua conta profissional grátis" }) => {
+  locale?: Locale;
+}> = ({ headline, cta, locale = "pt" }) => {
+  const ctaText = cta ?? DEFAULT_CTA[locale];
   const frame = useCurrentFrame();
   const logo = fadeUp(frame, 4);
   const logoScale = popIn(frame, 4);
@@ -78,7 +87,7 @@ export const EndCard: React.FC<{
             textAlign: "center",
           }}
         >
-          {cta}
+          {ctaText}
         </div>
 
         <div
@@ -92,9 +101,9 @@ export const EndCard: React.FC<{
             gap: 18,
           }}
         >
-          <StoreBadge platform="ios" />
-          <StoreBadge platform="android" />
-          <StoreBadge platform="web" />
+          <StoreBadge platform="ios" locale={locale} />
+          <StoreBadge platform="android" locale={locale} />
+          <StoreBadge platform="web" locale={locale} />
         </div>
 
         <div

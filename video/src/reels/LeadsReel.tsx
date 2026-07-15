@@ -10,27 +10,118 @@ import { UiCard } from "../components/UiCard";
 import { ListingCard } from "../components/ListingCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn } from "../anim";
 
-const INTENTS = [
-  {
-    title: "Procuro: berlina diesel",
-    criteria: "Até 19 000 € · 2018 ou mais recente",
-    zone: "Distrito do Porto",
+const COPY = {
+  pt: {
+    kicker: "Para stands",
+    hookLines: [
+      "E se os compradores",
+      <React.Fragment key="l2">
+        te procurassem <Accent>a ti?</Accent>
+      </React.Fragment>,
+    ],
+    intents: [
+      {
+        title: "Procuro: berlina diesel",
+        criteria: "Até 19 000 € · 2018 ou mais recente",
+        zone: "Distrito do Porto",
+      },
+      {
+        title: "Procuro: citadino automático",
+        criteria: "Até 9 000 € · menos de 120 000 km",
+        zone: "Lisboa e arredores",
+      },
+    ],
+    intentsEyebrow: "Intenções de compra",
+    intentsHeadline: (
+      <>
+        Quem compra diz
+        <br />o que procura
+      </>
+    ),
+    car: {
+      title: "Mercedes Classe C",
+      subtitle: "2018 · 98 000 km · Diesel",
+      price: "18 900 €",
+      tag: "No teu stock",
+    },
+    reply: "Tenho exatamente o que procuras",
+    matchEyebrow: "Leads qualificados",
+    matchHeadline: (
+      <>
+        Responde com
+        <br />o carro certo
+      </>
+    ),
+    endHeadline: (
+      <>
+        Deixa os compradores
+        <br />
+        virem ter contigo.
+      </>
+    ),
   },
-  {
-    title: "Procuro: citadino automático",
-    criteria: "Até 9 000 € · menos de 120 000 km",
-    zone: "Lisboa e arredores",
+  br: {
+    kicker: "Para lojistas",
+    hookLines: [
+      "E se os compradores",
+      <React.Fragment key="l2">
+        procurassem <Accent>você?</Accent>
+      </React.Fragment>,
+    ],
+    intents: [
+      {
+        title: "Procuro: sedã diesel",
+        criteria: "Até R$ 120 mil · 2018 ou mais novo",
+        zone: "Grande São Paulo",
+      },
+      {
+        title: "Procuro: hatch automático",
+        criteria: "Até R$ 60 mil · menos de 120 000 km",
+        zone: "Curitiba e região",
+      },
+    ],
+    intentsEyebrow: "Intenções de compra",
+    intentsHeadline: (
+      <>
+        Quem compra diz
+        <br />o que procura
+      </>
+    ),
+    car: {
+      title: "Mercedes Classe C",
+      subtitle: "2018 · 98 000 km · Diesel",
+      price: "R$ 165.900",
+      tag: "No seu estoque",
+    },
+    reply: "Tenho exatamente o que você procura",
+    matchEyebrow: "Leads qualificados",
+    matchHeadline: (
+      <>
+        Responda com
+        <br />o carro certo
+      </>
+    ),
+    endHeadline: (
+      <>
+        Deixe os compradores
+        <br />
+        virem até você.
+      </>
+    ),
   },
-] as const;
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** Buyer intent cards — the reverse-marketplace differentiator. */
-const IntentBoardMock: React.FC = () => {
+const IntentBoardMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 26, width: 800 }}>
-      {INTENTS.map((intent, i) => {
+      {c.intents.map((intent, i) => {
         const enter = fadeUp(frame, 16 + i * 22, 55);
         const scale = popIn(frame, 16 + i * 22);
         return (
@@ -80,7 +171,7 @@ const IntentBoardMock: React.FC = () => {
 };
 
 /** Your car matching an intent + the reply pill closing the loop. */
-const MatchMock: React.FC = () => {
+const MatchMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const car = fadeUp(frame, 10, 55);
   const carScale = popIn(frame, 10);
@@ -99,10 +190,10 @@ const MatchMock: React.FC = () => {
       >
         <ListingCard
           image="brand/car-2.png"
-          title="Mercedes Classe C"
-          subtitle="2018 · 98 000 km · Diesel"
-          price="18 900 €"
-          tag="No teu stock"
+          title={c.car.title}
+          subtitle={c.car.subtitle}
+          price={c.car.price}
+          tag={c.car.tag}
           tagColor={colors.primary}
           width={600}
         />
@@ -129,84 +220,55 @@ const MatchMock: React.FC = () => {
         }}
       >
         <PaperPlaneRight size={44} weight="fill" />
-        Tenho exatamente o que procuras
+        {c.reply}
       </div>
     </div>
   );
 };
 
-export const leadsScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands"
-        lines={[
-          "E se os compradores",
-          <>
-            te procurassem <Accent>a ti?</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Intenções de compra"
-            headline={
-              <>
-                Quem compra diz
-                <br />o que procura
-              </>
-            }
-          />
-        }
-        visual={<IntentBoardMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Leads qualificados"
-            headline={
-              <>
-                Responde com
-                <br />o carro certo
-              </>
-            }
-          />
-        }
-        visual={<MatchMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Deixa os compradores
-            <br />
-            virem ter contigo.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.intentsEyebrow} headline={c.intentsHeadline} />}
+          visual={<IntentBoardMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.matchEyebrow} headline={c.matchHeadline} />}
+          visual={<MatchMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const leadsScenes = makeScenes("pt");
+export const leadsScenesBR = makeScenes("br");
 
 /** Reel 03 — buyer intents as qualified leads for dealerships. */
 export const LeadsReel: React.FC = () => (
   <Reel scenes={leadsScenes} musicOffsetSeconds={4} />
+);
+
+/** Reel 03 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const LeadsReelBR: React.FC = () => (
+  <Reel scenes={leadsScenesBR} musicOffsetSeconds={4} />
 );

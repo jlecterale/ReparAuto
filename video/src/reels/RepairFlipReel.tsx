@@ -10,10 +10,128 @@ import { UiCard } from "../components/UiCard";
 import { ListingCard } from "../components/ListingCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress } from "../anim";
 
+const COPY = {
+  pt: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "O próximo negócio",
+      "da tua oficina",
+      <React.Fragment key="l3">
+        custa <Accent>900 €.</Accent>
+      </React.Fragment>,
+    ],
+    car: {
+      title: "Renault Clio",
+      subtitle: "2005 · 198 000 km · Gasolina",
+      price: "900 €",
+      tag: "Precisa de manutenção",
+    },
+    transparency: "Estado declarado no anúncio",
+    carEyebrow: "Carros para restaurar",
+    carHeadline: (
+      <>
+        Estado real,
+        <br />
+        sem surpresas
+      </>
+    ),
+    damages: ["Para-choques", "Porta", "Farolim"],
+    aiPill: "Análise de danos com IA",
+    aiCaption: "Vê o que precisa de reparação antes de saíres da oficina",
+    aiEyebrow: "Vê os danos antes de ir",
+    aiHeadline: (
+      <>
+        A IA marca-os
+        <br />
+        na foto
+      </>
+    ),
+    flip: [
+      { label: "Compra", value: "900 €", color: colors.secondary },
+      { label: "Repara", value: "na tua oficina", color: colors.primary },
+      { label: "Revende", value: "2 400 €", color: colors.success },
+    ],
+    flipEyebrow: "O modelo de negócio",
+    flipHeadline: (
+      <>
+        Compra. Repara.
+        <br />
+        Revende.
+      </>
+    ),
+    endHeadline: (
+      <>
+        Compra com os
+        <br />
+        olhos abertos.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "O próximo negócio",
+      "da sua oficina",
+      <React.Fragment key="l3">
+        custa <Accent>R$ 8.500.</Accent>
+      </React.Fragment>,
+    ],
+    car: {
+      title: "Renault Clio",
+      subtitle: "2005 · 198 000 km · Gasolina",
+      price: "R$ 8.500",
+      tag: "Precisa de manutenção",
+    },
+    transparency: "Estado declarado no anúncio",
+    carEyebrow: "Carros para restaurar",
+    carHeadline: (
+      <>
+        Estado real,
+        <br />
+        sem surpresas
+      </>
+    ),
+    damages: ["Para-choque", "Porta", "Lanterna"],
+    aiPill: "Análise de danos com IA",
+    aiCaption: "Veja o que precisa de reparo antes de sair da oficina",
+    aiEyebrow: "Veja os danos antes de ir",
+    aiHeadline: (
+      <>
+        A IA marca tudo
+        <br />
+        na foto
+      </>
+    ),
+    flip: [
+      { label: "Compre", value: "R$ 8.500", color: colors.secondary },
+      { label: "Repare", value: "na sua oficina", color: colors.primary },
+      { label: "Revenda", value: "R$ 16.900", color: colors.success },
+    ],
+    flipEyebrow: "O modelo de negócio",
+    flipHeadline: (
+      <>
+        Compre. Repare.
+        <br />
+        Revenda.
+      </>
+    ),
+    endHeadline: (
+      <>
+        Compre com os
+        <br />
+        olhos abertos.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
+
 /** Project-car listing with the honest condition tag + transparency pill. */
-const ProjectCarMock: React.FC = () => {
+const ProjectCarMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 10, 55);
   const cardScale = popIn(frame, 10);
@@ -30,10 +148,10 @@ const ProjectCarMock: React.FC = () => {
       >
         <ListingCard
           image="images/clio-low-cost.jpg"
-          title="Renault Clio"
-          subtitle="2005 · 198 000 km · Gasolina"
-          price="900 €"
-          tag="Precisa de manutenção"
+          title={c.car.title}
+          subtitle={c.car.subtitle}
+          price={c.car.price}
+          tag={c.car.tag}
           tagColor={colors.secondary}
           width={640}
         />
@@ -56,20 +174,20 @@ const ProjectCarMock: React.FC = () => {
         }}
       >
         <ShieldCheck size={40} weight="bold" color={colors.mist} />
-        Estado declarado no anúncio
+        {c.transparency}
       </div>
     </div>
   );
 };
 
 const DAMAGE_BOXES = [
-  { left: "8%", top: "58%", width: "26%", height: "24%", label: "Para-choques", color: "#e0452b", delay: 46 },
-  { left: "38%", top: "48%", width: "22%", height: "20%", label: "Porta", color: colors.secondary, delay: 66 },
-  { left: "66%", top: "40%", width: "20%", height: "18%", label: "Farolim", color: "#f2b91d", delay: 86 },
+  { left: "8%", top: "58%", width: "26%", height: "24%", color: "#e0452b", delay: 46 },
+  { left: "38%", top: "48%", width: "22%", height: "20%", color: colors.secondary, delay: 66 },
+  { left: "66%", top: "40%", width: "20%", height: "18%", color: "#f2b91d", delay: 86 },
 ] as const;
 
 /** AI damage analysis: photo with severity-coloured boxes popping in. */
-const DamageAnalysisMock: React.FC = () => {
+const DamageAnalysisMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 10, 55);
   const cardScale = popIn(frame, 10);
@@ -88,12 +206,13 @@ const DamageAnalysisMock: React.FC = () => {
           src={staticFile("images/clio-low-cost.jpg")}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-        {DAMAGE_BOXES.map((box) => {
+        {DAMAGE_BOXES.map((box, i) => {
           const opacity = easeProgress(frame, box.delay, 14);
           const scale = popIn(frame, box.delay);
+          const label = c.damages[i];
           return (
             <div
-              key={box.label}
+              key={label}
               style={{
                 position: "absolute",
                 left: box.left,
@@ -121,7 +240,7 @@ const DamageAnalysisMock: React.FC = () => {
                   whiteSpace: "nowrap",
                 }}
               >
-                {box.label}
+                {label}
               </span>
             </div>
           );
@@ -147,28 +266,22 @@ const DamageAnalysisMock: React.FC = () => {
             whiteSpace: "nowrap",
           }}
         >
-          Análise de danos com IA
+          {c.aiPill}
         </span>
         <span style={{ fontWeight: 600, fontSize: 28, color: "#6c6e72" }}>
-          Vê o que precisa de reparação antes de saíres da oficina
+          {c.aiCaption}
         </span>
       </div>
     </UiCard>
   );
 };
 
-const FLIP_STEPS = [
-  { label: "Compra", value: "900 €", color: colors.secondary },
-  { label: "Repara", value: "na tua oficina", color: colors.primary },
-  { label: "Revende", value: "2 400 €", color: colors.success },
-] as const;
-
 /** Buy → repair → resell margin flow. */
-const FlipFlowMock: React.FC = () => {
+const FlipFlowMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
-      {FLIP_STEPS.map((step, i) => {
+      {c.flip.map((step, i) => {
         const enter = fadeUp(frame, 16 + i * 22, 50);
         const scale = popIn(frame, 16 + i * 22);
         const arrow = easeProgress(frame, 30 + i * 22, 14);
@@ -201,7 +314,7 @@ const FlipFlowMock: React.FC = () => {
               <span
                 style={{
                   fontWeight: 800,
-                  fontSize: step.value.includes("€") ? 44 : 30,
+                  fontSize: /\d/.test(step.value) ? 42 : 30,
                   color: colors.ink,
                   textAlign: "center",
                 }}
@@ -209,7 +322,7 @@ const FlipFlowMock: React.FC = () => {
                 {step.value}
               </span>
             </UiCard>
-            {i < FLIP_STEPS.length - 1 ? (
+            {i < c.flip.length - 1 ? (
               <div style={{ opacity: arrow }}>
                 <ArrowRight size={44} weight="bold" color={colors.mist} />
               </div>
@@ -221,103 +334,65 @@ const FlipFlowMock: React.FC = () => {
   );
 };
 
-export const repairFlipScenes: ReelScene[] = [
-  {
-    durationInFrames: 105,
-    content: (
-      <HookScene
-        kicker="Para oficinas"
-        lines={[
-          "O próximo negócio",
-          "da tua oficina",
-          <>
-            custa <Accent>900 €.</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Carros para restaurar"
-            headline={
-              <>
-                Estado real,
-                <br />
-                sem surpresas
-              </>
-            }
-          />
-        }
-        visual={<ProjectCarMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 210,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Vê os danos antes de ir"
-            headline={
-              <>
-                A IA marca-os
-                <br />
-                na foto
-              </>
-            }
-          />
-        }
-        visual={<DamageAnalysisMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 180,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="O modelo de negócio"
-            headline={
-              <>
-                Compra. Repara.
-                <br />
-                Revende.
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<FlipFlowMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Compra com os
-            <br />
-            olhos abertos.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 105,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.carEyebrow} headline={c.carHeadline} />}
+          visual={<ProjectCarMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 210,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.aiEyebrow} headline={c.aiHeadline} />}
+          visual={<DamageAnalysisMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 180,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.flipEyebrow}
+              headline={c.flipHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<FlipFlowMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const repairFlipScenes = makeScenes("pt");
+export const repairFlipScenesBR = makeScenes("br");
 
 /** Reel 13 — workshops flipping project cars (honest condition + AI damage). */
 export const RepairFlipReel: React.FC = () => (
   <Reel scenes={repairFlipScenes} musicOffsetSeconds={10} />
+);
+
+/** Reel 13 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const RepairFlipReelBR: React.FC = () => (
+  <Reel scenes={repairFlipScenesBR} musicOffsetSeconds={10} />
 );

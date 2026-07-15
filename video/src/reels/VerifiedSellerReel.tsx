@@ -9,10 +9,97 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn } from "../anim";
 
+const COPY = {
+  pt: {
+    kicker: "Para stands",
+    hookLines: [
+      "Porque é que",
+      "uns anúncios",
+      <Accent key="l3">vendem primeiro?</Accent>,
+    ],
+    sellerName: "Stand Silva Automóveis",
+    sellerListings: "34 anúncios ativos",
+    verified: "Verificado",
+    pills: ["NIF confirmado", "Selo em todos os anúncios"],
+    sealEyebrow: "Vendedor Verificado",
+    sealHeadline: (
+      <>
+        O selo que
+        <br />
+        gera confiança
+      </>
+    ),
+    results: [
+      { name: "Renault Mégane 1.5", seller: "Anúncio particular", verified: false, slotFrom: 0, slotTo: 1 },
+      { name: "Seat Leon 2.0 TDI", seller: "Anúncio particular", verified: false, slotFrom: 1, slotTo: 2 },
+      { name: "Peugeot 308 1.2 PureTech", seller: "Stand Silva · Verificado", verified: true, slotFrom: 2, slotTo: 0 },
+    ],
+    firstPlace: "1.º lugar",
+    rankEyebrow: "Prioridade nos resultados",
+    rankHeadline: (
+      <>
+        Apareces primeiro
+        <br />a quem procura
+      </>
+    ),
+    endHeadline: (
+      <>
+        Confiança vende.
+        <br />
+        Verifica o teu stand.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas",
+    hookLines: [
+      "Por que uns",
+      "anúncios",
+      <Accent key="l3">vendem primeiro?</Accent>,
+    ],
+    sellerName: "Silva Veículos",
+    sellerListings: "34 anúncios ativos",
+    verified: "Verificado",
+    pills: ["CNPJ confirmado", "Selo em todos os anúncios"],
+    sealEyebrow: "Vendedor Verificado",
+    sealHeadline: (
+      <>
+        O selo que
+        <br />
+        gera confiança
+      </>
+    ),
+    results: [
+      { name: "Chevrolet Onix 1.0", seller: "Anúncio particular", verified: false, slotFrom: 0, slotTo: 1 },
+      { name: "Fiat Argo Drive 1.3", seller: "Anúncio particular", verified: false, slotFrom: 1, slotTo: 2 },
+      { name: "VW Polo TSI", seller: "Silva Veículos · Verificado", verified: true, slotFrom: 2, slotTo: 0 },
+    ],
+    firstPlace: "1º lugar",
+    rankEyebrow: "Prioridade nos resultados",
+    rankHeadline: (
+      <>
+        Apareça primeiro
+        <br />
+        para quem procura
+      </>
+    ),
+    endHeadline: (
+      <>
+        Confiança vende.
+        <br />
+        Verifique sua loja.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
+
 /** Seller card receiving the blue "Verificado" seal. */
-const SealMock: React.FC = () => {
+const SealMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 12, 55);
   const cardScale = popIn(frame, 12);
@@ -53,10 +140,10 @@ const SealMock: React.FC = () => {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
           <span style={{ fontWeight: 800, fontSize: 44, color: colors.ink }}>
-            Stand Silva Automóveis
+            {c.sellerName}
           </span>
           <span style={{ fontWeight: 600, fontSize: 30, color: "#6c6e72" }}>
-            34 anúncios ativos
+            {c.sellerListings}
           </span>
         </div>
         <div
@@ -76,7 +163,7 @@ const SealMock: React.FC = () => {
           }}
         >
           <SealCheck size={40} weight="fill" />
-          Verificado
+          {c.verified}
         </div>
       </UiCard>
 
@@ -90,7 +177,7 @@ const SealMock: React.FC = () => {
           justifyContent: "center",
         }}
       >
-        {["NIF confirmado", "Selo em todos os anúncios"].map((label) => (
+        {c.pills.map((label) => (
           <div
             key={label}
             style={{
@@ -116,17 +203,11 @@ const SealMock: React.FC = () => {
   );
 };
 
-const RESULTS = [
-  { name: "Renault Mégane 1.5", seller: "Anúncio particular", verified: false, slotFrom: 0, slotTo: 1 },
-  { name: "Seat Leon 2.0 TDI", seller: "Anúncio particular", verified: false, slotFrom: 1, slotTo: 2 },
-  { name: "Peugeot 308 1.2 PureTech", seller: "Stand Silva · Verificado", verified: true, slotFrom: 2, slotTo: 0 },
-] as const;
-
 const ROW_HEIGHT = 150;
 const ROW_GAP = 26;
 
 /** Search results reordering: the verified listing climbs to the top. */
-const RankingMock: React.FC = () => {
+const RankingMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const move = interpolate(frame, [64, 96], [0, 1], {
     extrapolateLeft: "clamp",
@@ -139,10 +220,10 @@ const RankingMock: React.FC = () => {
       style={{
         position: "relative",
         width: 800,
-        height: RESULTS.length * ROW_HEIGHT + (RESULTS.length - 1) * ROW_GAP,
+        height: c.results.length * ROW_HEIGHT + (c.results.length - 1) * ROW_GAP,
       }}
     >
-      {RESULTS.map((r, i) => {
+      {c.results.map((r, i) => {
         const enter = fadeUp(frame, 12 + i * 14, 50);
         const y =
           interpolate(move, [0, 1], [r.slotFrom, r.slotTo]) *
@@ -196,7 +277,7 @@ const RankingMock: React.FC = () => {
                   flexShrink: 0,
                 }}
               >
-                1.º lugar
+                {c.firstPlace}
               </div>
             ) : null}
           </UiCard>
@@ -206,79 +287,55 @@ const RankingMock: React.FC = () => {
   );
 };
 
-export const verifiedSellerScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands"
-        lines={[
-          "Porque é que",
-          "uns anúncios",
-          <Accent key="a">vendem primeiro?</Accent>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Vendedor Verificado"
-            headline={
-              <>
-                O selo que
-                <br />
-                gera confiança
-              </>
-            }
-            accent={colors.primary}
-          />
-        }
-        visual={<SealMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 190,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Prioridade nos resultados"
-            headline={
-              <>
-                Apareces primeiro
-                <br />a quem procura
-              </>
-            }
-          />
-        }
-        visual={<RankingMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Confiança vende.
-            <br />
-            Verifica o teu stand.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.sealEyebrow}
+              headline={c.sealHeadline}
+              accent={colors.primary}
+            />
+          }
+          visual={<SealMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 190,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.rankEyebrow} headline={c.rankHeadline} />}
+          visual={<RankingMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const verifiedSellerScenes = makeScenes("pt");
+export const verifiedSellerScenesBR = makeScenes("br");
 
 /** Reel 04 — verified seller badge + ranking priority for dealerships. */
 export const VerifiedSellerReel: React.FC = () => (
   <Reel scenes={verifiedSellerScenes} musicOffsetSeconds={10} />
+);
+
+/** Reel 04 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const VerifiedSellerReelBR: React.FC = () => (
+  <Reel scenes={verifiedSellerScenesBR} musicOffsetSeconds={10} />
 );

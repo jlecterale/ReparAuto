@@ -9,15 +9,104 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn } from "../anim";
 
-const RESULTS = [
-  { name: "Alternador Valeo", detail: "Clio IV 1.5 dCi · usado, testado", price: "85 €", place: "Braga" },
-  { name: "Alternador (desmonte)", detail: "Clio IV · retirado a funcionar", price: "60 €", place: "Setúbal" },
-] as const;
+const COPY = {
+  pt: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "O carro no elevador.",
+      <React.Fragment key="l2">
+        A peça <Accent>a semanas?</Accent>
+      </React.Fragment>,
+    ],
+    query: "Alternador · Renault Clio IV",
+    results: [
+      { name: "Alternador Valeo", detail: "Clio IV 1.5 dCi · usado, testado", price: "85 €", place: "Braga" },
+      { name: "Alternador (desmonte)", detail: "Clio IV · retirado a funcionar", price: "60 €", place: "Setúbal" },
+    ],
+    compatible: "Compatível",
+    searchEyebrow: "Peças novas e usadas",
+    searchHeadline: (
+      <>
+        Procura por carro,
+        <br />
+        não por sorte
+      </>
+    ),
+    chat: [
+      { mine: true, text: "Serve no 1.5 dCi de 2014?", delay: 16 },
+      { mine: false, text: "Serve sim, a referência confere. 👍", delay: 58 },
+      { mine: false, text: "Se confirmares até às 16h, envio hoje.", delay: 96 },
+    ],
+    shipping: "Vendedores de todo o país",
+    chatEyebrow: "Fala com quem vende",
+    chatHeadline: (
+      <>
+        Confirma antes
+        <br />
+        de comprar
+      </>
+    ),
+    endHeadline: (
+      <>
+        O carro sai do
+        <br />
+        elevador mais cedo.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "O carro no elevador.",
+      <React.Fragment key="l2">
+        E a peça ainda <Accent>nem chegou?</Accent>
+      </React.Fragment>,
+    ],
+    query: "Alternador · Chevrolet Onix",
+    results: [
+      { name: "Alternador Valeo", detail: "Onix 1.0 turbo · usado, testado", price: "R$ 450", place: "Campinas" },
+      { name: "Alternador (desmanche)", detail: "Onix · retirado funcionando", price: "R$ 320", place: "Sorocaba" },
+    ],
+    compatible: "Compatível",
+    searchEyebrow: "Peças novas e usadas",
+    searchHeadline: (
+      <>
+        Busque por carro,
+        <br />
+        não por sorte
+      </>
+    ),
+    chat: [
+      { mine: true, text: "Serve no 1.0 turbo 2020?", delay: 16 },
+      { mine: false, text: "Serve sim, o código confere. 👍", delay: 58 },
+      { mine: false, text: "Confirmando até as 16h, envio hoje.", delay: 96 },
+    ],
+    shipping: "Vendedores do país inteiro",
+    chatEyebrow: "Fale com quem vende",
+    chatHeadline: (
+      <>
+        Confirme antes
+        <br />
+        de comprar
+      </>
+    ),
+    endHeadline: (
+      <>
+        O carro sai do
+        <br />
+        elevador mais cedo.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** Compatibility-first parts search: query + matching results. */
-const PartsSearchMock: React.FC = () => {
+const PartsSearchMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const search = fadeUp(frame, 10, 45);
 
@@ -36,11 +125,11 @@ const PartsSearchMock: React.FC = () => {
       >
         <MagnifyingGlass size={44} weight="bold" color={colors.primary} />
         <span style={{ fontWeight: 700, fontSize: 36, color: colors.ink }}>
-          Alternador · Renault Clio IV
+          {c.query}
         </span>
       </UiCard>
 
-      {RESULTS.map((r, i) => {
+      {c.results.map((r, i) => {
         const enter = fadeUp(frame, 34 + i * 20, 55);
         const scale = popIn(frame, 34 + i * 20);
         const chip = popIn(frame, 56 + i * 20);
@@ -81,7 +170,7 @@ const PartsSearchMock: React.FC = () => {
                 }}
               >
                 <CheckCircle size={30} weight="fill" />
-                Compatível
+                {c.compatible}
               </div>
             </div>
             <div
@@ -104,20 +193,14 @@ const PartsSearchMock: React.FC = () => {
   );
 };
 
-const CHAT = [
-  { mine: true, text: "Serve no 1.5 dCi de 2014?", delay: 16 },
-  { mine: false, text: "Serve sim, a referência confere. 👍", delay: 58 },
-  { mine: false, text: "Se confirmares até às 16h, envio hoje.", delay: 96 },
-] as const;
-
 /** Quick confirmation chat with the dismantler + nationwide shipping pill. */
-const ConfirmChatMock: React.FC = () => {
+const ConfirmChatMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const shipping = fadeUp(frame, 130, 40);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 26, width: 780 }}>
-      {CHAT.map((m, i) => {
+      {c.chat.map((m, i) => {
         const enter = fadeUp(frame, m.delay, 40);
         const scale = popIn(frame, m.delay);
         return (
@@ -166,89 +249,63 @@ const ConfirmChatMock: React.FC = () => {
         }}
       >
         <Truck size={40} weight="bold" color={colors.mist} />
-        Vendedores de todo o país
+        {c.shipping}
       </div>
     </div>
   );
 };
 
-export const partsFinderScenes: ReelScene[] = [
-  {
-    durationInFrames: 105,
-    content: (
-      <HookScene
-        kicker="Para oficinas"
-        tint="orange"
-        lines={[
-          "O carro no elevador.",
-          <>
-            A peça <Accent>a semanas?</Accent>
-          </>,
-        ]}
-        fontSize={92}
-      />
-    ),
-  },
-  {
-    durationInFrames: 210,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Peças novas e usadas"
-            headline={
-              <>
-                Procura por carro,
-                <br />
-                não por sorte
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<PartsSearchMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Fala com quem vende"
-            headline={
-              <>
-                Confirma antes
-                <br />
-                de comprar
-              </>
-            }
-          />
-        }
-        visual={<ConfirmChatMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            O carro sai do
-            <br />
-            elevador mais cedo.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 105,
+      content: (
+        <HookScene kicker={c.kicker} tint="orange" lines={[...c.hookLines]} fontSize={92} />
+      ),
+    },
+    {
+      durationInFrames: 210,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={
+            <SceneHeading
+              eyebrow={c.searchEyebrow}
+              headline={c.searchHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<PartsSearchMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.chatEyebrow} headline={c.chatHeadline} />}
+          visual={<ConfirmChatMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const partsFinderScenes = makeScenes("pt");
+export const partsFinderScenesBR = makeScenes("br");
 
 /** Reel 12 — workshops sourcing parts fast (search by car + confirm in chat). */
 export const PartsFinderReel: React.FC = () => (
   <Reel scenes={partsFinderScenes} musicOffsetSeconds={7} />
+);
+
+/** Reel 12 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const PartsFinderReelBR: React.FC = () => (
+  <Reel scenes={partsFinderScenesBR} musicOffsetSeconds={7} />
 );

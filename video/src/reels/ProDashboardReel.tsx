@@ -14,20 +14,114 @@ import { SceneHeading } from "../components/SceneHeading";
 import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
+import { Locale } from "../copy";
 import { fadeUp, popIn, countUp, easeProgress, formatThousands } from "../anim";
 
-const KPIS = [
-  { Icon: Eye, label: "Visualizações", value: 1284, delta: "+18%", color: colors.primary },
-  { Icon: ChatCircleDots, label: "Contactos", value: 96, delta: "+12%", color: colors.secondary },
-  { Icon: Heart, label: "Favoritos", value: 210, delta: "+9%", color: colors.success },
-  { Icon: ChartLineUp, label: "Taxa de contacto", value: 7, suffix: ",5%", delta: "+2%", color: colors.primaryDark },
-] as const;
+const COPY = {
+  pt: {
+    kicker: "Para stands e oficinas",
+    hookLines: [
+      "Quantas pessoas",
+      <React.Fragment key="l2">
+        viram o teu <Accent>stock</Accent>
+      </React.Fragment>,
+      "esta semana?",
+    ],
+    kpis: {
+      views: "Visualizações",
+      contacts: "Contactos",
+      favorites: "Favoritos",
+      contactRate: "Taxa de contacto",
+    },
+    chartTitle: "Últimos 7 dias",
+    overviewEyebrow: "Painel Profissional",
+    overviewHeadline: (
+      <>
+        Os teus números,
+        <br />
+        em tempo real
+      </>
+    ),
+    listingStats: (views: number, contacts: number) =>
+      `${views} visualizações · ${contacts} contactos`,
+    noContacts: "Sem contactos",
+    signalsEyebrow: "Sinais inteligentes",
+    signalsHeadline: (
+      <>
+        Vê o que precisa
+        <br />
+        de atenção
+      </>
+    ),
+    endHeadline: (
+      <>
+        Gere o teu negócio
+        <br />
+        com dados.
+      </>
+    ),
+    thousands: "\u2009",
+  },
+  br: {
+    kicker: "Para lojistas e oficinas",
+    hookLines: [
+      "Quantas pessoas",
+      <React.Fragment key="l2">
+        viram seu <Accent>estoque</Accent>
+      </React.Fragment>,
+      "esta semana?",
+    ],
+    kpis: {
+      views: "Visualizações",
+      contacts: "Contatos",
+      favorites: "Favoritos",
+      contactRate: "Taxa de contato",
+    },
+    chartTitle: "Últimos 7 dias",
+    overviewEyebrow: "Painel Profissional",
+    overviewHeadline: (
+      <>
+        Seus números,
+        <br />
+        em tempo real
+      </>
+    ),
+    listingStats: (views: number, contacts: number) =>
+      `${views} visualizações · ${contacts} contatos`,
+    noContacts: "Sem contatos",
+    signalsEyebrow: "Sinais inteligentes",
+    signalsHeadline: (
+      <>
+        Veja o que precisa
+        <br />
+        de atenção
+      </>
+    ),
+    endHeadline: (
+      <>
+        Gerencie seu negócio
+        <br />
+        com dados.
+      </>
+    ),
+    thousands: ".",
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** KPI grid + animated line chart, echoing the /painel overview. */
-const DashboardMock: React.FC = () => {
+const DashboardMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const chartEnter = fadeUp(frame, 70, 50);
   const draw = easeProgress(frame, 84, 55);
+
+  const kpis = [
+    { Icon: Eye, label: c.kpis.views, value: 1284, suffix: "", delta: "+18%", color: colors.primary },
+    { Icon: ChatCircleDots, label: c.kpis.contacts, value: 96, suffix: "", delta: "+12%", color: colors.secondary },
+    { Icon: Heart, label: c.kpis.favorites, value: 210, suffix: "", delta: "+9%", color: colors.success },
+    { Icon: ChartLineUp, label: c.kpis.contactRate, value: 7, suffix: ",5%", delta: "+2%", color: colors.primaryDark },
+  ] as const;
 
   // Weekly views trend for the SVG line (x evenly spaced, y in chart space).
   const points = [150, 132, 138, 110, 96, 74, 42];
@@ -40,7 +134,7 @@ const DashboardMock: React.FC = () => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24, width: 800 }}>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-        {KPIS.map((kpi, i) => {
+        {kpis.map((kpi, i) => {
           const enter = fadeUp(frame, 12 + i * 12, 50);
           const scale = popIn(frame, 12 + i * 12);
           const value = countUp(frame, 20 + i * 12, kpi.value);
@@ -63,8 +157,8 @@ const DashboardMock: React.FC = () => {
               </div>
               <div style={{ display: "flex", alignItems: "baseline", gap: 16, marginTop: 12 }}>
                 <span style={{ fontWeight: 800, fontSize: 62, color: colors.ink }}>
-                  {formatThousands(value)}
-                  {"suffix" in kpi ? kpi.suffix : ""}
+                  {formatThousands(value, c.thousands)}
+                  {kpi.suffix}
                 </span>
                 <span style={{ fontWeight: 700, fontSize: 30, color: colors.success }}>
                   {kpi.delta}
@@ -84,7 +178,7 @@ const DashboardMock: React.FC = () => {
         }}
       >
         <div style={{ fontWeight: 700, fontSize: 30, color: colors.ink, marginBottom: 10 }}>
-          Últimos 7 dias
+          {c.chartTitle}
         </div>
         <svg width={w} height={h} style={{ display: "block" }}>
           <polyline
@@ -116,8 +210,8 @@ const LISTINGS = [
   { name: "Opel Corsa 1.2", views: 118, contacts: 0, alert: true },
 ] as const;
 
-/** Per-listing performance rows with the "Sem contactos" attention signal. */
-const ListingSignalsMock: React.FC = () => {
+/** Per-listing performance rows with the "no contacts" attention signal. */
+const ListingSignalsMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 22, width: 820 }}>
@@ -146,7 +240,7 @@ const ListingSignalsMock: React.FC = () => {
                 {l.name}
               </span>
               <span style={{ fontWeight: 600, fontSize: 28, color: "#6c6e72" }}>
-                {l.views} visualizações · {l.contacts} contactos
+                {c.listingStats(l.views, l.contacts)}
               </span>
             </div>
             {l.alert ? (
@@ -167,7 +261,7 @@ const ListingSignalsMock: React.FC = () => {
                 }}
               >
                 <WarningCircle size={34} weight="bold" />
-                Sem contactos
+                {c.noContacts}
               </div>
             ) : (
               <ChartLineUp size={44} weight="bold" color={colors.success} style={{ flexShrink: 0 }} />
@@ -179,81 +273,53 @@ const ListingSignalsMock: React.FC = () => {
   );
 };
 
-export const proDashboardScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands e oficinas"
-        lines={[
-          "Quantas pessoas",
-          <>
-            viram o teu <Accent>stock</Accent>
-          </>,
-          "esta semana?",
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 210,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Painel Profissional"
-            headline={
-              <>
-                Os teus números,
-                <br />
-                em tempo real
-              </>
-            }
-          />
-        }
-        visual={<DashboardMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 190,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Sinais inteligentes"
-            headline={
-              <>
-                Vê o que precisa
-                <br />
-                de atenção
-              </>
-            }
-          />
-        }
-        visual={<ListingSignalsMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Gere o teu negócio
-            <br />
-            com dados.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 210,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading eyebrow={c.overviewEyebrow} headline={c.overviewHeadline} />
+          }
+          visual={<DashboardMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 190,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={
+            <SceneHeading eyebrow={c.signalsEyebrow} headline={c.signalsHeadline} />
+          }
+          visual={<ListingSignalsMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const proDashboardScenes = makeScenes("pt");
+export const proDashboardScenesBR = makeScenes("br");
 
 /** Reel 01 — professional dashboard analytics (stands & workshops). */
 export const ProDashboardReel: React.FC = () => (
   <Reel scenes={proDashboardScenes} musicOffsetSeconds={7} />
+);
+
+/** Reel 01 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const ProDashboardReelBR: React.FC = () => (
+  <Reel scenes={proDashboardScenesBR} musicOffsetSeconds={7} />
 );

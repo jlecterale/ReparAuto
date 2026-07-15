@@ -9,21 +9,98 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress } from "../anim";
 
-const MESSAGES = [
-  { mine: false, text: "Boa tarde! O Clio ainda está disponível?", delay: 20 },
-  { mine: true, text: "Está sim. Queres vir vê-lo amanhã?", delay: 66 },
-  { mine: false, text: "Pode ser às 15h?", delay: 112 },
-  { mine: true, text: "Combinado, fica reservado 👍", delay: 148 },
-] as const;
+const COPY = {
+  pt: {
+    kicker: "Para stands e oficinas",
+    hookLines: [
+      "O primeiro a responder",
+      <Accent key="l2">ganha o negócio.</Accent>,
+    ],
+    messages: [
+      { mine: false, text: "Boa tarde! O Clio ainda está disponível?", delay: 20 },
+      { mine: true, text: "Está sim. Queres vir vê-lo amanhã?", delay: 66 },
+      { mine: false, text: "Pode ser às 15h?", delay: 112 },
+      { mine: true, text: "Combinado, fica reservado 👍", delay: 148 },
+    ],
+    chatEyebrow: "Chat integrado",
+    chatHeadline: (
+      <>
+        Fala já com quem
+        <br />
+        quer comprar
+      </>
+    ),
+    notifTitle: "Nova mensagem · agora",
+    notifBody: "João pergunta sobre o Renault Clio",
+    privacy: "Sem partilhar o teu número",
+    notifEyebrow: "Notificações",
+    notifHeadline: (
+      <>
+        Nenhum contacto
+        <br />
+        fica sem resposta
+      </>
+    ),
+    endHeadline: (
+      <>
+        Responde rápido.
+        <br />
+        Fecha mais negócios.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas e oficinas",
+    hookLines: [
+      "O primeiro a responder",
+      <Accent key="l2">ganha o negócio.</Accent>,
+    ],
+    messages: [
+      { mine: false, text: "Boa tarde! O Onix ainda está disponível?", delay: 20 },
+      { mine: true, text: "Está sim. Quer vir ver amanhã?", delay: 66 },
+      { mine: false, text: "Pode ser às 15h?", delay: 112 },
+      { mine: true, text: "Combinado, fica reservado 👍", delay: 148 },
+    ],
+    chatEyebrow: "Chat integrado",
+    chatHeadline: (
+      <>
+        Fale na hora com
+        <br />
+        quem quer comprar
+      </>
+    ),
+    notifTitle: "Nova mensagem · agora",
+    notifBody: "João pergunta sobre o Chevrolet Onix",
+    privacy: "Sem compartilhar seu número",
+    notifEyebrow: "Notificações",
+    notifHeadline: (
+      <>
+        Nenhum contato
+        <br />
+        fica sem resposta
+      </>
+    ),
+    endHeadline: (
+      <>
+        Responda rápido.
+        <br />
+        Feche mais negócios.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** Chat conversation between buyer and seller, bubble by bubble. */
-const ConversationMock: React.FC = () => {
+const ConversationMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 26, width: 780 }}>
-      {MESSAGES.map((m, i) => {
+      {c.messages.map((m, i) => {
         const enter = fadeUp(frame, m.delay, 40);
         const scale = popIn(frame, m.delay);
         return (
@@ -57,7 +134,7 @@ const ConversationMock: React.FC = () => {
 };
 
 /** Push notification sliding in + privacy pill. */
-const NotificationMock: React.FC = () => {
+const NotificationMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   // Notification slides down from above like a real push banner.
   const slide = interpolate(frame, [14, 40], [-160, 0], {
@@ -101,10 +178,10 @@ const NotificationMock: React.FC = () => {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
           <span style={{ fontWeight: 800, fontSize: 36, color: colors.ink }}>
-            Nova mensagem · agora
+            {c.notifTitle}
           </span>
           <span style={{ fontWeight: 600, fontSize: 30, color: "#6c6e72" }}>
-            João pergunta sobre o Renault Clio
+            {c.notifBody}
           </span>
         </div>
       </UiCard>
@@ -127,85 +204,57 @@ const NotificationMock: React.FC = () => {
         }}
       >
         <LockSimple size={40} weight="bold" color={colors.mist} />
-        Sem partilhar o teu número
+        {c.privacy}
       </div>
     </div>
   );
 };
 
-export const chatScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands e oficinas"
-        lines={[
-          "O primeiro a responder",
-          <Accent key="a">ganha o negócio.</Accent>,
-        ]}
-        fontSize={92}
-      />
-    ),
-  },
-  {
-    durationInFrames: 220,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Chat integrado"
-            headline={
-              <>
-                Fala já com quem
-                <br />
-                quer comprar
-              </>
-            }
-          />
-        }
-        visual={<ConversationMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 180,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Notificações"
-            headline={
-              <>
-                Nenhum contacto
-                <br />
-                fica sem resposta
-              </>
-            }
-          />
-        }
-        visual={<NotificationMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Responde rápido.
-            <br />
-            Fecha mais negócios.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: (
+        <HookScene kicker={c.kicker} lines={[...c.hookLines]} fontSize={92} />
+      ),
+    },
+    {
+      durationInFrames: 220,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.chatEyebrow} headline={c.chatHeadline} />}
+          visual={<ConversationMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 180,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.notifEyebrow} headline={c.notifHeadline} />}
+          visual={<NotificationMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const chatScenes = makeScenes("pt");
+export const chatScenesBR = makeScenes("br");
 
 /** Reel 08 — integrated chat + push notifications for fast replies. */
 export const ChatReel: React.FC = () => (
   <Reel scenes={chatScenes} musicOffsetSeconds={10} />
+);
+
+/** Reel 08 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const ChatReelBR: React.FC = () => (
+  <Reel scenes={chatScenesBR} musicOffsetSeconds={10} />
 );

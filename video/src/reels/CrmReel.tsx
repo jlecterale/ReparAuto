@@ -9,16 +9,100 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, countUp, easeProgress } from "../anim";
 
-const CLIENTS = [
-  { initials: "MF", name: "Maria Fernandes", car: "VW Golf VII · Revisão", status: "Ativo", statusColor: colors.success },
-  { initials: "JS", name: "João Santos", car: "BMW 320d · Travões", status: "Lead", statusColor: colors.secondary },
-  { initials: "AP", name: "Ana Pereira", car: "Fiat Punto · Embraiagem", status: "Ativo", statusColor: colors.success },
-] as const;
+const COPY = {
+  pt: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "Os teus clientes",
+      "ainda vivem",
+      <React.Fragment key="l3">
+        num <Accent>caderno?</Accent>
+      </React.Fragment>,
+    ],
+    searchPlaceholder: "Pesquisar por nome, email ou telefone…",
+    clients: [
+      { initials: "MF", name: "Maria Fernandes", car: "VW Golf VII · Revisão", status: "Ativo", statusColor: colors.success },
+      { initials: "JS", name: "João Santos", car: "BMW 320d · Travões", status: "Lead", statusColor: colors.secondary },
+      { initials: "AP", name: "Ana Pereira", car: "Fiat Punto · Embraiagem", status: "Ativo", statusColor: colors.success },
+    ],
+    listEyebrow: "CRM de Clientes",
+    listHeadline: (
+      <>
+        Todos os clientes
+        <br />
+        num só lugar
+      </>
+    ),
+    csvFile: "clientes-oficina.csv",
+    csvProgress: (n: number) => `${n} de 128 clientes`,
+    csvDone: "Importação concluída — sem escrever um a um",
+    csvEyebrow: "Importação CSV",
+    csvHeadline: (
+      <>
+        Traz a tua lista
+        <br />
+        em segundos
+      </>
+    ),
+    endHeadline: (
+      <>
+        O CRM da tua oficina.
+        <br />
+        Já incluído.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para oficinas",
+    hookLines: [
+      "Seus clientes",
+      "ainda vivem",
+      <React.Fragment key="l3">
+        num <Accent>caderno?</Accent>
+      </React.Fragment>,
+    ],
+    searchPlaceholder: "Buscar por nome, email ou telefone…",
+    clients: [
+      { initials: "MF", name: "Maria Fernandes", car: "VW Golf VII · Revisão", status: "Ativo", statusColor: colors.success },
+      { initials: "JS", name: "João Santos", car: "BMW 320d · Freios", status: "Lead", statusColor: colors.secondary },
+      { initials: "AP", name: "Ana Pereira", car: "Fiat Argo · Embreagem", status: "Ativo", statusColor: colors.success },
+    ],
+    listEyebrow: "CRM de Clientes",
+    listHeadline: (
+      <>
+        Todos os clientes
+        <br />
+        num só lugar
+      </>
+    ),
+    csvFile: "clientes-oficina.csv",
+    csvProgress: (n: number) => `${n} de 128 clientes`,
+    csvDone: "Importação concluída — sem digitar um a um",
+    csvEyebrow: "Importação CSV",
+    csvHeadline: (
+      <>
+        Traga sua lista
+        <br />
+        em segundos
+      </>
+    ),
+    endHeadline: (
+      <>
+        O CRM da sua oficina.
+        <br />
+        Já incluído.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /** Searchable client list, echoing the /painel CRM grid. */
-const ClientListMock: React.FC = () => {
+const ClientListMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const search = fadeUp(frame, 10, 40);
 
@@ -37,16 +121,16 @@ const ClientListMock: React.FC = () => {
       >
         <MagnifyingGlass size={40} weight="bold" color="#6c6e72" />
         <span style={{ fontWeight: 600, fontSize: 34, color: "#9aa0a6" }}>
-          Pesquisar por nome, email ou telefone…
+          {c.searchPlaceholder}
         </span>
       </UiCard>
 
-      {CLIENTS.map((c, i) => {
+      {c.clients.map((client, i) => {
         const enter = fadeUp(frame, 30 + i * 16, 50);
         const scale = popIn(frame, 30 + i * 16);
         return (
           <UiCard
-            key={c.name}
+            key={client.name}
             width="100%"
             style={{
               opacity: enter.opacity,
@@ -73,20 +157,20 @@ const ClientListMock: React.FC = () => {
                 flexShrink: 0,
               }}
             >
-              {c.initials}
+              {client.initials}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, flex: 1, minWidth: 0 }}>
               <span style={{ fontWeight: 800, fontSize: 36, color: colors.ink }}>
-                {c.name}
+                {client.name}
               </span>
               <span style={{ fontWeight: 600, fontSize: 28, color: "#6c6e72" }}>
-                {c.car}
+                {client.car}
               </span>
             </div>
             <div
               style={{
-                background: `${c.statusColor}1f`,
-                color: c.statusColor,
+                background: `${client.statusColor}1f`,
+                color: client.statusColor,
                 fontWeight: 800,
                 fontSize: 28,
                 padding: "12px 26px",
@@ -94,7 +178,7 @@ const ClientListMock: React.FC = () => {
                 flexShrink: 0,
               }}
             >
-              {c.status}
+              {client.status}
             </div>
           </UiCard>
         );
@@ -104,7 +188,7 @@ const ClientListMock: React.FC = () => {
 };
 
 /** CSV import card: progress bar filling + imported counter. */
-const CsvImportMock: React.FC = () => {
+const CsvImportMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const enter = fadeUp(frame, 14, 50);
   const scale = popIn(frame, 14);
@@ -142,10 +226,10 @@ const CsvImportMock: React.FC = () => {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontWeight: 800, fontSize: 40, color: colors.ink }}>
-            clientes-oficina.csv
+            {c.csvFile}
           </span>
           <span style={{ fontWeight: 600, fontSize: 30, color: "#6c6e72" }}>
-            {imported} de 128 clientes
+            {c.csvProgress(imported)}
           </span>
         </div>
       </div>
@@ -175,89 +259,61 @@ const CsvImportMock: React.FC = () => {
         }}
       >
         <CheckCircle size={44} weight="fill" />
-        Importação concluída — sem escrever um a um
+        {c.csvDone}
       </div>
     </UiCard>
   );
 };
 
-export const crmScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para oficinas"
-        tint="orange"
-        lines={[
-          "Os teus clientes",
-          "ainda vivem",
-          <>
-            num <Accent>caderno?</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="CRM de Clientes"
-            headline={
-              <>
-                Todos os clientes
-                <br />
-                num só lugar
-              </>
-            }
-          />
-        }
-        visual={<ClientListMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 190,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Importação CSV"
-            headline={
-              <>
-                Traz a tua lista
-                <br />
-                em segundos
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<CsvImportMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            O CRM da tua oficina.
-            <br />
-            Já incluído.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} tint="orange" lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.listEyebrow} headline={c.listHeadline} />}
+          visual={<ClientListMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 190,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.csvEyebrow}
+              headline={c.csvHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<CsvImportMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const crmScenes = makeScenes("pt");
+export const crmScenesBR = makeScenes("br");
 
 /** Reel 02 — client CRM for workshops (professional dashboard). */
 export const CrmReel: React.FC = () => (
   <Reel scenes={crmScenes} musicOffsetSeconds={0} />
+);
+
+/** Reel 02 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const CrmReelBR: React.FC = () => (
+  <Reel scenes={crmScenesBR} musicOffsetSeconds={0} />
 );

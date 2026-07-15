@@ -4,20 +4,20 @@ import { Composition, Folder } from "remotion";
 import { RecarGaragePromo } from "./RecarGaragePromo";
 import { format, scenes, TRANSITION_FRAMES } from "./theme";
 import { reelDuration, ReelScene } from "./components/Reel";
-import { ProDashboardReel, proDashboardScenes } from "./reels/ProDashboardReel";
-import { CrmReel, crmScenes } from "./reels/CrmReel";
-import { LeadsReel, leadsScenes } from "./reels/LeadsReel";
-import { VerifiedSellerReel, verifiedSellerScenes } from "./reels/VerifiedSellerReel";
-import { AiListingReel, aiListingScenes } from "./reels/AiListingReel";
-import { PricingReel, pricingScenes } from "./reels/PricingReel";
-import { WorkshopReel, workshopScenes } from "./reels/WorkshopReel";
-import { ChatReel, chatScenes } from "./reels/ChatReel";
-import { PartsReel, partsScenes } from "./reels/PartsReel";
-import { EcosystemReel, ecosystemScenes } from "./reels/EcosystemReel";
-import { Spin360Reel, spin360Scenes } from "./reels/Spin360Reel";
-import { PartsFinderReel, partsFinderScenes } from "./reels/PartsFinderReel";
-import { RepairFlipReel, repairFlipScenes } from "./reels/RepairFlipReel";
-import { AudioListingReel, audioListingScenes } from "./reels/AudioListingReel";
+import { ProDashboardReel, ProDashboardReelBR, proDashboardScenes, proDashboardScenesBR } from "./reels/ProDashboardReel";
+import { CrmReel, CrmReelBR, crmScenes, crmScenesBR } from "./reels/CrmReel";
+import { LeadsReel, LeadsReelBR, leadsScenes, leadsScenesBR } from "./reels/LeadsReel";
+import { VerifiedSellerReel, VerifiedSellerReelBR, verifiedSellerScenes, verifiedSellerScenesBR } from "./reels/VerifiedSellerReel";
+import { AiListingReel, AiListingReelBR, aiListingScenes, aiListingScenesBR } from "./reels/AiListingReel";
+import { PricingReel, PricingReelBR, pricingScenes, pricingScenesBR } from "./reels/PricingReel";
+import { WorkshopReel, WorkshopReelBR, workshopScenes, workshopScenesBR } from "./reels/WorkshopReel";
+import { ChatReel, ChatReelBR, chatScenes, chatScenesBR } from "./reels/ChatReel";
+import { PartsReel, PartsReelBR, partsScenes, partsScenesBR } from "./reels/PartsReel";
+import { EcosystemReel, EcosystemReelBR, ecosystemScenes, ecosystemScenesBR } from "./reels/EcosystemReel";
+import { Spin360Reel, Spin360ReelBR, spin360Scenes, spin360ScenesBR } from "./reels/Spin360Reel";
+import { PartsFinderReel, PartsFinderReelBR, partsFinderScenes, partsFinderScenesBR } from "./reels/PartsFinderReel";
+import { RepairFlipReel, RepairFlipReelBR, repairFlipScenes, repairFlipScenesBR } from "./reels/RepairFlipReel";
+import { AudioListingReel, AudioListingReelBR, audioListingScenes, audioListingScenesBR } from "./reels/AudioListingReel";
 import { StandImportReel, standImportScenes } from "./reels/StandImportReel";
 
 // Six cross-fades join the seven scenes; the length is derived from `theme.ts`.
@@ -63,6 +63,32 @@ const REELS: ReadonlyArray<{
   { id: "ReelStandImport", component: StandImportReel, scenes: standImportScenes },
 ];
 
+/**
+ * Brazilian Portuguese variants — same beats, localized copy (você forms,
+ * BR vocabulary, R$ prices). ReelStandImport has no BR variant: the
+ * Standvirtual import is a Portugal-only feature.
+ */
+const REELS_BR: ReadonlyArray<{
+  id: string;
+  component: React.FC;
+  scenes: ReelScene[];
+}> = [
+  { id: "ReelProDashboardBR", component: ProDashboardReelBR, scenes: proDashboardScenesBR },
+  { id: "ReelCrmBR", component: CrmReelBR, scenes: crmScenesBR },
+  { id: "ReelLeadsBR", component: LeadsReelBR, scenes: leadsScenesBR },
+  { id: "ReelVerifiedSellerBR", component: VerifiedSellerReelBR, scenes: verifiedSellerScenesBR },
+  { id: "ReelAiListingBR", component: AiListingReelBR, scenes: aiListingScenesBR },
+  { id: "ReelPricingBR", component: PricingReelBR, scenes: pricingScenesBR },
+  { id: "ReelWorkshopBR", component: WorkshopReelBR, scenes: workshopScenesBR },
+  { id: "ReelChatBR", component: ChatReelBR, scenes: chatScenesBR },
+  { id: "ReelPartsBR", component: PartsReelBR, scenes: partsScenesBR },
+  { id: "ReelEcosystemBR", component: EcosystemReelBR, scenes: ecosystemScenesBR },
+  { id: "ReelSpin360BR", component: Spin360ReelBR, scenes: spin360ScenesBR },
+  { id: "ReelPartsFinderBR", component: PartsFinderReelBR, scenes: partsFinderScenesBR },
+  { id: "ReelRepairFlipBR", component: RepairFlipReelBR, scenes: repairFlipScenesBR },
+  { id: "ReelAudioListingBR", component: AudioListingReelBR, scenes: audioListingScenesBR },
+];
+
 export const RemotionRoot: React.FC = () => {
   return (
     <>
@@ -79,6 +105,19 @@ export const RemotionRoot: React.FC = () => {
       ))}
       <Folder name="Instagram-Reels">
         {REELS.map((reel) => (
+          <Composition
+            key={reel.id}
+            id={reel.id}
+            component={reel.component}
+            durationInFrames={reelDuration(reel.scenes)}
+            fps={format.fps}
+            width={1080}
+            height={1920}
+          />
+        ))}
+      </Folder>
+      <Folder name="Instagram-Reels-BR">
+        {REELS_BR.map((reel) => (
           <Composition
             key={reel.id}
             id={reel.id}

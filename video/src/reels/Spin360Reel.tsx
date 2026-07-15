@@ -9,15 +9,93 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress } from "../anim";
 
-const ANGLES = ["Frente", "Lateral direita", "Traseira", "Lateral esquerda"];
+const COPY = {
+  pt: {
+    kicker: "Para stands",
+    hookLines: [
+      "O comprador quer",
+      "andar à volta",
+      <React.Fragment key="l3">
+        do carro. <Accent>Deixa-o.</Accent>
+      </React.Fragment>,
+    ],
+    angles: ["Frente", "Lateral direita", "Traseira", "Lateral esquerda"],
+    dragHint: "Arrasta para rodar",
+    viewerEyebrow: "Vista 360°",
+    viewerHeadline: (
+      <>
+        Arrasta e roda
+        <br />o carro
+      </>
+    ),
+    captureTitle: "Captura guiada 360°",
+    captureAngle: "Traseira",
+    captureCaption: "A app diz-te onde te pôr — as fotos ficam marcadas sozinhas",
+    captureEyebrow: "Captura guiada",
+    captureHeadline: (
+      <>
+        Sem equipamento.
+        <br />
+        Só o telemóvel.
+      </>
+    ),
+    endHeadline: (
+      <>
+        O teu anúncio
+        <br />
+        em 360°.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas",
+    hookLines: [
+      "O comprador quer",
+      "dar a volta",
+      <React.Fragment key="l3">
+        no carro. <Accent>Deixe.</Accent>
+      </React.Fragment>,
+    ],
+    angles: ["Frente", "Lateral direita", "Traseira", "Lateral esquerda"],
+    dragHint: "Arraste para girar",
+    viewerEyebrow: "Vista 360°",
+    viewerHeadline: (
+      <>
+        Arraste e gire
+        <br />o carro
+      </>
+    ),
+    captureTitle: "Captura guiada 360°",
+    captureAngle: "Traseira",
+    captureCaption: "O app mostra onde ficar — as fotos são marcadas sozinhas",
+    captureEyebrow: "Captura guiada",
+    captureHeadline: (
+      <>
+        Sem equipamento.
+        <br />
+        Só o celular.
+      </>
+    ),
+    endHeadline: (
+      <>
+        Seu anúncio
+        <br />
+        em 360°.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
 
 /**
  * Drag-to-rotate viewer mock: listing photo with the 360 badge, a hand
  * sweeping left-right and the 8-dot orbit cycling through the angles.
  */
-const SpinViewerMock: React.FC = () => {
+const SpinViewerMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const card = fadeUp(frame, 10, 55);
   const cardScale = popIn(frame, 10);
@@ -31,10 +109,8 @@ const SpinViewerMock: React.FC = () => {
   });
   const sweep = Math.abs(1 - (drag % 2)); // 1 → 0 → 1 ping-pong
   const handX = interpolate(sweep, [0, 1], [-170, 170]);
-  const activeDot = Math.floor(
-    interpolate(sweep, [0, 1], [0, 7.99]),
-  );
-  const angleLabel = ANGLES[Math.floor(interpolate(sweep, [0, 1], [0, 3.99]))];
+  const activeDot = Math.floor(interpolate(sweep, [0, 1], [0, 7.99]));
+  const angleLabel = c.angles[Math.floor(interpolate(sweep, [0, 1], [0, 3.99]))];
   const handOpacity = easeProgress(frame, 56, 14);
 
   return (
@@ -101,7 +177,7 @@ const SpinViewerMock: React.FC = () => {
             {angleLabel}
           </span>
           <span style={{ fontWeight: 600, fontSize: 28, color: "#6c6e72" }}>
-            Arrasta para rodar
+            {c.dragHint}
           </span>
         </div>
         {/* 8-dot orbit indicator */}
@@ -127,9 +203,9 @@ const CAPTURE_ANGLES = 8;
 
 /**
  * Guided capture mock: dashed viewfinder frame, angle label, progress and
- * the top-down walk-around diagram — echoing GuidedSpinCapture.
+ * the shutter — echoing GuidedSpinCapture.
  */
-const GuidedCaptureMock: React.FC = () => {
+const GuidedCaptureMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const enter = fadeUp(frame, 12, 55);
   const scale = popIn(frame, 12);
@@ -155,7 +231,7 @@ const GuidedCaptureMock: React.FC = () => {
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontWeight: 800, fontSize: 32, color: colors.white }}>
-          Captura guiada 360°
+          {c.captureTitle}
         </span>
         <span
           style={{
@@ -201,7 +277,7 @@ const GuidedCaptureMock: React.FC = () => {
             borderRadius: 999,
           }}
         >
-          Traseira
+          {c.captureAngle}
         </div>
         {/* Shutter pulse */}
         <div
@@ -221,86 +297,55 @@ const GuidedCaptureMock: React.FC = () => {
       </div>
 
       <span style={{ fontWeight: 600, fontSize: 28, color: "#b9c2ce", fontFamily: brandFont }}>
-        A app diz-te onde te pôr — as fotos ficam marcadas sozinhas
+        {c.captureCaption}
       </span>
     </UiCard>
   );
 };
 
-export const spin360Scenes: ReelScene[] = [
-  {
-    durationInFrames: 105,
-    content: (
-      <HookScene
-        kicker="Para stands"
-        lines={[
-          "O comprador quer",
-          "andar à volta",
-          <>
-            do carro. <Accent>Deixa-o.</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 220,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Vista 360°"
-            headline={
-              <>
-                Arrasta e roda
-                <br />o carro
-              </>
-            }
-          />
-        }
-        visual={<SpinViewerMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Captura guiada"
-            headline={
-              <>
-                Sem equipamento.
-                <br />
-                Só o telemóvel.
-              </>
-            }
-          />
-        }
-        visual={<GuidedCaptureMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            O teu anúncio
-            <br />
-            em 360°.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 105,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 220,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={<SceneHeading eyebrow={c.viewerEyebrow} headline={c.viewerHeadline} />}
+          visual={<SpinViewerMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.captureEyebrow} headline={c.captureHeadline} />}
+          visual={<GuidedCaptureMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const spin360Scenes = makeScenes("pt");
+export const spin360ScenesBR = makeScenes("br");
 
 /** Reel 11 — 360° spin view: drag-to-rotate + guided capture (plan 23). */
 export const Spin360Reel: React.FC = () => (
   <Reel scenes={spin360Scenes} musicOffsetSeconds={4} />
+);
+
+/** Reel 11 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const Spin360ReelBR: React.FC = () => (
+  <Reel scenes={spin360ScenesBR} musicOffsetSeconds={4} />
 );

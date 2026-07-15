@@ -49,6 +49,16 @@ cenas de produto (mock da UI real) → CTA final. Renderiza todos com
 | 14 | `ReelAudioListing` | Ambos | Anúncio por áudio: fala e a IA preenche o formulário |
 | 15 | `ReelStandImport` | Stands | Importar anúncios do Standvirtual por URL (1, lote ou stand inteiro) |
 
+### 🇧🇷 Variantes pt-BR
+
+Cada reel (exceto o 15, específico do Standvirtual/Portugal) tem uma composição
+irmã com sufixo **`BR`** (`ReelProDashboardBR`, `ReelCrmBR`, …) na pasta
+"Instagram-Reels-BR" do Studio: mesma estrutura e animações, mas copy em
+português do Brasil — "você" em vez de "tu", "estoque/lojista/celular/freios"
+em vez de "stock/stand/telemóvel/travões", preços em **R$** e cidades
+brasileiras. Renderiza todas com `npm run render:reels:br`
+(saem para `out/reels/br/`).
+
 > Nota: os Reels 01/02 (painel + CRM), 04, 05 e 06 apresentam funcionalidades
 > das PRs #33, #58, #54 e #9, o Reel 13 usa a análise de danos da PR #54, o
 > Reel 14 o anúncio por áudio da PR #69 e o Reel 15 a importação do

@@ -9,6 +9,7 @@ import { EndCard } from "../components/EndCard";
 import { UiCard } from "../components/UiCard";
 import { colors } from "../theme";
 import { brandFont } from "../fonts";
+import { Locale } from "../copy";
 import { fadeUp, popIn, easeProgress, countUp, formatThousands } from "../anim";
 
 const LEVELS = [
@@ -19,8 +20,91 @@ const LEVELS = [
   { label: "Sobrevalorizado", color: "#e0452b" },
 ] as const;
 
+const COPY = {
+  pt: {
+    kicker: "Para stands",
+    hookLines: [
+      "O teu stock está",
+      <React.Fragment key="l2">
+        ao <Accent>preço certo?</Accent>
+      </React.Fragment>,
+    ],
+    verdictTitle: "Bom preço",
+    verdictDetail: "850 € abaixo da mediana de anúncios semelhantes",
+    scaleEyebrow: "Badge de preço",
+    scaleHeadline: (
+      <>
+        5 níveis,
+        <br />
+        dados reais
+      </>
+    ),
+    medianLabel: "Mediana do mercado",
+    medianValue: 13900,
+    currency: (v: string) => `${v} €`,
+    thousands: "\u2009",
+    histTitle: "Distribuição de preços — Clio 2018+",
+    marketEyebrow: "Página de mercado",
+    marketHeadline: (
+      <>
+        O mercado inteiro,
+        <br />
+        num relance
+      </>
+    ),
+    endHeadline: (
+      <>
+        Preço certo vende
+        <br />
+        mais depressa.
+      </>
+    ),
+  },
+  br: {
+    kicker: "Para lojistas",
+    hookLines: [
+      "Seu estoque está",
+      <React.Fragment key="l2">
+        no <Accent>preço certo?</Accent>
+      </React.Fragment>,
+    ],
+    verdictTitle: "Bom preço",
+    verdictDetail: "R$ 4.500 abaixo da mediana de anúncios semelhantes",
+    scaleEyebrow: "Badge de preço",
+    scaleHeadline: (
+      <>
+        5 níveis,
+        <br />
+        dados reais
+      </>
+    ),
+    medianLabel: "Mediana do mercado",
+    medianValue: 84500,
+    currency: (v: string) => `R$ ${v}`,
+    thousands: ".",
+    histTitle: "Distribuição de preços — Onix 2020+",
+    marketEyebrow: "Página de mercado",
+    marketHeadline: (
+      <>
+        O mercado inteiro,
+        <br />
+        na sua frente
+      </>
+    ),
+    endHeadline: (
+      <>
+        Preço certo vende
+        <br />
+        mais rápido.
+      </>
+    ),
+  },
+} as const;
+
+type Copy = (typeof COPY)[Locale];
+
 /** 5-level price badge scale with the marker settling on "Bom preço". */
-const PriceScaleMock: React.FC = () => {
+const PriceScaleMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const scaleEnter = fadeUp(frame, 12, 50);
   // Marker sweeps across the scale and settles on segment 2 ("Bom preço").
@@ -112,10 +196,10 @@ const PriceScaleMock: React.FC = () => {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <span style={{ fontWeight: 800, fontSize: 40, color: colors.success }}>
-            Bom preço
+            {c.verdictTitle}
           </span>
           <span style={{ fontWeight: 600, fontSize: 30, color: "#6c6e72" }}>
-            850 € abaixo da mediana de anúncios semelhantes
+            {c.verdictDetail}
           </span>
         </div>
       </UiCard>
@@ -126,11 +210,11 @@ const PriceScaleMock: React.FC = () => {
 const BARS = [26, 44, 78, 120, 156, 128, 88, 52, 30];
 
 /** Market page: median KPI + distribution histogram growing in. */
-const MarketMock: React.FC = () => {
+const MarketMock: React.FC<{ c: Copy }> = ({ c }) => {
   const frame = useCurrentFrame();
   const kpi = fadeUp(frame, 12, 50);
   const kpiScale = popIn(frame, 12);
-  const median = countUp(frame, 20, 13900, 50);
+  const median = countUp(frame, 20, c.medianValue, 50);
   const chart = fadeUp(frame, 46, 50);
 
   return (
@@ -150,10 +234,10 @@ const MarketMock: React.FC = () => {
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span style={{ fontWeight: 700, fontSize: 30, color: "#6c6e72" }}>
-            Mediana do mercado
+            {c.medianLabel}
           </span>
-          <span style={{ fontWeight: 800, fontSize: 64, color: colors.ink }}>
-            {formatThousands(median)} €
+          <span style={{ fontWeight: 800, fontSize: 60, color: colors.ink }}>
+            {c.currency(formatThousands(median, c.thousands))}
           </span>
         </div>
         <div
@@ -183,7 +267,7 @@ const MarketMock: React.FC = () => {
         }}
       >
         <div style={{ fontWeight: 700, fontSize: 30, color: colors.ink, marginBottom: 20 }}>
-          Distribuição de preços — Clio 2018+
+          {c.histTitle}
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", gap: 14, height: 170 }}>
           {BARS.map((height, i) => {
@@ -207,81 +291,55 @@ const MarketMock: React.FC = () => {
   );
 };
 
-export const pricingScenes: ReelScene[] = [
-  {
-    durationInFrames: 100,
-    content: (
-      <HookScene
-        kicker="Para stands"
-        lines={[
-          "O teu stock está",
-          <>
-            ao <Accent>preço certo?</Accent>
-          </>,
-        ]}
-      />
-    ),
-  },
-  {
-    durationInFrames: 210,
-    content: (
-      <SceneShell
-        tint="blue"
-        heading={
-          <SceneHeading
-            eyebrow="Badge de preço"
-            headline={
-              <>
-                5 níveis,
-                <br />
-                dados reais
-              </>
-            }
-            accent={colors.success}
-          />
-        }
-        visual={<PriceScaleMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 200,
-    content: (
-      <SceneShell
-        tint="orange"
-        heading={
-          <SceneHeading
-            eyebrow="Página de mercado"
-            headline={
-              <>
-                O mercado inteiro,
-                <br />
-                num relance
-              </>
-            }
-          />
-        }
-        visual={<MarketMock />}
-      />
-    ),
-  },
-  {
-    durationInFrames: 170,
-    content: (
-      <EndCard
-        headline={
-          <>
-            Preço certo vende
-            <br />
-            mais depressa.
-          </>
-        }
-      />
-    ),
-  },
-];
+const makeScenes = (locale: Locale): ReelScene[] => {
+  const c = COPY[locale];
+  return [
+    {
+      durationInFrames: 100,
+      content: <HookScene kicker={c.kicker} lines={[...c.hookLines]} />,
+    },
+    {
+      durationInFrames: 210,
+      content: (
+        <SceneShell
+          tint="blue"
+          heading={
+            <SceneHeading
+              eyebrow={c.scaleEyebrow}
+              headline={c.scaleHeadline}
+              accent={colors.success}
+            />
+          }
+          visual={<PriceScaleMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 200,
+      content: (
+        <SceneShell
+          tint="orange"
+          heading={<SceneHeading eyebrow={c.marketEyebrow} headline={c.marketHeadline} />}
+          visual={<MarketMock c={c} />}
+        />
+      ),
+    },
+    {
+      durationInFrames: 170,
+      content: <EndCard headline={c.endHeadline} locale={locale} />,
+    },
+  ];
+};
+
+export const pricingScenes = makeScenes("pt");
+export const pricingScenesBR = makeScenes("br");
 
 /** Reel 06 — price intelligence: 5-level badges + market page. */
 export const PricingReel: React.FC = () => (
   <Reel scenes={pricingScenes} musicOffsetSeconds={0} />
+);
+
+/** Reel 06 (pt-BR) — same beats, Brazilian Portuguese copy. */
+export const PricingReelBR: React.FC = () => (
+  <Reel scenes={pricingScenesBR} musicOffsetSeconds={0} />
 );
