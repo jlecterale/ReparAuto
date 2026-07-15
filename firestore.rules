@@ -33,6 +33,15 @@ service cloud.firestore {
     function isOwnerByEmail() {
       return isAuthenticated() && resource.data.criador == request.auth.token.email;
     }
+    // Admin ban: a banned account may still read (public data) but can never
+    // create new content (listings, messages, reviews, intents, proposals).
+    // Reads the requester's own profile — the same doc isAdmin()/accountCountry()
+    // already read, so no extra billable get within one evaluation. A missing
+    // profile is treated as not-banned (matches the app's default).
+    function isNotBanned() {
+      let userPath = /databases/$(database)/documents/users/$(request.auth.uid);
+      return !exists(userPath) || get(userPath).data.get('banned', false) != true;
+    }
     function hasValidImageCount(maxLimit) {
       let data = request.resource.data;
       let hasFotos = 'fotos' in data;
@@ -89,7 +98,7 @@ service cloud.firestore {
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(20) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(20) && hasValidCountry() && matchesAccountCountry();
       allow update: if (isOwnerByEmail() && hasValidImageCount(20) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
@@ -102,7 +111,7 @@ service cloud.firestore {
 
     match /parts/{partId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(3) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(3) && hasValidCountry() && matchesAccountCountry();
       allow update: if (isOwnerByEmail() && hasValidImageCount(3) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante
         || request.resource.data.diff(resource.data).affectedKeys()
@@ -115,7 +124,7 @@ service cloud.firestore {
 
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && isNotBanned() && hasValidImageCount(7) && hasValidCountry() && matchesAccountCountry();
       allow update: if (isOwnerByEmail() && hasValidImageCount(7) && keepsCountry()) || isAdmin()
         // Favoritos: apenas autenticados (espelha a exceção de /cars e /parts)
         || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()
@@ -172,14 +181,14 @@ service cloud.firestore {
         request.auth.uid == resource.data.fromUid ||
         request.auth.uid == resource.data.toUid
       );
-      allow create: if isAuthenticated() && request.resource.data.fromUid == request.auth.uid && request.resource.data.fromUid != request.resource.data.toUid;
+      allow create: if isAuthenticated() && isNotBanned() && request.resource.data.fromUid == request.auth.uid && request.resource.data.fromUid != request.resource.data.toUid;
       allow update: if isAuthenticated() && (request.auth.uid == resource.data.fromUid || request.auth.uid == resource.data.toUid);
       allow delete: if isAdmin();
     }
 
     match /reviews/{reviewId} {
       allow read: if true;
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.autorUid == request.auth.uid
         && request.resource.data.vendedorEmail != request.auth.token.email
         && request.resource.data.nota >= 1
@@ -208,7 +217,7 @@ service cloud.firestore {
 
     match /intencoes_compra/{intencaoId} {
       allow read: if true;
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.userId == request.auth.uid
         && hasValidCountry()
         && matchesAccountCountry();
@@ -225,7 +234,7 @@ service cloud.firestore {
         request.auth.uid == get(/databases/$(database)/documents/intencoes_compra/$(resource.data.intencaoId)).data.userId ||
         request.auth.uid == resource.data.vendedorId
       )) || isAdmin();
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.vendedorId == request.auth.uid;
       allow update: if isAuthenticated() && (
         request.auth.uid == get(/databases/$(database)/documents/intencoes_compra/$(resource.data.intencaoId)).data.userId ||
@@ -251,7 +260,7 @@ service cloud.firestore {
         request.auth.uid == resource.data.compradorUid ||
         isAdmin()
       );
-      allow create: if isAuthenticated()
+      allow create: if isAuthenticated() && isNotBanned()
         && request.resource.data.vendedorUid == request.auth.uid
         && request.resource.data.status == 'pendente';
       allow update: if isAuthenticated() && (

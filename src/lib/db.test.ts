@@ -1,4 +1,5 @@
-import { eliminarDadosDoUtilizador } from '@/lib/db';
+import { eliminarDadosDoUtilizador, setUserBanned } from '@/lib/db';
+import { setDoc } from 'firebase/firestore';
 
 // Firestore is mocked at the boundary. The behavior under test: GDPR erasure
 // must remove every user-owned document (plus the profile) using batched
@@ -75,6 +76,29 @@ beforeEach(() => {
   jest.clearAllMocks();
   batches.length = 0;
   rejectMessageBatches = false;
+});
+
+describe('setUserBanned', () => {
+  it('marca a conta como banida com data e motivo (merge no doc do utilizador)', async () => {
+    await setUserBanned('u1', true, 'spam repetido');
+
+    expect(setDoc).toHaveBeenCalledTimes(1);
+    const [ref, payload, opts] = (setDoc as jest.Mock).mock.calls[0];
+    expect(ref.path).toBe('users/u1');
+    expect(payload.banned).toBe(true);
+    expect(payload.bannedReason).toBe('spam repetido');
+    expect(payload.bannedAt).not.toBeNull();
+    expect(opts).toEqual({ merge: true });
+  });
+
+  it('limpa data e motivo ao desbanir', async () => {
+    await setUserBanned('u1', false);
+
+    const [, payload] = (setDoc as jest.Mock).mock.calls[0];
+    expect(payload.banned).toBe(false);
+    expect(payload.bannedAt).toBeNull();
+    expect(payload.bannedReason).toBeNull();
+  });
 });
 
 describe('eliminarDadosDoUtilizador', () => {

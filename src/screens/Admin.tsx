@@ -29,6 +29,8 @@ import {
   revokeUserPlan,
   getAdminDashboardStats,
   updateUserProfile,
+  setUserBanned,
+  eliminarDadosDoUtilizador,
   type PlanInfo,
   type AdminDashboardStats,
 } from '@/lib/db';
@@ -222,6 +224,39 @@ export default function Admin() {
       toast?.sucesso('Plano removido com sucesso.');
     } catch {
       toast?.erro('Erro ao remover plano.');
+    }
+  };
+
+  const handleBanUser = async (uid: string, banned: boolean, reason?: string) => {
+    try {
+      await setUserBanned(uid, banned, reason);
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, banned } : u)));
+      const target = users.find((u) => u.uid === uid);
+      if (banned) {
+        if (target) {
+          await criarNotificacao(uid, 'info', 'Conta suspensa',
+            'A sua conta foi suspensa pela administração. Não é possível publicar anúncios nem enviar mensagens.' + (reason ? ` Motivo: ${reason}` : ''));
+        }
+        toast?.sucesso('Conta banida.');
+      } else {
+        if (target) {
+          await criarNotificacao(uid, 'info', 'Conta reativada',
+            'A sua conta foi reativada. Já pode voltar a publicar anúncios e enviar mensagens.');
+        }
+        toast?.sucesso('Conta reativada.');
+      }
+    } catch {
+      toast?.erro('Erro ao atualizar o estado da conta.');
+    }
+  };
+
+  const handleDeleteUser = async (uid: string) => {
+    try {
+      await eliminarDadosDoUtilizador(uid);
+      setUsers((prev) => prev.filter((u) => u.uid !== uid));
+      toast?.sucesso('Conta e anúncios eliminados.');
+    } catch {
+      toast?.erro('Erro ao eliminar a conta.');
     }
   };
 
@@ -1021,6 +1056,8 @@ export default function Admin() {
                 onGrantPlan={handleGrantPlan}
                 onRevokePlan={handleRevokePlan}
                 onUpdateUserProfile={handleUpdateUserProfile}
+                onBanUser={handleBanUser}
+                onDeleteUser={handleDeleteUser}
               />
             </div>
           )}
