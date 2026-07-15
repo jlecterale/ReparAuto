@@ -194,7 +194,11 @@ service cloud.firestore {
         && request.resource.data.nota >= 1
         && request.resource.data.nota <= 5
         && request.resource.data.status == 'pendente';
-      allow update: if isAdmin();
+      // Author can update (any edit re‑pendes the review for moderation)
+      allow update: if (isAuthenticated()
+        && resource.data.autorUid == request.auth.uid
+        && request.resource.data.status == 'pendente')
+        || isAdmin();
       allow delete: if isAuthenticated() && (resource.data.autorUid == request.auth.uid || isAdmin());
     }
 
