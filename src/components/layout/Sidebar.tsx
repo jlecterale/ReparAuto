@@ -8,6 +8,8 @@ import {
   PlusCircle,
   MagnifyingGlass,
   GearSix,
+  ChartLineUp,
+  Calculator,
   ShieldCheck,
   Heart,
   Target,
@@ -82,6 +84,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
     { href: '/comprar', Icon: MagnifyingGlass, label: 'Comprar' },
     { href: '/pecas', Icon: GearSix, label: 'Peças & Desmonte' },
     { href: '/oficinas', Icon: Wrench, label: 'Oficinas & Mecânicos' },
+    { href: '/mercado', Icon: ChartLineUp, label: 'Mercado' },
+    { href: '/avaliar-veiculo', Icon: Calculator, label: 'Avaliar Veículo' },
     ...(isAdmin ? [{ href: '/admin', Icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 

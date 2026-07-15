@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, ArrowsClockwise, ArrowsOut, CircleNotch, Heart, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
+import { ArrowLeft, ArrowsClockwise, ArrowsOut, ChartLineUp, CircleNotch, Heart, Info, Lock, PencilSimpleLine, TextAlignLeft, Trash, Warning, Wrench, YoutubeLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
@@ -17,6 +17,11 @@ import Spin360Viewer from '@/components/detalhes/Spin360Viewer';
 import CompatibleParts from '@/components/pecas/CompatibleParts';
 import VinCheckPanel from '@/components/trust/VinCheckPanel';
 import FinanciamentoSeguroWidget from '@/components/detalhes/FinanciamentoSeguroWidget';
+import PriceIndicatorBadge from '@/components/preco/PriceIndicatorBadge';
+import MarketWidget from '@/components/preco/MarketWidget';
+import usePriceIndicator from '@/hooks/usePriceIndicator';
+import { formatarPreco as fmt } from '@/lib/utils';
+import { PRICE_DISCLAIMERS, PRICE_THRESHOLDS } from '@/lib/constants';
 import Badge from '@/components/ui/Badge';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -115,6 +120,13 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
       setDeleting(false);
     }
   };
+
+  // Must run before any conditional return — calling it after the
+  // loading/bloqueado/!carro early-returns would change the number of hooks
+  // called between the first render (carro still null) and a later one
+  // (carro loaded), violating the Rules of Hooks. The hook already handles
+  // a null carro by returning 'indisponivel'.
+  const priceInfo = usePriceIndicator(carro);
 
   if (loading) {
     return (
@@ -293,6 +305,53 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
             />
           </div>
         )}
+
+        {priceInfo.indicator !== 'indisponivel' && priceInfo.stats && (
+          <div className="mb-6 bg-neutral-50 border border-neutral-200 rounded-xl p-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h3 className="font-extrabold text-fg-heading flex items-center gap-2 mb-1">
+                  <ChartLineUp className="text-accent" /> Análise de preço
+                </h3>
+                <p className="text-xs text-fg-muted">
+                  Comparado com {priceInfo.sampleSize}{' '}
+                  {priceInfo.sampleSize === 1 ? 'anúncio similar' : 'anúncios similares'} no RecarGarage.
+                </p>
+              </div>
+              <PriceIndicatorBadge
+                indicator={priceInfo.indicator}
+                deviation={priceInfo.deviation}
+                sampleSize={priceInfo.sampleSize}
+                diffValue={Math.round(carro.preco - priceInfo.stats.median)}
+                country={docCountry(carro)}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-3 text-center text-xs">
+              <div className="bg-white rounded-lg p-2">
+                <p className="text-[10px] text-fg-muted">Mínimo</p>
+                <p className="font-bold text-success-700">{fmt(priceInfo.stats.min, docCountry(carro))}</p>
+              </div>
+              <div className="bg-white rounded-lg p-2">
+                <p className="text-[10px] text-fg-muted">Mediana do mercado</p>
+                <p className="font-bold text-fg-heading">{fmt(priceInfo.stats.median, docCountry(carro))}</p>
+              </div>
+              <div className="bg-white rounded-lg p-2">
+                <p className="text-[10px] text-fg-muted">Máximo</p>
+                <p className="font-bold text-danger-700">{fmt(priceInfo.stats.max, docCountry(carro))}</p>
+              </div>
+            </div>
+            {priceInfo.sampleSize < PRICE_THRESHOLDS.lowConfidenceSampleSize && (
+              <Alert tipo="aviso" icone={<Info />} className="mt-3 !p-2 !text-xs">
+                {PRICE_DISCLAIMERS.lowConfidence}
+              </Alert>
+            )}
+            <p className="text-[10px] text-fg-muted mt-2">{PRICE_DISCLAIMERS.badge}</p>
+          </div>
+        )}
+
+        <div className="mb-6">
+          <MarketWidget marca={carro.marca} modelo={carro.modelo} title="Ver mercado deste modelo" />
+        </div>
 
         {carro.videoUrl && (
           <div className="mb-6">

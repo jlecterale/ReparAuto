@@ -122,6 +122,66 @@ export const BADGES_CONFIANCA: { key: string; label: string; Icon: Icon; cor: st
   { key: 'respostas_rapidas', label: 'Respostas Rápidas', Icon: Lightning, cor: 'text-green-600' },
 ];
 
+// ============ PRICE INTELLIGENCE ============
+// 5-tier badge system aligned with CarGurus / AutoUncle / Auto Trader.
+// Tiers are derived from deviation from the (outlier-trimmed) median:
+//   ≤ -greatDeal            → excelente
+//   between -greatDeal, -ok → bom
+//   |dev| < ok              → justo
+//   ok ≤ dev < greatDeal    → acima
+//   ≥ greatDeal             → sobrevalorizado
+//
+// "ok" widens with market dispersion (CV), clamped to [adaptiveMin, adaptiveMax].
+// minSampleSize gates the badge; minPublicSampleSize gates aggregate stats
+// that could leak individual prices.
+export const PRICE_THRESHOLDS = {
+  adaptiveMin: 0.07,
+  adaptiveMax: 0.15,
+  greatDeal: 0.20,
+  minSampleSize: 5,
+  lowConfidenceSampleSize: 15,
+  minPublicSampleSize: 5,
+  similarYearRange: 2,
+  similarKmRange: 50000,
+  outlierIqrMultiplier: 1.5,
+} as const;
+
+export const PRICE_LABELS: Record<
+  'excelente' | 'bom' | 'justo' | 'acima' | 'sobrevalorizado' | 'indisponivel',
+  string
+> = {
+  excelente: 'Excelente negócio',
+  bom: 'Bom preço',
+  justo: 'Preço justo',
+  acima: 'Acima do mercado',
+  sobrevalorizado: 'Sobrevalorizado',
+  indisponivel: 'Sem dados suficientes',
+};
+
+// Icons are rendered by PriceIndicatorBadge (Phosphor); this stays icon-library agnostic.
+export const PRICE_COLORS: Record<
+  'excelente' | 'bom' | 'justo' | 'acima' | 'sobrevalorizado' | 'indisponivel',
+  { bg: string; text: string; border: string }
+> = {
+  excelente: { bg: 'bg-success-100', text: 'text-success-800', border: 'border-success-300' },
+  bom:       { bg: 'bg-success-50',  text: 'text-success-700', border: 'border-success-200' },
+  justo:     { bg: 'bg-primary-50',  text: 'text-primary-700', border: 'border-primary-200' },
+  acima:     { bg: 'bg-warning-50',  text: 'text-warning-700', border: 'border-warning-200' },
+  sobrevalorizado: { bg: 'bg-danger-50', text: 'text-danger-700', border: 'border-danger-200' },
+  indisponivel:    { bg: 'bg-neutral-50', text: 'text-fg-muted', border: 'border-neutral-200' },
+};
+
+export const PRICE_DISCLAIMERS = {
+  badge:
+    'Classificação baseada na mediana de anúncios semelhantes (mesma marca, modelo, ano ±2). Não reflete o estado do veículo.',
+  estimator:
+    'A avaliação apresentada tem caráter meramente indicativo e não vinculativo, sendo calculada com base em anúncios ativos no RecarGarage à data da consulta. Não constitui uma proposta de compra nem uma peritagem. O valor real depende do estado de conservação, histórico e equipamento.',
+  market:
+    'Dados agregados a partir de anúncios publicados no RecarGarage. Os valores podem não refletir transações efetivamente concretizadas.',
+  lowConfidence:
+    'Estimativa com baixa confiança — poucos anúncios comparáveis disponíveis.',
+};
+
 // ============ TEXTOS DAS POLÍTICAS ============
 export const TEXTOS_POLITICAS = {
   termos: {

@@ -61,7 +61,7 @@ src/
 
 ## Data Layer
 
-Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`, `intencoes_compra`, `contatos_intencao`, `denuncias_intencao`.
+Firestore collections: `cars`, `parts`, `users`, `messages`, `notifications`, `services`, `reviews`, `reports`, `verifications`, `intencoes_compra`, `contatos_intencao`, `denuncias_intencao`, `priceSnapshots`, `alertSubscriptions`.
 Firebase Storage for images (10MB limit, 20 max for cars, 1 for parts). Listing photos can also be external https URLs pasted by the user (stored as-is, no upload).
 localStorage fallback for anonymous favorites only (`favs_reparauto` key).
 

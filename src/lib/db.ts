@@ -21,7 +21,7 @@ import {
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
-import { docCountry, getActiveCountry } from '@/lib/country';
+import { docCountry, getActiveCountry, type Country } from '@/lib/country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -34,6 +34,8 @@ import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoInten
 import type { LeadParceria, LeadParceriaInput } from '@/types/lead';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { Banner, BannerInput } from '@/types/banner';
+import type { PriceSnapshot, PriceSnapshotInput } from '@/types/preco';
+import { normalizeModelo } from '@/lib/priceUtils';
 import type { AlertSubscription, AlertSubscriptionInput, NotificationPreferences } from '@/types/alertas';
 import {
   MAX_ALERT_SUBSCRIPTIONS,
@@ -1631,6 +1633,52 @@ export async function deleteBanner(id: string): Promise<void> {
 }
 
 
+// ============ PRICE INTELLIGENCE ============
+
+const PRICE_SNAPSHOTS_COLLECTION = 'priceSnapshots';
+
+export async function savePriceSnapshot(data: PriceSnapshotInput): Promise<string> {
+  try {
+    const docRef = await addDoc(collection(db, PRICE_SNAPSHOTS_COLLECTION), {
+      ...data,
+      modeloNormalizado: normalizeModelo(data.modelo),
+      dataCriacao: Timestamp.now(),
+    });
+    return docRef.id;
+  } catch (err) {
+    console.error('[DB] Erro ao gravar snapshot de preço:', err);
+    throw err;
+  }
+}
+
+export async function getPriceSnapshots(
+  marca: string,
+  modelo: string,
+  country: Country,
+  limit?: number,
+): Promise<PriceSnapshot[]> {
+  try {
+    const modeloNorm = normalizeModelo(modelo);
+    const q = query(
+      collection(db, PRICE_SNAPSHOTS_COLLECTION),
+      where('marca', '==', marca),
+      where('modeloNormalizado', '==', modeloNorm),
+      // Snapshots are per-market — mixing PT/BR history would plot EUR and
+      // BRL on the same series, same bug class fixed in filtrarCarrosSimilares.
+      where('country', '==', country),
+      orderBy('dataCriacao', 'asc'),
+    );
+    const snap = await getDocs(q);
+    let snaps = snap.docs.map((d) => ({ id: d.id, ...d.data() } as PriceSnapshot));
+    if (limit && snaps.length > limit) {
+      snaps = snaps.slice(snaps.length - limit);
+    }
+    return snaps;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar histórico de preços:', err);
+    return [];
+  }
+}
 
 // ============ ALERT SUBSCRIPTIONS (plan 3.1) ============
 

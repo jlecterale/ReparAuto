@@ -254,6 +254,11 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
+    match /priceSnapshots/{snapshotId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
     match /propostas/{propostaId} {
       allow read: if isAuthenticated() && (
         request.auth.uid == resource.data.vendedorUid ||

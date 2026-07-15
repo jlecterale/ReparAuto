@@ -13,6 +13,8 @@ jest.mock('../providers/AppProvider', () => ({
   useApp: () => ({
     auth: { user: null, isAdmin: false },
     favoritos: { toggleFavorito: jest.fn(), isFavorito: () => false },
+    // usePriceIndicator (called unconditionally by DetalhesCarro) reads carros.carros.
+    carros: { carros: [] },
   }),
 }));
 
@@ -30,6 +32,9 @@ jest.mock('../components/detalhes/FinanciamentoSeguroWidget', () => () => null);
 jest.mock('../components/pecas/CompatibleParts', () => () => null);
 jest.mock('../components/trust/VinCheckPanel', () => () => null);
 jest.mock('../components/admin/EditarCarroModal', () => () => null);
+// MarketWidget needs both useMarketStats (via useApp) and useCountry
+// (CountryProvider), neither mocked here — its own behavior isn't under test.
+jest.mock('../components/preco/MarketWidget', () => () => null);
 
 beforeAll(() => {
   class IntersectionObserverStub {

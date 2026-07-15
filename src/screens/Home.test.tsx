@@ -44,6 +44,8 @@ jest.mock('../providers/AppProvider', () => ({
     favoritos: { toggleFavorito: jest.fn(), isFavorito: () => false },
     carros: {
       loading: appState.loading,
+      // usePriceIndicator (called unconditionally by CarCard) reads carros.carros.
+      carros: appState.carrosFiltrados,
       carrosFiltrados: appState.carrosFiltrados,
       filtroAtivo: null,
       setFiltroAtivo: jest.fn(),

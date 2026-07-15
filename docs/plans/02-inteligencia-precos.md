@@ -3,6 +3,7 @@
 **Prioridade:** ALTA
 **Estimativa Total:** 15-20 dias de desenvolvimento
 **Impacto Principal:** Decisao de compra informada, diferenciacao competitiva, retencao
+**Status:** Implementado (parcial). Entregue: badge de preco de 5 niveis (excelente/bom/justo/acima/sobrevalorizado) nos cards e na ficha do anuncio, pagina `/avaliar-veiculo` (estimador com intervalo P25-P75), dashboard `/mercado` (estatisticas + distribuicao + top marcas). Alertas de queda de preco em favoritos foram entregues pelo Plano 3.1 (`functions/src/onListingPriceDrop.ts`, sistema unificado de `alertSubscriptions`) — a infraestrutura `savedSearches`/`useSavedSearches` que este plano tinha criado como placeholder nunca chegou a ter UI e foi removida em favor do sistema do Plano 3.1. Fica para o proximo ciclo: o cron que popula `priceSnapshots` para o grafico de tendencia historica (o componente `PriceChart` ja existe, so falta a fonte de dados).
 
 ---
 
@@ -139,7 +140,10 @@ interface PriceSnapshot {
 }
 ```
 
-#### Colecao `savedSearches` (nova, para alertas)
+#### Colecao `savedSearches` — OBSOLETO, ver nota de status no topo do ficheiro
+
+> Este design original foi implementado como placeholder (`savedSearches`/`useSavedSearches`) mas nunca teve UI. O Plano 3.1 entregou um sistema equivalente e mais geral (`alertSubscriptions`, tipo `filtro_salvo`), ja ligado a UI (`SaveAlertButton`, `AlertSubscriptionsList`) e a uma Cloud Function real. A colecao `savedSearches`, os tipos e as regras abaixo foram removidos do codigo; mantidos aqui apenas como registo historico do design original.
+
 ```typescript
 interface SavedSearch {
   id: string;
@@ -178,6 +182,7 @@ match /priceSnapshots/{snapshotId} {
   allow write: if isAdmin();  // Apenas admin ou Cloud Function cria snapshots
 }
 
+// savedSearches rule — obsoleto, ver nota acima; removido de firestore.rules.
 match /savedSearches/{searchId} {
   allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
   allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
@@ -428,9 +433,7 @@ TASKS — Implement in this order:
    - getCarrosSimilares(marca: string, anoMin: number, anoMax: number): Promise<Carro[]> — query by marca and year range from 'cars' collection where status == 'aprovado'
    - savePriceSnapshot(snapshot: Omit<PriceSnapshot, 'id'>): Promise<void>
    - getPriceSnapshots(marca: string, modelo?: string): Promise<PriceSnapshot[]>
-   - addSavedSearch(data: Omit<SavedSearch, 'id'>): Promise<string>
-   - getSavedSearches(uid: string): Promise<SavedSearch[]>
-   - deleteSavedSearch(id: string): Promise<void>
+   - addSavedSearch / getSavedSearches / deleteSavedSearch — OBSOLETO: substituidas por alertSubscriptions do Plano 3.1, ver nota no topo do ficheiro.
 
 5. HOOKS
    Create src/hooks/usePriceIndicator.ts:
@@ -451,9 +454,7 @@ TASKS — Implement in this order:
    - Returns { stats: MarketStats | null, loading: boolean }
    - Uses calculateMarketStats from priceUtils
 
-   Create src/hooks/useSavedSearches.ts:
-   - Takes uid
-   - Returns { searches: SavedSearch[], addSearch, removeSearch, loading }
+   useSavedSearches.ts — OBSOLETO: nunca teve UI, removido em favor do sistema de alertas do Plano 3.1 (useAlertSubscriptions).
 
 6. UI COMPONENTS
    Create src/components/precos/PriceIndicatorBadge.tsx:

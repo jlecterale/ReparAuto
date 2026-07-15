@@ -110,6 +110,7 @@ export interface Carro {
   visualizacoes?: number;
   contagemMensagens?: number;
   contagemFavoritos?: number;
+  priceIndicator?: 'excelente' | 'bom' | 'justo' | 'acima' | 'sobrevalorizado' | 'indisponivel';
   /** Where the listing came from (plan 24). Absent means created manually. */
   origem?: OrigemAnuncio;
   /** Source advert id (the URL ID token) — duplicate-import detection key. */

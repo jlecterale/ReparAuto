@@ -7,6 +7,8 @@ const mockToggleFavorito = jest.fn();
 jest.mock('../../providers/AppProvider', () => ({
   useApp: () => ({
     favoritos: { toggleFavorito: mockToggleFavorito, isFavorito: () => false },
+    // usePriceIndicator (called unconditionally by CarCard) reads carros.carros.
+    carros: { carros: [] },
   }),
 }));
 
