@@ -169,7 +169,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 bg-brand-50 text-brand-600 rounded-2xl flex items-center justify-center font-bold text-2xl border border-brand-100 shrink-0">
                   {oficina.logoUrl ? (
-                    <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-2xl" />
+                    <img src={oficina.logoUrl} alt={oficina.nome} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-2xl" />
                   ) : (
                     oficina.nome.substring(0, 2).toUpperCase()
                   )}
@@ -178,7 +178,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                   <h1 className="text-2xl font-black text-fg-strong tracking-tight">{oficina.nome}</h1>
                   <div className="flex items-center gap-1.5 mt-1.5 text-sm text-fg-subtle">
                     <MapPin size={16} className="text-neutral-400" />
-                    <span>{oficina.morada}, {oficina.localidade}, {oficina.distrito}</span>
+                    <span>{[oficina.morada, oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center text-amber-500">

@@ -8,8 +8,11 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { decidirVerificacao, getAllVerifications } from '@/lib/admin';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
+import { DOCUMENTO_LABELS } from '@/lib/verificationDocs';
 import { colors } from '@/theme/colors';
-import { TIPO_DOCUMENTO_LABELS, type Verification } from '@/types';
+import type { Verification } from '@/types';
 
 export default function AdminVerificacoesScreen() {
   const { isAdmin, user } = useAuth();
@@ -74,8 +77,10 @@ export default function AdminVerificacoesScreen() {
         return (
           <View className="mb-3 rounded-2xl bg-white p-4 shadow-sm">
             <View className="flex-row items-center justify-between">
-              <Text className="text-base font-bold text-fg-heading">{item.nome}</Text>
-              <View className="flex-row items-center rounded-full bg-primary-50 px-3 py-1">
+              <Text className="flex-1 text-base font-bold text-fg-heading" numberOfLines={1}>
+                {COUNTRY_INFO[docCountry(item)].flag} {item.nome}
+              </Text>
+              <View className="ml-2 flex-row items-center rounded-full bg-primary-50 px-3 py-1">
                 <Ionicons
                   name={item.tipo === 'profissional' ? 'briefcase-outline' : 'person-outline'}
                   size={13}
@@ -87,10 +92,18 @@ export default function AdminVerificacoesScreen() {
               </View>
             </View>
             <Text className="mt-1 text-sm text-fg-muted">{item.email}</Text>
-            {!!item.nif && <Text className="text-sm text-fg-muted">NIF: {item.nif}</Text>}
-            <Text className="mt-1 text-sm text-fg-muted">
-              Documento: {TIPO_DOCUMENTO_LABELS[item.tipoDocumento]}
-            </Text>
+            {!!item.nif && (
+              <Text className="text-sm text-fg-muted">
+                {term('taxIdLabel', docCountry(item))}: {item.nif}
+              </Text>
+            )}
+            {/* Legacy docs may lack tipoDocumento — guard and fall back to the
+                raw value, mirroring the web VerificationsQueue. */}
+            {!!item.tipoDocumento && (
+              <Text className="mt-1 text-sm text-fg-muted">
+                Documento: {DOCUMENTO_LABELS[item.tipoDocumento] || item.tipoDocumento}
+              </Text>
+            )}
 
             {item.documentoUrl || item.selfieUrl ? (
               <View className="mt-3 flex-row gap-3">

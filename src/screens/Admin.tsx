@@ -29,9 +29,13 @@ import {
   revokeUserPlan,
   getAdminDashboardStats,
   updateUserProfile,
+  setUserBanned,
+  eliminarDadosDoUtilizador,
   type PlanInfo,
   type AdminDashboardStats,
 } from '@/lib/db';
+import { pickChangedFields } from '@/lib/changedFields';
+import { filterByCountry } from '@/lib/country';
 import Button from '@/components/ui/Button';
 import UserTable from '@/components/admin/UserTable';
 import ListingsTable from '@/components/admin/ListingsTable';
@@ -55,6 +59,22 @@ import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 
 type TabAdmin = 'visao-geral' | 'utilizadores' | 'anuncios' | 'intencoes' | 'oficinas' | 'premium' | 'seguro-financiamento' | 'pendentes' | 'banners';
+
+// Per-market split for the overview cards (legacy docs without a country count as PT).
+function splitByMarket(...lists: Array<Array<{ country?: string | null }>>): { PT: number; BR: number } {
+  const all = lists.flat();
+  const pt = filterByCountry(all, 'PT').length;
+  return { PT: pt, BR: all.length - pt };
+}
+
+function MarketSplitLine({ split }: { split: { PT: number; BR: number } }) {
+  return (
+    <p className="text-[10px] font-semibold text-fg-muted mt-1">
+      <span aria-hidden="true">🇵🇹</span> {split.PT} <span className="text-fg-subtle">·</span>{' '}
+      <span aria-hidden="true">🇧🇷</span> {split.BR}
+    </p>
+  );
+}
 
 export default function Admin() {
   const { auth } = useApp();
@@ -207,6 +227,39 @@ export default function Admin() {
     }
   };
 
+  const handleBanUser = async (uid: string, banned: boolean, reason?: string) => {
+    try {
+      await setUserBanned(uid, banned, reason);
+      setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, banned } : u)));
+      const target = users.find((u) => u.uid === uid);
+      if (banned) {
+        if (target) {
+          await criarNotificacao(uid, 'info', 'Conta suspensa',
+            'A sua conta foi suspensa pela administração. Não é possível publicar anúncios nem enviar mensagens.' + (reason ? ` Motivo: ${reason}` : ''));
+        }
+        toast?.sucesso('Conta banida.');
+      } else {
+        if (target) {
+          await criarNotificacao(uid, 'info', 'Conta reativada',
+            'A sua conta foi reativada. Já pode voltar a publicar anúncios e enviar mensagens.');
+        }
+        toast?.sucesso('Conta reativada.');
+      }
+    } catch {
+      toast?.erro('Erro ao atualizar o estado da conta.');
+    }
+  };
+
+  const handleDeleteUser = async (uid: string) => {
+    try {
+      await eliminarDadosDoUtilizador(uid);
+      setUsers((prev) => prev.filter((u) => u.uid !== uid));
+      toast?.sucesso('Conta e anúncios eliminados.');
+    } catch {
+      toast?.erro('Erro ao eliminar a conta.');
+    }
+  };
+
   const handleDeleteCarro = async (id: string) => {
     try {
       await deleteCarro(id);
@@ -229,8 +282,12 @@ export default function Admin() {
 
   const handleUpdateCarro = async (id: string, dados: Record<string, unknown>) => {
     try {
-      await updateCarro(id, dados);
-      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, ...dados } as Carro : c)));
+      const original = carros.find((c) => c.id === id);
+      const changed = original ? pickChangedFields(original, dados) : dados;
+      if (Object.keys(changed).length > 0) {
+        await updateCarro(id, changed);
+      }
+      setCarros((prev) => prev.map((c) => (c.id === id ? { ...c, ...changed } as Carro : c)));
       toast?.sucesso('Carro atualizado.');
     } catch {
       toast?.erro('Erro ao atualizar carro.');
@@ -239,8 +296,12 @@ export default function Admin() {
 
   const handleUpdatePeca = async (id: string, dados: Record<string, unknown>) => {
     try {
-      await updatePeca(id, dados);
-      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, ...dados } as Peca : p)));
+      const original = pecas.find((p) => p.id === id);
+      const changed = original ? pickChangedFields(original, dados) : dados;
+      if (Object.keys(changed).length > 0) {
+        await updatePeca(id, changed);
+      }
+      setPecas((prev) => prev.map((p) => (p.id === id ? { ...p, ...changed } as Peca : p)));
       toast?.sucesso('Peça atualizada.');
     } catch {
       toast?.erro('Erro ao atualizar peça.');
@@ -766,23 +827,27 @@ export default function Admin() {
           {tab === 'visao-geral' && (
             <div className="space-y-6">
               
-              {/* Summary Cards with real totals */}
+              {/* Summary Cards with real totals + per-market (PT/BR) split */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
                   <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Utilizadores</span>
                   <p className="text-xl font-black text-pink-700 mt-0.5">{users.length}</p>
+                  <MarketSplitLine split={splitByMarket(users)} />
                 </div>
                 <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
                   <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Anúncios</span>
                   <p className="text-xl font-black text-amber-700 mt-0.5">{carros.length + pecas.length}</p>
+                  <MarketSplitLine split={splitByMarket(carros, pecas)} />
                 </div>
                 <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
                   <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Oficinas</span>
                   <p className="text-xl font-black text-blue-700 mt-0.5">{oficinasAdmin.length}</p>
+                  <MarketSplitLine split={splitByMarket(oficinasAdmin)} />
                 </div>
                 <div className="bg-white border border-neutral-200 rounded-xl p-3.5">
                   <span className="text-[9px] font-bold text-fg-muted uppercase tracking-wider">Intenções</span>
                   <p className="text-xl font-black text-purple-700 mt-0.5">{intencoesAdmin.length}</p>
+                  <MarketSplitLine split={splitByMarket(intencoesAdmin)} />
                 </div>
               </div>
 
@@ -991,6 +1056,8 @@ export default function Admin() {
                 onGrantPlan={handleGrantPlan}
                 onRevokePlan={handleRevokePlan}
                 onUpdateUserProfile={handleUpdateUserProfile}
+                onBanUser={handleBanUser}
+                onDeleteUser={handleDeleteUser}
               />
             </div>
           )}

@@ -1097,8 +1097,8 @@
     <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-19" id="tab-19" onclick="switchTab('19')" tabindex="-1">
       <span class="tab-num">&#10003;</span> App React Native <span class="priority-badge priority-implementado">FEITO</span>
     </button></li>
-    <li><button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-20" id="tab-20" onclick="switchTab('20')" tabindex="-1">
-      <span class="tab-num">20</span> Brasil <span class="priority-badge priority-alta">ALTA</span>
+    <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-20" id="tab-20" onclick="switchTab('20')" tabindex="-1">
+      <span class="tab-num">&#10003;</span> Brasil <span class="priority-badge priority-implementado">FEITO</span>
     </button></li>
     <li><button class="tab-btn implemented" role="tab" aria-selected="false" aria-controls="panel-21" id="tab-21" onclick="switchTab('21')" tabindex="-1">
       <span class="tab-num">&#10003;</span> Recorte de Fotos <span class="priority-badge priority-implementado">FEITO</span>
@@ -1248,7 +1248,7 @@
           <tr class="implemented"><td>17</td><td>Monetizacao B2B</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>14-20 dias</td><td>Receita recorrente (premium, impulsos)</td></tr>
           <tr><td>18</td><td>Integracao de APIs &amp; Parcerias</td><td><span class="priority-badge priority-media">MEDIA</span></td><td>15-20 dias</td><td>Dados externos e parcerias</td></tr>
           <tr class="implemented"><td>19</td><td>App React Native (iOS &amp; Android)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~12 semanas</td><td>Presenca nativa nas lojas</td></tr>
-          <tr><td>20</td><td>Expansao para o Brasil</td><td><span class="priority-badge priority-alta">ALTA</span></td><td>15-20 dias</td><td>Novo mercado de lancamento</td></tr>
+          <tr class="implemented"><td>20</td><td>Expansao para o Brasil</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>15-20 dias</td><td>Novo mercado de lancamento</td></tr>
           <tr class="implemented"><td>21</td><td>Recorte de Fotos nos Anuncios</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Fotos uniformes (4:3) em cards e galerias</td></tr>
           <tr class="implemented"><td>22</td><td>Campos e Filtros Adicionais (Carros)</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~4-6 dias</td><td>Anuncios mais completos e busca mais precisa</td></tr>
           <tr class="implemented"><td>23</td><td>Vista 360&deg; dos Veiculos</td><td><span class="priority-badge priority-implementado">FEITO</span></td><td>~3-4 dias</td><td>Rotacao interativa do veiculo, confianca do comprador</td></tr>
@@ -1517,6 +1517,7 @@ const planMeta = [
   { id:'12', title:'Internacionalizacao e SEO', shortName:'SEO', priority:'MEDIA', effort:'8-11 dias', value:'Alto/Muito Alto', quadrant:'Quick Wins + Estrategico', impact:'Trafego organico, visibilidade, compartilhamento' },
   { id:'20', title:'Testes Automatizados e TDD', shortName:'Testes/TDD', priority:'ALTA', implemented:false, effort:'8-12 dias', value:'Alto', quadrant:'Fundacao Tecnica', impact:'Prevencao de regressoes, refactors seguros, qualidade de codigo' },
   { id:'22', title:'Campos e Filtros Adicionais nos Anuncios de Carros', shortName:'Campos/Filtros', priority:'MEDIA', implemented:true, effort:'2-3 dias', value:'Medio-Alto', quadrant:'Quick Win', impact:'Anuncios mais completos (categoria, lugares, condicao...), pesquisa refinada, paridade Web+Mobile' },
+  { id:'25', title:'Campos de Anuncio em Paridade com a Standvirtual', shortName:'Campos Standvirtual', priority:'MEDIA', implemented:true, effort:'2-3 dias', value:'Medio-Alto', quadrant:'Quick Win', impact:'Ficha tecnica completa (versao, mes de matricula, origem, proprietarios, consumos, CO2, garantia, financiamento...), paridade Web+Mobile' },
 ];
 
 // ============================================================
@@ -2259,10 +2260,10 @@ const extraPlans = [
   },
   {
     id: '20', title: 'Expansao para o Brasil', priority: 'ALTA', effort: '~15-20 dias',
-    implemented: false, file: '20-expansao-brasil.html',
+    implemented: true, file: '20-expansao-brasil.html',
     impact: 'Novo mercado de lancamento (maior da America Latina)',
     summary: 'Localizacao PT-BR, moeda BRL e PIX, base de veiculos FIPE e arquitetura multi-pais (chave country) que isola Brasil e Portugal numa unica base.',
-    evidence: 'Em fila — plano recem-criado; sem implementacao no codigo.'
+    evidence: 'Entregue (web + mobile): chave country nos docs e queries, seletor de mercado com GeoIP, contas vinculadas a um unico mercado (seletor bloqueia ao autenticar; rules impedem anuncios fora do mercado da conta), precos em BRL por anuncio, validadores BR (DDD, CEP, CPF/CNPJ), catalogo FIPE no anunciar, estados/cidades BR, script de backfill e rules. Deferido: gateway PIX para planos premium (exige conta de pagamento e webhooks).'
   },
   {
     id: '21', title: 'Recorte de Fotos nos Anuncios (Web + Mobile)', priority: 'MEDIA', effort: '~3-4 dias',

@@ -9,12 +9,17 @@ import {
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
   EQUIPAMENTOS_CARRO,
+  ORIGENS_VEICULO,
+  TIPOS_ESTOFO,
+  MESES,
 } from '@/lib/constants';
 import { validarDadosVeiculo } from '@/lib/carSpec';
-import { toggleInList } from '@/lib/utils';
+import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import ToggleChip from '@/components/ui/ToggleChip';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 
@@ -34,12 +39,15 @@ interface CampoOptions {
   emptyOption?: boolean;
   /** Hard character cap. On numeric fields this is enforced live (type=number ignores maxLength). */
   maxLength?: number;
+  /** Decimal numeric field (e.g. l/100 km): allows digits + a single separator. */
+  decimal?: boolean;
 }
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
   // Maps a field id to its error message (empty/absent = valid).
   const [erros, setErros] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  const { country } = useCountry();
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -48,6 +56,10 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
 
   const toggleFeature = (feature: string) => {
     setDados((prev) => ({ ...prev, features: toggleInList(prev.features, feature) }));
+  };
+
+  const toggleBoolean = (campo: 'acceptsFinancing' | 'vatDeductible' | 'acceptsExchange') => {
+    setDados((prev) => ({ ...prev, [campo]: !prev[campo] }));
   };
 
   const validar = () => {
@@ -68,9 +80,9 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   const campo = (
     label: string,
     campoId: keyof CarroFormData,
-    { type = 'text', placeholder = '', options, required = true, emptyOption = true, maxLength }: CampoOptions = {},
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true, maxLength, decimal = false }: CampoOptions = {},
   ) => {
-    const numeric = type === 'number';
+    const numeric = type === 'number' || decimal;
     return (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">
@@ -92,13 +104,20 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           // Numeric fields render as a digit-only text input: type=number ignores
           // maxLength, so we cap length here and strip non-digits on input.
           type={numeric ? 'text' : type}
-          inputMode={numeric ? 'numeric' : undefined}
-          pattern={numeric ? '[0-9]*' : undefined}
+          inputMode={decimal ? 'decimal' : numeric ? 'numeric' : undefined}
+          pattern={decimal ? '[0-9.,]*' : numeric ? '[0-9]*' : undefined}
           placeholder={placeholder}
           maxLength={maxLength}
           value={(dados[campoId] as string) || ''}
           onChange={(e) =>
-            atualizar(campoId, numeric ? e.target.value.replace(/\D/g, '').slice(0, maxLength) : e.target.value)
+            atualizar(
+              campoId,
+              decimal
+                ? sanitizeDecimalInput(e.target.value).slice(0, maxLength)
+                : numeric
+                  ? e.target.value.replace(/\D/g, '').slice(0, maxLength)
+                  : e.target.value,
+            )
           }
           onBlur={() => validarCampo(campoId)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
@@ -128,6 +147,9 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         className="mb-4"
       />
       <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="col-span-2">
+          {campo('Versão', 'version', { placeholder: 'Ex: CDi Avantgarde', required: false, maxLength: 60 })}
+        </div>
         {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007', maxLength: 4 })}
         {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008', maxLength: 4 })}
         {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000', maxLength: 6 })}
@@ -145,10 +167,16 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             onChange={(d, c) => {
               atualizar('localizacaoDistrito', d);
               atualizar('localizacao', c);
+              atualizar('bairro', '');
             }}
             obrigatorio
           />
         </div>
+        {country === 'BR' && (
+          <div className="col-span-2">
+            {campo('Bairro', 'bairro', { placeholder: 'Ex: Bela Vista', required: false, maxLength: 60 })}
+          </div>
+        )}
       </div>
 
       {/* Advanced specs — collapsed by default to keep the core form short */}
@@ -168,6 +196,54 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false, maxLength: 4 })}
             {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false, maxLength: 5 })}
             {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
+            {campo('Nº de mudanças', 'gears', { type: 'number', placeholder: 'Ex: 6', required: false, maxLength: 2 })}
+            {/* Month of first registration — stored as 1–12, labelled by month name. */}
+            <div>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('firstRegistrationLabel', country)}</label>
+              <select
+                value={dados.firstRegistrationMonth || ''}
+                onChange={(e) => atualizar('firstRegistrationMonth', e.target.value)}
+                className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
+              >
+                <option value="">Indiferente</option>
+                {MESES.map((nome, i) => (
+                  <option key={nome} value={String(i + 1)}>{nome}</option>
+                ))}
+              </select>
+            </div>
+            {campo('Origem', 'origin', { options: ORIGENS_VEICULO, required: false })}
+            {campo('Proprietários anteriores', 'previousOwners', { type: 'number', placeholder: 'Ex: 1', required: false, maxLength: 2 })}
+            {campo('Garantia (meses)', 'warrantyMonths', { type: 'number', placeholder: 'Ex: 12', required: false, maxLength: 3 })}
+            {campo('Emissões CO₂ (g/km)', 'co2Emissions', { type: 'number', placeholder: 'Ex: 120', required: false, maxLength: 3 })}
+            {campo('Autonomia (km)', 'maxFuelRange', { type: 'number', placeholder: 'Ex: 900', required: false, maxLength: 4 })}
+            {campo('Estofos', 'upholstery', { options: TIPOS_ESTOFO, required: false })}
+            {campo('Nº de airbags', 'numberOfAirbags', { type: 'number', placeholder: 'Ex: 8', required: false, maxLength: 2 })}
+          </div>
+
+          {/* Fuel consumption (l/100 km) — decimals allowed. */}
+          <div>
+            <label className="block text-xs font-semibold text-fg-subtle mb-2">Consumo (l/100 km)</label>
+            <div className="grid grid-cols-3 gap-3">
+              {campo('Urbano', 'consumptionUrban', { decimal: true, placeholder: 'Ex: 7,2', required: false, maxLength: 5 })}
+              {campo('Extra-urbano', 'consumptionExtraUrban', { decimal: true, placeholder: 'Ex: 4,8', required: false, maxLength: 5 })}
+              {campo('Combinado', 'consumptionCombined', { decimal: true, placeholder: 'Ex: 5,6', required: false, maxLength: 5 })}
+            </div>
+          </div>
+
+          {/* Commercial conditions (Standvirtual accept_funding / tax_deductible / accept_returns). */}
+          <div>
+            <label className="block text-xs font-semibold text-fg-subtle mb-2">Condições comerciais</label>
+            <div className="flex flex-wrap gap-2">
+              <ToggleChip active={dados.acceptsFinancing} onClick={() => toggleBoolean('acceptsFinancing')}>
+                Aceita financiamento
+              </ToggleChip>
+              <ToggleChip active={dados.vatDeductible} onClick={() => toggleBoolean('vatDeductible')}>
+                IVA dedutível
+              </ToggleChip>
+              <ToggleChip active={dados.acceptsExchange} onClick={() => toggleBoolean('acceptsExchange')}>
+                Aceita retoma
+              </ToggleChip>
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>

@@ -42,7 +42,8 @@ const cspDirectives = [
   // image URL, so img-src cannot be a fixed host allowlist.
   "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com",
-  `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} ${GOOGLE_ADS_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org`,
+  // api.country.is: first-visit GeoIP market detection. parallelum.com.br / brasilapi.com.br: FIPE brands/models for Brazilian listings.
+  `connect-src 'self' ${FIREBASE_HOSTS.join(' ')} ${GOOGLE_ADS_HOSTS.join(' ')} wss://*.firebaseio.com https://*.tile.openstreetmap.org https://api.country.is https://parallelum.com.br https://brasilapi.com.br`,
   "frame-src 'self' https://*.firebaseapp.com https://apis.google.com https://www.youtube-nocookie.com https://www.youtube.com",
   "frame-ancestors 'none'",
   "form-action 'self'",

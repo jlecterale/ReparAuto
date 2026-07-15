@@ -12,6 +12,7 @@ import {
   getFavoritosRemoto,
   saveFavoritosRemoto,
 } from '@/lib/db';
+import { logAddFavorite } from '@/lib/analytics';
 import { trackPositiveAction } from '@/lib/appReview';
 import { carregarFavoritosLocal, salvarFavoritosLocal } from '@/lib/storage';
 import { useAuth } from './AuthContext';
@@ -74,7 +75,10 @@ export function FavoritosProvider({ children }: { children: React.ReactNode }) {
         const nova = existe ? atual.filter((x) => x !== id) : [...atual, id];
         // Fire-and-forget the counter bump; ignore permission/offline errors.
         bumpContador('cars', id, 'contagemFavoritos', existe ? -1 : 1).catch(() => {});
-        if (!existe) trackPositiveAction('add-favorite');
+        if (!existe) {
+          trackPositiveAction('add-favorite');
+          logAddFavorite(id);
+        }
         persistir(nova);
         return nova;
       });

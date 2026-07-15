@@ -7,10 +7,12 @@ import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
-import { parsePositiveInt } from '@/lib/utils';
+import { parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull } from '@/lib/utils';
 import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
-import { getCoordenadas } from '@/lib/geo';
+import { getCoordenadas, geocodeAddress } from '@/lib/geo';
+import { useCountry } from '@/providers/CountryProvider';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
+import { EMPTY_CARRO_FORM_DATA } from '@/lib/carFormDefaults';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
 import { useAdDraft } from '@/hooks/useAdDraft';
 import StepIndicator from '@/components/anunciar/StepIndicator';
@@ -28,41 +30,7 @@ import type { CarroFormData } from '@/types/carro';
 
 type CategoriaAnuncio = 'carro' | 'peca';
 
-const initialDados: CarroFormData = {
-  marca: '',
-  modelo: '',
-  anoFabricacao: '',
-  anoModelo: '',
-  km: '',
-  cor: '',
-  combustivel: 'Gasolina',
-  cambio: 'Manual',
-  portas: '',
-  bodyType: '',
-  seats: '',
-  condition: 'Usado',
-  power: '',
-  displacement: '',
-  traction: '',
-  features: [],
-  localizacao: '',
-  localizacaoDistrito: '',
-  preco: '',
-  descricao: '',
-  videoUrl: '',
-  estadoVeiculo: 'pronto',
-  rodando: 'sim',
-  inspecao: 'sim',
-  tiposManutencao: [],
-  orcamentoTexto: '',
-  incluirMecanicoNome: false,
-  incluirMecanicoTelefone: false,
-  mecanicoNome: '',
-  mecanicoTelefone: '',
-  vendedorWhatsApp: '',
-  vendedorTelefone: '',
-  vendedorEmail: '',
-};
+const initialDados: CarroFormData = EMPTY_CARRO_FORM_DATA;
 
 export default function Anunciar() {
   const router = useRouter();
@@ -71,6 +39,7 @@ export default function Anunciar() {
   const { publicarCarro } = carros;
   const { user } = auth;
   const toast = useToast();
+  const { country } = useCountry();
 
   // Onboarding deep-links here with ?tipo=carro|peca to skip the category step.
   const tipoParam = searchParams.get('tipo');
@@ -203,10 +172,14 @@ export default function Anunciar() {
 
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
+        country,
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
-        coordenadas: localizacao ? getCoordenadas(localizacao) : undefined,
+        bairro: country === 'BR' ? dados.bairro.trim() || undefined : undefined,
+        coordenadas: localizacao
+          ? (getCoordenadas(localizacao, country) ?? await geocodeAddress(localizacao, localizacaoDistrito ?? '', country) ?? undefined)
+          : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         photoAngles: photoAngles ?? undefined,
@@ -222,6 +195,24 @@ export default function Anunciar() {
         displacement: parsePositiveInt(dados.displacement) ?? undefined,
         traction: dados.traction || undefined,
         features: dados.features.length ? dados.features : undefined,
+        // Standvirtual-parity optional specs — strings/booleans coerced to the
+        // stored shape; empty/invalid drop to undefined (cleanUndefined strips them).
+        version: dados.version?.trim() || undefined,
+        firstRegistrationMonth: parsePositiveInt(dados.firstRegistrationMonth) ?? undefined,
+        origin: dados.origin || undefined,
+        previousOwners: parseNonNegativeInt(dados.previousOwners) ?? undefined,
+        gears: parsePositiveInt(dados.gears) ?? undefined,
+        co2Emissions: parseNonNegativeInt(dados.co2Emissions) ?? undefined,
+        maxFuelRange: parseNonNegativeInt(dados.maxFuelRange) ?? undefined,
+        consumptionUrban: parseDecimalOrNull(dados.consumptionUrban) ?? undefined,
+        consumptionExtraUrban: parseDecimalOrNull(dados.consumptionExtraUrban) ?? undefined,
+        consumptionCombined: parseDecimalOrNull(dados.consumptionCombined) ?? undefined,
+        upholstery: dados.upholstery || undefined,
+        numberOfAirbags: parseNonNegativeInt(dados.numberOfAirbags) ?? undefined,
+        warrantyMonths: parseNonNegativeInt(dados.warrantyMonths) ?? undefined,
+        acceptsFinancing: dados.acceptsFinancing || undefined,
+        vatDeductible: dados.vatDeductible || undefined,
+        acceptsExchange: dados.acceptsExchange || undefined,
         rodando: dados.rodando === 'sim',
         inspecao: dados.inspecao === 'sim',
         criador: user.email,

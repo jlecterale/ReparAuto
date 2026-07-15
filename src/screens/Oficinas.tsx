@@ -15,6 +15,7 @@ import { useApp } from '@/providers/AppProvider';
 import type { OficinaMecanico, EspecialidadeOficina } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
+import { useCountry } from '@/providers/CountryProvider';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 
@@ -28,22 +29,32 @@ export default function Oficinas() {
   const [busca, setBusca] = useState('');
   const [especialidade, setEspecialidade] = useState<EspecialidadeOficina | ''>('');
   const [distrito, setDistrito] = useState('');
+  const [bairro, setBairro] = useState('');
 
   const { distritos } = useDistritosConcelhos();
+  const { country } = useCountry();
+
+  // Only neighbourhoods that actually have workshops are offered (BR;
+  // marca-facet pattern).
+  const bairroOpts = [...new Set(listaOficinas.map((o) => o.bairro).filter((b): b is string => !!b))]
+    .sort((a, b) => a.localeCompare(b, 'pt'));
 
   const oficinasFiltradas = listaOficinas.filter((oficina) => {
-    const correspondeBusca = 
+    const correspondeBusca =
       oficina.nome.toLowerCase().includes(busca.toLowerCase()) ||
       oficina.descricao.toLowerCase().includes(busca.toLowerCase()) ||
       oficina.responsavel.toLowerCase().includes(busca.toLowerCase());
 
-    const correspondeEspecialidade = 
+    const correspondeEspecialidade =
       !especialidade || oficina.especialidades.includes(especialidade);
 
-    const correspondeDistrito = 
+    const correspondeDistrito =
       !distrito || oficina.distrito === distrito;
 
-    return correspondeBusca && correspondeEspecialidade && correspondeDistrito;
+    const correspondeBairro =
+      !bairro || (oficina.bairro ?? '').toLowerCase() === bairro.toLowerCase();
+
+    return correspondeBusca && correspondeEspecialidade && correspondeDistrito && correspondeBairro;
   });
 
   return (
@@ -137,13 +148,36 @@ export default function Oficinas() {
               </div>
             </div>
 
+            {/* Bairro Filter (BR) — only neighbourhoods with workshops */}
+            {country === 'BR' && bairroOpts.length > 0 && (
+              <div>
+                <label className="block text-xs font-bold text-fg-subtle mb-1.5 uppercase tracking-wider">
+                  Bairro
+                </label>
+                <div className="relative">
+                  <select
+                    value={bairro}
+                    onChange={(e) => setBairro(e.target.value)}
+                    className="w-full appearance-none bg-neutral-50 border border-neutral-200 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  >
+                    <option value="">Todos os bairros</option>
+                    {bairroOpts.map((b) => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
+                  </select>
+                  <CaretDown size={16} className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                </div>
+              </div>
+            )}
+
             {/* Clear Filters */}
-            {(busca || especialidade || distrito) && (
+            {(busca || especialidade || distrito || bairro) && (
               <button
                 onClick={() => {
                   setBusca('');
                   setEspecialidade('');
                   setDistrito('');
+                  setBairro('');
                 }}
                 className="w-full text-center py-2 text-xs font-semibold text-accent hover:text-accent-hover transition"
               >
@@ -221,7 +255,7 @@ export default function Oficinas() {
                     <div className="flex items-start gap-4 mb-3">
                       <div className="w-12 h-12 bg-brand-50 text-brand-600 rounded-xl flex items-center justify-center font-bold text-lg shrink-0 border border-brand-100">
                         {oficina.logoUrl ? (
-                          <img src={oficina.logoUrl} alt={oficina.nome} className="w-full h-full object-cover rounded-xl" />
+                          <img src={oficina.logoUrl} alt={oficina.nome} loading="lazy" decoding="async" className="w-full h-full object-cover rounded-xl" />
                         ) : (
                           oficina.nome.substring(0, 2).toUpperCase()
                         )}
@@ -232,7 +266,7 @@ export default function Oficinas() {
                         </h3>
                         <div className="flex items-center gap-1 mt-0.5 text-sm text-fg-subtle">
                           <MapPin size={14} className="text-neutral-400" />
-                          <span className="truncate">{oficina.localidade}, {oficina.distrito}</span>
+                          <span className="truncate">{[oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                         </div>
                       </div>
                     </div>

@@ -8,6 +8,7 @@
  * index is required.
  */
 import firestore from '@react-native-firebase/firestore';
+import { logSendMessage } from './analytics';
 import { db } from './firebase';
 import type { ListingType, Mensagem, Notificacao } from '@/types';
 
@@ -63,6 +64,8 @@ export async function enviarMensagem(p: EnviarMensagemParams): Promise<void> {
     lida: false,
     dataCriacao: firestore.FieldValue.serverTimestamp(),
   });
+
+  logSendMessage(p.listingType, p.listingId);
 
   // Bump the listing's message counter (best-effort; rules whitelist it).
   const colecao =

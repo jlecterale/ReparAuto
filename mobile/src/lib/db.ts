@@ -9,8 +9,10 @@ import firestore, {
   FirebaseFirestoreTypes,
 } from '@react-native-firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logPublishListing } from './analytics';
 import { db, storage } from './firebase';
-import type { Carro, Peca, Oficina, Usuario } from '@/types';
+import { getActiveCountry, getBindingCountry } from './country';
+import type { Carro, Peca, Oficina, Usuario, Verification, VerificationInput } from '@/types';
 
 /** Firestore rejects `undefined`; drop those keys before writing. */
 function cleanUndefined<T extends Record<string, unknown>>(obj: T): T {
@@ -34,6 +36,7 @@ const CARROS = 'cars';
 const PECAS = 'parts';
 const OFICINAS = 'services';
 const USERS = 'users';
+const VERIFICATIONS = 'verifications';
 
 type Snapshot = FirebaseFirestoreTypes.QuerySnapshot;
 type Doc = FirebaseFirestoreTypes.QueryDocumentSnapshot;
@@ -52,11 +55,6 @@ function byDataCriacaoDesc<T extends { dataCriacao?: FirebaseFirestoreTypes.Time
 }
 
 // ---------- Carros ----------
-export async function getCarros(): Promise<Carro[]> {
-  const snap = await db.collection(CARROS).where('status', '==', 'aprovado').get();
-  return mapDocs<Carro>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribeCarros(
   onData: (carros: Carro[]) => void,
   onError?: (err: Error) => void,
@@ -76,6 +74,17 @@ export async function getCarroById(id: string): Promise<Carro | null> {
 }
 
 /**
+ * File extension of a local picker/camera URI, query string stripped. Falls
+ * back to jpg for extension-less URIs (e.g. content:// providers) so the
+ * Storage path never embeds the raw URI and putFile still infers an image
+ * content type.
+ */
+function localImageExt(localUri: string): string {
+  const match = /\.([A-Za-z0-9]+)$/.exec(localUri.split('?')[0]);
+  return match ? match[1].toLowerCase() : 'jpg';
+}
+
+/**
  * Uploads a local image (file:// URI from the picker/camera) to
  * `ads/{uid}/...` and returns its download URL — same Storage layout the web
  * app uses, allowed by `storage.rules`.
@@ -85,8 +94,7 @@ export async function uploadAnuncioFoto(
   localUri: string,
   index: number,
 ): Promise<string> {
-  const ext = (localUri.split('.').pop() || 'jpg').split('?')[0].toLowerCase();
-  const ref = storage.ref(`ads/${uid}/${Date.now()}_${index}.${ext}`);
+  const ref = storage.ref(`ads/${uid}/${Date.now()}_${index}.${localImageExt(localUri)}`);
   await ref.putFile(localUri);
   return ref.getDownloadURL();
 }
@@ -108,20 +116,18 @@ export async function uploadFotoIfLocal(
 export async function addCarro(dados: Record<string, unknown>): Promise<string> {
   const docRef = await db.collection(CARROS).add(
     cleanUndefined({
+      // Stamp the active market; callers may override via `dados`.
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('carro', docRef.id);
   return docRef.id;
 }
 
 // ---------- Peças ----------
-export async function getPecas(): Promise<Peca[]> {
-  const snap = await db.collection(PECAS).where('status', '==', 'aprovado').get();
-  return mapDocs<Peca>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribePecas(
   onData: (pecas: Peca[]) => void,
   onError?: (err: Error) => void,
@@ -141,11 +147,6 @@ export async function getPecaById(id: string): Promise<Peca | null> {
 }
 
 // ---------- Oficinas ----------
-export async function getOficinas(): Promise<Oficina[]> {
-  const snap = await db.collection(OFICINAS).where('status', '==', 'aprovado').get();
-  return mapDocs<Oficina>(snap).sort(byDataCriacaoDesc);
-}
-
 export function subscribeOficinas(
   onData: (oficinas: Oficina[]) => void,
   onError?: (err: Error) => void,
@@ -168,11 +169,14 @@ export async function getOficinaById(id: string): Promise<Oficina | null> {
 export async function addPeca(dados: Record<string, unknown>): Promise<string> {
   const docRef = await db.collection(PECAS).add(
     cleanUndefined({
+      // Stamp the active market; callers may override via `dados`.
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('peca', docRef.id);
   return docRef.id;
 }
 
@@ -180,11 +184,14 @@ export async function addPeca(dados: Record<string, unknown>): Promise<string> {
 export async function addOficina(dados: Record<string, unknown>): Promise<string> {
   const docRef = await db.collection(OFICINAS).add(
     cleanUndefined({
+      // Stamp the active market; callers may override via `dados`.
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: firestore.FieldValue.serverTimestamp(),
     }),
   );
+  logPublishListing('oficina', docRef.id);
   return docRef.id;
 }
 
@@ -244,11 +251,19 @@ export async function createUserProfile(
   uid: string,
   data: Record<string, unknown>,
 ): Promise<void> {
+  // Accounts belong to one market, bound at signup. Await the first-launch
+  // resolution so a signup racing the AsyncStorage/GeoIP detection can't
+  // stamp the wrong market; an explicit caller value always wins.
+  const country = (data.country as string) ?? (await getBindingCountry());
   await db
     .collection(USERS)
     .doc(uid)
     .set(
-      { ...data, dataCriacao: firestore.FieldValue.serverTimestamp() },
+      {
+        ...data,
+        country,
+        dataCriacao: firestore.FieldValue.serverTimestamp(),
+      },
       { merge: true },
     );
 }
@@ -315,4 +330,54 @@ export async function registarVisualizacao(
   } catch {
     // view counting is non-critical; ignore failures.
   }
+}
+
+// ---------- Verificações ----------
+/**
+ * Uploads a verification image (document or selfie, local file:// URI) to
+ * `verifications/{uid}/...` — the owner-writable path in `storage.rules`
+ * (image only, 5MB max; readable by the owner and admins, wiped after the
+ * admin decision). File names are deterministic on purpose: `storage.rules`
+ * only lets admins delete under `verifications/`, so a submission that fails
+ * halfway must overwrite its own leftovers on retry instead of accumulating
+ * orphaned ID photos. Reports upload progress as a 0–1 fraction.
+ */
+export async function uploadVerificationImage(
+  uid: string,
+  localUri: string,
+  name: 'documento' | 'selfie',
+  onProgress?: (fraction: number) => void,
+): Promise<string> {
+  const ref = storage.ref(`verifications/${uid}/${name}.${localImageExt(localUri)}`);
+  const task = ref.putFile(localUri);
+  task.on('state_changed', (snap) => {
+    if (snap.totalBytes > 0) onProgress?.(snap.bytesTransferred / snap.totalBytes);
+  });
+  await task;
+  return ref.getDownloadURL();
+}
+
+/** Creates a verification request as `pendente` (an admin approves/rejects it). */
+export async function addVerification(data: VerificationInput): Promise<Verification> {
+  const docRef = await db.collection(VERIFICATIONS).add(
+    cleanUndefined({
+      ...data,
+      dataPedido: firestore.FieldValue.serverTimestamp(),
+    }),
+  );
+  return { id: docRef.id, ...data } as Verification;
+}
+
+/**
+ * The user's most recent verification request, or null. Filtering by own uid
+ * keeps the query provable against the `verifications` read rule; sorting
+ * stays in memory (no composite index), like every other list read here.
+ */
+export async function getVerificationByUid(uid: string): Promise<Verification | null> {
+  const snap = await db.collection(VERIFICATIONS).where('uid', '==', uid).get();
+  if (snap.empty) return null;
+  const [latest] = mapDocs<Verification>(snap).sort(
+    (a, b) => (b.dataPedido?.toMillis?.() ?? 0) - (a.dataPedido?.toMillis?.() ?? 0),
+  );
+  return latest;
 }

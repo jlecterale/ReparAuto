@@ -6,6 +6,8 @@
  * here, then `firestore.rules` re-assert the same bounds server-side — the
  * client is never the source of truth.
  */
+import { getActiveCountry } from '@/lib/country';
+import { formatPreco } from '@/lib/format';
 import type {
   AlertCriteria,
   AlertFiltros,
@@ -29,13 +31,6 @@ const CATEGORIA_LABELS: Record<CategoriaAlerta, string> = {
   carros: 'Carros',
   pecas: 'Peças',
   oficinas: 'Oficinas',
-};
-
-export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
-  mensagem: { inApp: true, push: true },
-  conta: { inApp: true, push: true },
-  alerta: { inApp: true, push: true },
-  preco: { inApp: true, push: true },
 };
 
 /** Collapses whitespace, strips control characters/angle brackets and caps the length. */
@@ -97,11 +92,14 @@ export function sanitizeAlertFiltros(raw: AlertFiltros): AlertFiltros {
 function defaultFilterAlertName(filters: AlertFiltros): string {
   const marcaModelo = [filters.marca, filters.modelo].filter(Boolean).join(' ');
   const local = filters.concelho || filters.distrito;
+  // Alerts are created signed in, so the active country is the account's
+  // market — its currency is the one the saved price bounds are in.
+  const country = getActiveCountry();
   const preco =
     filters.precoMax !== undefined
-      ? `até ${filters.precoMax.toLocaleString('pt-PT')} €`
+      ? `até ${formatPreco(filters.precoMax, country)}`
       : filters.precoMin !== undefined
-        ? `desde ${filters.precoMin.toLocaleString('pt-PT')} €`
+        ? `desde ${formatPreco(filters.precoMin, country)}`
         : undefined;
   const parts = [filters.texto, marcaModelo, local, preco].filter(Boolean) as string[];
   if (parts.length === 0) return 'Filtro guardado';

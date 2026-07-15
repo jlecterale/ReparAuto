@@ -57,6 +57,7 @@ if (!GOOGLE_IOS_URL_SCHEME) {
 const APS_ENVIRONMENT =
   process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
 
+
 // Microphone usage string shared by every plugin that can touch the mic. The
 // audio-ad assistant (plan 24) records spoken listing descriptions, so the
 // permission must exist — plugins must NOT pass `microphonePermission: false`,
@@ -64,8 +65,8 @@ const APS_ENVIRONMENT =
 // RECORD_AUDIO at manifest merge (Android), breaking expo-audio.
 const MICROPHONE_PERMISSION =
   'A RecarGarage usa o microfone apenas quando grava um áudio para descrever o seu anúncio.';
-const VERSION = '1.6.0';
-const BUILD_NUMBER = 60;
+const VERSION = '1.9.0';
+const BUILD_NUMBER = 90;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -148,6 +149,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-secure-store',
     'expo-apple-authentication',
     '@react-native-firebase/app',
+    '@react-native-firebase/analytics',
     '@react-native-firebase/auth',
     '@react-native-firebase/messaging',
     [

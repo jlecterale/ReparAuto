@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
 import { CAR_PRICE_MAX } from '@/lib/carSpec';
 import { isValidYoutubeUrl } from '@/lib/utils';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
@@ -20,6 +22,7 @@ interface StepPrecoProps {
 export default function StepPreco({ dados, setDados, onBack, onPublicar, carregando }: StepPrecoProps) {
   const [erros, setErros] = useState<Record<string, boolean>>({});
   const [telefoneDiferente, setTelefoneDiferente] = useState(false);
+  const { country } = useCountry();
 
   const atualizar = (campo: string, valor: unknown) => {
     setDados((prev) => {
@@ -309,7 +312,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
                 {dados.incluirMecanicoTelefone && (
                   <input
                     type="tel"
-                    placeholder="Telefone do mecânico"
+                    placeholder={`${term('phoneLabel', country)} do mecânico`}
                     value={dados.mecanicoTelefone || ''}
                     onChange={(e) => atualizar('mecanicoTelefone', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg p-2 text-xs focus:outline-none focus:border-accent"
@@ -328,7 +331,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
         <div className="space-y-2">
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-1">
-              WhatsApp / Telefone <span className="text-green-600">(recomendado)</span>
+              WhatsApp / {term('phoneLabel', country)} <span className="text-green-600">(recomendado)</span>
             </label>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-fg-muted">+</span>
@@ -354,11 +357,11 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
               }}
               className="rounded text-accent focus:ring-accent"
             />
-            Telefone diferente do WhatsApp
+            {term('phoneLabel', country)} diferente do WhatsApp
           </label>
           {telefoneDiferente && (
             <div>
-              <label className="block text-xs font-semibold text-fg-subtle mb-1">Telefone</label>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('phoneLabel', country)}</label>
               <input
                 type="tel"
                 placeholder="912 345 678"

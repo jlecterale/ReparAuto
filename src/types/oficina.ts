@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type EspecialidadeOficina =
   | 'mecanica_convencional'
@@ -38,7 +39,11 @@ export interface OficinaMecanico {
   website?: string;
   distrito: string;
   localidade: string;
+  /** Neighbourhood — Brazilian workshops only ("bairro"); unused for PT. */
+  bairro?: string;
   morada: string;
+  /** Market the workshop belongs to (missing on legacy docs = PT). */
+  country?: Country;
   coordenadas?: {
     latitude: number;
     longitude: number;

@@ -28,7 +28,24 @@ export const CAR_POWER_MAX = 2000; // cv
 export const CAR_DISPLACEMENT_MAX = 10_000; // cc
 export const CAR_PRICE_MAX = 10_000_000; // €
 
+// Bounds for the Standvirtual-parity optional specs (all validated only when
+// the user fills them in). Kept deliberately generous so real listings never
+// trip them, while still blocking absurd input.
+export const CAR_GEARS_MAX = 12; // forward gears
+export const CAR_PREVIOUS_OWNERS_MAX = 50;
+export const CAR_CO2_MAX = 999; // g/km
+export const CAR_RANGE_MAX = 2000; // km (max fuel/electric range)
+export const CAR_AIRBAGS_MAX = 20;
+export const CAR_WARRANTY_MONTHS_MAX = 120; // 10 years
+export const CAR_CONSUMPTION_MAX = 50; // l/100 km (decimals allowed)
+export const CAR_VERSION_MAX = 60; // characters (trim / variant text)
+
 const REQUIRED = 'Este campo é obrigatório.';
+
+/** Parses a PT-style decimal string ("5,6" or "5.6") to a number (NaN if invalid). */
+export function parseDecimalPt(raw: string): number {
+  return Number(String(raw).trim().replace(',', '.'));
+}
 
 /**
  * Validates the required/numeric fields of the car-listing form and returns a
@@ -47,6 +64,17 @@ export function validarDadosVeiculo(dados: {
   seats?: string;
   power?: string;
   displacement?: string;
+  version?: string;
+  gears?: string;
+  previousOwners?: string;
+  co2Emissions?: string;
+  maxFuelRange?: string;
+  numberOfAirbags?: string;
+  warrantyMonths?: string;
+  firstRegistrationMonth?: string;
+  consumptionUrban?: string;
+  consumptionExtraUrban?: string;
+  consumptionCombined?: string;
 }): Record<string, string> {
   const erros: Record<string, string> = {};
   const yearMax = carYearMax();
@@ -88,7 +116,7 @@ export function validarDadosVeiculo(dados: {
 
   // Optional fields: only validated once the user fills them in.
   const validarOpcional = (
-    campo: 'seats' | 'power' | 'displacement',
+    campo: string,
     raw: string | undefined,
     min: number,
     max: number,
@@ -102,6 +130,33 @@ export function validarDadosVeiculo(dados: {
   validarOpcional('seats', dados.seats, CAR_SEATS_MIN, seatsMax, `Lugares deve estar entre ${CAR_SEATS_MIN} e ${seatsMax}.`);
   validarOpcional('power', dados.power, 1, CAR_POWER_MAX, `Potência deve estar entre 1 e ${CAR_POWER_MAX} cv.`);
   validarOpcional('displacement', dados.displacement, 1, CAR_DISPLACEMENT_MAX, `Cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`);
+
+  // Standvirtual-parity optional specs — same "validate only when filled" rule.
+  validarOpcional('gears', dados.gears, 1, CAR_GEARS_MAX, `Mudanças deve estar entre 1 e ${CAR_GEARS_MAX}.`);
+  validarOpcional('previousOwners', dados.previousOwners, 0, CAR_PREVIOUS_OWNERS_MAX, `Proprietários deve estar entre 0 e ${CAR_PREVIOUS_OWNERS_MAX}.`);
+  validarOpcional('co2Emissions', dados.co2Emissions, 0, CAR_CO2_MAX, `Emissões de CO₂ deve estar entre 0 e ${CAR_CO2_MAX} g/km.`);
+  validarOpcional('maxFuelRange', dados.maxFuelRange, 0, CAR_RANGE_MAX, `Autonomia deve estar entre 0 e ${CAR_RANGE_MAX} km.`);
+  validarOpcional('numberOfAirbags', dados.numberOfAirbags, 0, CAR_AIRBAGS_MAX, `Airbags deve estar entre 0 e ${CAR_AIRBAGS_MAX}.`);
+  validarOpcional('warrantyMonths', dados.warrantyMonths, 0, CAR_WARRANTY_MONTHS_MAX, `Garantia deve estar entre 0 e ${CAR_WARRANTY_MONTHS_MAX} meses.`);
+  validarOpcional('firstRegistrationMonth', dados.firstRegistrationMonth, 1, 12, 'Mês deve estar entre 1 e 12.');
+
+  // Fuel consumption is a decimal (l/100 km) — validated without the integer rule.
+  const validarConsumo = (campo: 'consumptionUrban' | 'consumptionExtraUrban' | 'consumptionCombined', raw?: string) => {
+    if (!raw) return;
+    const n = parseDecimalPt(raw);
+    if (!Number.isFinite(n) || n < 0 || n > CAR_CONSUMPTION_MAX) {
+      erros[campo] = `Consumo deve estar entre 0 e ${CAR_CONSUMPTION_MAX} l/100 km.`;
+    }
+  };
+  validarConsumo('consumptionUrban', dados.consumptionUrban);
+  validarConsumo('consumptionExtraUrban', dados.consumptionExtraUrban);
+  validarConsumo('consumptionCombined', dados.consumptionCombined);
+
+  // Version is free text — cap its length (the enum-backed fields are already
+  // bounded by their <select>, and booleans are inherently bounded).
+  if (dados.version && dados.version.trim().length > CAR_VERSION_MAX) {
+    erros.version = `Versão deve ter no máximo ${CAR_VERSION_MAX} caracteres.`;
+  }
 
   return erros;
 }

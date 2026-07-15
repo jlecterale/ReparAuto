@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,15 +13,15 @@ import { CarCard } from '@/components/CarCard';
 import { useCarros } from '@/hooks/useCarros';
 import { useCarFilters, type QuickChip, type Ordenar } from '@/hooks/useCarFilters';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useCountry } from '@/context/CountryContext';
 import { useNotificacoes } from '@/context/NotificacoesContext';
+import { QUICK_PRICE_BANDS } from '@/lib/constants';
+import { formatPreco } from '@/lib/format';
 import { colors } from '@/theme/colors';
 
-const FILTROS: ChipOption<QuickChip>[] = [
-  { value: 'todos', label: 'Todos' },
-  { value: 'ate1000', label: 'Até €1.000' },
-  { value: 'ate5000', label: 'Até €5.000' },
-  { value: 'reparar', label: 'Para reparar' },
-];
+// Module-scope so the memoized CarCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const openDetalhes = (id: string) => router.push(`/detalhes/${id}`);
 
 const SORT_OPCOES: SortOption<Ordenar>[] = [
   { value: 'relevancia', label: 'Mais recentes', icon: 'sparkles-outline' },
@@ -33,6 +33,17 @@ export default function HomeScreen() {
   const { carros, loading, error } = useCarros();
   const requireAuth = useRequireAuth();
   const { naoLidas } = useNotificacoes();
+  const { country } = useCountry();
+  // Quick chips follow the active market: EUR bands for PT, BRL bands for BR.
+  const filtros = useMemo<ChipOption<QuickChip>[]>(() => {
+    const bands = QUICK_PRICE_BANDS[country];
+    return [
+      { value: 'todos', label: 'Todos' },
+      { value: 'priceLow', label: `Até ${formatPreco(bands.low, country)}` },
+      { value: 'priceMid', label: `Até ${formatPreco(bands.mid, country)}` },
+      { value: 'reparar', label: 'Para reparar' },
+    ];
+  }, [country]);
   const {
     busca,
     setBusca,
@@ -47,6 +58,7 @@ export default function HomeScreen() {
     filtrados,
     marcaOpts,
     modeloOpts,
+    bairroOpts,
   } = useCarFilters(carros);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -98,7 +110,7 @@ export default function HomeScreen() {
         sortActive={ordenar !== 'relevancia'}
         onOpenSort={() => setSortOpen(true)}
       />
-      <FilterChips options={FILTROS} selected={chip} onSelect={setChip} />
+      <FilterChips options={filtros} selected={chip} onSelect={setChip} />
 
       {loading ? (
         <View className="flex-1 items-center justify-center">
@@ -115,9 +127,7 @@ export default function HomeScreen() {
           data={filtrados}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
-          renderItem={({ item }) => (
-            <CarCard carro={item} onPress={(id) => router.push(`/detalhes/${id}`)} />
-          )}
+          renderItem={({ item }) => <CarCard carro={item} onPress={openDetalhes} />}
           ListEmptyComponent={
             <EmptyState
               icon="car-outline"
@@ -143,6 +153,7 @@ export default function HomeScreen() {
         resultCount={filtrados.length}
         marcaOpts={marcaOpts}
         modeloOpts={modeloOpts}
+        bairroOpts={bairroOpts}
       />
       <SortSheet
         visible={sortOpen}

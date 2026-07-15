@@ -1,9 +1,9 @@
-// Listing option lists shared by the forms, filters and the audio-ad
-// assistant. Kept in a dependency-light module (like carSpec.ts) so
-// server-side code — e.g. app/api/listing-from-audio — can import them
-// without dragging UI-only dependencies (Phosphor icons) into the bundle.
-// `src/lib/constants.ts` re-exports everything here; client code can keep
-// importing from either module.
+/**
+ * Pure listing data/limits shared by client screens AND server code (API
+ * routes). Kept icon-free on purpose: constants.ts imports Phosphor icons,
+ * which cannot be evaluated inside route handlers — server modules import
+ * from here, constants.ts re-exports for the existing client call sites.
+ */
 
 import type { BodyType, Condition, Traction } from '@/types/carro';
 
@@ -12,6 +12,10 @@ export const TIPOS_COMBUSTIVEL = [
 ];
 
 export const TIPOS_CAMBIO = ['Manual', 'Automático', 'CVT'];
+
+export const MAX_FOTOS_CARRO = 20;
+export const MAX_FOTO_SIZE_MB = 10;
+export const MAX_FOTO_SIZE_BYTES = MAX_FOTO_SIZE_MB * 1024 * 1024;
 
 // Body type / category (carroçaria). A single Portuguese enum serves both the PT
 // and BR markets — e.g. "Carrinha"/"Perua" and "Pick-up"/"Picape" are the same
