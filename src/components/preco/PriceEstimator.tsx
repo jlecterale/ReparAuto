@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Info, MagnifyingGlass } from '@phosphor-icons/react';
 import usePriceEstimate from '@/hooks/usePriceEstimate';
 import { formatarPreco } from '@/lib/utils';
+import { useCountry } from '@/providers/CountryProvider';
 import { PRICE_DISCLAIMERS, PRICE_THRESHOLDS, TIPOS_CAMBIO, TIPOS_COMBUSTIVEL } from '@/lib/constants';
 import Alert from '@/components/ui/Alert';
 import BrandModelSelect from '@/components/preco/BrandModelSelect';
@@ -11,6 +12,7 @@ import BrandModelSelect from '@/components/preco/BrandModelSelect';
 const ANO_ATUAL = new Date().getFullYear();
 
 export default function PriceEstimator() {
+  const { country } = useCountry();
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [ano, setAno] = useState<string>('');
@@ -26,6 +28,7 @@ export default function PriceEstimator() {
         km: km ? Number(km) : undefined,
         combustivel: combustivel || undefined,
         cambio: cambio || undefined,
+        country,
       }
     : null;
 
@@ -129,10 +132,10 @@ export default function PriceEstimator() {
           <div className="bg-primary-50 border border-primary-100 rounded-xl p-5 text-center">
             <p className="text-xs text-fg-muted mb-2">Intervalo de mercado</p>
             <p className="text-2xl sm:text-3xl font-extrabold text-accent leading-tight">
-              {formatarPreco(estimate.rangeMin)} – {formatarPreco(estimate.rangeMax)}
+              {formatarPreco(estimate.rangeMin, country)} – {formatarPreco(estimate.rangeMax, country)}
             </p>
             <p className="text-xs text-fg-muted mt-3">
-              Estimativa central: <strong className="text-fg-strong">{formatarPreco(estimate.estimate)}</strong>
+              Estimativa central: <strong className="text-fg-strong">{formatarPreco(estimate.estimate, country)}</strong>
             </p>
             <div className="mt-3 flex items-center justify-center gap-2 text-[11px] flex-wrap">
               <span className={`px-2 py-1 rounded-full border ${confidenceColor}`}>
@@ -149,19 +152,19 @@ export default function PriceEstimator() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 text-center text-xs">
               <div className="bg-neutral-50 rounded-lg p-2">
                 <p className="text-[10px] text-fg-muted">Mínimo</p>
-                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.min)}</p>
+                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.min, country)}</p>
               </div>
               <div className="bg-neutral-50 rounded-lg p-2">
                 <p className="text-[10px] text-fg-muted">Mediana</p>
-                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.median)}</p>
+                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.median, country)}</p>
               </div>
               <div className="bg-neutral-50 rounded-lg p-2">
                 <p className="text-[10px] text-fg-muted">Média</p>
-                <p className="font-bold text-fg-strong">{formatarPreco(Math.round(estimate.stats.mean))}</p>
+                <p className="font-bold text-fg-strong">{formatarPreco(Math.round(estimate.stats.mean), country)}</p>
               </div>
               <div className="bg-neutral-50 rounded-lg p-2">
                 <p className="text-[10px] text-fg-muted">Máximo</p>
-                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.max)}</p>
+                <p className="font-bold text-fg-strong">{formatarPreco(estimate.stats.max, country)}</p>
               </div>
             </div>
           )}

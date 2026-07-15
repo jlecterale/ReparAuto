@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Camera, X, Check, ArrowCounterClockwise, Warning } from '@phosphor-icons/react';
+import { centerCropRect, dataUrlToFile } from '@/lib/cropImage';
 import Button from './Button';
 
 interface Props {
@@ -9,30 +10,44 @@ interface Props {
   onClose: () => void;
   facingMode?: 'user' | 'environment';
   label?: string;
+  /** Replaces the default "Alinhar no centro" guide (e.g. the 360 angle frame). */
+  overlay?: React.ReactNode;
+  /** Center-crop the captured photo to this aspect ratio (width / height). */
+  cropAspect?: number;
+  /** Keep the camera open after onCapture (multi-shot flows like guided 360). */
+  keepOpenAfterCapture?: boolean;
 }
 
-export default function CameraCapture({ onCapture, onClose, facingMode = 'environment', label }: Props) {
+export default function CameraCapture({
+  onCapture,
+  onClose,
+  facingMode = 'environment',
+  label,
+  overlay,
+  cropAspect,
+  keepOpenAfterCapture = false,
+}: Props) {
   const [permissionState, setPermissionState] = useState<'prompt' | 'granted' | 'denied'>('prompt');
-  const [stream, setStream] = useState<MediaStream | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [currentFacingMode, setCurrentFacingMode] = useState<'user' | 'environment'>(facingMode);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // Ref (not state) so camera toggles and the unmount cleanup always see the
+  // live stream instead of a stale closure.
+  const streamRef = useRef<MediaStream | null>(null);
 
   const startCamera = async (mode: 'user' | 'environment') => {
-    // Stop any existing stream
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-    }
-    
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+
     try {
       setPermissionState('prompt');
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: mode, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       });
-      setStream(newStream);
+      streamRef.current = newStream;
       setPermissionState('granted');
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
@@ -46,11 +61,20 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
   useEffect(() => {
     startCamera(currentFacingMode);
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFacingMode]);
+
+  // The <video> unmounts while a capture is being reviewed (the preview <img>
+  // replaces it) and on the permission screens — reattach the stream whenever
+  // it comes back, or multi-shot flows go black after the first photo.
+  useEffect(() => {
+    if (permissionState === 'granted' && !capturedDataUrl && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [permissionState, capturedDataUrl]);
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -58,20 +82,26 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
+        // Center-crop the source frame to cropAspect (when set) so the saved
+        // photo matches the on-screen guide frame.
+        const src =
+          cropAspect && video.videoWidth > 0 && video.videoHeight > 0
+            ? centerCropRect(video.videoWidth, video.videoHeight, cropAspect)
+            : { x: 0, y: 0, width: video.videoWidth, height: video.videoHeight };
+        canvas.width = src.width;
+        canvas.height = src.height;
+
         // If front camera is active, flip horizontally to match preview mirror effect
         if (currentFacingMode === 'user') {
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
         }
-        
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
+
+        ctx.drawImage(video, src.x, src.y, src.width, src.height, 0, 0, canvas.width, canvas.height);
+
         // Reset scale/translate just in case
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        
+
         const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
         setCapturedDataUrl(dataUrl);
       }
@@ -80,13 +110,8 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
 
   const handleUsePhoto = () => {
     if (capturedDataUrl) {
-      // Convert dataUrl to File object
-      fetch(capturedDataUrl)
-        .then((res) => res.blob())
-        .then((blob) => {
-          const file = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' });
-          onCapture(file);
-        });
+      onCapture(dataUrlToFile(capturedDataUrl, `camera_${Date.now()}.jpg`));
+      if (keepOpenAfterCapture) setCapturedDataUrl(null);
     }
   };
 
@@ -128,28 +153,38 @@ export default function CameraCapture({ onCapture, onClose, facingMode = 'enviro
             </div>
           )}
 
+          {/* With cropAspect the preview box keeps that exact aspect so the
+              guide overlay outlines precisely what gets saved. */}
           {permissionState === 'granted' && !capturedDataUrl && (
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`w-full h-full object-cover ${currentFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+              style={cropAspect ? { aspectRatio: cropAspect } : undefined}
+              className={`w-full object-cover ${cropAspect ? 'max-h-full' : 'h-full'} ${currentFacingMode === 'user' ? 'scale-x-[-1]' : ''}`}
             />
           )}
 
           {capturedDataUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={capturedDataUrl} alt="Captura" className="w-full h-full object-cover" />
+            <img
+              src={capturedDataUrl}
+              alt="Captura"
+              style={cropAspect ? { aspectRatio: cropAspect } : undefined}
+              className={`w-full object-cover ${cropAspect ? 'max-h-full' : 'h-full'}`}
+            />
           )}
 
           {/* Guide Overlay */}
           {permissionState === 'granted' && !capturedDataUrl && (
-            <div className="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none m-8 rounded-xl flex items-center justify-center">
-              <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider bg-black/40 px-2.5 py-1 rounded">
-                Alinhar no centro
+            overlay ?? (
+              <div className="absolute inset-0 border-2 border-dashed border-white/20 pointer-events-none m-8 rounded-xl flex items-center justify-center">
+                <div className="text-white/40 text-[10px] font-bold uppercase tracking-wider bg-black/40 px-2.5 py-1 rounded">
+                  Alinhar no centro
+                </div>
               </div>
-            </div>
+            )
           )}
         </div>
 

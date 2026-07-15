@@ -103,7 +103,7 @@ When asked to investigate a feature, scope a change, or generate a plan, **do on
 
 ### 2. Plans
 
-Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for full written analysis, optionally paired with a self-contained interactive HTML page (`NN-<slug>.html`) that visually summarizes the proposal. Each plan should cover: context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), commit sequence, edge cases, and verification steps.
+Plans live in `docs/plans/` — **always authored as a self-contained interactive HTML page (`NN-<slug>.html`), never as a `.md` file.** The HTML page carries the full written analysis (not just a visual summary): it should cover context/what it solves, competitive benchmark, user stories, scope (types/db/UI/rules changes), commit sequence, edge cases, and verification steps. Match the layout of the existing HTML plans (`docs/plans/20-expansao-brasil.html`, `24-importacao-anuncios-standvirtual.html`): Tailwind CDN + the dark glass theme, header, metrics strip, numbered sections, and a sidebar (benchmark / scope / risks / next steps). Legacy plans still exist as `.md` — leave them as-is, but every **new** plan is `.html`.
 
 - **Number new plans sequentially** (continue from the highest existing `NN`).
 - **Register the plan** in the `plans` array in `docs/plans/index.html` (`id`, `title`, `priority`, `implemented`, `effort`, …) so the roadmap dashboard picks it up.
@@ -113,11 +113,19 @@ Plans live in `docs/plans/` — numbered Markdown files (`NN-<slug>.md`) for ful
 
 New interfaces must follow modern UI/UX standards: visual feedback, micro-interactions, accessibility (WCAG), responsiveness, and consistency with the existing design system. Use the `frontend-design` skill (semantic Tailwind tokens, shared `src/components/ui/` primitives) for any UI work.
 
-### 4. Closing out a plan (after it ships)
+### 4. User guides for new features (`docs/guias` → `/guias`)
+
+For every new user-facing feature, **if relevant, write a companion guide** in the `/guias` section (`src/data/guias.ts`, rendered by `app/guias/page.tsx` and `app/guias/[slug]/page.tsx`). A guide is relevant when the feature adds a new user workflow, decision point, or "how do I…" moment (e.g., comparing vehicles, checking a seller's verification, using a new filter, a new financing/insurance flow). Skip it for internal/admin-only tooling, infra/i18n plumbing, or minor UI tweaks with no new behavior to explain.
+
+- Add an entry to the `GUIDES` array following the existing `Guide` shape (`slug`, `title`, `description`, `category`, `readingMinutes`, `updatedAt`, `intro`, `sections`) — PT-PT content, English identifiers, no mention of "ReparAuto".
+- It must pass `src/data/guias.test.ts` (unique url-safe slug, description within SEO bounds, valid category, non-empty sections, no internal brand name leakage).
+- The index page, per-guide `generateMetadata`/JSON-LD, and `app/sitemap.ts` pick up new entries automatically — no extra wiring needed.
+
+### 5. Closing out a plan (after it ships)
 
 A plan isn't done until the roadmap says so. **When the implementing work lands, mark the plan shipped in the same pass:** flip its `implemented` flag (and any status badge) in the `docs/plans/index.html` `plans` registry, noting anything deliberately deferred. Commit it alongside (or right after) the feature, e.g. `docs: mark plan NN (<feature>) as shipped`.
 
-### 5. Pre-PR / pre-completion review checklist
+### 6. Pre-PR / pre-completion review checklist
 
 Before opening a PR or marking a task done, **always do a self-review pass** — go through every item:
 
@@ -130,8 +138,17 @@ Before opening a PR or marking a task done, **always do a self-review pass** —
 - **Firestore-rules provability** — any new query is provable against `firestore.rules` (rules are not filters); cross-doc counter bumps need an explicit `affectedKeys` exception.
 - **Tests** — written test-first for new/changed logic; `npm test` green; new behavior has a test that would fail without the change.
 - **Type safety** — run `npx tsc --noEmit` and `npm run build`; fix every error before reporting done.
+- **Risk analysis** — think through what could break: other screens/hooks/components consuming the same data or component, Firestore rules/queries, realtime subscriptions, SEO/metadata, other routes/locales. This feeds the PR description (see **PR description requirements** below).
 
 Only after this pass is clean should you open the PR (when the user asks) or report the task complete.
+
+### 7. PR description requirements
+
+Every PR must include, in **português do Brasil**, regardless of the language used in code/commits:
+
+- **Descrição em pt-BR** — resumo do que mudou e por quê.
+- **"O que pode quebrar"** — seção explícita com a análise de risco do item acima: efeitos colaterais prováveis em outras telas/hooks/componentes, regras do Firestore, subscriptions, SEO, etc.
+- **"Como testar"** — passo a passo numerado e reproduzível para validação manual, cobrindo caminho feliz e casos de borda.
 
 ## Conventions
 

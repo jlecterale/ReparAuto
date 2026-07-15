@@ -1,4 +1,5 @@
 import { PRICE_THRESHOLDS } from '@/lib/constants';
+import { docCountry, type Country } from '@/lib/country';
 import type { Carro } from '@/types/carro';
 import type {
   MarketStats,
@@ -163,7 +164,7 @@ export function indexCarrosByMarca(carros: Carro[]): Map<string, Carro[]> {
 
 export function filtrarCarrosSimilares(
   todos: Carro[],
-  criterios: { marca: string; modelo: string; ano?: number; excludeId?: string },
+  criterios: { marca: string; modelo: string; ano?: number; excludeId?: string; country?: Country },
 ): Carro[] {
   const marcaNorm = normalizeMarca(criterios.marca);
   if (!marcaNorm || !criterios.modelo) return [];
@@ -178,6 +179,9 @@ export function filtrarCarrosSimilares(
     // from a working car of the same model — including them would drag the
     // median toward salvage prices instead of market value.
     if (c.condition === 'Para peças') return false;
+    // Cross-market comps are meaningless — EUR and BRL prices are compared as
+    // plain numbers downstream, so mixing them produces a nonsense indicator.
+    if (criterios.country && docCountry(c) !== criterios.country) return false;
     if (criterios.ano && c.anoFabricacao) {
       const diff = Math.abs(c.anoFabricacao - criterios.ano);
       if (diff > PRICE_THRESHOLDS.similarYearRange) return false;
@@ -207,6 +211,7 @@ export function calculatePriceEstimate(
     marca: input.marca,
     modelo: input.modelo,
     ano: input.ano,
+    country: input.country,
   });
 
   const stats = calculateMarketStats(similares.map((c) => c.preco));
@@ -255,6 +260,9 @@ export function calculatePriceEstimate(
   };
 }
 
+// Labels are plain numbers — currency-agnostic on purpose, since these buckets
+// are computed from a single-market price array. The caller (PriceDistribution)
+// formats the min/max with the active market's currency.
 export function priceDistributionBuckets(
   precos: number[],
   bucketCount = 8,
@@ -264,14 +272,14 @@ export function priceDistributionBuckets(
   const min = sorted[0];
   const max = sorted[sorted.length - 1];
   if (min === max) {
-    return [{ label: `${min}€`, min, max, count: sorted.length }];
+    return [{ label: `${min}`, min, max, count: sorted.length }];
   }
   const step = (max - min) / bucketCount;
   const buckets = Array.from({ length: bucketCount }, (_, i) => {
     const bMin = Math.round(min + step * i);
     const bMax = Math.round(min + step * (i + 1));
     return {
-      label: `${bMin}–${bMax}€`,
+      label: `${bMin}–${bMax}`,
       min: bMin,
       max: bMax,
       count: 0,

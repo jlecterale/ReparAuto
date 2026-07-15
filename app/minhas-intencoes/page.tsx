@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { formatarPreco } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import type { IntencaoCompra } from '@/types/intencao';
 import Button from '@/components/ui/Button';
 
@@ -152,7 +153,7 @@ export default function MinhasIntencoes() {
                 ) : (
                   <span className="col-span-2 italic text-fg-subtle">{intencao.descricao?.slice(0, 100)}</span>
                 )}
-                <span>Preço: {formatarPreco(intencao.criterios.precoMaximo)}</span>
+                <span>Preço: {formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))}</span>
                 <span>Local: {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</span>
               </div>
 

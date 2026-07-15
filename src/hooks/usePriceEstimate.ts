@@ -31,6 +31,7 @@ export default function usePriceEstimate(input: PriceEstimateInput | null, debou
     input?.km,
     input?.combustivel,
     input?.cambio,
+    input?.country,
     debounceMs,
   ]);
 

@@ -1,8 +1,11 @@
 'use client';
 
-import { Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
+import { BellRinging, Car, ChatCircleDots, Envelope, Lightning, MagnifyingGlass, MapPin, Phone, Question, SignIn, SlidersHorizontal, TrendDown, TrendUp, User, WhatsappLogo, Wrench, Star, CaretDown } from '@phosphor-icons/react';
 import Button from '@/components/ui/Button';
-import { useState, useEffect } from 'react';
+import Modal from '@/components/ui/Modal';
+import KeywordAlertInput from '@/components/alertas/KeywordAlertInput';
+import SaveAlertButton from '@/components/alertas/SaveAlertButton';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
@@ -12,8 +15,13 @@ import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
 import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import { docCountry, filterByCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/providers/CountryProvider';
+import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
+import type { SearchFilters } from '@/types/busca';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
@@ -55,8 +63,11 @@ function FilterSelect({
   );
 }
 
-export default function CarGrid() {
+// `initialCarros` (server-fetched, ISR) replaces the skeletons while the
+// realtime subscription is still loading; the live list takes over after.
+export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
+  const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
@@ -78,6 +89,9 @@ export default function CarGrid() {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -106,6 +120,7 @@ export default function CarGrid() {
 
   const { distritos, getConcelhos } = useDistritosConcelhos();
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showKeywordAlert, setShowKeywordAlert] = useState(false);
   const [raioMode, setRaioMode] = useState(false);
   const [raioDist, setRaioDist] = useState('');
 
@@ -116,6 +131,7 @@ export default function CarGrid() {
     setAdvPriceMax(null);
     setAdvDistrito('');
     setAdvConcelho('');
+    setAdvBairro('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
     setAdvBodyType('');
@@ -133,6 +149,7 @@ export default function CarGrid() {
   const handleDistritoChange = (d: string) => {
     setAdvDistrito(d);
     setAdvConcelho('');
+    setAdvBairro('');
   };
 
   const handleRaioDistChange = (d: string) => {
@@ -151,17 +168,21 @@ export default function CarGrid() {
   };
 
   useEffect(() => {
+    // Market isolation (plan 20): these direct fetches bypass the context
+    // hooks, so they filter by the active country themselves.
     if (tipo === 'intencoes') {
       setLoadingIntencoes(true);
       if (searchQuery) {
-        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
+        // country rides along so the match logic compares intents against the
+        // active market, not the PT default of a country-less object.
+        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined, country };
         buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       } else {
         getIntencoesAtivas()
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       }
@@ -169,7 +190,7 @@ export default function CarGrid() {
       setLoadingOficinas(true);
       const unsub = subscribeOficinas(
         (data) => {
-          setOficinas(data);
+          setOficinas(filterByCountry(data, country));
           setLoadingOficinas(false);
         },
         (err) => {
@@ -179,17 +200,21 @@ export default function CarGrid() {
       );
       return unsub;
     }
-  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
+  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid, country]);
 
-  const oficinasFiltradas = oficinas.filter((o) => {
-    const correspondeBusca = !searchQuery ||
-      (o.nome && o.nome.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (o.descricao && o.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+  const oficinasFiltradas = useMemo(() => {
+    const busca = searchQuery.toLowerCase();
+    return oficinas.filter((o) => {
+      const correspondeBusca = !busca ||
+        (o.nome && o.nome.toLowerCase().includes(busca)) ||
+        (o.descricao && o.descricao.toLowerCase().includes(busca));
 
-    return correspondeBusca && correspondeDistrito;
-  });
+      const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+      const correspondeBairro = !advBairro || (o.bairro ?? '').toLowerCase() === advBairro.toLowerCase();
+
+      return correspondeBusca && correspondeDistrito && correspondeBairro;
+    });
+  }, [oficinas, searchQuery, advDistrito, advBairro]);
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -213,6 +238,17 @@ export default function CarGrid() {
               className="w-full pl-9 pr-3 py-2 rounded-full bg-white text-fg placeholder-slate-500 border border-slate-300 focus:outline-none focus:border-accent transition text-sm"
             />
           </div>
+
+          {/* Keyword alert entry point (plan 3.1) */}
+          {tipo === 'carros' && searchQuery.trim().length >= 2 && (
+            <button
+              onClick={() => (user ? setShowKeywordAlert(true) : loginModal.openLoginModal('/'))}
+              className="flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent-hover transition-colors"
+            >
+              <BellRinging size={14} weight="bold" />
+              Criar alerta para &quot;{searchQuery.trim()}&quot;
+            </button>
+          )}
 
           {/* Search type select dropdown */}
           <div className="space-y-1">
@@ -344,7 +380,7 @@ export default function CarGrid() {
               </div>
               <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
                 <input type="checkbox" checked={raioMode}
-                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
+                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); setAdvBairro(''); } }}
                   className="rounded text-accent focus:ring-accent" />
                 Pesquisar por raio
               </label>
@@ -352,27 +388,35 @@ export default function CarGrid() {
                 <div className="space-y-2">
                   <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Todos os distritos</option>
+                    <option value="">{term('districtAllOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
-                  <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
+                  <select value={advConcelho} onChange={(e) => { setAdvConcelho(e.target.value); setAdvBairro(''); }}
                     disabled={!advDistrito}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                    <option value="">{advDistrito ? term('municipalityAllOption', country) : term('districtSelectOption', country)}</option>
                     {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
+                  {country === 'BR' && advConcelho && bairroOpts.length > 0 && (
+                    // Only neighbourhoods with active ads are offered (marca-facet pattern).
+                    <select value={advBairro} onChange={(e) => setAdvBairro(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                      <option value="">Todos os bairros</option>
+                      {bairroOpts.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
                   <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Selecionar distrito</option>
+                    <option value="">{term('districtSelectOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
                     disabled={!raioDist}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                    <option value="">{raioDist ? 'Selecionar centro' : term('districtSelectOption', country)}</option>
                     {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
                   <div className="flex items-center gap-2">
@@ -410,8 +454,41 @@ export default function CarGrid() {
             >
               Limpar filtros
             </Button>
+
+            {/* Criar Alerta — instant saved-filter alert (plan 3.1) */}
+            {tipo === 'carros' && (
+              <SaveAlertButton
+                uid={user?.uid}
+                filters={{
+                  texto: searchQuery || undefined,
+                  precoMin: advPriceMin ?? undefined,
+                  precoMax: advPriceMax ?? undefined,
+                  distrito: advDistrito || undefined,
+                  concelho: advConcelho || undefined,
+                  combustivel: (advCombustivel || undefined) as SearchFilters['combustivel'],
+                  cambio: (advCambio || undefined) as SearchFilters['cambio'],
+                }}
+                onRequireLogin={() => loginModal.openLoginModal('/')}
+              />
+            )}
           </div>
         </div>
+
+        <Modal
+          show={showKeywordAlert}
+          onClose={() => setShowKeywordAlert(false)}
+          titulo="Criar alerta de pesquisa"
+          tamanho="sm"
+        >
+          {user && (
+            <KeywordAlertInput
+              uid={user.uid}
+              initialKeyword={searchQuery.trim()}
+              categoria="carros"
+              onCreated={() => setShowKeywordAlert(false)}
+            />
+          )}
+        </Modal>
       </aside>
 
       {/* ============ RESULTS (right column) ============ */}
@@ -425,7 +502,9 @@ export default function CarGrid() {
 
             {carros.loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 mb-8">
-                {Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
+                {initialCarros.length > 0
+                  ? initialCarros.map((carro) => <CarCard key={carro.id} carro={carro} />)
+                  : Array.from({ length: 6 }).map((_, i) => <CarCardSkeleton key={i} />)}
               </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center text-center py-16 text-fg-subtle">
@@ -473,7 +552,7 @@ export default function CarGrid() {
                           </Link>
                           <div className="flex items-center gap-1 text-[11px] text-fg-muted mt-0.5">
                             <MapPin size={12} className="text-slate-400" />
-                            <span className="truncate">{oficina.localidade || ''}, {oficina.distrito || ''}</span>
+                            <span className="truncate">{[oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                           </div>
                         </div>
                       </div>
@@ -517,7 +596,7 @@ export default function CarGrid() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {intencoesMatch.map((intencao) => {
-                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
                   const email = intencao.vendedorEmail || '';
                   const temWhatsApp = !!whatsapp;
                   const temTelefone = !!intencao.vendedorTelefone && intencao.mostrarTelefone;
@@ -552,7 +631,7 @@ export default function CarGrid() {
                         ) : (
                           <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>
                         )}
-                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
+                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))}</p>
                         <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
                       </div>
                     </div>

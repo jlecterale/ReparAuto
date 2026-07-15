@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { DraftSavedNote } from '@/components/ui/DraftSavedNote';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
+import { SelectField } from '@/components/ui/SelectField';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
+import { getDistritos } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { criarIntencao } from '@/lib/trust';
+import { trackPositiveAction } from '@/lib/appReview';
+import { clearAdDraft, type IntentDraftData } from '@/lib/draft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { COMBUSTIVEIS } from '@/lib/constants';
 import {
   CATEGORIA_INTENCAO_LABELS,
@@ -31,8 +40,14 @@ const CONTACTO: { value: ContatoPreferido; label: string }[] = [
 ];
 
 export default function CriarIntencaoScreen() {
+  const { retomar } = useLocalSearchParams<{ retomar?: string }>();
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
+  // Market vocabulary: PT says distrito/€, BR says estado/R$.
+  const regionLabel = term('districtLabel', country);
+  const currencySymbol = getCurrencySymbol(country);
+  const distritos = getDistritos(country);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
@@ -49,11 +64,47 @@ export default function CriarIntencaoScreen() {
   const [contato, setContato] = useState<ContatoPreferido>('chat');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
   const [enviando, setEnviando] = useState(false);
+  // Set once the intent is submitted, so the leave guard steps aside.
+  const [submitted, setSubmitted] = useState(false);
+
+  const draftData = useMemo<IntentDraftData>(
+    () => ({ categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone }),
+    [categoria, titulo, descricao, marca, modelo, anoMin, precoMax, kmMax, distrito, combustivel, contato, telefone],
+  );
+  // The prefilled phone doesn't count as progress worth drafting/guarding.
+  const hasDraftContent = !!(titulo || descricao || marca || precoMax);
+
+  function restoreDraft(d: IntentDraftData) {
+    setCategoria(d.categoria ?? 'carro');
+    setTitulo(d.titulo ?? '');
+    setDescricao(d.descricao ?? '');
+    setMarca(d.marca ?? '');
+    setModelo(d.modelo ?? '');
+    setAnoMin(d.anoMin ?? '');
+    setPrecoMax(d.precoMax ?? '');
+    setKmMax(d.kmMax ?? '');
+    setDistrito(d.distrito ?? '');
+    setCombustivel(d.combustivel ?? []);
+    setContato(d.contato ?? 'chat');
+    setTelefone(d.telefone ?? user?.telefone ?? '');
+  }
+
+  useAdDraft<IntentDraftData>({
+    kind: 'intencao',
+    enabled: true,
+    data: draftData,
+    hasContent: hasDraftContent,
+    submitting: enviando,
+    submitted,
+    resumeImmediately: retomar === '1',
+    itemLabel: 'uma procura',
+    onRestore: restoreDraft,
+  });
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título (ex.: Procuro Golf diesel).';
     if (!precoMax.trim() || Number.isNaN(Number(precoMax))) return 'Indique o preço máximo.';
-    if (!distrito.trim()) return 'Indique o distrito.';
+    if (!distrito.trim()) return `Indique o ${regionLabel.toLowerCase()}.`;
     return null;
   }
 
@@ -91,10 +142,20 @@ export default function CriarIntencaoScreen() {
         vendedorWhatsApp: telefone.trim() || undefined,
         vendedorEmail: user.email,
       });
+      clearAdDraft('intencao');
+      setSubmitted(true);
       Alert.alert(
         'Procura enviada',
-        'A sua procura foi submetida e ficará visível após aprovação.',
-        [{ text: 'OK', onPress: () => router.dismissAll() }],
+        'A sua procura foi submetida e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.dismissAll();
+              trackPositiveAction('publish-listing');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível publicar. Tente novamente.', 'error');
@@ -143,10 +204,17 @@ export default function CriarIntencaoScreen() {
 
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Preço máx. (€) *" value={precoMax} onChangeText={setPrecoMax} placeholder="15000" keyboardType="number-pad" />
+            <Input label={`Preço máx. (${currencySymbol}) *`} value={precoMax} onChangeText={setPrecoMax} placeholder="15000" keyboardType="number-pad" />
           </View>
           <View className="flex-1">
-            <Input label="Distrito *" value={distrito} onChangeText={setDistrito} placeholder="Porto" />
+            <SelectField
+              label={`${regionLabel} *`}
+              value={distrito}
+              onChange={setDistrito}
+              options={distritos}
+              placeholder={term('districtSelectOption', country)}
+              title={regionLabel}
+            />
           </View>
         </View>
 
@@ -163,7 +231,7 @@ export default function CriarIntencaoScreen() {
 
         <ChipSelect label="Como prefere ser contactado" options={CONTACTO} value={contato} onChange={setContato} />
         {contato !== 'chat' && (
-          <Input label="Telefone / WhatsApp" value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+          <Input label={`${term('phoneLabel', country)} / WhatsApp`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
         )}
 
         <Button
@@ -175,6 +243,7 @@ export default function CriarIntencaoScreen() {
         <Text className="text-center text-xs text-fg-subtle">
           A procura fica visível após aprovação da equipa.
         </Text>
+        <DraftSavedNote />
       </ScrollView>
     </KeyboardAvoider>
   );

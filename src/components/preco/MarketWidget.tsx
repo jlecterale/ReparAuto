@@ -5,6 +5,7 @@ import { ChartLineUp } from '@phosphor-icons/react';
 import useMarketStats from '@/hooks/useMarketStats';
 import { formatarPreco } from '@/lib/utils';
 import { PRICE_THRESHOLDS } from '@/lib/constants';
+import { useCountry } from '@/providers/CountryProvider';
 
 interface Props {
   marca?: string;
@@ -14,6 +15,9 @@ interface Props {
 
 export default function MarketWidget({ marca, modelo, title }: Props) {
   const { stats } = useMarketStats({ marca, modelo });
+  // useMarketStats reads carros already scoped to the active market
+  // (filterByCountry in useCarros), so every price here shares one currency.
+  const { country } = useCountry();
 
   if (!stats || stats.count < PRICE_THRESHOLDS.minPublicSampleSize) {
     return (
@@ -45,15 +49,15 @@ export default function MarketWidget({ marca, modelo, title }: Props) {
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="text-[10px] text-fg-muted">Mediana</p>
-          <p className="text-sm font-bold text-fg-heading">{formatarPreco(stats.median)}</p>
+          <p className="text-sm font-bold text-fg-heading">{formatarPreco(stats.median, country)}</p>
         </div>
         <div>
           <p className="text-[10px] text-fg-muted">Mínimo</p>
-          <p className="text-sm font-bold text-success-700">{formatarPreco(stats.min)}</p>
+          <p className="text-sm font-bold text-success-700">{formatarPreco(stats.min, country)}</p>
         </div>
         <div>
           <p className="text-[10px] text-fg-muted">Máximo</p>
-          <p className="text-sm font-bold text-danger-700">{formatarPreco(stats.max)}</p>
+          <p className="text-sm font-bold text-danger-700">{formatarPreco(stats.max, country)}</p>
         </div>
       </div>
     </Link>

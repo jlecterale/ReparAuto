@@ -5,6 +5,7 @@
  */
 import firestore from '@react-native-firebase/firestore';
 import { db } from './firebase';
+import { getActiveCountry } from './country';
 import type { IntencaoCompra, Review } from '@/types';
 
 const INTENCOES = 'intencoes_compra';
@@ -56,6 +57,8 @@ export async function criarIntencao(dados: Record<string, unknown>): Promise<str
   const ref = db.collection(INTENCOES).doc();
   await ref.set({
     id: ref.id,
+    // Stamp the active market; callers may override via `dados`.
+    country: getActiveCountry(),
     ...dados,
     status: 'pendente',
     prioritaria: false,

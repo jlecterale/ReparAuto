@@ -13,6 +13,7 @@ import {
 } from '@phosphor-icons/react';
 import useMarketStats from '@/hooks/useMarketStats';
 import { useApp } from '@/providers/AppProvider';
+import { useCountry } from '@/providers/CountryProvider';
 import { formatarPreco } from '@/lib/utils';
 import { PRICE_DISCLAIMERS, TIPOS_COMBUSTIVEL } from '@/lib/constants';
 import BrandModelSelect from '@/components/preco/BrandModelSelect';
@@ -23,6 +24,9 @@ const fieldClass =
 
 export default function MarketDashboard() {
   const { carros: carrosCtx } = useApp();
+  // carros.carros (and therefore every stat below) is already scoped to the
+  // active market by useCarros' filterByCountry — this is the currency they're in.
+  const { country } = useCountry();
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [combustivel, setCombustivel] = useState('');
@@ -105,18 +109,18 @@ export default function MarketDashboard() {
         <StatCard label="Anúncios" value={stats ? String(stats.count) : '0'} IconEl={ListBullets} />
         <StatCard
           label="Mediana"
-          value={stats ? formatarPreco(stats.median) : '—'}
+          value={stats ? formatarPreco(stats.median, country) : '—'}
           IconEl={Equals}
           accent
         />
         <StatCard
           label="Média"
-          value={stats ? formatarPreco(Math.round(stats.mean)) : '—'}
+          value={stats ? formatarPreco(Math.round(stats.mean), country) : '—'}
           IconEl={Calculator}
         />
         <StatCard
           label="Intervalo P25–P75"
-          value={stats ? `${formatarPreco(stats.p25)} – ${formatarPreco(stats.p75)}` : '—'}
+          value={stats ? `${formatarPreco(stats.p25, country)} – ${formatarPreco(stats.p75, country)}` : '—'}
           IconEl={ArrowsLeftRight}
         />
       </div>
@@ -125,7 +129,7 @@ export default function MarketDashboard() {
         <h3 className="font-extrabold text-fg-heading mb-3 flex items-center gap-2">
           <ChartBar className="text-accent" /> Distribuição de preços
         </h3>
-        <PriceDistribution precos={carros.map((c) => c.preco)} />
+        <PriceDistribution precos={carros.map((c) => c.preco)} country={country} />
       </div>
 
       {!marca && (
@@ -139,7 +143,7 @@ export default function MarketDashboard() {
                 <span className="font-semibold text-fg-strong">{m.marca}</span>
                 <div className="flex items-center gap-4 text-xs text-fg-muted">
                   <span>{m.count} {m.count === 1 ? 'anúncio' : 'anúncios'}</span>
-                  <span className="font-bold text-fg-heading">{formatarPreco(Math.round(m.media))}</span>
+                  <span className="font-bold text-fg-heading">{formatarPreco(Math.round(m.media), country)}</span>
                 </div>
               </div>
             ))}

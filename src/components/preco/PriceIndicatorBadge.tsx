@@ -10,13 +10,17 @@ import {
   type Icon,
 } from '@phosphor-icons/react';
 import { PRICE_COLORS, PRICE_LABELS, PRICE_THRESHOLDS } from '@/lib/constants';
+import { COUNTRY_INFO, type Country } from '@/lib/country';
 import type { PriceIndicator } from '@/types/preco';
 
 interface Props {
   indicator: PriceIndicator;
   deviation?: number;
   sampleSize?: number;
-  diffEuros?: number;
+  /** Absolute deviation from the market median, in the listing's own currency. */
+  diffValue?: number;
+  /** Currency/locale for `diffValue` — the listing's own market, not the viewer's. */
+  country?: Country;
   compact?: boolean;
 }
 
@@ -44,7 +48,8 @@ export default function PriceIndicatorBadge({
   indicator,
   deviation = 0,
   sampleSize,
-  diffEuros,
+  diffValue,
+  country = 'PT',
   compact = false,
 }: Props) {
   const cor = PRICE_COLORS[indicator];
@@ -76,8 +81,13 @@ export default function PriceIndicatorBadge({
     );
   }
 
-  const diffSign = (diffEuros ?? 0) >= 0 ? '+' : '−';
-  const diffAbs = Math.abs(diffEuros ?? 0);
+  const diffSign = (diffValue ?? 0) >= 0 ? '+' : '−';
+  const diffAbs = Math.abs(diffValue ?? 0);
+  const { locale, currency } = COUNTRY_INFO[country];
+  const diffFormatted =
+    currency === 'BRL'
+      ? `R$ ${diffAbs.toLocaleString(locale)}`
+      : `${diffAbs.toLocaleString(locale)} €`;
 
   return (
     <div
@@ -87,12 +97,12 @@ export default function PriceIndicatorBadge({
     >
       <IconEl size={16} weight="fill" aria-hidden="true" />
       <span>{label}</span>
-      {indicator !== 'indisponivel' && typeof diffEuros === 'number' && diffEuros !== 0 && (
+      {indicator !== 'indisponivel' && typeof diffValue === 'number' && diffValue !== 0 && (
         <span className="opacity-80">
-          ({diffSign}{diffAbs.toLocaleString('pt-PT')} €)
+          ({diffSign}{diffFormatted})
         </span>
       )}
-      {indicator !== 'indisponivel' && pct > 0 && typeof diffEuros !== 'number' && (
+      {indicator !== 'indisponivel' && pct > 0 && typeof diffValue !== 'number' && (
         <span className="opacity-75">
           ({deviation < 0 ? '−' : '+'}{pct}%)
         </span>

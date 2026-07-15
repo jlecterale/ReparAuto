@@ -1,9 +1,15 @@
-/** Formatters aligned with the web app (pt-PT, EUR). */
+/** Formatters aligned with the web app (pt-PT/EUR, pt-BR/BRL). */
+import { COUNTRY_INFO, type Country } from './country';
 
-export function formatPreco(preco: number): string {
-  return new Intl.NumberFormat('pt-PT', {
+/**
+ * Prices are formatted in the listing's market currency — pass the doc's
+ * `docCountry(...)`, not the viewer's preference. Defaults to PT (EUR).
+ */
+export function formatPreco(preco: number, country: Country = 'PT'): string {
+  const { locale, currency } = COUNTRY_INFO[country];
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency: 'EUR',
+    currency,
     maximumFractionDigits: 0,
   }).format(preco);
 }
@@ -12,13 +18,27 @@ export function formatKm(km: number): string {
   return `${new Intl.NumberFormat('pt-PT').format(km)} km`;
 }
 
+/**
+ * Masks a postal code as the user types (PT `0000-000`, BR CEP `00000-000`).
+ * Mirrors the web `formatarCodigoPostal` in `src/lib/utils.ts`.
+ */
+export function formatarCodigoPostal(cp: string, country: Country = 'PT'): string {
+  const digits = cp.replace(/\D/g, '');
+  const prefixLength = country === 'BR' ? 5 : 4;
+  if (digits.length <= prefixLength) return digits;
+  return `${digits.slice(0, prefixLength)}-${digits.slice(prefixLength, prefixLength + 3)}`;
+}
+
 export function formatNumero(n: number): string {
   return new Intl.NumberFormat('pt-PT').format(n);
 }
 
 /** Parts may have no price (e.g. "procura" listings) → "Sob consulta". */
-export function formatPrecoOpcional(preco: number | null | undefined): string {
-  return preco != null && preco > 0 ? formatPreco(preco) : 'Sob consulta';
+export function formatPrecoOpcional(
+  preco: number | null | undefined,
+  country: Country = 'PT',
+): string {
+  return preco != null && preco > 0 ? formatPreco(preco, country) : 'Sob consulta';
 }
 
 /**

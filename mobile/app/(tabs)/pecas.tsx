@@ -15,6 +15,10 @@ import { colors } from '@/theme/colors';
 
 type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
+// Module-scope so the memoized PecaCard rows keep a stable onPress identity
+// while the screen re-renders on every search keystroke.
+const openPeca = (id: string) => router.push(`/pecas/${id}`);
+
 const FILTROS: ChipOption<FiltroTipoPeca>[] = [
   { value: 'todos', label: 'Todas' },
   { value: 'venda', label: 'Venda' },
@@ -36,13 +40,22 @@ export default function PecasScreen() {
   const [categoria, setCategoria] = useState('');
   const [estado, setEstado] = useState('');
   const [distrito, setDistrito] = useState('');
+  const [bairro, setBairro] = useState('');
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
-  const filtersCount = [categoria, estado, distrito, marca, modelo].filter(Boolean).length;
+  const filtersCount = [categoria, estado, distrito, bairro, marca, modelo].filter(Boolean).length;
+
+  // Only neighbourhoods that actually have listings are offered (BR; mirrors
+  // how car brand options derive from the loaded ads).
+  const bairroOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of pecas) if (p.bairro) set.add(p.bairro);
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [pecas]);
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -50,7 +63,7 @@ export default function PecasScreen() {
 
     let ps = pecas.filter((p) => {
       if (filtro !== 'todos' && p.tipo !== filtro) return false;
-      if (termo && !`${p.titulo} ${p.categoria} ${p.marcaCarro} ${p.local}`.toLowerCase().includes(termo))
+      if (termo && !`${p.titulo} ${p.categoria} ${p.marcaCarro} ${p.local} ${p.bairro ?? ''}`.toLowerCase().includes(termo))
         return false;
       if (categoria && p.categoria !== categoria) return false;
       if (estado && p.estado !== estado) return false;
@@ -60,6 +73,7 @@ export default function PecasScreen() {
         const pd = (p.distrito ?? '').toLowerCase();
         if (pd !== dist && !(p.local ?? '').toLowerCase().includes(dist)) return false;
       }
+      if (bairro && (p.bairro ?? '').toLowerCase() !== bairro.toLowerCase()) return false;
       return true;
     });
 
@@ -72,12 +86,13 @@ export default function PecasScreen() {
       });
     }
     return ps;
-  }, [pecas, busca, filtro, categoria, estado, distrito, marca, modelo, ordenar]);
+  }, [pecas, busca, filtro, categoria, estado, distrito, bairro, marca, modelo, ordenar]);
 
   function limparFiltros() {
     setCategoria('');
     setEstado('');
     setDistrito('');
+    setBairro('');
     setMarca('');
     setModelo('');
   }
@@ -113,9 +128,7 @@ export default function PecasScreen() {
           data={filtradas}
           keyExtractor={(item) => item.id}
           contentContainerClassName="px-4 pb-6 pt-1"
-          renderItem={({ item }) => (
-            <PecaCard peca={item} onPress={(id) => router.push(`/pecas/${id}`)} />
-          )}
+          renderItem={({ item }) => <PecaCard peca={item} onPress={openPeca} />}
           ListEmptyComponent={
             busca || filtro !== 'todos' || filtersCount > 0 ? (
               <EmptyState icon="construct-outline" titulo="Sem peças" texto="Tente outros critérios." />
@@ -145,6 +158,9 @@ export default function PecasScreen() {
         setEstado={setEstado}
         distrito={distrito}
         setDistrito={setDistrito}
+        bairro={bairro}
+        setBairro={setBairro}
+        bairroOpts={bairroOpts}
         marca={marca}
         setMarca={setMarca}
         modelo={modelo}

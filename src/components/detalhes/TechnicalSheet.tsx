@@ -1,29 +1,56 @@
 import { ClipboardText, Invoice, Phone, RoadHorizon, User } from '@phosphor-icons/react';
 import { formatarPreco } from '@/lib/utils';
+import { MESES } from '@/lib/constants';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
 
 export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
   if (!carro) return null;
 
+  // Spec sheet of a specific listing → label by the listing's market, not the viewer's.
+  const country = docCountry(carro);
+
+  const consumo = (l?: number) => (l != null ? `${l.toLocaleString('pt-PT')} l/100 km` : undefined);
+
   const specs = [
     { label: 'Marca', value: carro.marca },
     { label: 'Modelo', value: carro.modelo },
+    { label: 'Versão', value: carro.version },
     { label: 'Categoria', value: carro.bodyType },
     { label: 'Condição', value: carro.condition },
+    { label: 'Origem', value: carro.origin },
     { label: 'Ano de Fabricação', value: carro.anoFabricacao },
+    { label: term('firstRegistrationLabel', country), value: carro.firstRegistrationMonth ? MESES[carro.firstRegistrationMonth - 1] : undefined },
     { label: 'Ano Modelo', value: carro.anoModelo || '-' },
     { label: 'Quilómetros', value: carro.km ? `${carro.km.toLocaleString('pt-PT')} km` : '-' },
+    { label: 'Proprietários anteriores', value: carro.previousOwners != null ? String(carro.previousOwners) : undefined },
     { label: 'Combustível', value: carro.combustivel },
     { label: 'Câmbio', value: carro.cambio },
+    { label: 'Nº de mudanças', value: carro.gears },
     { label: 'Tração', value: carro.traction },
     { label: 'Cor', value: carro.cor },
     { label: 'Nº Portas', value: carro.portas },
     { label: 'Lugares', value: carro.seats },
+    { label: 'Estofos', value: carro.upholstery },
+    { label: 'Nº de airbags', value: carro.numberOfAirbags },
     { label: 'Potência', value: carro.power ? `${carro.power} cv` : undefined },
     { label: 'Cilindrada', value: carro.displacement ? `${carro.displacement} cc` : undefined },
-    { label: 'Localização', value: carro.local || 'Portugal' },
+    { label: 'Emissões CO₂', value: carro.co2Emissions != null ? `${carro.co2Emissions} g/km` : undefined },
+    { label: 'Autonomia', value: carro.maxFuelRange != null ? `${carro.maxFuelRange} km` : undefined },
+    { label: 'Consumo urbano', value: consumo(carro.consumptionUrban) },
+    { label: 'Consumo extra-urbano', value: consumo(carro.consumptionExtraUrban) },
+    { label: 'Consumo combinado', value: consumo(carro.consumptionCombined) },
+    { label: 'Garantia', value: carro.warrantyMonths != null ? `${carro.warrantyMonths} meses` : undefined },
+    { label: 'Localização', value: [carro.bairro, carro.local].filter(Boolean).join(', ') || 'Portugal' },
   ].filter((s) => s.value !== undefined && s.value !== null && s.value !== '');
+
+  const comercial = [
+    carro.acceptsFinancing && 'Aceita financiamento',
+    carro.vatDeductible && 'IVA dedutível',
+    carro.acceptsExchange && 'Aceita retoma',
+  ].filter(Boolean) as string[];
 
   return (
     <div className="bg-slate-50 rounded-xl p-4 sm:p-5 border border-slate-200">
@@ -45,6 +72,17 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
           <div className="flex flex-wrap gap-1.5">
             {carro.features.map((f) => (
               <Badge key={f} cor="blue">{f}</Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {comercial.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-slate-200">
+          <span className="text-xs font-semibold text-fg-subtle block mb-2">Condições comerciais</span>
+          <div className="flex flex-wrap gap-1.5">
+            {comercial.map((c) => (
+              <Badge key={c} cor="green">{c}</Badge>
             ))}
           </div>
         </div>

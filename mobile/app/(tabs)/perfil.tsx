@@ -5,10 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/ui/Screen';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { Button } from '@/components/ui/Button';
+import { MarketSelector } from '@/components/settings/MarketSelector';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useNotificacoes } from '@/context/NotificacoesContext';
 import { useAdminPendencias } from '@/hooks/useAdminPendencias';
+import { useAlertSubscriptions } from '@/hooks/useAlertSubscriptions';
 import { REQUIRES_RECENT_LOGIN } from '@/lib/auth';
 import { colors } from '@/theme/colors';
 
@@ -17,6 +19,7 @@ export default function PerfilScreen() {
   const { showToast } = useToast();
   const { total: pendenciasAdmin } = useAdminPendencias(isAdmin);
   const { naoLidas } = useNotificacoes();
+  const { novosResultados } = useAlertSubscriptions(user?.uid);
 
   function confirmarLogout() {
     Alert.alert('Terminar sessão', 'Tem a certeza que quer sair?', [
@@ -56,18 +59,23 @@ export default function PerfilScreen() {
     return (
       <Screen>
         <SectionHeader title="Perfil" />
-        <View className="flex-1 items-center justify-center px-8">
-          <View className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-primary-50">
-            <Ionicons name="person-circle-outline" size={44} color={colors.primary[600]} />
+        <ScrollView contentContainerClassName="flex-grow p-4">
+          <View className="flex-1 items-center justify-center px-4 py-8">
+            <View className="mb-5 h-20 w-20 items-center justify-center rounded-full bg-primary-50">
+              <Ionicons name="person-circle-outline" size={44} color={colors.primary[600]} />
+            </View>
+            <Text className="text-2xl font-extrabold text-fg-heading">Bem-vindo</Text>
+            <Text className="mb-6 mt-2 text-center text-base text-fg-muted">
+              Inicie sessão para guardar favoritos, anunciar e contactar vendedores.
+            </Text>
+            <View className="w-full">
+              <Button label="Entrar ou criar conta" onPress={() => router.push('/login')} />
+            </View>
           </View>
-          <Text className="text-2xl font-extrabold text-fg-heading">Bem-vindo</Text>
-          <Text className="mb-6 mt-2 text-center text-base text-fg-muted">
-            Inicie sessão para guardar favoritos, anunciar e contactar vendedores.
-          </Text>
-          <View className="w-full">
-            <Button label="Entrar ou criar conta" onPress={() => router.push('/login')} />
-          </View>
-        </View>
+          {/* Anonymous visitors can still pick their market here (signed-in
+              accounts are bound to one, so the card lives in Definições). */}
+          <MarketSelector />
+        </ScrollView>
       </Screen>
     );
   }
@@ -139,9 +147,20 @@ export default function PerfilScreen() {
             onPress={() => router.push('/notificacoes')}
           />
           <Row
+            icon="bookmark-outline"
+            label="Meus Alertas"
+            badge={novosResultados}
+            onPress={() => router.push('/meus-alertas')}
+          />
+          <Row
             icon="create-outline"
             label="Editar perfil"
             onPress={() => router.push('/perfil/editar')}
+          />
+          <Row
+            icon="id-card-outline"
+            label="Verificação de conta"
+            onPress={() => router.push('/verificar-conta')}
           />
           {isAdmin && (
             <Row

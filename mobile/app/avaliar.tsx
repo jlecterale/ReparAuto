@@ -7,6 +7,7 @@ import { StarRating } from '@/components/ui/StarRating';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { addReview } from '@/lib/trust';
+import { trackPositiveAction } from '@/lib/appReview';
 import type { Review } from '@/types';
 
 export default function AvaliarScreen() {
@@ -49,7 +50,15 @@ export default function AvaliarScreen() {
       Alert.alert(
         'Avaliação enviada',
         'Obrigado! Será publicada após aprovação.',
-        [{ text: 'OK', onPress: () => router.back() }],
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.back();
+              trackPositiveAction('submit-review');
+            },
+          },
+        ],
       );
     } catch {
       showToast('Não foi possível enviar a avaliação.', 'error');

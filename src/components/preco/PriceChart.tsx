@@ -12,13 +12,16 @@ import {
   YAxis,
 } from 'recharts';
 import type { PriceSnapshot } from '@/types/preco';
+import { COUNTRY_INFO, type Country } from '@/lib/country';
 
 interface Props {
   snapshots: PriceSnapshot[];
   height?: number;
+  /** Currency for the axis/tooltip — the snapshots must already be single-market. */
+  country?: Country;
 }
 
-export default function PriceChart({ snapshots, height = 240 }: Props) {
+export default function PriceChart({ snapshots, height = 240, country = 'PT' }: Props) {
   if (!snapshots || snapshots.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 text-fg-muted text-sm">
@@ -28,8 +31,12 @@ export default function PriceChart({ snapshots, height = 240 }: Props) {
     );
   }
 
+  const { locale, currency } = COUNTRY_INFO[country];
+  const formatValue = (v: number) =>
+    currency === 'BRL' ? `R$ ${v.toLocaleString(locale)}` : `${v.toLocaleString(locale)}€`;
+
   const data = snapshots.map((s) => ({
-    data: s.dataCriacao?.toDate?.().toLocaleDateString('pt-PT', {
+    data: s.dataCriacao?.toDate?.().toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
     }) ?? '',
@@ -47,10 +54,10 @@ export default function PriceChart({ snapshots, height = 240 }: Props) {
         <YAxis
           tick={{ fontSize: 11 }}
           stroke="#64748b"
-          tickFormatter={(v) => `${v.toLocaleString('pt-PT')}€`}
+          tickFormatter={formatValue}
         />
         <Tooltip
-          formatter={(v) => `${Number(v).toLocaleString('pt-PT')} €`}
+          formatter={(v) => formatValue(Number(v))}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         <Legend wrapperStyle={{ fontSize: 11 }} />

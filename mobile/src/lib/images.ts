@@ -4,6 +4,27 @@
  * that is not a plain https web address. Returns null for invalid input.
  * Mirrors the web `parseExternalImageUrl` in `src/lib/utils.ts`.
  */
+/**
+ * Largest centered rect of a source image with the given aspect ratio —
+ * what guided capture saves so the photo matches the on-screen guide frame.
+ * Mirrors the web `centerCropRect` in `src/lib/cropImage.ts` (tested there).
+ */
+export function centerCropRect(srcWidth: number, srcHeight: number, aspect: number) {
+  let width = srcWidth;
+  let height = srcHeight;
+  if (srcWidth / srcHeight > aspect) {
+    width = Math.round(srcHeight * aspect);
+  } else {
+    height = Math.round(srcWidth / aspect);
+  }
+  return {
+    x: Math.round((srcWidth - width) / 2),
+    y: Math.round((srcHeight - height) / 2),
+    width,
+    height,
+  };
+}
+
 export function parseExternalImageUrl(input: string | null | undefined): string | null {
   if (!input) return null;
   let value = input.trim();

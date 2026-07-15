@@ -11,15 +11,24 @@ import {
   YAxis,
 } from 'recharts';
 import { priceDistributionBuckets } from '@/lib/priceUtils';
+import { COUNTRY_INFO, type Country } from '@/lib/country';
 
 interface Props {
   precos: number[];
   height?: number;
   bucketCount?: number;
+  /** Currency for the bucket labels — the precos array must already be single-market. */
+  country?: Country;
 }
 
-export default function PriceDistribution({ precos, height = 220, bucketCount = 8 }: Props) {
-  const data = priceDistributionBuckets(precos, bucketCount);
+export default function PriceDistribution({ precos, height = 220, bucketCount = 8, country = 'PT' }: Props) {
+  const { currency } = COUNTRY_INFO[country];
+  const currencySuffix = currency === 'BRL' ? '' : '€';
+  const currencyPrefix = currency === 'BRL' ? 'R$ ' : '';
+  const data = priceDistributionBuckets(precos, bucketCount).map((bucket) => ({
+    ...bucket,
+    label: `${currencyPrefix}${bucket.label}${currencySuffix}`,
+  }));
 
   if (!data.length) {
     return (

@@ -21,11 +21,20 @@ import {
   getPecasByCreator,
 } from '@/lib/db';
 import { deleteIntencao, getIntencoesByUser } from '@/lib/trust';
+import {
+  clearAdDraft,
+  loadAdDraft,
+  type AdDraftKind,
+  type CarDraftData,
+  type IntentDraftData,
+  type PartDraftData,
+  type WorkshopDraftData,
+} from '@/lib/draft';
 import { useAuth } from '@/context/AuthContext';
 import { colors } from '@/theme/colors';
 
-type Kind = 'carro' | 'peca' | 'oficina' | 'intencao';
-type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'outro';
+type Kind = AdDraftKind;
+type EstadoItem = 'pendente' | 'aprovado' | 'rejeitado' | 'ativa' | 'rascunho' | 'outro';
 
 interface ItemStats {
   visualizacoes?: number;
@@ -41,6 +50,8 @@ interface Item {
   subtitulo: string;
   status: EstadoItem;
   stats?: ItemStats;
+  /** Local unpublished draft (lives on this device, not in Firestore). */
+  draft?: boolean;
 }
 
 const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
@@ -48,6 +59,7 @@ const STATUS: Record<EstadoItem, { label: string; bg: string; fg: string }> = {
   aprovado: { label: 'Aprovado', bg: 'bg-success-100', fg: 'text-success-700' },
   ativa: { label: 'Ativa', bg: 'bg-success-100', fg: 'text-success-700' },
   rejeitado: { label: 'Rejeitado', bg: 'bg-danger-100', fg: 'text-danger-700' },
+  rascunho: { label: 'Rascunho', bg: 'bg-primary-50', fg: 'text-primary-700' },
   outro: { label: '—', bg: 'bg-neutral-100', fg: 'text-fg-muted' },
 };
 
@@ -72,13 +84,32 @@ export default function MeusAnunciosScreen() {
 
   const carregar = useCallback(async () => {
     if (!user?.email || !user?.uid) return;
-    const [carros, pecas, oficinas, intencoes] = await Promise.all([
-      getCarrosByCreator(user.email),
-      getPecasByCreator(user.email),
-      getOficinasByCreator(user.email),
-      getIntencoesByUser(user.uid),
-    ]);
+    const [carros, pecas, oficinas, intencoes, carDraft, partDraft, workshopDraft, intentDraft] =
+      await Promise.all([
+        getCarrosByCreator(user.email),
+        getPecasByCreator(user.email),
+        getOficinasByCreator(user.email),
+        getIntencoesByUser(user.uid),
+        loadAdDraft<CarDraftData>('carro', user.uid),
+        loadAdDraft<PartDraftData>('peca', user.uid),
+        loadAdDraft<WorkshopDraftData>('oficina', user.uid),
+        loadAdDraft<IntentDraftData>('intencao', user.uid),
+      ]);
+    const draftItem = (kind: Kind, titulo: string): Item => ({
+      kind,
+      id: 'draft',
+      draft: true,
+      titulo,
+      subtitulo: 'Guardado neste dispositivo — toque para continuar',
+      status: 'rascunho',
+    });
     const lista: Item[] = [
+      ...(carDraft
+        ? [draftItem('carro', `${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro')]
+        : []),
+      ...(partDraft ? [draftItem('peca', partDraft.data.titulo || 'Anúncio de peça')] : []),
+      ...(workshopDraft ? [draftItem('oficina', workshopDraft.data.nome || 'Registo de oficina')] : []),
+      ...(intentDraft ? [draftItem('intencao', intentDraft.data.titulo || 'Procura')] : []),
       ...carros.map((c) => ({
         kind: 'carro' as const,
         id: c.id,
@@ -133,8 +164,18 @@ export default function MeusAnunciosScreen() {
     setRefreshing(false);
   }
 
+  /** A draft has no detail page — opening it resumes the creation form. */
+  function resumeDraft(item: Item) {
+    const params = { retomar: '1' };
+    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params });
+    else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params });
+    else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params });
+    else router.push({ pathname: '/anunciar/intencao', params });
+  }
+
   function abrir(item: Item) {
-    if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
+    if (item.draft) resumeDraft(item);
+    else if (item.kind === 'carro') router.push(`/detalhes/${item.id}`);
     else if (item.kind === 'peca') router.push(`/pecas/${item.id}`);
     else if (item.kind === 'oficina') router.push(`/oficinas/${item.id}`);
     else router.push(`/intencoes/${item.id}`);
@@ -142,12 +183,27 @@ export default function MeusAnunciosScreen() {
 
   /** carro / peca / oficina have an edit form; intencao isn't editable here. */
   function editar(item: Item) {
-    if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
+    if (item.draft) resumeDraft(item);
+    else if (item.kind === 'carro') router.push({ pathname: '/anunciar/carro', params: { id: item.id } });
     else if (item.kind === 'peca') router.push({ pathname: '/anunciar/peca', params: { id: item.id } });
     else if (item.kind === 'oficina') router.push({ pathname: '/anunciar/oficina', params: { id: item.id } });
   }
 
   function confirmarRemover(item: Item) {
+    if (item.draft) {
+      Alert.alert('Descartar rascunho', `Descartar "${item.titulo}"?`, [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Descartar',
+          style: 'destructive',
+          onPress: async () => {
+            await clearAdDraft(item.kind);
+            setItens((atual) => atual.filter((x) => !(x.draft && x.kind === item.kind)));
+          },
+        },
+      ]);
+      return;
+    }
     Alert.alert('Eliminar anúncio', `Remover "${item.titulo}"?`, [
       { text: 'Cancelar', style: 'cancel' },
       {
@@ -179,6 +235,8 @@ export default function MeusAnunciosScreen() {
     );
   }
 
+  const temPendentes = itens.some((item) => item.status === 'pendente');
+
   return (
     <FlatList
       className="flex-1 bg-neutral-50"
@@ -186,6 +244,22 @@ export default function MeusAnunciosScreen() {
       keyExtractor={(item) => `${item.kind}_${item.id}`}
       contentContainerClassName="p-4"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      ListHeaderComponent={
+        temPendentes ? (
+          <View className="mb-3 flex-row items-start rounded-2xl border border-warning-200 bg-warning-50 p-3">
+            <Ionicons
+              name="time-outline"
+              size={20}
+              color={colors.warning[500]}
+              style={{ marginTop: 1 }}
+            />
+            <Text className="ml-2.5 flex-1 text-sm leading-5 text-warning-800">
+              Os itens "Em revisão" só ficam visíveis para os outros utilizadores depois de
+              aprovados pela equipa. Recebe uma notificação com a decisão.
+            </Text>
+          </View>
+        ) : null
+      }
       renderItem={({ item }) => (
         <Pressable
           onPress={() => abrir(item)}
@@ -212,7 +286,7 @@ export default function MeusAnunciosScreen() {
               </View>
             )}
           </View>
-          {item.kind !== 'intencao' && (
+          {(item.kind !== 'intencao' || item.draft) && (
             <Pressable
               onPress={() => editar(item)}
               hitSlop={8}

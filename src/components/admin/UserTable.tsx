@@ -6,9 +6,11 @@ import { formatarData, formatarDataHora } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import GrantPlanModal from './GrantPlanModal';
-import { 
-  X, User, Envelope, Phone, Cardholder, 
-  MapPin, Calendar, Crown, SealCheck, CheckCircle, Storefront
+import ImportInventoryModal from './ImportInventoryModal';
+import {
+  X, User, Envelope, Phone, Cardholder,
+  MapPin, Calendar, Crown, SealCheck, CheckCircle, Storefront, DownloadSimple,
+  Prohibit, Trash
 } from '@phosphor-icons/react';
 
 interface UserTableProps {
@@ -19,13 +21,52 @@ interface UserTableProps {
   onGrantPlan: (uid: string, planoId: string, nome: string, categoria: 'anuncios' | 'oficinas' | 'leads', dias: number) => Promise<void>;
   onRevokePlan: (uid: string) => Promise<void>;
   onUpdateUserProfile: (uid: string, updates: Partial<Usuario>) => Promise<void>;
+  onBanUser: (uid: string, banned: boolean, reason?: string) => Promise<void>;
+  onDeleteUser: (uid: string) => Promise<void>;
 }
 
-export default function UserTable({ users, onRoleChange, adminUid, adminNome, onGrantPlan, onRevokePlan, onUpdateUserProfile }: UserTableProps) {
+export default function UserTable({ users, onRoleChange, adminUid, adminNome, onGrantPlan, onRevokePlan, onUpdateUserProfile, onBanUser, onDeleteUser }: UserTableProps) {
   const [confirm, setConfirm] = useState<{ uid: string; nome: string; role: Role } | null>(null);
   const [loadingUid, setLoadingUid] = useState<string | null>(null);
   const [planUser, setPlanUser] = useState<Usuario | null>(null);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [importUser, setImportUser] = useState<Usuario | null>(null);
+  // Destructive-action flows (ban toggle + account deletion), each behind its own modal.
+  const [banTarget, setBanTarget] = useState<Usuario | null>(null);
+  const [banReason, setBanReason] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Usuario | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+
+  // Admins can moderate every account except other admins and themselves — those
+  // are protected from an accidental ban/delete (demote via the role selector first).
+  const canModerate = (u: Usuario) => u.role !== 'admin' && u.uid !== adminUid;
+
+  const handleBan = async () => {
+    if (!banTarget) return;
+    setActionBusy(true);
+    try {
+      await onBanUser(banTarget.uid, !banTarget.banned, banTarget.banned ? undefined : banReason.trim() || undefined);
+      if (selectedUser?.uid === banTarget.uid) {
+        setSelectedUser((prev) => (prev ? { ...prev, banned: !banTarget.banned } : null));
+      }
+      setBanTarget(null);
+      setBanReason('');
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setActionBusy(true);
+    try {
+      await onDeleteUser(deleteTarget.uid);
+      if (selectedUser?.uid === deleteTarget.uid) setSelectedUser(null);
+      setDeleteTarget(null);
+    } finally {
+      setActionBusy(false);
+    }
+  };
 
   const handleRoleChange = async (uid: string, role: Role) => {
     setLoadingUid(uid);
@@ -139,13 +180,20 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
 
                   {/* Role */}
                   <td className="py-3.5 pr-4">
-                    <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      u.role === 'admin' 
-                        ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                        : 'bg-white text-fg-muted border-neutral-200'
-                    }`}>
-                      {u.role}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        u.role === 'admin'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : 'bg-white text-fg-muted border-neutral-200'
+                      }`}>
+                        {u.role}
+                      </span>
+                      {u.banned && (
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-50 text-red-700 border border-red-200 flex items-center gap-0.5">
+                          <Prohibit size={9} weight="bold" /> Banido
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* Distrito */}
@@ -231,6 +279,37 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
                     >
                       <Storefront size={16} weight={u.tipoConta === 'profissional' ? 'fill' : 'regular'} />
                     </button>
+                    <button
+                      onClick={() => setImportUser(u)}
+                      className="p-1.5 rounded-lg border border-neutral-200 text-fg-muted hover:border-accent/30 hover:text-accent transition"
+                      title="Importar inventário do Standvirtual para esta conta"
+                    >
+                      <DownloadSimple size={16} />
+                    </button>
+                    {canModerate(u) && (
+                      <>
+                        <button
+                          onClick={() => { setBanReason(''); setBanTarget(u); }}
+                          aria-label={u.banned ? 'Desbanir conta' : 'Banir conta'}
+                          title={u.banned ? 'Desbanir conta' : 'Banir conta'}
+                          className={`p-1.5 rounded-lg border transition ${
+                            u.banned
+                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20'
+                              : 'border-neutral-200 text-fg-muted hover:border-amber-500/30 hover:text-amber-700'
+                          }`}
+                        >
+                          <Prohibit size={16} weight={u.banned ? 'fill' : 'regular'} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(u)}
+                          aria-label="Apagar conta"
+                          title="Apagar conta"
+                          className="p-1.5 rounded-lg border border-neutral-200 text-fg-muted hover:border-red-500/30 hover:text-red-700 transition"
+                        >
+                          <Trash size={16} />
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               );
@@ -411,24 +490,37 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
             </div>
 
             {/* Bottom drawer actions */}
-            <div className="pt-6 border-t border-neutral-200 mt-6 flex gap-3">
+            <div className="pt-6 border-t border-neutral-200 mt-6 space-y-3">
               <Button
                 tipo="secundario"
                 blocoCompleto
-                onClick={() => setSelectedUser(null)}
-              >
-                Fechar Painel
-              </Button>
-              <Button
-                tipo="primario"
-                blocoCompleto
+                icone={<DownloadSimple weight="bold" />}
                 onClick={() => {
                   setSelectedUser(null);
-                  setPlanUser(currentSelectedUser);
+                  setImportUser(currentSelectedUser);
                 }}
               >
-                Gerir Planos
+                Importar inventário do Standvirtual
               </Button>
+              <div className="flex gap-3">
+                <Button
+                  tipo="secundario"
+                  blocoCompleto
+                  onClick={() => setSelectedUser(null)}
+                >
+                  Fechar Painel
+                </Button>
+                <Button
+                  tipo="primario"
+                  blocoCompleto
+                  onClick={() => {
+                    setSelectedUser(null);
+                    setPlanUser(currentSelectedUser);
+                  }}
+                >
+                  Gerir Planos
+                </Button>
+              </div>
             </div>
           </div>
         </>
@@ -461,6 +553,62 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
         </div>
       )}
 
+      {banTarget && (
+        <div className="fixed inset-0 bg-black/70 z-[130] flex items-center justify-center p-4" onClick={() => !actionBusy && setBanTarget(null)}>
+          <div role="dialog" aria-modal="true" aria-label={banTarget.banned ? 'Desbanir conta' : 'Banir conta'} className="bg-white border border-neutral-200 rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">
+              {banTarget.banned ? 'Desbanir conta' : 'Banir conta'}
+            </h3>
+            <p className="text-sm text-fg-muted mb-4">
+              {banTarget.banned ? (
+                <>Pretende reativar a conta de <strong>{banTarget.nome || banTarget.email}</strong>? Voltará a poder publicar anúncios e enviar mensagens.</>
+              ) : (
+                <>Vai banir <strong>{banTarget.nome || banTarget.email}</strong>. A conta fica impedida de publicar anúncios, enviar mensagens e avaliar. A ação é reversível.</>
+              )}
+            </p>
+            {!banTarget.banned && (
+              <textarea
+                value={banReason}
+                onChange={(e) => setBanReason(e.target.value)}
+                placeholder="Motivo (opcional) — guardado para referência interna"
+                rows={2}
+                className="w-full text-sm bg-white border border-neutral-200 rounded-xl px-3 py-2 mb-4 focus:outline-none focus:border-accent resize-none"
+              />
+            )}
+            <div className="flex gap-3 justify-end">
+              <Button tipo="secundario" onClick={() => setBanTarget(null)} disabled={actionBusy}>
+                Cancelar
+              </Button>
+              <Button tipo={banTarget.banned ? 'verde' : 'aviso'} onClick={handleBan} disabled={actionBusy} carregando={actionBusy}>
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/70 z-[130] flex items-center justify-center p-4" onClick={() => !actionBusy && setDeleteTarget(null)}>
+          <div role="dialog" aria-modal="true" aria-label="Apagar conta" className="bg-white border border-neutral-200 rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-extrabold text-fg-heading mb-2">Apagar conta</h3>
+            <p className="text-sm text-fg-muted mb-4">
+              Vai apagar permanentemente o perfil de <strong>{deleteTarget.nome || deleteTarget.email}</strong> e os respetivos anúncios, peças, intenções e avaliações. Esta ação é irreversível.
+            </p>
+            <p className="text-[11px] text-fg-subtle mb-4">
+              Nota: a conta de autenticação (login) não é removida por aqui — o email não fica bloqueado.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button tipo="secundario" onClick={() => setDeleteTarget(null)} disabled={actionBusy}>
+                Cancelar
+              </Button>
+              <Button tipo="perigo" onClick={handleDelete} disabled={actionBusy} carregando={actionBusy}>
+                Confirmar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <GrantPlanModal
         show={planUser !== null}
         user={planUser}
@@ -470,6 +618,10 @@ export default function UserTable({ users, onRoleChange, adminUid, adminNome, on
         onGrant={onGrantPlan}
         onRevoke={onRevokePlan}
       />
+
+      {importUser && (
+        <ImportInventoryModal user={importUser} onClose={() => setImportUser(null)} />
+      )}
     </>
   );
 }

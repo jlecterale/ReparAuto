@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type PriceIndicator =
   | 'excelente'
@@ -54,31 +55,6 @@ export interface PriceSnapshot {
 
 export type PriceSnapshotInput = Omit<PriceSnapshot, 'id' | 'dataCriacao'>;
 
-export interface SavedSearchCriteria {
-  marca?: string;
-  modelo?: string;
-  anoMin?: number;
-  anoMax?: number;
-  precoMin?: number;
-  precoMax?: number;
-  kmMax?: number;
-  combustivel?: string;
-  cambio?: string;
-  distrito?: string;
-}
-
-export interface SavedSearch {
-  id: string;
-  uid: string;
-  nome: string;
-  criterios: SavedSearchCriteria;
-  alertasAtivos: boolean;
-  dataCriacao: Timestamp;
-  ultimoAlerta?: Timestamp;
-}
-
-export type SavedSearchInput = Omit<SavedSearch, 'id' | 'dataCriacao' | 'ultimoAlerta'>;
-
 export interface PriceEstimateInput {
   marca: string;
   modelo: string;
@@ -86,4 +62,6 @@ export interface PriceEstimateInput {
   km?: number;
   combustivel?: string;
   cambio?: string;
+  /** Market the comparables must belong to — defaults to PT when omitted. */
+  country?: Country;
 }

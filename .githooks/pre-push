@@ -1,0 +1,15 @@
+#!/bin/sh
+. "$(dirname "$0")/lib/ensure-node.sh"
+
+if ! command -v npm >/dev/null 2>&1; then
+  echo "pre-push: npm not found on PATH — skipping tests for this push."
+  echo "  (Install Node or expose your version manager to GUI git clients.)"
+  exit 0
+fi
+
+echo "Running tests before push..."
+npm test || {
+  echo ""
+  echo "Tests failed — push aborted. Fix the tests or push with --no-verify to skip."
+  exit 1
+}

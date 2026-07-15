@@ -1,17 +1,42 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
+import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
+import { useAdDraft } from '@/hooks/useAdDraft';
 import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import Button from '@/components/ui/Button';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
+import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
+import DraftSavedNote from '@/components/ui/DraftSavedNote';
+
+/** Serializable snapshot persisted as the workshop draft. */
+export interface OficinaFormDraft {
+  nome: string;
+  descricao: string;
+  responsavel: string;
+  telefone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  distrito: string;
+  localidade: string;
+  bairro: string;
+  morada: string;
+  coordenadas: { latitude: number; longitude: number };
+  especialidades: EspecialidadeOficina[];
+  logoUrl: string;
+  videoUrl: string;
+}
 
 // Dynamically import MapSelector to prevent SSR/window errors
 const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
@@ -21,9 +46,13 @@ const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
 
 export default function RegistarOficina() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { auth } = useApp();
   const { user } = auth;
+  const { country } = useCountry();
   const toast = useToast();
+  // The profile's "Continuar rascunho" button deep-links with ?retomar=1.
+  const resumeParam = searchParams.get('retomar') === '1';
 
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,6 +67,7 @@ export default function RegistarOficina() {
   const [website, setWebsite] = useState('');
   const [distrito, setDistrito] = useState('');
   const [localidade, setLocalidade] = useState('');
+  const [bairro, setBairro] = useState('');
   const [morada, setMorada] = useState('');
   const [coordenadas, setCoordenadas] = useState<{ latitude: number; longitude: number }>({
     latitude: 38.7436,
@@ -46,6 +76,48 @@ export default function RegistarOficina() {
   const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
   const [logoUrl, setLogoUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+
+  // Remounts the map when a draft restores saved coordinates.
+  const [mapKey, setMapKey] = useState(0);
+
+  const draftSnapshot = useMemo<OficinaFormDraft>(
+    () => ({
+      nome, descricao, responsavel, telefone, whatsapp, email, website,
+      distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl,
+    }),
+    [nome, descricao, responsavel, telefone, whatsapp, email, website,
+     distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl],
+  );
+
+  const applyDraft = (d: OficinaFormDraft) => {
+    setNome(d.nome ?? '');
+    setDescricao(d.descricao ?? '');
+    setResponsavel(d.responsavel ?? '');
+    setTelefone(d.telefone ?? '');
+    setWhatsapp(d.whatsapp ?? '');
+    setEmail(d.email ?? user?.email ?? '');
+    setWebsite(d.website ?? '');
+    setDistrito(d.distrito ?? '');
+    setLocalidade(d.localidade ?? '');
+    setBairro(d.bairro ?? '');
+    setMorada(d.morada ?? '');
+    if (d.coordenadas) {
+      setCoordenadas(d.coordenadas);
+      setMapKey((k) => k + 1);
+    }
+    setEspecialidades(d.especialidades ?? []);
+    setLogoUrl(d.logoUrl ?? '');
+    setVideoUrl(d.videoUrl ?? '');
+  };
+
+  const workshopDraft = useAdDraft<OficinaFormDraft>({
+    kind: 'oficina',
+    suspended: publicado || loading,
+    data: draftSnapshot,
+    hasContent: hasWorkshopDraftContent({ nome, descricao, responsavel, morada }, especialidades),
+    resumeImmediately: resumeParam,
+    onRestore: (draft) => applyDraft(draft.data),
+  });
 
   const handleToggleEspecialidade = (esp: EspecialidadeOficina) => {
     if (especialidades.includes(esp)) {
@@ -93,6 +165,7 @@ export default function RegistarOficina() {
         website: website || null,
         distrito,
         localidade,
+        bairro: country === 'BR' ? bairro.trim() || null : null,
         morada,
         coordenadas,
         especialidades,
@@ -102,6 +175,7 @@ export default function RegistarOficina() {
         totalAvaliacoes: 0,
       });
 
+      clearAdDraft('oficina');
       setPublicado(true);
       toast?.sucesso('Oficina registada com sucesso! A aguardar aprovação.');
 
@@ -299,7 +373,7 @@ export default function RegistarOficina() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-fg mb-1.5">
-                  Telefone <span className="text-danger-500">*</span>
+                  {term('phoneLabel', country)} <span className="text-danger-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -365,13 +439,29 @@ export default function RegistarOficina() {
               onChange={(dist, conc) => {
                 setDistrito(dist);
                 setLocalidade(conc);
+                setBairro('');
               }}
               obrigatorio={true}
             />
 
+            {country === 'BR' && (
+              <div>
+                <label className="block text-xs font-bold text-fg mb-1.5">Bairro (opcional)</label>
+                <input
+                  type="text"
+                  autoComplete="address-level3"
+                  placeholder="Ex: Bela Vista"
+                  maxLength={60}
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                  className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                Morada Completa (Rua, Número) <span className="text-danger-500">*</span>
+                {term('addressLabel', country)} (Rua, Número) <span className="text-danger-500">*</span>
               </label>
               <input
                 type="text"
@@ -389,6 +479,7 @@ export default function RegistarOficina() {
                 Localização Geográfica (Coordenadas)
               </label>
               <MapSelector
+                key={mapKey}
                 initialLat={coordenadas.latitude}
                 initialLng={coordenadas.longitude}
                 onChange={(lat, lng) => setCoordenadas({ latitude: lat, longitude: lng })}
@@ -402,6 +493,7 @@ export default function RegistarOficina() {
 
           {/* Submit */}
           <div className="pt-4">
+            <DraftSavedNote className="mb-3" />
             <Button
               type="submit"
               tipo="primario"
@@ -413,6 +505,15 @@ export default function RegistarOficina() {
           </div>
         </form>
       </div>
+
+      {workshopDraft.prompt && (
+        <DraftResumePrompt
+          itemLabel="um registo de oficina"
+          savedAt={workshopDraft.prompt.savedAt}
+          onDiscard={workshopDraft.discard}
+          onResume={workshopDraft.resume}
+        />
+      )}
     </div>
   );
 }

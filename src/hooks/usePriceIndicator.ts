@@ -6,6 +6,7 @@ import {
   calculatePriceIndicator,
   filtrarCarrosSimilares,
 } from '@/lib/priceUtils';
+import { docCountry } from '@/lib/country';
 import type { Carro } from '@/types/carro';
 import type { PriceIndicatorResult } from '@/types/preco';
 
@@ -27,6 +28,10 @@ export default function usePriceIndicator(carro: Carro | null): PriceIndicatorRe
       modelo: carro.modelo,
       ano: carro.anoFabricacao,
       excludeId: carro.id,
+      // carros.carros is scoped to the viewer's active market; a listing from
+      // the other market (reachable via direct link) must not be compared
+      // against it — EUR and BRL prices would mix as plain numbers.
+      country: docCountry(carro),
     });
     return calculatePriceIndicator(carro.preco, similares);
   }, [carro, carros.carros]);

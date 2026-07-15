@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { formatarPreco, formatarData } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { marcarContatoRelevante, rejeitarContato } from '@/lib/db';
 import type { ContatoIntencao, IntencaoCompra } from '@/types/intencao';
 import Button from '@/components/ui/Button';
@@ -134,7 +135,7 @@ export default function ContatosIntencao() {
                   </div>
                   <p className="text-xs font-semibold text-fg mt-0.5">{contato.titulo}</p>
                   {contato.descricao && <p className="text-xs text-fg-subtle mt-1">{contato.descricao}</p>}
-                  {contato.precoOferido && <p className="text-xs text-accent font-bold mt-0.5">Oferta: {formatarPreco(contato.precoOferido)}</p>}
+                  {contato.precoOferido && <p className="text-xs text-accent font-bold mt-0.5">Oferta: {formatarPreco(contato.precoOferido, intencao ? docCountry(intencao) : 'PT')}</p>}
                   <p className="text-[10px] text-fg-subtle mt-1">{formatarData(contato.criadoEm)}</p>
                 </div>
               </div>
