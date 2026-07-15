@@ -1,8 +1,11 @@
 import { useMemo, useState } from 'react';
 import { getCoordenadas, getDistritoForConcelho, haversineKm } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { QUICK_PRICE_BANDS } from '@/lib/constants';
+import { useCountry } from '@/context/CountryContext';
 import type { Carro, Combustivel, EstadoVeiculo } from '@/types';
 
-export type QuickChip = 'todos' | 'ate1000' | 'ate5000' | 'reparar';
+export type QuickChip = 'todos' | 'priceLow' | 'priceMid' | 'reparar';
 export type Ordenar = 'relevancia' | 'preco_asc' | 'preco_desc';
 
 export interface CarAdvFilters {
@@ -59,12 +62,12 @@ function num(v: string): number | null {
   return v.trim() && !Number.isNaN(n) ? n : null;
 }
 
-function aplicaChip(carro: Carro, chip: QuickChip): boolean {
+function aplicaChip(carro: Carro, chip: QuickChip, bands: { low: number; mid: number }): boolean {
   switch (chip) {
-    case 'ate1000':
-      return carro.preco <= 1000;
-    case 'ate5000':
-      return carro.preco <= 5000;
+    case 'priceLow':
+      return carro.preco <= bands.low;
+    case 'priceMid':
+      return carro.preco <= bands.mid;
     case 'reparar':
       return carro.estadoVeiculo === 'manutencao';
     default:
@@ -73,6 +76,7 @@ function aplicaChip(carro: Carro, chip: QuickChip): boolean {
 }
 
 export function useCarFilters(carros: Carro[]) {
+  const { country } = useCountry();
   const [busca, setBusca] = useState('');
   const [chip, setChip] = useState<QuickChip>('todos');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
@@ -124,10 +128,13 @@ export function useCarFilters(carros: Carro[]) {
     const anoMax = num(f.anoMax);
     const seatsMin = num(f.seatsMin);
     const raioKm = num(f.raioKm);
-    const centro = f.raioMode && f.raioCentro ? getCoordenadas(f.raioCentro) : null;
+    // The center is user-picked from the active market's dataset; per-doc
+    // lookups below are scoped to each listing's own market (names collide).
+    const centro = f.raioMode && f.raioCentro ? getCoordenadas(f.raioCentro, country) : null;
+    const bands = QUICK_PRICE_BANDS[country];
 
     let cs = carros.filter((c) => {
-      if (!aplicaChip(c, chip)) return false;
+      if (!aplicaChip(c, chip, bands)) return false;
       if (termo && !`${c.marca} ${c.modelo} ${c.local}`.toLowerCase().includes(termo)) return false;
       if (f.marca && c.marca !== f.marca) return false;
       if (f.modelo && c.modelo !== f.modelo) return false;
@@ -150,13 +157,13 @@ export function useCarFilters(carros: Carro[]) {
 
       // Location: radius takes precedence, then concelho, then distrito.
       if (centro && raioKm && raioKm > 0) {
-        const coords = c.coordenadas ?? getCoordenadas(c.local);
+        const coords = c.coordenadas ?? getCoordenadas(c.local, docCountry(c));
         if (!coords) return false;
         if (haversineKm(centro, coords) > raioKm) return false;
       } else if (f.concelho) {
         if ((c.local ?? '').toLowerCase() !== f.concelho.toLowerCase()) return false;
       } else if (f.distrito) {
-        const cd = c.distrito ?? getDistritoForConcelho(c.local) ?? '';
+        const cd = c.distrito ?? getDistritoForConcelho(c.local, docCountry(c)) ?? '';
         if (cd !== f.distrito) return false;
       }
       return true;
@@ -165,7 +172,7 @@ export function useCarFilters(carros: Carro[]) {
     if (ordenar === 'preco_asc') cs = [...cs].sort((a, b) => a.preco - b.preco);
     else if (ordenar === 'preco_desc') cs = [...cs].sort((a, b) => b.preco - a.preco);
     return cs;
-  }, [carros, busca, chip, ordenar, f]);
+  }, [carros, busca, chip, ordenar, f, country]);
 
   return {
     busca,

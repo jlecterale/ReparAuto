@@ -9,16 +9,19 @@ import {
   query,
   orderBy,
   where,
+  limit,
   setDoc,
   writeBatch,
   Timestamp,
   onSnapshot,
   increment,
   type DocumentData,
+  type DocumentReference,
 } from 'firebase/firestore';
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
+import { docCountry, getActiveCountry } from '@/lib/country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -99,11 +102,12 @@ export async function getCarroPorId(id: string): Promise<Carro | null> {
 export async function addCarro(dados: Record<string, unknown>): Promise<Carro> {
   try {
     const docRef = await addDoc(collection(db, CARROS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Carro;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Carro;
   } catch (err) {
     console.error('[DB] Erro ao adicionar carro:', err);
     throw err;
@@ -165,11 +169,12 @@ export async function getPecaPorId(id: string): Promise<Peca | null> {
 export async function addPeca(dados: Record<string, unknown>): Promise<Peca> {
   try {
     const docRef = await addDoc(collection(db, PECAS_COLLECTION), cleanUndefined({
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     }));
-    return { id: docRef.id, ...cleanUndefined(dados), status: 'pendente' } as Peca;
+    return { id: docRef.id, country: getActiveCountry(), ...cleanUndefined(dados), status: 'pendente' } as Peca;
   } catch (err) {
     console.error('[DB] Erro ao adicionar peça:', err);
     throw err;
@@ -184,7 +189,7 @@ export async function addPecasBatch(dadosList: Record<string, unknown>[]): Promi
     const now = Timestamp.now();
     for (const dados of dadosList) {
       const ref = doc(collection(db, PECAS_COLLECTION));
-      batch.set(ref, { ...dados, status: 'pendente', dataCriacao: now });
+      batch.set(ref, { country: getActiveCountry(), ...dados, status: 'pendente', dataCriacao: now });
       ids.push(ref.id);
     }
     await batch.commit();
@@ -226,6 +231,7 @@ export async function createUserProfile(uid: string, data: Record<string, unknow
   try {
     const userRef = doc(db, USERS_COLLECTION, uid);
     await setDoc(userRef, {
+      country: getActiveCountry(),
       ...data,
       dataCriacao: Timestamp.now(),
       dataAtualizacao: Timestamp.now(),
@@ -464,6 +470,12 @@ export async function criarNotificacao(
   }
 }
 
+// Notifications accumulate forever, so the stream is capped to the most
+// recent page instead of downloading the user's whole history on every
+// session. Requires the (uid ASC, dataCriacao DESC) composite index —
+// deploy indexes before shipping this code.
+const NOTIFICATIONS_PAGE_SIZE = 50;
+
 export function subscribeNotificacoes(
   uid: string,
   onData: (notificacoes: Notificacao[]) => void,
@@ -472,6 +484,8 @@ export function subscribeNotificacoes(
   const q = query(
     collection(db, NOTIFICACOES_COLLECTION),
     where('uid', '==', uid),
+    orderBy('dataCriacao', 'desc'),
+    limit(NOTIFICATIONS_PAGE_SIZE),
   );
   return onSnapshot(
     q,
@@ -548,6 +562,9 @@ export async function addReview(data: ReviewInput): Promise<Review> {
   }
 }
 
+// Review queries filter status server-side with equality-only constraints
+// (served by merging single-field indexes — no composite index needed) and
+// sort in memory, so pending/rejected reviews never come down the wire.
 export function subscribeReviews(
   vendedorEmail: string,
   onData: (reviews: Review[]) => void,
@@ -556,13 +573,13 @@ export function subscribeReviews(
   const q = query(
     collection(db, REVIEWS_COLLECTION),
     where('vendedorEmail', '==', vendedorEmail),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações:', err);
@@ -580,13 +597,13 @@ export function subscribeReviewsOficina(
     collection(db, REVIEWS_COLLECTION),
     where('anuncioId', '==', oficinaId),
     where('anuncioTipo', '==', 'oficina'),
-    orderBy('dataCriacao', 'desc'),
+    where('status', '==', 'aprovado'),
   );
   return onSnapshot(
     q,
     (snap) => {
       const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-      onData(all.filter((r) => r.status === 'aprovado'));
+      onData(sortByDataCriacaoDesc(all));
     },
     (err) => {
       console.error('[DB] Erro no snapshot de avaliações de oficina:', err);
@@ -630,11 +647,11 @@ async function getReviewsByVendedor(vendedorEmail: string): Promise<Review[]> {
     const q = query(
       collection(db, REVIEWS_COLLECTION),
       where('vendedorEmail', '==', vendedorEmail),
-      orderBy('dataCriacao', 'desc'),
+      where('status', '==', 'aprovado'),
     );
     const snap = await getDocs(q);
     const all = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Review);
-    return all.filter((r) => r.status === 'aprovado');
+    return sortByDataCriacaoDesc(all);
   } catch (err) {
     console.error('[DB] Erro ao buscar avaliações:', err);
     return [];
@@ -827,6 +844,7 @@ export async function criarIntencaoCompra(dados: IntencaoCompraInput): Promise<s
     const intencaoId = doc(collection(db, INTENCOES_COLLECTION)).id;
     await setDoc(doc(db, INTENCOES_COLLECTION, intencaoId), cleanUndefined({
       id: intencaoId,
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       prioritaria: false,
@@ -971,6 +989,8 @@ export async function buscarIntencoesMatch(carro: Record<string, any>, usuarioId
 
     resultados = resultados.filter((intencao) => {
       if (intencao.userId === usuarioId) return false;
+      // Market isolation (plan 20): an intent only matches cars from its own market.
+      if (docCountry(intencao) !== docCountry(carro)) return false;
       const c = intencao.criterios;
       const cat = intencao.categoria;
 
@@ -1212,11 +1232,12 @@ export async function getOficinaPorId(id: string): Promise<OficinaMecanico | nul
 export async function addOficina(dados: Record<string, unknown>): Promise<OficinaMecanico> {
   try {
     const docRef = await addDoc(collection(db, OFICINAS_COLLECTION), {
+      country: getActiveCountry(),
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     });
-    return { id: docRef.id, ...dados, status: 'pendente' } as OficinaMecanico;
+    return { id: docRef.id, country: getActiveCountry(), ...dados, status: 'pendente' } as OficinaMecanico;
   } catch (err) {
     console.error('[DB] Erro ao adicionar oficina:', err);
     throw err;
@@ -1260,71 +1281,57 @@ export async function getAllOficinasAdmin(): Promise<OficinaMecanico[]> {
 // hold documents, so GDPR cleanup below keeps deleting them.
 const PROPOSTAS_COLLECTION = 'propostas';
 
+// Firestore batches cap at 500 operations.
+const DELETE_BATCH_LIMIT = 500;
+
+async function deleteRefsInBatches(refs: DocumentReference[]): Promise<void> {
+  for (let i = 0; i < refs.length; i += DELETE_BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    for (const ref of refs.slice(i, i + DELETE_BATCH_LIMIT)) batch.delete(ref);
+    await batch.commit();
+  }
+}
+
 export async function eliminarDadosDoUtilizador(uid: string): Promise<void> {
   try {
-    // 1. Eliminar anúncios de carros
-    const qCars = query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid));
-    const snapCars = await getDocs(qCars);
-    for (const docSnap of snapCars.docs) {
-      await deleteDoc(docSnap.ref);
+    // Chat messages are co-owned by the other participant and deleting them
+    // is admin-only in the rules — attempt it in its own batch and never let
+    // a denial abort the rest of the erasure (it used to stop the whole flow
+    // before the profile was deleted).
+    try {
+      const snapMessages = await getDocs(
+        query(collection(db, 'messages'), where('participants', 'array-contains', uid)),
+      );
+      await deleteRefsInBatches(snapMessages.docs.map((d) => d.ref));
+    } catch (err) {
+      console.warn('[DB] Mensagens não eliminadas (limpeza requer admin):', err);
     }
 
-    // 2. Eliminar anúncios de peças
-    const qParts = query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid));
-    const snapParts = await getDocs(qParts);
-    for (const docSnap of snapParts.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    // Everything the user owns: listings, propostas (as buyer or seller),
+    // notifications, purchase intents, identity verifications and reviews
+    // authored.
+    const ownershipQueries = [
+      query(collection(db, CARROS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PECAS_COLLECTION), where('criadorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid)),
+      query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid)),
+      query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, INTENCOES_COLLECTION), where('userId', '==', uid)),
+      query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid)),
+      query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid)),
+    ];
+    const snaps = await Promise.all(ownershipQueries.map((q) => getDocs(q)));
 
-    // 3. Eliminar propostas (onde o utilizador é comprador OU vendedor)
-    const qPropComp = query(collection(db, PROPOSTAS_COLLECTION), where('compradorUid', '==', uid));
-    const snapPropComp = await getDocs(qPropComp);
-    for (const docSnap of snapPropComp.docs) {
-      await deleteDoc(docSnap.ref);
+    // Dedupe by path — the two propostas queries can match the same doc, and
+    // a batch must not touch a document twice.
+    const refsByPath = new Map<string, DocumentReference>();
+    for (const snap of snaps) {
+      for (const docSnap of snap.docs) refsByPath.set(docSnap.ref.path, docSnap.ref);
     }
-    const qPropVend = query(collection(db, PROPOSTAS_COLLECTION), where('vendedorUid', '==', uid));
-    const snapPropVend = await getDocs(qPropVend);
-    for (const docSnap of snapPropVend.docs) {
-      await deleteDoc(docSnap.ref);
-    }
+    const profileRef = doc(db, USERS_COLLECTION, uid);
+    refsByPath.set(profileRef.path, profileRef);
 
-    // 4. Eliminar notificações do utilizador
-    const qNotif = query(collection(db, NOTIFICACOES_COLLECTION), where('uid', '==', uid));
-    const snapNotif = await getDocs(qNotif);
-    for (const docSnap of snapNotif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 5. Eliminar intenções de compra do utilizador
-    const qInten = query(collection(db, INTENCOES_COLLECTION), where('uid', '==', uid));
-    const snapInten = await getDocs(qInten);
-    for (const docSnap of snapInten.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 6. Eliminar verificação de identidade
-    const qVerif = query(collection(db, VERIFICATIONS_COLLECTION), where('uid', '==', uid));
-    const snapVerif = await getDocs(qVerif);
-    for (const docSnap of snapVerif.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 7. Eliminar reviews escritas pelo utilizador
-    const qRev = query(collection(db, REVIEWS_COLLECTION), where('autorUid', '==', uid));
-    const snapRev = await getDocs(qRev);
-    for (const docSnap of snapRev.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 8. Eliminar mensagens de chats do utilizador
-    const qMessages = query(collection(db, 'messages'), where('participants', 'array-contains', uid));
-    const snapMessages = await getDocs(qMessages);
-    for (const docSnap of snapMessages.docs) {
-      await deleteDoc(docSnap.ref);
-    }
-
-    // 9. Eliminar perfil do utilizador
-    await deleteDoc(doc(db, USERS_COLLECTION, uid));
+    await deleteRefsInBatches(Array.from(refsByPath.values()));
   } catch (err) {
     console.error('[DB] Erro ao eliminar dados do utilizador:', err);
     throw err;

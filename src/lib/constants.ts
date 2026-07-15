@@ -1,16 +1,23 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
+import type { Country } from '@/lib/country';
 import type { CategoriaIntencao } from '@/types/intencao';
-import type { BodyType, Condition, Traction } from '@/types/carro';
+import type { Condition, Traction, VehicleOrigin, Upholstery } from '@/types/carro';
 
 // ============ CONSTANTES REPARAUTO ============
 
 // Limites
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
 
-export const MAX_FOTOS_CARRO = 20;
-export const MAX_FOTO_SIZE_MB = 10;
-export const MAX_FOTO_SIZE_BYTES = MAX_FOTO_SIZE_MB * 1024 * 1024;
+// Pure listing data/limits live in listingOptions.ts (icon-free, safe for
+// server code); re-exported here so existing call sites keep working.
+export {
+  MAX_FOTOS_CARRO,
+  MAX_FOTO_SIZE_MB,
+  MAX_FOTO_SIZE_BYTES,
+  TIPOS_CARROCERIA,
+  EQUIPAMENTOS_CARRO,
+} from '@/lib/listingOptions';
 // Every listing photo is cropped to this aspect ratio (width / height) so cards
 // and galleries render uniformly — 4:3 is the automotive-marketplace standard.
 export const LISTING_PHOTO_ASPECT = 4 / 3;
@@ -50,50 +57,23 @@ export const TIPOS_COMBUSTIVEL = [
 
 export const TIPOS_CAMBIO = ['Manual', 'Automático', 'CVT'];
 
-// Body type / category (carroçaria). A single Portuguese enum serves both the PT
-// and BR markets — e.g. "Carrinha"/"Perua" and "Pick-up"/"Picape" are the same
-// category. Used in the listing form and as a default filter. The element type
-// annotations keep these lists checked against the unions in types/carro.ts.
-export const TIPOS_CARROCERIA: readonly BodyType[] = [
-  'Citadino',
-  'Utilitário',
-  'Sedan',
-  'Carrinha',
-  'SUV',
-  'Monovolume',
-  'Coupé',
-  'Cabrio',
-  'Pick-up',
-];
-
 // Vehicle condition. "Para peças" bridges the car and parts marketplaces.
 export const CONDICOES_VEICULO: readonly Condition[] = ['Novo', 'Usado', 'Para peças'];
 
 // Drivetrain / traction.
 export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4)'];
 
-// Equipment / extras checklist (multi-select). Covers the most searched options
-// across PT + BR marketplaces.
-export const EQUIPAMENTOS_CARRO = [
-  'Ar condicionado',
-  'Climatização automática',
-  'Direção assistida',
-  'Vidros elétricos',
-  'Fecho centralizado',
-  'Sensores de estacionamento',
-  'Câmara de marcha-atrás',
-  'GPS / Navegação',
-  'Bluetooth',
-  'Cruise control',
-  'Bancos em pele',
-  'Bancos aquecidos',
-  'Teto de abrir',
-  'Jantes de liga leve',
-  'Faróis LED/Xénon',
-  'Isofix',
-  'Apple CarPlay / Android Auto',
-  'Start/Stop',
-] as const;
+// Vehicle origin — national vs. imported (Standvirtual "origin").
+export const ORIGENS_VEICULO: readonly VehicleOrigin[] = ['Nacional', 'Importado'];
+
+// Upholstery / interior material (Standvirtual "upholstery").
+export const TIPOS_ESTOFO: readonly Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+
+// Month labels for the first-registration selector — index + 1 is the stored value.
+export const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+];
 
 export const CATEGORIAS_PECAS = [
   'Motor e Transmissão',
@@ -430,3 +410,93 @@ export const TEXTOS_POLITICAS = {
     `,
   },
 };
+
+// Brazil-market policy variants (plan 20). Only the privacy policy is fully
+// localized to the LGPD for now; other policies fall back to the PT text via
+// getPolicy(). pt-BR wording; identifiers stay English.
+export const TEXTOS_POLITICAS_BR: Partial<Record<keyof typeof TEXTOS_POLITICAS, { titulo: string; corpo: string }>> = {
+  privacidade: {
+    titulo: 'Política de Privacidade (LGPD) - RecarGarage',
+    corpo: `
+      <p class='font-bold text-slate-800 mb-2'>1. Controlador e Encarregado (DPO)</p>
+      <p class='mb-4'>Em cumprimento da Lei nº 13.709/2018 (Lei Geral de Proteção de Dados Pessoais — LGPD), o RecarGarage compromete-se a proteger a privacidade dos seus usuários. O <strong>controlador</strong> dos dados é o operador da plataforma. Nos termos do art. 41 da LGPD, o <strong>Encarregado pelo Tratamento de Dados Pessoais (DPO)</strong> pode ser contatado pelo e-mail <strong>suporte@recargarage.com</strong>, canal também disponível para qualquer solicitação relativa a dados pessoais.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>2. Dados Pessoais Coletados</p>
+      <ul class='list-disc pl-5 mb-4 space-y-1'>
+        <li><strong>Dados de Identificação e Contato:</strong> nome, e-mail, celular (quando informado). Para verificação de conta, documento de identidade (RG ou CNH) e, para perfis profissionais, CNPJ / contrato social — apagados após a análise.</li>
+        <li><strong>Dados de Localização:</strong> indicação geográfica geral (cidade/estado) informada pelo usuário para associar aos anúncios. Não são coletadas coordenadas GPS exatas.</li>
+        <li><strong>Dados de Navegação e Dispositivo:</strong> endereço IP, tipo e versão do navegador, sistema operacional, páginas visitadas e horários, tratados de forma anonimizada para segurança e diagnóstico.</li>
+        <li><strong>Dados de Uso do Aplicativo:</strong> no app RecarGarage (iOS/Android), via Google Analytics for Firebase, eventos de uso pseudonimizados (telas, interações com anúncios, modelo do aparelho, sistema, idioma e país aproximado) associados a um identificador de instância do app e, para usuários autenticados, ao UID da conta. <strong>Não é coletado o identificador de publicidade (Advertising ID / IDFA)</strong> e o conteúdo dos anúncios e mensagens nunca é enviado como parâmetro de evento.</li>
+        <li><strong>Dados de Autenticação:</strong> UID gerado pelo Firebase Authentication, método de login (e-mail/senha, Google ou Apple) e foto de perfil (apenas se o login for via Google).</li>
+        <li><strong>Dados de Anúncios e Favoritos:</strong> informações de veículos/peças publicados (fotos, descrições, preços, estado) e a lista de favoritos.</li>
+      </ul>
+      <p class='mb-4'><em>Não são coletados dados pessoais sensíveis (art. 5º, II da LGPD), como origem racial ou étnica, convicção religiosa, opinião política, dados referentes à saúde ou dado biométrico.</em></p>
+
+      <p class='font-bold text-slate-800 mb-2'>3. Finalidades e Bases Legais</p>
+      <table class='w-full mb-4 text-sm border-collapse border border-slate-300'>
+        <thead><tr class='bg-slate-100'><th class='border border-slate-300 p-2 text-left'>Finalidade</th><th class='border border-slate-300 p-2 text-left'>Base Legal (LGPD)</th><th class='border border-slate-300 p-2 text-left'>Dados</th></tr></thead>
+        <tbody>
+          <tr><td class='border border-slate-300 p-2'>Criação e gestão de conta</td><td class='border border-slate-300 p-2'>Art. 7º, V — execução de contrato</td><td class='border border-slate-300 p-2'>E-mail, nome, UID</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Publicação e gestão de anúncios</td><td class='border border-slate-300 p-2'>Art. 7º, V — execução de contrato</td><td class='border border-slate-300 p-2'>Dados do anúncio, localização, contato</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Contato entre usuários</td><td class='border border-slate-300 p-2'>Art. 7º, V — execução de contrato</td><td class='border border-slate-300 p-2'>Nome, e-mail/celular (conforme anúncio)</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Verificação de identidade / perfil profissional</td><td class='border border-slate-300 p-2'>Art. 7º, IX — legítimo interesse (prevenção à fraude)</td><td class='border border-slate-300 p-2'>Documento (RG/CNH/CNPJ), selfie</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Segurança e integridade da plataforma</td><td class='border border-slate-300 p-2'>Art. 7º, IX — legítimo interesse</td><td class='border border-slate-300 p-2'>IP, logs de acesso, UID</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Favoritos (não autenticados)</td><td class='border border-slate-300 p-2'>Art. 7º, I — consentimento</td><td class='border border-slate-300 p-2'>localStorage (dados locais)</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Comunicação de alterações aos Termos</td><td class='border border-slate-300 p-2'>Art. 7º, II — obrigação legal/regulatória</td><td class='border border-slate-300 p-2'>E-mail</td></tr>
+          <tr><td class='border border-slate-300 p-2'>Estatísticas de uso (app)</td><td class='border border-slate-300 p-2'>Art. 7º, IX — legítimo interesse</td><td class='border border-slate-300 p-2'>Eventos de uso, identificador de instância, dados do aparelho, UID</td></tr>
+        </tbody>
+      </table>
+
+      <p class='font-bold text-slate-800 mb-2'>4. Operadores e Transferência Internacional</p>
+      <p class='mb-4'>O RecarGarage utiliza como operadores (suboperadores) os serviços do Google Cloud / Firebase (Google LLC): Firebase Authentication, Cloud Firestore, Firebase Storage, Firebase Hosting e Google Analytics for Firebase (configurado <strong>sem coleta do identificador de publicidade</strong> e sem publicidade personalizada).</p>
+      <p class='mb-4'>Os dados são armazenados em servidores do Google localizados na <strong>União Europeia</strong>, podendo os dados de uso ser processados também nos Estados Unidos. Trata-se de <strong>transferência internacional de dados</strong> nos termos do art. 33 da LGPD, realizada com garantias adequadas — cláusulas contratuais padrão oferecidas pelo Google LLC — que asseguram o nível de proteção exigido pela legislação brasileira.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>5. Prazos de Retenção</p>
+      <ul class='list-disc pl-5 mb-4 space-y-1'>
+        <li><strong>Conta e anúncios ativos:</strong> durante a vigência da conta; após a exclusão da conta ou remoção do anúncio, os dados são apagados em até 30 dias.</li>
+        <li><strong>Documentos de verificação:</strong> apagados logo após a análise do pedido.</li>
+        <li><strong>Logs de acesso e navegação:</strong> 6 meses (art. 15 do Marco Civil da Internet exige a guarda de registros de acesso a aplicações por 6 meses), salvo necessidade de investigação de incidentes.</li>
+        <li><strong>Dados de uso do app (Google Analytics for Firebase):</strong> até 14 meses para dados associados a identificadores; relatórios agregados podem ser mantidos por mais tempo.</li>
+        <li><strong>Dados fiscais/de consumo:</strong> quando aplicável, até 5 anos (prazos do Código de Defesa do Consumidor e da legislação tributária).</li>
+      </ul>
+
+      <p class='font-bold text-slate-800 mb-2'>6. Compartilhamento de Dados</p>
+      <p class='mb-4'>O RecarGarage <strong>não vende, não aluga nem compartilha dados pessoais</strong> com terceiros para fins de marketing. Os únicos destinatários são os operadores citados no item 4 e, quando exigido, autoridades competentes no cumprimento de obrigações legais. Os dados de contato do vendedor (e-mail e/ou celular) são disponibilizados aos compradores interessados conforme a visibilidade definida pelo próprio vendedor.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>7. Direitos do Titular</p>
+      <p class='mb-4'>Nos termos do art. 18 da LGPD, o titular pode a qualquer momento solicitar:</p>
+      <ul class='list-disc pl-5 mb-4 space-y-1'>
+        <li>Confirmação da existência de tratamento e acesso aos dados;</li>
+        <li>Correção de dados incompletos, inexatos ou desatualizados;</li>
+        <li>Anonimização, bloqueio ou eliminação de dados desnecessários, excessivos ou tratados em desconformidade com a LGPD;</li>
+        <li>Portabilidade dos dados a outro fornecedor de serviço, mediante requisição expressa;</li>
+        <li>Eliminação dos dados tratados com base no consentimento;</li>
+        <li>Informação sobre entidades públicas e privadas com as quais os dados foram compartilhados;</li>
+        <li>Informação sobre a possibilidade de não fornecer consentimento e as respetivas consequências;</li>
+        <li>Revogação do consentimento.</li>
+      </ul>
+      <p class='mb-4'>Para exercer esses direitos, contate <strong>suporte@recargarage.com</strong>. As solicitações são atendidas sem custo, em prazo razoável. O RecarGarage <strong>não realiza decisões automatizadas nem profiling</strong>; havendo, o titular pode solicitar revisão nos termos do art. 20 da LGPD. Poderá ser solicitada comprovação de identidade antes do atendimento.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>8. Reclamação à ANPD</p>
+      <p class='mb-4'>Sem prejuízo de outras vias administrativas ou judiciais, o titular pode apresentar reclamação à <strong>Autoridade Nacional de Proteção de Dados (ANPD)</strong> caso entenda que o tratamento viola a LGPD. Site: <strong>www.gov.br/anpd</strong>.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>9. Consentimento e Crianças e Adolescentes</p>
+      <p class='mb-4'>Quando o tratamento se basear no consentimento (art. 7º, I da LGPD), o titular pode revogá-lo a qualquer momento, sem prejuízo da licitude do tratamento realizado anteriormente. A plataforma destina-se a maiores de 18 anos. O tratamento de dados de crianças e adolescentes, quando ocorrer, observa o art. 14 da LGPD, exigindo o consentimento específico e em destaque de pelo menos um dos pais ou do responsável legal e sempre no melhor interesse do menor.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>10. Segurança</p>
+      <p class='mb-4'>O RecarGarage adota medidas técnicas e administrativas adequadas para proteger os dados pessoais de acessos não autorizados e de situações acidentais ou ilícitas de destruição, perda, alteração, comunicação ou difusão, nos termos dos arts. 46 a 49 da LGPD. Consulte a Política de Segurança para mais detalhes.</p>
+
+      <p class='font-bold text-slate-800 mb-2'>11. Alterações desta Política</p>
+      <p class='mb-4'>Esta Política de Privacidade pode ser atualizada periodicamente. Alterações relevantes serão comunicadas aos usuários registrados com antecedência mínima de 15 dias, e a versão mais recente estará sempre disponível na plataforma.</p>
+    `,
+  },
+};
+
+/**
+ * Resolve the policy text for the active market: the Brazil (LGPD) variant when
+ * one exists for that policy, otherwise the Portuguese (RGPD) default.
+ */
+export function getPolicy(tipo: keyof typeof TEXTOS_POLITICAS, country: Country) {
+  if (country === 'BR' && TEXTOS_POLITICAS_BR[tipo]) return TEXTOS_POLITICAS_BR[tipo]!;
+  return TEXTOS_POLITICAS[tipo];
+}

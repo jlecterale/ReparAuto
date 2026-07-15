@@ -12,11 +12,16 @@ import {
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
   EQUIPAMENTOS_CARRO,
+  ORIGENS_VEICULO,
+  TIPOS_ESTOFO,
+  MESES,
   MAX_FOTOS_CARRO,
 } from '@/lib/constants';
 import { CAR_PRICE_MAX, validarDadosVeiculo } from '@/lib/carSpec';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
-import { toggleInList, parsePositiveInt } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
+import { toggleInList, parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull, sanitizeDecimalInput } from '@/lib/utils';
 import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -37,6 +42,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const { auth } = useApp();
   const toast = useToast();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  // Editing a specific listing → label by the listing's market.
+  const country = docCountry(carro);
 
   const [form, setForm] = useState({
     marca: carro.marca,
@@ -57,12 +64,32 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     power: carro.power != null ? String(carro.power) : '',
     displacement: carro.displacement != null ? String(carro.displacement) : '',
     traction: carro.traction ?? '',
+    version: carro.version ?? '',
+    firstRegistrationMonth: carro.firstRegistrationMonth != null ? String(carro.firstRegistrationMonth) : '',
+    origin: carro.origin ?? '',
+    previousOwners: carro.previousOwners != null ? String(carro.previousOwners) : '',
+    gears: carro.gears != null ? String(carro.gears) : '',
+    co2Emissions: carro.co2Emissions != null ? String(carro.co2Emissions) : '',
+    maxFuelRange: carro.maxFuelRange != null ? String(carro.maxFuelRange) : '',
+    consumptionUrban: carro.consumptionUrban != null ? String(carro.consumptionUrban) : '',
+    consumptionExtraUrban: carro.consumptionExtraUrban != null ? String(carro.consumptionExtraUrban) : '',
+    consumptionCombined: carro.consumptionCombined != null ? String(carro.consumptionCombined) : '',
+    upholstery: carro.upholstery ?? '',
+    numberOfAirbags: carro.numberOfAirbags != null ? String(carro.numberOfAirbags) : '',
+    warrantyMonths: carro.warrantyMonths != null ? String(carro.warrantyMonths) : '',
     local: carro.local,
     distrito: carro.distrito ?? getDistritoForConcelho(carro.local) ?? '',
     descricao: carro.descricao,
     videoUrl: carro.videoUrl ?? '',
     estadoVeiculo: carro.estadoVeiculo,
   });
+  const [comercial, setComercial] = useState({
+    acceptsFinancing: carro.acceptsFinancing ?? false,
+    vatDeductible: carro.vatDeductible ?? false,
+    acceptsExchange: carro.acceptsExchange ?? false,
+  });
+  const toggleComercial = (campo: keyof typeof comercial) =>
+    setComercial((prev) => ({ ...prev, [campo]: !prev[campo] }));
   const [features, setFeatures] = useState<string[]>(carro.features ?? []);
   const [fotos, setFotos] = useState<string[]>(carro.fotos || []);
   const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>(() =>
@@ -145,6 +172,24 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         power: parsePositiveInt(form.power),
         displacement: parsePositiveInt(form.displacement),
         traction: form.traction || null,
+        // Standvirtual-parity optional specs. updateDoc rejects undefined, so
+        // empty optionals must be null (parse* return null when empty/invalid).
+        version: form.version.trim() || null,
+        firstRegistrationMonth: parsePositiveInt(form.firstRegistrationMonth),
+        origin: form.origin || null,
+        previousOwners: parseNonNegativeInt(form.previousOwners),
+        gears: parsePositiveInt(form.gears),
+        co2Emissions: parseNonNegativeInt(form.co2Emissions),
+        maxFuelRange: parseNonNegativeInt(form.maxFuelRange),
+        consumptionUrban: parseDecimalOrNull(form.consumptionUrban),
+        consumptionExtraUrban: parseDecimalOrNull(form.consumptionExtraUrban),
+        consumptionCombined: parseDecimalOrNull(form.consumptionCombined),
+        upholstery: form.upholstery || null,
+        numberOfAirbags: parseNonNegativeInt(form.numberOfAirbags),
+        warrantyMonths: parseNonNegativeInt(form.warrantyMonths),
+        acceptsFinancing: comercial.acceptsFinancing,
+        vatDeductible: comercial.vatDeductible,
+        acceptsExchange: comercial.acceptsExchange,
         features: features.length ? features : null,
         local: form.local,
         // updateDoc rejects undefined (no ignoreUndefinedProperties), so empty
@@ -174,7 +219,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     allowEmpty = false,
     maxLength?: number,
   ) => {
-    const numeric = type === 'number';
+    const decimal = type === 'decimal';
+    const numeric = type === 'number' || decimal;
     return (
     <div>
       <label className="block text-xs font-semibold text-fg-subtle mb-1">{label}</label>
@@ -194,12 +240,19 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
           // Numeric fields are digit-only text inputs so maxLength is honoured
           // (type=number ignores it).
           type={numeric ? 'text' : type}
-          inputMode={numeric ? 'numeric' : undefined}
-          pattern={numeric ? '[0-9]*' : undefined}
+          inputMode={decimal ? 'decimal' : numeric ? 'numeric' : undefined}
+          pattern={decimal ? '[0-9.,]*' : numeric ? '[0-9]*' : undefined}
           maxLength={maxLength}
           value={form[campoId as keyof typeof form] as string}
           onChange={(e) =>
-            atualizar(campoId, numeric ? e.target.value.replace(/\D/g, '').slice(0, maxLength) : e.target.value)
+            atualizar(
+              campoId,
+              decimal
+                ? sanitizeDecimalInput(e.target.value).slice(0, maxLength)
+                : numeric
+                  ? e.target.value.replace(/\D/g, '').slice(0, maxLength)
+                  : e.target.value,
+            )
           }
           onBlur={() => validarCampo(campoId)}
           className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent ${
@@ -231,12 +284,40 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Potência (cv)', 'power', 'number', null, false, 4)}
         {campo('Cilindrada (cc)', 'displacement', 'number', null, false, 5)}
         {campo('Tração', 'traction', 'text', TIPOS_TRACAO, true)}
+        <div className="col-span-2">{campo('Versão', 'version', 'text', null, false, 60)}</div>
+        {campo(term('firstRegistrationLabel', country), 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
+        {campo('Origem', 'origin', 'text', ORIGENS_VEICULO, true)}
+        {campo('Proprietários anteriores', 'previousOwners', 'number', null, false, 2)}
+        {campo('Nº de mudanças', 'gears', 'number', null, false, 2)}
+        {campo('Emissões CO₂ (g/km)', 'co2Emissions', 'number', null, false, 3)}
+        {campo('Autonomia (km)', 'maxFuelRange', 'number', null, false, 4)}
+        {campo('Estofos', 'upholstery', 'text', TIPOS_ESTOFO, true)}
+        {campo('Nº de airbags', 'numberOfAirbags', 'number', null, false, 2)}
+        {campo('Garantia (meses)', 'warrantyMonths', 'number', null, false, 3)}
+        {campo('Consumo urbano', 'consumptionUrban', 'decimal', null, false, 5)}
+        {campo('Consumo extra-urbano', 'consumptionExtraUrban', 'decimal', null, false, 5)}
+        {campo('Consumo combinado', 'consumptionCombined', 'decimal', null, false, 5)}
         <div className="col-span-2">
           <SeletorLocalizacao
             distrito={form.distrito}
             concelho={form.local}
             onChange={(d, c) => setForm((prev) => ({ ...prev, distrito: d, local: c }))}
           />
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-fg-subtle mb-2">Condições comerciais</label>
+        <div className="flex flex-wrap gap-2">
+          <ToggleChip active={comercial.acceptsFinancing} onClick={() => toggleComercial('acceptsFinancing')}>
+            Aceita financiamento
+          </ToggleChip>
+          <ToggleChip active={comercial.vatDeductible} onClick={() => toggleComercial('vatDeductible')}>
+            IVA dedutível
+          </ToggleChip>
+          <ToggleChip active={comercial.acceptsExchange} onClick={() => toggleComercial('acceptsExchange')}>
+            Aceita retoma
+          </ToggleChip>
         </div>
       </div>
 

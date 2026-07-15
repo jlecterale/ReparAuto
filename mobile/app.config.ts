@@ -56,8 +56,8 @@ if (!GOOGLE_IOS_URL_SCHEME) {
 // dev builds fall back to `development`.
 const APS_ENVIRONMENT =
   process.env.APS_ENVIRONMENT === 'production' ? 'production' : 'development';
-const VERSION = '1.7.0';
-const BUILD_NUMBER = 70;
+const VERSION = '1.8.2';
+const BUILD_NUMBER = 83;
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,

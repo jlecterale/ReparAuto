@@ -15,6 +15,9 @@ import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
 import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import { docCountry, filterByCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/providers/CountryProvider';
 import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
@@ -64,6 +67,7 @@ function FilterSelect({
 // realtime subscription is still loading; the live list takes over after.
 export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
+  const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
@@ -159,17 +163,21 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   };
 
   useEffect(() => {
+    // Market isolation (plan 20): these direct fetches bypass the context
+    // hooks, so they filter by the active country themselves.
     if (tipo === 'intencoes') {
       setLoadingIntencoes(true);
       if (searchQuery) {
-        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
+        // country rides along so the match logic compares intents against the
+        // active market, not the PT default of a country-less object.
+        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined, country };
         buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       } else {
         getIntencoesAtivas()
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       }
@@ -177,7 +185,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
       setLoadingOficinas(true);
       const unsub = subscribeOficinas(
         (data) => {
-          setOficinas(data);
+          setOficinas(filterByCountry(data, country));
           setLoadingOficinas(false);
         },
         (err) => {
@@ -187,7 +195,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
       );
       return unsub;
     }
-  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
+  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid, country]);
 
   const oficinasFiltradas = useMemo(() => {
     const busca = searchQuery.toLowerCase();
@@ -374,13 +382,13 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                 <div className="space-y-2">
                   <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Todos os distritos</option>
+                    <option value="">{term('districtAllOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
                     disabled={!advDistrito}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                    <option value="">{advDistrito ? term('municipalityAllOption', country) : term('districtSelectOption', country)}</option>
                     {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
                 </div>
@@ -388,13 +396,13 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                 <div className="space-y-2">
                   <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Selecionar distrito</option>
+                    <option value="">{term('districtSelectOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
                     disabled={!raioDist}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                    <option value="">{raioDist ? 'Selecionar centro' : term('districtSelectOption', country)}</option>
                     {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
                   <div className="flex items-center gap-2">
@@ -574,7 +582,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {intencoesMatch.map((intencao) => {
-                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
                   const email = intencao.vendedorEmail || '';
                   const temWhatsApp = !!whatsapp;
                   const temTelefone = !!intencao.vendedorTelefone && intencao.mostrarTelefone;
@@ -609,7 +617,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                         ) : (
                           <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>
                         )}
-                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
+                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))}</p>
                         <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
                       </div>
                     </div>

@@ -4,6 +4,7 @@ import { ChatCircleDots, Envelope, IdentificationCard, Phone, SignIn, Star, User
 import { useState, useEffect } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { getUserByEmail } from '@/lib/db';
 import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import useReviews from '@/hooks/useReviews';
@@ -45,7 +46,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
   // conversion. Google's "count = one" setting dedups repeat clicks per session.
   const trackContact = () => reportConversion(CONVERSION_LABELS.contactSeller);
 
-  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone);
+  const whatsapp = obterWhatsApp(carro.vendedorWhatsApp, carro.vendedorTelefone, docCountry(carro));
   const telefone = carro.vendedorTelefone;
   const email = carro.vendedorEmail || carro.criador;
   const temWhatsApp = !!whatsapp;

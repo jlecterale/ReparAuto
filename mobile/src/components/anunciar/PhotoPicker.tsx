@@ -13,6 +13,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { KeyboardAvoider } from '@/components/ui/KeyboardAvoider';
+import { PhotoSourceSheet } from '@/components/ui/PhotoSourceSheet';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
 import { parseExternalImageUrl } from '@/lib/images';
 import {
@@ -142,14 +143,6 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
       return;
     }
     setAddSheetOpen(true);
-  }
-
-  // Runs a sheet action only after the sheet Modal has dismissed — presenting
-  // the native picker (or another Modal) while it is still animating out fails
-  // silently on iOS.
-  function runAfterSheetClose(action: () => void) {
-    setAddSheetOpen(false);
-    setTimeout(action, 350);
   }
 
   function closeUrlDialog() {
@@ -363,27 +356,16 @@ export function PhotoPicker({ fotos, onChange, max, angleByPhoto, onAngleByPhoto
         </View>
       )}
 
-      <BottomSheet visible={addSheetOpen} onClose={() => setAddSheetOpen(false)} title="Adicionar foto">
-        <View className="gap-1">
-          {(
-            [
-              { icon: 'camera-outline', label: 'Tirar foto', action: tirarFoto },
-              { icon: 'images-outline', label: 'Escolher da galeria', action: escolherDaGaleria },
-              { icon: 'link-outline', label: 'Adicionar por URL', action: () => setUrlDialogOpen(true) },
-            ] as const
-          ).map((opt) => (
-            <Pressable
-              key={opt.label}
-              onPress={() => runAfterSheetClose(opt.action)}
-              accessibilityRole="button"
-              className="flex-row items-center rounded-xl px-3 py-3.5 active:bg-neutral-100"
-            >
-              <Ionicons name={opt.icon} size={20} color={colors.primary[600]} style={{ marginRight: 12 }} />
-              <Text className="flex-1 text-base text-fg">{opt.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </BottomSheet>
+      <PhotoSourceSheet
+        visible={addSheetOpen}
+        onClose={() => setAddSheetOpen(false)}
+        title="Adicionar foto"
+        options={[
+          { icon: 'camera-outline', label: 'Tirar foto', action: tirarFoto },
+          { icon: 'images-outline', label: 'Escolher da galeria', action: escolherDaGaleria },
+          { icon: 'link-outline', label: 'Adicionar por URL', action: () => setUrlDialogOpen(true) },
+        ]}
+      />
 
       <Modal visible={urlDialogOpen} transparent animationType="fade" onRequestClose={closeUrlDialog}>
         <KeyboardAvoider>

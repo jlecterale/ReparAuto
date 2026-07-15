@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { getIntencaoById } from '@/lib/trust';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { CATEGORIA_INTENCAO_LABELS, type IntencaoCompra } from '@/types';
@@ -76,14 +77,18 @@ export default function IntencaoDetailScreen() {
           <Spec
             icon="cash-outline"
             label="Preço máx."
-            value={c?.precoMaximo ? formatPreco(c.precoMaximo) : '—'}
+            value={c?.precoMaximo ? formatPreco(c.precoMaximo, docCountry(intencao)) : '—'}
           />
           <Spec
             icon="speedometer-outline"
             label="Km máx."
             value={c?.quilometragemMaxima ? formatKm(c.quilometragemMaxima) : '—'}
           />
-          <Spec icon="location-outline" label="Distrito" value={c?.localizacao?.distrito || '—'} />
+          <Spec
+            icon="location-outline"
+            label={docCountry(intencao) === 'BR' ? 'Estado' : 'Distrito'}
+            value={c?.localizacao?.distrito || '—'}
+          />
         </View>
 
         {!!c?.combustivel?.length && (

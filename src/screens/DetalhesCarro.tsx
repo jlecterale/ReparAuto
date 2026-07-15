@@ -6,7 +6,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
+import { pickChangedFields } from '@/lib/changedFields';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
@@ -92,7 +94,10 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
       carro?.fotos ?? [],
       (dados.fotos as string[] | undefined) ?? [],
     );
-    await updateCarro(id, { ...dados, status });
+    const changed = pickChangedFields(carro ?? {}, { ...dados, status });
+    if (Object.keys(changed).length > 0) {
+      await updateCarro(id, changed);
+    }
     setEditModalOpen(false);
     const data = await getCarroPorIdDb(id);
     if (data) setCarro(data);
@@ -183,7 +188,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-2xl sm:text-3xl font-extrabold text-accent">
-                {formatarPreco(carro.preco)}
+                {formatarPreco(carro.preco, docCountry(carro))}
               </span>
               {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             </div>
@@ -191,6 +196,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
           <div className="flex items-center gap-2">
             {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
             {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
+            {carro.origem === 'standvirtual' && <Badge cor="blue">Importado</Badge>}
             <button
               onClick={() => toggleFavorito(carro.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${
@@ -204,7 +210,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
             </button>
             <ShareButton
               title={`${carro.marca} ${carro.modelo} - RecarGarage`}
-              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco)}`}
+              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco, docCountry(carro))}`}
             />
             {(carro.criador === user?.email || isAdmin) && (
               <>

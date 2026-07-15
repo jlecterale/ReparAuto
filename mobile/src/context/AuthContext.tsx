@@ -4,6 +4,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
@@ -27,6 +28,7 @@ import {
   getUserProfile,
   updateUserProfile,
 } from '@/lib/db';
+import { getBindingCountry, type Country } from '@/lib/country';
 import type { Usuario, Role, TipoConta } from '@/types';
 
 const DEFAULT_ROLE: Role = 'user';
@@ -67,7 +69,8 @@ interface AuthContextValue {
   profileCompleted: boolean;
   emailVerified: boolean;
   login: (email: string, password: string) => Promise<Usuario>;
-  registar: (nome: string, email: string, password: string) => Promise<Usuario>;
+  /** `country` binds the new account to that market (defaults to the active one). */
+  registar: (nome: string, email: string, password: string, country?: Country) => Promise<Usuario>;
   loginGoogle: () => Promise<Usuario>;
   loginApple: () => Promise<Usuario>;
   appleDisponivel: boolean;
@@ -87,6 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<Usuario | null>(null);
   const [loading, setLoading] = useState(true);
   const [appleDisponivel, setAppleDisponivel] = useState(false);
+  // Country picked on the signup form, consumed when the profile is seeded. A
+  // ref (not a param threaded into mergeProfile) because seeding can run from
+  // either path — registar's explicit mergeProfile or the onAuthChange
+  // listener, whichever wins the race — and both must see the same choice.
+  const signupCountryRef = useRef<Country | null>(null);
 
   useEffect(() => {
     appleSignInDisponivel().then(setAppleDisponivel).catch(() => {});
@@ -98,8 +106,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         let profile = await getUserProfile(fb.uid);
         if (!profile) {
-          await createUserProfile(fb.uid, base as unknown as Record<string, unknown>);
-          profile = base;
+          // Resolve the binding market once and pass it through, so the doc
+          // and the in-memory profile (which drives the account-market lock)
+          // can't diverge. An explicit signup choice wins over the ambient one.
+          const country = signupCountryRef.current ?? (await getBindingCountry());
+          const seeded = { ...base, country };
+          await createUserProfile(fb.uid, seeded as unknown as Record<string, unknown>);
+          profile = seeded;
         }
         // emailVerified is an auth property — always trust the live Firebase
         // value over whatever happens to be stored on the profile document.
@@ -140,12 +153,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const registar = useCallback(
-    async (nome: string, email: string, password: string) => {
-      const fb = await criarConta(email, password, nome);
-      const merged = { ...(await mergeProfile(fb)), nome };
-      setUser(merged);
-      logSignUp('password');
-      return merged;
+    async (nome: string, email: string, password: string, country?: Country) => {
+      signupCountryRef.current = country ?? null;
+      try {
+        const fb = await criarConta(email, password, nome);
+        const merged = { ...(await mergeProfile(fb)), nome };
+        setUser(merged);
+        logSignUp('password');
+        return merged;
+      } finally {
+        // Clear after mergeProfile has seeded the doc: a failed signup must
+        // not leak the choice into a later Google/Apple first sign-in.
+        signupCountryRef.current = null;
+      }
     },
     [mergeProfile],
   );
