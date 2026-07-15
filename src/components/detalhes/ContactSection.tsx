@@ -1,6 +1,6 @@
 'use client';
 
-import { ChatCircleDots, Envelope, IdentificationCard, Phone, SignIn, Star, User, WhatsappLogo } from '@phosphor-icons/react';
+import { ChatCircleDots, Envelope, IdentificationCard, PencilSimple, Phone, SignIn, Star, User, WhatsappLogo } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
@@ -10,7 +10,7 @@ import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import useReviews from '@/hooks/useReviews';
 import useReports from '@/hooks/useReports';
 import SellerBadges from '@/components/trust/SellerBadges';
-import ReviewForm from '@/components/trust/ReviewForm';
+import ReviewFormStructured from '@/components/trust/ReviewFormStructured';
 import ReviewsList from '@/components/trust/ReviewsList';
 import ReportButton from '@/components/trust/ReportButton';
 import ReportModal from '@/components/trust/ReportModal';
@@ -28,7 +28,7 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
 
   const vendedorEmail = carro?.vendedorEmail || carro?.criador;
-  const { reviews, loading: reviewsLoading, media, total, criar: criarReview, remover: removerReview } = useReviews(vendedorEmail);
+  const { reviews, loading: reviewsLoading, media, total, criar: criarReview, atualizar, remover: removerReview, jaAvaliou } = useReviews(vendedorEmail);
   const { criar: criarReport } = useReports();
 
   useEffect(() => {
@@ -55,7 +55,10 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
   const vendedorUid = vendedorProfile?.uid || carro.criadorUid;
   const temChat = !!user && !!vendedorUid && user.email !== carro.criador;
   const canReview = !!user && user.email !== carro.criador;
-  const alreadyReviewed = reviews.some((r) => r.autorUid === user?.uid && r.anuncioId === carro.id);
+
+  // Check if the user already reviewed this listing
+  const existingReview = user ? jaAvaliou(user.uid, carro.id) : undefined;
+  const userReview = existingReview ?? undefined;
 
   return (
     <>
@@ -188,18 +191,38 @@ export default function ContactSection({ carro }: { carro: Carro | null }) {
           <Star className="text-yellow-400" /> Avaliações do Vendedor
         </h3>
 
-        {canReview && !alreadyReviewed && vendedorProfile && (
+        {canReview && vendedorProfile && (
           <div className="mb-4">
-            <ReviewForm
-              autorUid={user!.uid}
-              autorNome={user!.nome}
-              autorFoto={user!.foto}
-              vendedorUid={vendedorProfile.uid}
-              vendedorEmail={vendedorEmail!}
-              anuncioId={carro.id}
-              anuncioTipo="carro"
-              onSubmit={criarReview}
-            />
+            {userReview ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-xs text-fg-subtle flex items-center gap-1">
+                  <PencilSimple /> A sua avaliação actual
+                </p>
+                <ReviewFormStructured
+                  autorUid={user!.uid}
+                  autorNome={user!.nome}
+                  autorFoto={user!.foto}
+                  vendedorUid={vendedorProfile.uid}
+                  vendedorEmail={vendedorEmail!}
+                  anuncioId={carro.id}
+                  anuncioTipo="carro"
+                  existingReview={userReview}
+                  onSubmit={criarReview}
+                  onUpdate={(data) => atualizar(user!.uid, carro.id, data)}
+                />
+              </div>
+            ) : (
+              <ReviewFormStructured
+                autorUid={user!.uid}
+                autorNome={user!.nome}
+                autorFoto={user!.foto}
+                vendedorUid={vendedorProfile.uid}
+                vendedorEmail={vendedorEmail!}
+                anuncioId={carro.id}
+                anuncioTipo="carro"
+                onSubmit={criarReview}
+              />
+            )}
           </div>
         )}
 

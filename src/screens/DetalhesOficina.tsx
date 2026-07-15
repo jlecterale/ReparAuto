@@ -14,18 +14,21 @@ import {
   User,
   Wrench,
   ChatCircleDots,
-  SignIn
+  SignIn,
+  PencilSimple,
 } from '@phosphor-icons/react';
-import { getOficinaPorId, addReview, subscribeReviewsOficina } from '@/lib/db';
+import { getOficinaPorId, addReview, updateReview, subscribeReviewsOficina, getReviewById } from '@/lib/db';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
-import type { Review } from '@/types/review';
+import type { Review, ReviewInput } from '@/types/review';
+import { getReviewId } from '@/types/review';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+import ReviewFormStructured from '@/components/trust/ReviewFormStructured';
+import ReviewCriteriosBar from '@/components/trust/ReviewCriteriosBar';
 import UserAvatar from '@/components/ui/UserAvatar';
+import Badge from '@/components/ui/Badge';
 
 // Dynamically import MapViewer to prevent SSR errors
 const MapViewer = dynamic(() => import('@/components/ui/MapViewer'), {
@@ -47,11 +50,8 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
   const [oficina, setOficina] = useState<OficinaMecanico | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Review Form state
-  const [nota, setNota] = useState(5);
-  const [comentario, setComentario] = useState('');
-  const [enviandoReview, setEnviandoReview] = useState(false);
+  const [userReview, setUserReview] = useState<Review | undefined>(undefined);
+  const [checkingReview, setCheckingReview] = useState(false);
 
   useEffect(() => {
     async function carregarDados() {
@@ -87,50 +87,18 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
     return unsub;
   }, [id, router, toast]);
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  // Check if current user has already reviewed this workshop
+  useEffect(() => {
     if (!user) {
-      toast?.erro('Faça login para deixar uma avaliação.');
-      router.push('/perfil');
+      setUserReview(undefined);
       return;
     }
-
-    if (user.email === oficina?.criador) {
-      toast?.erro('Não pode avaliar a sua própria oficina.');
-      return;
-    }
-
-    if (!comentario) {
-      toast?.erro('Por favor, escreva um comentário.');
-      return;
-    }
-
-    setEnviandoReview(true);
-
-    try {
-      await addReview({
-        autorUid: user.uid,
-        autorNome: user.nome,
-        autorFoto: user.foto || null,
-        vendedorUid: '', // Not strictly a seller profile
-        vendedorEmail: oficina?.criador || '',
-        anuncioId: id,
-        anuncioTipo: 'oficina',
-        nota,
-        comentario,
-      });
-
-      toast?.sucesso('Avaliação enviada com sucesso! Irá aparecer após aprovação.');
-      setComentario('');
-      setNota(5);
-    } catch (err) {
-      console.error(err);
-      toast?.erro('Erro ao enviar avaliação.');
-    } finally {
-      setEnviandoReview(false);
-    }
-  };
+    setCheckingReview(true);
+    getReviewById(user.uid, id).then((found) => {
+      setUserReview(found ?? undefined);
+      setCheckingReview(false);
+    });
+  }, [user, id]);
 
   if (loading) {
     return (
@@ -232,49 +200,65 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
           <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
             <h2 className="text-lg font-bold text-fg-strong">Avaliações do Profissional</h2>
 
-            {/* Review Form */}
-            {user?.email !== oficina.criador ? (
-              <form onSubmit={handleSubmitReview} className="bg-neutral-50 rounded-2xl p-5 border border-neutral-150">
-                <h3 className="text-sm font-bold text-fg-strong mb-3">Deixe a sua avaliação</h3>
-                
-                {/* Stars selector */}
-                <div className="flex items-center gap-1.5 mb-4">
-                  <span className="text-xs text-fg-subtle mr-2">Nota:</span>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setNota(star)}
-                      className="text-amber-500 hover:scale-110 transition cursor-pointer"
-                    >
-                      <Star size={24} weight={star <= nota ? 'fill' : 'regular'} />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="space-y-3">
-                  <textarea
-                    rows={3}
-                    placeholder="Escreva a sua avaliação sobre o serviço prestado, pontualidade, simpatia e qualidade..."
-                    value={comentario}
-                    onChange={(e) => setComentario(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+            {/* Review Form — only if not the workshop owner */}
+            {user && user.email !== oficina.criador ? (
+              <div className="bg-neutral-50 rounded-2xl p-5 border border-neutral-150">
+                {checkingReview ? (
+                  <p className="text-xs text-fg-subtle text-center py-3">A verificar...</p>
+                ) : userReview ? (
+                  <div>
+                    <p className="text-xs text-fg-subtle mb-2 flex items-center gap-1">
+                      <PencilSimple /> A sua avaliação actual
+                    </p>
+                    <ReviewFormStructured
+                      autorUid={user.uid}
+                      autorNome={user.nome}
+                      autorFoto={user.foto || null}
+                      vendedorUid={oficina.criadorUid || ''}
+                      vendedorEmail={oficina.criador}
+                      anuncioId={id}
+                      anuncioTipo="oficina"
+                      especialidades={oficina.especialidades}
+                      existingReview={userReview}
+                      onSubmit={async (data: ReviewInput) => {
+                        await addReview(data);
+                        toast?.sucesso('Avaliação enviada! Irá aparecer após aprovação.');
+                        // Refresh user review
+                        const found = await getReviewById(user.uid, id);
+                        setUserReview(found ?? undefined);
+                      }}
+                      onUpdate={async (data: Partial<ReviewInput>) => {
+                        await updateReview(user.uid, id, data);
+                        toast?.sucesso('Avaliação actualizada! Irá ser re‑avaliada.');
+                        const found = await getReviewById(user.uid, id);
+                        setUserReview(found ?? undefined);
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <ReviewFormStructured
+                    autorUid={user.uid}
+                    autorNome={user.nome}
+                    autorFoto={user.foto || null}
+                    vendedorUid={oficina.criadorUid || ''}
+                    vendedorEmail={oficina.criador}
+                    anuncioId={id}
+                    anuncioTipo="oficina"
+                    especialidades={oficina.especialidades}
+                    onSubmit={async (data: ReviewInput) => {
+                      await addReview(data);
+                      toast?.sucesso('Avaliação enviada! Irá aparecer após aprovação.');
+                      const found = await getReviewById(user.uid, id);
+                      setUserReview(found ?? undefined);
+                    }}
                   />
-                  <Button
-                    type="submit"
-                    tipo="primario"
-                    carregando={enviandoReview}
-                    className="w-full sm:w-auto font-bold px-6"
-                  >
-                    Enviar Avaliação
-                  </Button>
-                </div>
-              </form>
-            ) : (
+                )}
+              </div>
+            ) : user ? (
               <div className="bg-neutral-50 rounded-2xl p-4 text-center border border-neutral-150 text-xs text-fg-subtle">
                 Como proprietário desta oficina, não pode submeter avaliações para o seu próprio perfil.
               </div>
-            )}
+            ) : null}
 
             {/* Reviews List */}
             <div className="space-y-4 pt-2">
@@ -299,6 +283,10 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                         {review.dataCriacao?.toDate?.() ? new Date(review.dataCriacao.toDate()).toLocaleDateString('pt-PT') : ''}
                       </span>
                     </div>
+                    {/* Criteria breakdown */}
+                    {review.criterios && review.criterios.length > 0 && (
+                      <ReviewCriteriosBar criterios={review.criterios} layout="horizontal" />
+                    )}
                     <p className="text-sm text-fg-subtle mt-2 leading-relaxed pl-11">
                       {review.comentario}
                     </p>

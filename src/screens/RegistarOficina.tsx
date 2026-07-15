@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
-import { useApp } from '@/providers/AppProvider';
-import { useToast } from '@/components/ui/Toast';
-import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
-import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
-import { useAdDraft } from '@/hooks/useAdDraft';
-import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
-import { isValidYoutubeUrl } from '@/lib/utils';
-import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
-import { useCountry } from '@/providers/CountryProvider';
-import { term } from '@/lib/terms';
-import Button from '@/components/ui/Button';
-import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
-import DraftResumePrompt from '@/components/ui/DraftResumePrompt';
-import DraftSavedNote from '@/components/ui/DraftSavedNote';
+import { useState, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import { CheckCircle, ArrowLeft } from "@phosphor-icons/react";
+import { useApp } from "@/providers/AppProvider";
+import { useToast } from "@/components/ui/Toast";
+import { addOficina, getAdminUsers, criarNotificacao } from "@/lib/db";
+import { clearAdDraft, hasWorkshopDraftContent } from "@/lib/adDraft";
+import { useAdDraft } from "@/hooks/useAdDraft";
+import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from "@/types/oficina";
+import { isValidYoutubeUrl } from "@/lib/utils";
+import SeletorLocalizacao from "@/components/ui/SeletorLocalizacao";
+import { useCountry } from "@/providers/CountryProvider";
+import { term } from "@/lib/terms";
+import Button from "@/components/ui/Button";
+import YoutubeEmbed from "@/components/ui/YoutubeEmbed";
+import DraftResumePrompt from "@/components/ui/DraftResumePrompt";
+import DraftSavedNote from "@/components/ui/DraftSavedNote";
 
 /** Serializable snapshot persisted as the workshop draft. */
 export interface OficinaFormDraft {
@@ -39,9 +39,13 @@ export interface OficinaFormDraft {
 }
 
 // Dynamically import MapSelector to prevent SSR/window errors
-const MapSelector = dynamic(() => import('@/components/ui/MapSelector'), {
+const MapSelector = dynamic(() => import("@/components/ui/MapSelector"), {
   ssr: false,
-  loading: () => <div className="h-64 bg-neutral-100 animate-pulse rounded-xl flex items-center justify-center text-sm text-neutral-400">A carregar mapa...</div>
+  loading: () => (
+    <div className="h-64 bg-neutral-100 animate-pulse rounded-xl flex items-center justify-center text-sm text-neutral-400">
+      A carregar mapa...
+    </div>
+  ),
 });
 
 export default function RegistarOficina() {
@@ -52,69 +56,105 @@ export default function RegistarOficina() {
   const { country } = useCountry();
   const toast = useToast();
   // The profile's "Continuar rascunho" button deep-links with ?retomar=1.
-  const resumeParam = searchParams.get('retomar') === '1';
+  const resumeParam = searchParams.get("retomar") === "1";
 
   const [publicado, setPublicado] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Form State
-  const [nome, setNome] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [responsavel, setResponsavel] = useState('');
-  const [telefone, setTelefone] = useState('');
-  const [whatsapp, setWhatsapp] = useState('');
-  const [email, setEmail] = useState(user?.email || '');
-  const [website, setWebsite] = useState('');
-  const [distrito, setDistrito] = useState('');
-  const [localidade, setLocalidade] = useState('');
-  const [bairro, setBairro] = useState('');
-  const [morada, setMorada] = useState('');
-  const [coordenadas, setCoordenadas] = useState<{ latitude: number; longitude: number }>({
+  const [nome, setNome] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [responsavel, setResponsavel] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
+  const [website, setWebsite] = useState("");
+  const [distrito, setDistrito] = useState("");
+  const [localidade, setLocalidade] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [morada, setMorada] = useState("");
+  const [coordenadas, setCoordenadas] = useState<{
+    latitude: number;
+    longitude: number;
+  }>({
     latitude: 38.7436,
-    longitude: -9.1443
+    longitude: -9.1443,
   });
-  const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>([]);
-  const [logoUrl, setLogoUrl] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
+  const [especialidades, setEspecialidades] = useState<EspecialidadeOficina[]>(
+    [],
+  );
+  const [logoUrl, setLogoUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
 
   // Remounts the map when a draft restores saved coordinates.
   const [mapKey, setMapKey] = useState(0);
 
   const draftSnapshot = useMemo<OficinaFormDraft>(
     () => ({
-      nome, descricao, responsavel, telefone, whatsapp, email, website,
-      distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl,
+      nome,
+      descricao,
+      responsavel,
+      telefone,
+      whatsapp,
+      email,
+      website,
+      distrito,
+      localidade,
+      bairro,
+      morada,
+      coordenadas,
+      especialidades,
+      logoUrl,
+      videoUrl,
     }),
-    [nome, descricao, responsavel, telefone, whatsapp, email, website,
-     distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl],
+    [
+      nome,
+      descricao,
+      responsavel,
+      telefone,
+      whatsapp,
+      email,
+      website,
+      distrito,
+      localidade,
+      bairro,
+      morada,
+      coordenadas,
+      especialidades,
+      logoUrl,
+      videoUrl,
+    ],
   );
 
   const applyDraft = (d: OficinaFormDraft) => {
-    setNome(d.nome ?? '');
-    setDescricao(d.descricao ?? '');
-    setResponsavel(d.responsavel ?? '');
-    setTelefone(d.telefone ?? '');
-    setWhatsapp(d.whatsapp ?? '');
-    setEmail(d.email ?? user?.email ?? '');
-    setWebsite(d.website ?? '');
-    setDistrito(d.distrito ?? '');
-    setLocalidade(d.localidade ?? '');
-    setBairro(d.bairro ?? '');
-    setMorada(d.morada ?? '');
+    setNome(d.nome ?? "");
+    setDescricao(d.descricao ?? "");
+    setResponsavel(d.responsavel ?? "");
+    setTelefone(d.telefone ?? "");
+    setWhatsapp(d.whatsapp ?? "");
+    setEmail(d.email ?? user?.email ?? "");
+    setWebsite(d.website ?? "");
+    setDistrito(d.distrito ?? "");
+    setLocalidade(d.localidade ?? "");
+    setBairro(d.bairro ?? "");
+    setMorada(d.morada ?? "");
     if (d.coordenadas) {
       setCoordenadas(d.coordenadas);
       setMapKey((k) => k + 1);
     }
     setEspecialidades(d.especialidades ?? []);
-    setLogoUrl(d.logoUrl ?? '');
-    setVideoUrl(d.videoUrl ?? '');
+    setLogoUrl(d.logoUrl ?? "");
+    setVideoUrl(d.videoUrl ?? "");
   };
 
   const workshopDraft = useAdDraft<OficinaFormDraft>({
-    kind: 'oficina',
+    kind: "oficina",
     suspended: publicado || loading,
     data: draftSnapshot,
-    hasContent: hasWorkshopDraftContent({ nome, descricao, responsavel, morada }, especialidades),
+    hasContent: hasWorkshopDraftContent(
+      { nome, descricao, responsavel, morada },
+      especialidades,
+    ),
     resumeImmediately: resumeParam,
     onRestore: (draft) => applyDraft(draft.data),
   });
@@ -131,23 +171,39 @@ export default function RegistarOficina() {
     e.preventDefault();
 
     if (!user) {
-      toast?.erro('Faça login para registar uma oficina.');
-      router.push('/perfil');
+      toast?.erro("Faça login para registar uma oficina.");
+      router.push("/perfil");
       return;
     }
 
-    if (!nome || !descricao || !responsavel || !telefone || !email || !distrito || !localidade || !morada) {
-      toast?.erro('Por favor, preencha todos os campos obrigatórios.');
+    if (!user.emailVerified) {
+      toast?.erro("Por favor, verifique o seu email antes de registar uma oficina.");
+      return;
+    }
+
+    if (
+      !nome ||
+      !descricao ||
+      !responsavel ||
+      !telefone ||
+      !email ||
+      !distrito ||
+      !localidade ||
+      !morada
+    ) {
+      toast?.erro("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     if (especialidades.length === 0) {
-      toast?.erro('Por favor, selecione pelo menos uma especialidade.');
+      toast?.erro("Por favor, selecione pelo menos uma especialidade.");
       return;
     }
 
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl)) {
-      toast?.erro('O link do vídeo do YouTube é inválido. Cole o endereço completo do vídeo.');
+      toast?.erro(
+        "O link do vídeo do YouTube é inválido. Cole o endereço completo do vídeo.",
+      );
       return;
     }
 
@@ -165,7 +221,7 @@ export default function RegistarOficina() {
         website: website || null,
         distrito,
         localidade,
-        bairro: country === 'BR' ? bairro.trim() || null : null,
+        bairro: country === "BR" ? bairro.trim() || null : null,
         morada,
         coordenadas,
         especialidades,
@@ -175,24 +231,24 @@ export default function RegistarOficina() {
         totalAvaliacoes: 0,
       });
 
-      clearAdDraft('oficina');
+      clearAdDraft("oficina");
       setPublicado(true);
-      toast?.sucesso('Oficina registada com sucesso! A aguardar aprovação.');
+      toast?.sucesso("Oficina registada com sucesso! A aguardar aprovação.");
 
       // Notify admins
       const admins = await getAdminUsers();
       admins.forEach((admin) => {
         criarNotificacao(
           admin.uid,
-          'info',
-          'Nova oficina registada',
+          "info",
+          "Nova oficina registada",
           `A oficina "${nome}" foi registada e necessita de aprovação.`,
-          `/admin`
+          `/admin`,
         );
       });
     } catch (err) {
-      console.error('[RegistarOficina] Erro:', err);
-      toast?.erro('Erro ao registar oficina. Tente novamente.');
+      console.error("[RegistarOficina] Erro:", err);
+      toast?.erro("Erro ao registar oficina. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -202,36 +258,38 @@ export default function RegistarOficina() {
     return (
       <div className="max-w-2xl mx-auto bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10 page-enter text-center">
         <CheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
-        <h3 className="text-2xl font-black text-fg-strong">Oficina Registada!</h3>
+        <h3 className="text-2xl font-black text-fg-strong">
+          Oficina Registada!
+        </h3>
         <p className="text-fg-subtle text-sm mt-3 leading-relaxed max-w-md mx-auto">
-          Obrigado por registar a sua oficina. O seu perfil foi enviado para revisão e está <strong>pendente de aprovação</strong> pela administração.
+          Obrigado por registar a sua oficina. O seu perfil foi enviado para
+          revisão e está <strong>pendente de aprovação</strong> pela
+          administração.
         </p>
         <p className="text-fg-subtle text-xs mt-2">
-          Assim que for aprovada, ficará visível publicamente no diretório de Oficinas & Mecânicos.
+          Assim que for aprovada, ficará visível publicamente no diretório de
+          Oficinas & Mecânicos.
         </p>
         <div className="mt-8 flex gap-3 justify-center">
-          <Button
-            tipo="primario"
-            onClick={() => router.push('/oficinas')}
-          >
+          <Button tipo="primario" onClick={() => router.push("/oficinas")}>
             Ir para o Diretório
           </Button>
           <Button
             tipo="secundario"
             onClick={() => {
               setPublicado(false);
-              setNome('');
-              setDescricao('');
-              setResponsavel('');
-              setTelefone('');
-              setWhatsapp('');
-              setWebsite('');
-              setDistrito('');
-              setLocalidade('');
-              setMorada('');
+              setNome("");
+              setDescricao("");
+              setResponsavel("");
+              setTelefone("");
+              setWhatsapp("");
+              setWebsite("");
+              setDistrito("");
+              setLocalidade("");
+              setMorada("");
               setEspecialidades([]);
-              setLogoUrl('');
-              setVideoUrl('');
+              setLogoUrl("");
+              setVideoUrl("");
             }}
           >
             Registar outra
@@ -245,15 +303,19 @@ export default function RegistarOficina() {
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 page-enter">
       {/* Back button */}
       <button
-        onClick={() => router.push('/oficinas')}
+        onClick={() => router.push("/oficinas")}
         className="flex items-center gap-2 text-sm font-semibold text-fg-subtle hover:text-fg transition mb-6 cursor-pointer"
       >
         <ArrowLeft size={16} /> Voltar para o Diretório
       </button>
 
       <div className="bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10">
-        <h2 className="text-2xl font-black text-fg-strong tracking-tight">Registar Oficina / Mecânico</h2>
-        <p className="text-fg-subtle text-sm mt-1">Crie o seu perfil profissional focado no mundo automóvel.</p>
+        <h2 className="text-2xl font-black text-fg-strong tracking-tight">
+          Registar Oficina / Mecânico
+        </h2>
+        <p className="text-fg-subtle text-sm mt-1">
+          Crie o seu perfil profissional focado no mundo automóvel.
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
           {/* General Information */}
@@ -263,7 +325,8 @@ export default function RegistarOficina() {
             </h3>
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                Nome da Oficina ou Nome Profissional <span className="text-danger-500">*</span>
+                Nome da Oficina ou Nome Profissional{" "}
+                <span className="text-danger-500">*</span>
               </label>
               <input
                 type="text"
@@ -277,7 +340,8 @@ export default function RegistarOficina() {
 
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                Descrição dos Serviços <span className="text-danger-500">*</span>
+                Descrição dos Serviços{" "}
+                <span className="text-danger-500">*</span>
               </label>
               <textarea
                 required
@@ -291,7 +355,8 @@ export default function RegistarOficina() {
 
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                Responsável técnico/oficina <span className="text-danger-500">*</span>
+                Responsável técnico/oficina{" "}
+                <span className="text-danger-500">*</span>
               </label>
               <input
                 type="text"
@@ -328,9 +393,16 @@ export default function RegistarOficina() {
                 onChange={(e) => setVideoUrl(e.target.value)}
                 className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
               />
-              <p className="text-xs text-fg-subtle mt-1.5">Apresente a sua oficina, instalações ou trabalhos num vídeo para gerar mais confiança.</p>
+              <p className="text-xs text-fg-subtle mt-1.5">
+                Apresente a sua oficina, instalações ou trabalhos num vídeo para
+                gerar mais confiança.
+              </p>
               {videoUrl.trim() && isValidYoutubeUrl(videoUrl) && (
-                <YoutubeEmbed url={videoUrl} title="Pré-visualização do vídeo" className="mt-3" />
+                <YoutubeEmbed
+                  url={videoUrl}
+                  title="Pré-visualização do vídeo"
+                  className="mt-3"
+                />
               )}
             </div>
           </div>
@@ -338,7 +410,8 @@ export default function RegistarOficina() {
           {/* Specialties */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
-              Especialidades Automóveis <span className="text-danger-500">*</span>
+              Especialidades Automóveis{" "}
+              <span className="text-danger-500">*</span>
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {Object.entries(ESPECIALIDADES_LABELS).map(([value, label]) => {
@@ -351,12 +424,16 @@ export default function RegistarOficina() {
                     onClick={() => handleToggleEspecialidade(esp)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left font-medium transition cursor-pointer ${
                       isSelected
-                        ? 'border-accent bg-accent/5 text-accent'
-                        : 'border-neutral-200 hover:border-neutral-400 text-fg-strong'
+                        ? "border-accent bg-accent/5 text-accent"
+                        : "border-neutral-200 hover:border-neutral-400 text-fg-strong"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-accent bg-accent' : 'border-neutral-300'}`}>
-                      {isSelected && <span className="text-[10px] text-white">✓</span>}
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? "border-accent bg-accent" : "border-neutral-300"}`}
+                    >
+                      {isSelected && (
+                        <span className="text-[10px] text-white">✓</span>
+                      )}
                     </div>
                     {label}
                   </button>
@@ -373,7 +450,8 @@ export default function RegistarOficina() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-fg mb-1.5">
-                  {term('phoneLabel', country)} <span className="text-danger-500">*</span>
+                  {term("phoneLabel", country)}{" "}
+                  <span className="text-danger-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -432,21 +510,23 @@ export default function RegistarOficina() {
             <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
               Localização & Mapa
             </h3>
-            
+
             <SeletorLocalizacao
               distrito={distrito}
               concelho={localidade}
               onChange={(dist, conc) => {
                 setDistrito(dist);
                 setLocalidade(conc);
-                setBairro('');
+                setBairro("");
               }}
               obrigatorio={true}
             />
 
-            {country === 'BR' && (
+            {country === "BR" && (
               <div>
-                <label className="block text-xs font-bold text-fg mb-1.5">Bairro (opcional)</label>
+                <label className="block text-xs font-bold text-fg mb-1.5">
+                  Bairro (opcional)
+                </label>
                 <input
                   type="text"
                   autoComplete="address-level3"
@@ -461,7 +541,8 @@ export default function RegistarOficina() {
 
             <div>
               <label className="block text-xs font-bold text-fg mb-1.5">
-                {term('addressLabel', country)} (Rua, Número) <span className="text-danger-500">*</span>
+                {term("addressLabel", country)} (Rua, Número){" "}
+                <span className="text-danger-500">*</span>
               </label>
               <input
                 type="text"
@@ -482,7 +563,9 @@ export default function RegistarOficina() {
                 key={mapKey}
                 initialLat={coordenadas.latitude}
                 initialLng={coordenadas.longitude}
-                onChange={(lat, lng) => setCoordenadas({ latitude: lat, longitude: lng })}
+                onChange={(lat, lng) =>
+                  setCoordenadas({ latitude: lat, longitude: lng })
+                }
               />
               <div className="flex gap-4 mt-2 text-xs text-fg-subtle">
                 <span>Lat: {coordenadas.latitude.toFixed(6)}</span>

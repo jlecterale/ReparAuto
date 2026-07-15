@@ -1,7 +1,10 @@
+'use client';
+
 import { CircleNotch, Star, Trash } from '@phosphor-icons/react';
 import { formatarData } from '@/lib/utils';
 import type { Review } from '@/types/review';
 import UserAvatar from '@/components/ui/UserAvatar';
+import ReviewCriteriosBar from './ReviewCriteriosBar';
 
 interface ReviewsListProps {
   reviews: Review[];
@@ -82,6 +85,10 @@ export default function ReviewsList({ reviews, loading, media, total, currentUse
                 </button>
               )}
             </div>
+            {/* Structured criteria breakdown */}
+            {review.criterios && review.criterios.length > 0 && (
+              <ReviewCriteriosBar criterios={review.criterios} layout="horizontal" />
+            )}
             {review.comentario && (
               <p className="text-sm text-fg-muted mt-2 leading-relaxed">{review.comentario}</p>
             )}

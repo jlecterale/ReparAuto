@@ -2294,6 +2294,13 @@ const extraPlans = [
     impact: 'Ficha tecnica completa em paridade com a Standvirtual/OLX',
     summary: '16 campos opcionais (versao, mes da 1a matricula, origem, proprietarios anteriores, nº de mudanças, emissoes CO2, consumos urbano/extra/combinado, autonomia, estofos, nº de airbags, garantia, aceita financiamento, IVA dedutivel, aceita retoma) no formulario, na edicao do admin, na ficha tecnica e no JSON-LD, em ambas as plataformas.',
     evidence: 'Entregue — carSpec estendido (+TDD), enums VehicleOrigin/Upholstery, TechnicalSheet e detalhe mobile com nova seccao "Condicoes comerciais", JSON-LD Vehicle enriquecido. Matricula e detalhes fiscais de nicho excluidos por privacidade/relevancia.'
+  },
+  {
+    id: '26', title: 'Avaliacoes Estruturadas (Reviews 2.0)', priority: 'MEDIA', effort: '~5-7 dias',
+    implemented: false, file: '26-avaliacoes-estruturadas.html',
+    impact: 'Reviews multi-criterio, edicao pelo autor, bloqueio de duplicatas',
+    summary: 'Avaliacoes com breakdown de criterios por tipo de anuncio (carro/peca/oficina), id deterministico para unicidade, edicao com re-aprovacao, formulario estruturado tipo Google Maps.',
+    evidence: 'Entregue: ReviewCriterio, getCriteriosPorTipo(), ID deterministico, updateReview, ReviewFormStructured, ReviewCriteriosBar, ContactSection/DetalhesOficina actualizados, script de migracao. PR #97.'
   }
 ];
 

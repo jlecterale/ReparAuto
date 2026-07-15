@@ -13,10 +13,13 @@
     "test:coverage": "jest --coverage",
     "studio": "npm --prefix video run studio -- --port 4000",
     "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:firestore": "firebase deploy --only firestore",
     "deploy:hosting": "firebase deploy --only apphosting",
     "import:pecas": "node scripts/importar-pecas.mjs",
     "import:pecas:dry": "node scripts/importar-pecas.mjs --dry-run",
-    "generate:dashboard": "node scripts/generate-dashboard.mjs"
+    "generate:dashboard": "node scripts/generate-dashboard.mjs",
+    "migrate:reviews": "node scripts/migrate-reviews.mjs",
+    "migrate:reviews:dry": "node scripts/migrate-reviews.mjs --dry-run"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

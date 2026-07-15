@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { subscribeReviews, addReview, deleteReview, updateSellerRating, getAllReviewsAdmin, updateReviewStatus } from '@/lib/db';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { subscribeReviews, addReview, updateReview, deleteReview, updateSellerRating, getAllReviewsAdmin, updateReviewStatus } from '@/lib/db';
 import type { Review, ReviewInput, StatusReview } from '@/types/review';
 
 export default function useReviews(vendedorEmail: string | undefined) {
@@ -34,10 +34,26 @@ export default function useReviews(vendedorEmail: string | undefined) {
     return await addReview(data);
   }, []);
 
+  const atualizar = useCallback(async (
+    autorUid: string,
+    anuncioId: string,
+    data: Partial<ReviewInput>,
+  ) => {
+    await updateReview(autorUid, anuncioId, data);
+  }, []);
+
   const remover = useCallback(async (id: string, vendedorUid: string, vendedorEmailParam: string) => {
     await deleteReview(id);
     await updateSellerRating(vendedorUid, vendedorEmailParam);
   }, []);
+
+  /** Returns the current user's review for a specific listing, if it exists. */
+  const jaAvaliou = useCallback(
+    (autorUid: string, anuncioId: string): Review | undefined => {
+      return reviews.find((r) => r.autorUid === autorUid && r.anuncioId === anuncioId);
+    },
+    [reviews],
+  );
 
   return {
     reviews,
@@ -45,7 +61,9 @@ export default function useReviews(vendedorEmail: string | undefined) {
     media,
     total: reviews.length,
     criar,
+    atualizar,
     remover,
+    jaAvaliou,
   };
 }
 

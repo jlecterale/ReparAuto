@@ -28,6 +28,8 @@ import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
 import type { Usuario, Role, PremiumConfig } from '@/types/usuario';
 import type { Notificacao, TipoNotificacao } from '@/types/notificacao';
 import type { Review, ReviewInput, StatusReview } from '@/types/review';
+import { getReviewId } from '@/types/review';
+import { getCriteriosPorTipo } from './reviewUtils';
 import type { Report, ReportInput, StatusReport } from '@/types/report';
 import type { Verification, VerificationInput, StatusVerificacao } from '@/types/verification';
 import type { IntencaoCompra, IntencaoCompraInput, ContatoIntencao, ContatoIntencaoInput, DenunciaIntencao } from '@/types/intencao';
@@ -574,15 +576,73 @@ export async function addReview(data: ReviewInput): Promise<Review> {
     if (data.comentario && contemProfanity(data.comentario)) {
       throw new Error('Comentário contém linguagem inapropriada.');
     }
-    const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), {
+    // Auto-generate criterios if not provided (backward compatibility)
+    const criterios = data.criterios ?? getCriteriosPorTipo(data.anuncioTipo);
+    // Compute overall nota from criteria if criterios are present
+    const nota =
+      data.criterios && data.criterios.length > 0
+        ? Math.round(
+            (data.criterios.reduce((s, c) => s + c.nota, 0) /
+              data.criterios.length) *
+              10,
+          ) / 10
+        : data.nota;
+    // Deterministic ID guarantees one review per (autorUid, anuncioId)
+    const docId = getReviewId(data.autorUid, data.anuncioId);
+    const docRef = doc(db, REVIEWS_COLLECTION, docId);
+    const review: Omit<Review, 'id'> = {
       ...data,
+      criterios,
+      nota,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
-    });
-    return { id: docRef.id, ...data, status: 'pendente' } as Review;
+    };
+    await setDoc(docRef, review);
+    return { id: docRef.id, ...review } as Review;
   } catch (err) {
     console.error('[DB] Erro ao adicionar avaliação:', err);
     throw err;
+  }
+}
+
+/**
+ * Updates an existing review.
+ * Any edit resets the status to 'pendente' for re‑moderation.
+ */
+export async function updateReview(
+  autorUid: string,
+  anuncioId: string,
+  data: Partial<ReviewInput>,
+): Promise<void> {
+  try {
+    const docId = getReviewId(autorUid, anuncioId);
+    const ref = doc(db, REVIEWS_COLLECTION, docId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) throw new Error('Avaliação não encontrada.');
+    await updateDoc(ref, {
+      ...data,
+      status: 'pendente',
+      dataAtualizacao: Timestamp.now(),
+    });
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar avaliação:', err);
+    throw err;
+  }
+}
+
+/** Fetches a single review by its deterministic id. */
+export async function getReviewById(
+  autorUid: string,
+  anuncioId: string,
+): Promise<Review | null> {
+  try {
+    const docId = getReviewId(autorUid, anuncioId);
+    const snap = await getDoc(doc(db, REVIEWS_COLLECTION, docId));
+    if (!snap.exists()) return null;
+    return { id: snap.id, ...snap.data() } as Review;
+  } catch (err) {
+    console.error('[DB] Erro ao buscar avaliação:', err);
+    return null;
   }
 }
 
@@ -686,7 +746,19 @@ export async function updateSellerRating(vendedorUid: string, vendedorEmail: str
   try {
     const reviews = await getReviewsByVendedor(vendedorEmail);
     const total = reviews.length;
-    const media = total > 0 ? reviews.reduce((sum, r) => sum + r.nota, 0) / total : 0;
+    // Use weighted score from criterios if available, fall back to flat nota
+    let soma = 0;
+    let divisor = 0;
+    for (const r of reviews) {
+      if (r.criterios && r.criterios.length > 0) {
+        const sub = r.criterios.reduce((acc, c) => acc + c.nota, 0);
+        soma += sub / r.criterios.length;
+      } else {
+        soma += r.nota;
+      }
+      divisor++;
+    }
+    const media = divisor > 0 ? soma / divisor : 0;
 
     const profile = await getUserProfile(vendedorUid);
     const existingBadges = (profile?.badges || []).filter((b) => b !== 'top_vendedor');
