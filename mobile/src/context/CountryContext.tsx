@@ -76,7 +76,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       try {
         const res = await fetch(GEOIP_ENDPOINT);
         const data: { country?: string } | null = res.ok ? await res.json() : null;
-        const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
+        const detected: Country = data?.country === 'PT' ? 'PT' : DEFAULT_COUNTRY;
         if (cancelled) return;
         if (isCountryResolved()) return;
         setCountryState(detected);
