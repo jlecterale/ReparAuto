@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import { getPriceSnapshots } from '@/lib/db';
 import type { PriceSnapshot } from '@/types/preco';
+import type { Country } from '@/lib/country';
 
-export default function usePriceHistory(marca: string | null, modelo: string | null) {
+export default function usePriceHistory(marca: string | null, modelo: string | null, country: Country) {
   const [snapshots, setSnapshots] = useState<PriceSnapshot[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +16,7 @@ export default function usePriceHistory(marca: string | null, modelo: string | n
       return;
     }
     setLoading(true);
-    getPriceSnapshots(marca, modelo)
+    getPriceSnapshots(marca, modelo, country)
       .then((data) => {
         if (!cancelled) setSnapshots(data);
       })
@@ -25,7 +26,7 @@ export default function usePriceHistory(marca: string | null, modelo: string | n
     return () => {
       cancelled = true;
     };
-  }, [marca, modelo]);
+  }, [marca, modelo, country]);
 
   return { snapshots, loading };
 }

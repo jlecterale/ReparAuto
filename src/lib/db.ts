@@ -21,7 +21,7 @@ import {
 import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
-import { docCountry, getActiveCountry } from '@/lib/country';
+import { docCountry, getActiveCountry, type Country } from '@/lib/country';
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -1654,6 +1654,7 @@ export async function savePriceSnapshot(data: PriceSnapshotInput): Promise<strin
 export async function getPriceSnapshots(
   marca: string,
   modelo: string,
+  country: Country,
   limit?: number,
 ): Promise<PriceSnapshot[]> {
   try {
@@ -1662,6 +1663,9 @@ export async function getPriceSnapshots(
       collection(db, PRICE_SNAPSHOTS_COLLECTION),
       where('marca', '==', marca),
       where('modeloNormalizado', '==', modeloNorm),
+      // Snapshots are per-market — mixing PT/BR history would plot EUR and
+      // BRL on the same series, same bug class fixed in filtrarCarrosSimilares.
+      where('country', '==', country),
       orderBy('dataCriacao', 'asc'),
     );
     const snap = await getDocs(q);

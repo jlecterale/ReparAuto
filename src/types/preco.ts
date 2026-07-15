@@ -51,6 +51,9 @@ export interface PriceSnapshot {
   p25: number;
   p75: number;
   dataCriacao: Timestamp;
+  /** Market these stats were computed from — required so a future PT/BR
+   *  snapshot cron never mixes EUR and BRL prices into one series. */
+  country: Country;
 }
 
 export type PriceSnapshotInput = Omit<PriceSnapshot, 'id' | 'dataCriacao'>;
