@@ -11,6 +11,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "studio": "npm --prefix video run studio -- --port 4000",
     "deploy:rules": "firebase deploy --only firestore:rules",
     "deploy:hosting": "firebase deploy --only apphosting",
     "import:pecas": "node scripts/importar-pecas.mjs",
