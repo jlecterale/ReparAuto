@@ -89,7 +89,7 @@ service cloud.firestore {
 
     match /cars/{carId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(20) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && hasValidImageCount(20) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
       allow update: if (isOwnerByEmail() && hasValidImageCount(20) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante (mesmo não logado)
         || request.resource.data.diff(resource.data).affectedKeys()
@@ -102,7 +102,7 @@ service cloud.firestore {
 
     match /parts/{partId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(3) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && hasValidImageCount(3) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
       allow update: if (isOwnerByEmail() && hasValidImageCount(3) && keepsCountry()) || isAdmin()
         // Visualizações: qualquer visitante
         || request.resource.data.diff(resource.data).affectedKeys()
@@ -115,7 +115,7 @@ service cloud.firestore {
 
     match /services/{serviceId} {
       allow read: if true;
-      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry() && matchesAccountCountry();
+      allow create: if isAuthenticated() && hasValidImageCount(7) && hasValidCountry() && (matchesAccountCountry() || isAdmin());
       allow update: if (isOwnerByEmail() && hasValidImageCount(7) && keepsCountry()) || isAdmin()
         // Favoritos: apenas autenticados (espelha a exceção de /cars e /parts)
         || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys()

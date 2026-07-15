@@ -78,17 +78,20 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   // Accounts belong to one market (plan 20): while signed in, the active
   // country is bound to the account's country (legacy accounts resolve to PT)
   // and the selector locks. Anonymous visitors keep the free selector.
+  // Exception: admins keep the selector unlocked so they can navigate and
+  // create ads in both markets for testing and bug-fixing purposes.
   const { setCountry, setLocked } = useCountry();
   const accountCountry = auth.user ? docCountry(auth.user) : null;
+  const isAdmin = auth.user?.role === 'admin';
   useEffect(() => {
     if (auth.loading) return;
     if (accountCountry) {
       setCountry(accountCountry);
-      setLocked(true);
+      setLocked(!isAdmin);
     } else {
       setLocked(false);
     }
-  }, [accountCountry, auth.loading, setCountry, setLocked]);
+  }, [accountCountry, auth.loading, isAdmin, setCountry, setLocked]);
 
   // Only stream the heavy public collections on routes that render them.
   // Other routes still get the action methods (publicarCarro/publicarPeca);
