@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano 26 — Avaliações Estruturadas (Reviews 2.0)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.65; font-size: 15px; padding: 2rem; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.25rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.5rem; }
+  p { margin: 0.5rem 0; }
+  ul, ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+  li { margin-bottom: 0.35rem; }
+  .badge { display: inline-flex; padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+  .badge-feito { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+  .badge-media { background: #fef3c7; color: #92400e; }
+  .table-wrapper { overflow-x: auto; margin: 1rem 0; border-radius: 8px; border: 1px solid #e2e8f0; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { background: #e2e8f0; padding: 0.65rem 0.75rem; text-align: left; font-weight: 600; }
+  td { padding: 0.55rem 0.75rem; border-top: 1px solid #e2e8f0; }
+  tbody tr:nth-child(even) td { background: #f1f5f9; }
+  code { background: #f1f5f9; padding: 0.1rem 0.3rem; border-radius: 4px; font-size: 0.82rem; }
+  pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; margin: 1rem 0; }
+  .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem; margin: 1rem 0; }
+  .card h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  @media (max-width: 640px) { body { padding: 1rem; } }
+</style>
+</head>
+<body>
+
+<h1>Plano 26 — Avaliações Estruturadas (Reviews 2.0)</h1>
+<p>
+  <span class="badge badge-media">Prioridade: MÉDIA</span>
+  <span class="badge badge-feito" style="margin-left:0.5rem;">IMPLEMENTADO</span>
+</p>
+<p style="margin-top:0.5rem;color:#64748b;">Esforço: ~5-7 dias · PR #97</p>
+
+<h2>O Que Resolve</h2>
+<p>O sistema actual de avaliações é básico: 1-5 estrelas + texto. Não impede duplicatas a nível de base de dados, não permite edição pelo autor, e não diferencia critérios por tipo de anúncio. Isto reduz a credibilidade das avaliações e não ajuda compradores a tomar decisões informadas.</p>
+
+<h2>O Que Foi Implementado</h2>
+
+<h3>1. Tipos (src/types/review.ts)</h3>
+<ul>
+  <li><strong>ReviewCriterio</strong> — chave, rótulo, nota (1-5)</li>
+  <li><strong>dataAtualizacao?</strong> — timestamp de edição</li>
+  <li><strong>getReviewId()</strong> — ID determinístico = autorUid_anuncioId</li>
+</ul>
+
+<h3>2. Critérios por Tipo de Anúncio (src/lib/reviewUtils.ts)</h3>
+
+<p><strong>Carro:</strong></p>
+<ul>
+  <li>Precisão do anúncio</li>
+  <li>Honestidade sobre defeitos</li>
+  <li>Documentação</li>
+  <li>Comunicação</li>
+  <li>Negociação</li>
+</ul>
+
+<p><strong>Peça:</strong></p>
+<ul>
+  <li>Precisão do estado da peça</li>
+  <li>Velocidade de envio</li>
+  <li>Embalagem e proteção</li>
+  <li>Comunicação</li>
+</ul>
+
+<p><strong>Oficina — 5 fixos:</strong></p>
+<ul>
+  <li>Qualidade do serviço prestado</li>
+  <li>Pontualidade e cumprimento de prazos</li>
+  <li>Preço justo / relação custo-benefício</li>
+  <li>Comunicação e transparência</li>
+  <li>Limpeza e organização</li>
+</ul>
+
+<p><strong>Oficina — +1 por especialidade:</strong></p>
+<table>
+  <tr><th>Especialidade</th><th>Critério Extra</th></tr>
+  <tr><td>Mecânica Convencional</td><td>Qualidade dos reparos mecânicos</td></tr>
+  <tr><td>Preparação & Tuning</td><td>Qualidade da preparação/tuning</td></tr>
+  <tr><td>Pintura & Funilaria</td><td>Qualidade da pintura/funilaria</td></tr>
+  <tr><td>Eletricidade</td><td>Qualidade dos serviços elétricos</td></tr>
+  <tr><td>Eletrónica & Diagnóstico</td><td>Qualidade do diagnóstico eletrônico</td></tr>
+  <tr><td>Estética Automóvel</td><td>Qualidade do detailing/estética</td></tr>
+  <tr><td>Pneus & Alinhamento</td><td>Qualidade dos serviços de pneus</td></tr>
+  <tr><td>Ar Condicionado</td><td>Qualidade do serviço de ar condicionado</td></tr>
+  <tr><td>Clássicos & Restauro</td><td>Qualidade do restauro de clássicos</td></tr>
+  <tr><td>Outro Serviço</td><td>Qualidade geral do serviço</td></tr>
+</table>
+
+<h3>3. Base de Dados (src/lib/db.ts)</h3>
+<ul>
+  <li><strong>addReview</strong> — usa setDoc() com ID determinístico; auto-gera criterios se omissos</li>
+  <li><strong>updateReview</strong> — qualquer edição re-pende a avaliação</li>
+  <li><strong>getReviewById</strong> — leitura directa por ID determinístico</li>
+  <li><strong>updateSellerRating</strong> — calcula média dos criterios (fallback nota)</li>
+</ul>
+
+<h3>4. Firestore Rules</h3>
+<pre>match /reviews/{reviewId} {
+  allow read: if true;
+  allow create: if isAuthenticated() && isNotBanned()
+    && request.resource.data.autorUid == request.auth.uid
+    && request.resource.data.vendedorEmail != request.auth.token.email
+    && request.resource.data.nota >= 1
+    && request.resource.data.nota <= 5
+    && request.resource.data.status == 'pendente';
+  allow update: if (isAuthenticated()
+    && resource.data.autorUid == request.auth.uid
+    && request.resource.data.status == 'pendente')
+    || isAdmin();
+  allow delete: if isAuthenticated() && (resource.data.autorUid == request.auth.uid || isAdmin());
+}</pre>
+
+<h3>5. Hook (useReviews)</h3>
+<ul>
+  <li><strong>atualizar</strong> — chama updateReview</li>
+  <li><strong>jaAvaliou</strong> — encontra review do utilizador na lista subscrita</li>
+</ul>
+
+<h3>6. UI Components</h3>
+
+<p><strong>ReviewFormStructured</strong> — formulário com estrelas por critério dinâmico:</p>
+<ul>
+  <li>Create mode (novo) e Edit mode (existente)</li>
+  <li>Indicador PencilSimple quando em edição</li>
+  <li>Valida profanity, loading, erro, sucesso</li>
+</ul>
+
+<p><strong>ReviewCriteriosBar</strong> — breakdown visual dos critérios:</p>
+<ul>
+  <li>Layout horizontal (badges) ou vertical</li>
+  <li>Cada critério com estrelas coloridas</li>
+</ul>
+
+<h3>7. Componentes Actualizados</h3>
+<ul>
+  <li><strong>ContactSection</strong> — toggle criar/editar com ReviewFormStructured</li>
+  <li><strong>DetalhesOficina</strong> — form inline substituído; verificação via getReviewById</li>
+  <li><strong>ReviewsList</strong> — mostra ReviewCriteriosBar nos cards</li>
+</ul>
+
+<h3>8. Script de Migração</h3>
+<pre>scripts/migrate-reviews.mjs
+
+# Dry-run:
+npm run migrate:reviews:dry
+
+# Aplicar:
+npm run migrate:reviews</pre>
+
+<h2>Arquivos Alterados/Criados</h2>
+<table>
+  <tr><th>Arquivo</th><th>Tipo</th></tr>
+  <tr><td>src/types/review.ts</td><td>Modificado</td></tr>
+  <tr><td>src/lib/reviewUtils.ts</td><td>Novo</td></tr>
+  <tr><td>src/lib/reviewUtils.test.ts</td><td>Novo</td></tr>
+  <tr><td>src/lib/db.ts</td><td>Modificado</td></tr>
+  <tr><td>firestore.rules</td><td>Modificado</td></tr>
+  <tr><td>src/hooks/useReviews.ts</td><td>Modificado</td></tr>
+  <tr><td>src/components/trust/ReviewFormStructured.tsx</td><td>Novo</td></tr>
+  <tr><td>src/components/trust/ReviewCriteriosBar.tsx</td><td>Novo</td></tr>
+  <tr><td>src/components/trust/ReviewsList.tsx</td><td>Modificado</td></tr>
+  <tr><td>src/components/detalhes/ContactSection.tsx</td><td>Modificado</td></tr>
+  <tr><td>src/screens/DetalhesOficina.tsx</td><td>Modificado</td></tr>
+  <tr><td>package.json</td><td>Modificado</td></tr>
+  <tr><td>scripts/migrate-reviews.mjs</td><td>Novo</td></tr>
+</table>
+
+<h2>Decisões de Arquitetura</h2>
+
+<div class="card">
+<h4>ID Determinístico vs Campo uniqueKey</h4>
+<p><strong>Contexto:</strong> Como garantir 1 review por (autorUid, anuncioId) ao nível da base de dados?</p>
+<p><strong>Opções:</strong></p>
+<ul>
+  <li><strong>Campo uniqueKey + query</strong> — adicionar campo e consultar antes de criar (race condition)</li>
+  <li><strong>ID determinístico com setDoc</strong> — usar autorUid_anuncioId como doc ID; setDoc falha se já existe</li>
+</ul>
+<p><strong>Escolha:</strong> ID determinístico. Garantia Firestore-level sem race conditions.</p>
+</div>
+
+<div class="card">
+<h4>Edição: re-pendente vs apenas pendente</h4>
+<p><strong>Contexto:</strong> O utilizador pode editar avaliações já aprovadas?</p>
+<p><strong>Escolha:</strong> Sim — qualquer edição re-pende a avaliação para re-moderação.</p>
+</div>
+
+<h2>Verificação</h2>
+<ul>
+  <li>46 test suites, 456 testes — todos passam</li>
+  <li>npx tsc --noEmit — sem erros</li>
+  <li>npm run build — build bem-sucedido</li>
+</ul>
+
+<hr style="margin:2rem 0;border:none;border-top:1px solid #e2e8f0;">
+<p style="font-size:0.85rem;color:#64748b;">Plano gerado em 15 de julho de 2026 · RecarGarage</p>
+
+</body>
+</html>
