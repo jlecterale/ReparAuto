@@ -184,6 +184,7 @@ function calcDesconto(precoMensal: number, precoAnual: number): number {
 }
 
 export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModalProps) {
+  const { country } = useCountry();
   const premiumConfig = usePremiumConfig();
   const [tab, setTab] = useState<Tab>('anuncios');
   const [billing, setBilling] = useState<BillingCycle>('anual');
@@ -225,13 +226,6 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
       </Modal>
     );
   }
-
-export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModalProps) {
-  const { country } = useCountry();
-  const { config, loading: configLoading } = usePremiumConfig();
-  const [activeTab, setActiveTab] = useState<string>('');
-  const [billing, setBilling] = useState<'mensal' | 'anual'>('mensal');
-  const [loading, setLoading] = useState<string | null>(null);
 
   const handleEscolherPlano = async (plano: Plano) => {
     setLoading(plano.id);
