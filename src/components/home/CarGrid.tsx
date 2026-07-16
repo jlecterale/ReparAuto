@@ -12,7 +12,7 @@ import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
-import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro } from '@/lib/constants';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro, getCurrencySymbol, QUICK_PRICE_BANDS } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import { docCountry, filterByCountry } from '@/lib/country';
@@ -25,13 +25,6 @@ import type { SearchFilters } from '@/types/busca';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
-
-const quickChips = [
-  { label: 'Todas as Ofertas', value: 'qualquer' },
-  { label: 'Destaques Low-Cost', value: 'lowcost' },
-  { label: 'Até 500€', value: '500' },
-  { label: 'Até 1.000€', value: '1000' },
-] as const;
 
 function FilterSelect({
   label,
@@ -69,6 +62,16 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   const { carros, auth, chat, loginModal } = useApp();
   const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
+
+  const quickChips = useMemo(() => {
+    const bands = QUICK_PRICE_BANDS[country];
+    return [
+      { label: 'Todas as Ofertas', value: 'qualquer' },
+      { label: 'Destaques Low-Cost', value: 'lowcost' },
+      { label: `Até ${formatarPreco(bands.low, country)}`, value: '500' },
+      { label: `Até ${formatarPreco(bands.mid, country)}`, value: '1000' },
+    ] as const;
+  }, [country]);
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
   const [telefonesVisiveis, setTelefonesVisiveis] = useState<Set<string>>(new Set());
@@ -158,10 +161,11 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   };
 
   const getFiltroLabel = () => {
+    const bands = QUICK_PRICE_BANDS[country];
     switch (filtroAtivo) {
-      case 'lowcost': return 'Destaques Low-Cost (Até 2.000€)';
-      case '500': return 'Até 500€';
-      case '1000': return 'Até 1.000€';
+      case 'lowcost': return `Destaques Low-Cost (Até ${formatarPreco(bands.lowcost, country)})`;
+      case '500': return `Até ${formatarPreco(bands.low, country)}`;
+      case '1000': return `Até ${formatarPreco(bands.mid, country)}`;
       case 'qualquer': return 'Qualquer Valor';
       default: return 'Todos os anúncios';
     }
@@ -319,7 +323,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
             {tipo === 'carros' && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. ({getCurrencySymbol(country)})</label>
                   <input
                     type="number" placeholder="Mínimo"
                     value={advPriceMin ?? ''}
@@ -328,7 +332,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. ({getCurrencySymbol(country)})</label>
                   <input
                     type="number" placeholder="Máximo"
                     value={advPriceMax ?? ''}

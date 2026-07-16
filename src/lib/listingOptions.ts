@@ -55,7 +55,7 @@ export const EQUIPAMENTOS_CARRO_PT = [
 export const EQUIPAMENTOS_CARRO_BR = [
   'Ar condicionado',
   'Climatização automática',
-  'Direção assistida',
+  'Direção hidráulica/elétrica',
   'Vidros elétricos',
   'Fecho centralizado',
   'Sensores de estacionamento',

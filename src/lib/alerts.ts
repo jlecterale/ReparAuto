@@ -23,6 +23,8 @@ import type {
   GrupoPreferencia,
   NotificationPreferences,
 } from '@/types/alertas';
+import type { Country } from '@/lib/country';
+import { formatarPreco } from '@/lib/utils';
 import type { TipoNotificacao } from '@/types/notificacao';
 import type { SearchFilters } from '@/types/busca';
 
@@ -109,6 +111,7 @@ function sanitizeCategoria(raw: unknown): CategoriaAlerta | undefined {
  */
 export function sanitizeAlertSubscriptionInput(
   input: AlertSubscriptionInput,
+  country: Country = 'PT',
 ): AlertSubscriptionInput | null {
   const nome = sanitizeAlertText(input.nome || '', MAX_ALERT_TEXT_LENGTH);
   const ativo = input.ativo !== false;
@@ -153,29 +156,29 @@ export function sanitizeAlertSubscriptionInput(
     };
   }
 
-  if (input.tipo === 'filtro_salvo') {
-    const filters = sanitizeSearchFilters(input.filters || {});
-    if (Object.keys(filters).length === 0) return null;
-    return {
-      tipo: 'filtro_salvo',
-      nome: nome || defaultFilterAlertName(filters),
-      ativo,
-      filters,
-    };
-  }
+    if (input.tipo === 'filtro_salvo') {
+      const filters = sanitizeSearchFilters(input.filters || {});
+      if (Object.keys(filters).length === 0) return null;
+      return {
+        tipo: 'filtro_salvo',
+        nome: nome || defaultFilterAlertName(filters, country),
+        ativo,
+        filters,
+      };
+    }
 
   return null;
 }
 
 /** Short human label for a saved-filter alert when the user doesn't name it. */
-function defaultFilterAlertName(filters: SearchFilters): string {
+function defaultFilterAlertName(filters: SearchFilters, country: Country = 'PT'): string {
   const marcaModelo = [filters.marca, filters.modelo].filter(Boolean).join(' ');
   const local = filters.concelho || filters.distrito;
   const preco =
     filters.precoMax !== undefined
-      ? `até ${filters.precoMax.toLocaleString('pt-PT')} €`
+      ? `até ${formatarPreco(filters.precoMax, country)}`
       : filters.precoMin !== undefined
-        ? `desde ${filters.precoMin.toLocaleString('pt-PT')} €`
+        ? `desde ${formatarPreco(filters.precoMin, country)}`
         : undefined;
   const parts = [filters.texto, marcaModelo, local, preco].filter(Boolean) as string[];
   if (parts.length === 0) return 'Filtro guardado';

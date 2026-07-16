@@ -1,6 +1,6 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
-import type { Country } from '@/lib/country';
+import { type Country, getCurrencySymbol, QUICK_PRICE_BANDS } from '@/lib/country';
 import type { CategoriaIntencao } from '@/types/intencao';
 import type { Condition, Traction, VehicleOrigin, Upholstery } from '@/types/carro';
 
@@ -507,3 +507,5 @@ export function getPolicy(tipo: keyof typeof TEXTOS_POLITICAS, country: Country)
   if (country === 'BR' && TEXTOS_POLITICAS_BR[tipo]) return TEXTOS_POLITICAS_BR[tipo]!;
   return TEXTOS_POLITICAS[tipo];
 }
+
+export { getCurrencySymbol, QUICK_PRICE_BANDS };
