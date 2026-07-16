@@ -48,13 +48,13 @@ import {
   parseDecimalPt,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
-  EQUIPAMENTOS_CARRO,
+  getEquipamentosCarro,
   ESTADOS_VEICULO,
   MAX_FOTOS_CARRO,
   MESES,
   ORIGENS_VEICULO,
   TIPOS_CARROCERIA,
-  TIPOS_ESTOFO,
+  getTiposEstofo,
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { colors } from '@/theme/colors';
@@ -619,7 +619,7 @@ export default function AnunciarCarroScreen() {
         />
         <MultiChipSelect
           label="Equipamento / Extras"
-          options={EQUIPAMENTOS_CARRO.map((e) => ({ value: e, label: e }))}
+          options={getEquipamentosCarro(country).map((e) => ({ value: e, label: e }))}
           values={features}
           onToggle={(value) =>
             setFeatures((prev) =>
@@ -692,7 +692,7 @@ export default function AnunciarCarroScreen() {
 
         <ChipSelect
           label="Estofos"
-          options={TIPOS_ESTOFO.map((u) => ({ value: u, label: u }))}
+          options={getTiposEstofo(country).map((u) => ({ value: u, label: u }))}
           value={upholstery}
           onChange={setUpholstery}
         />

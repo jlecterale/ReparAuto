@@ -11,9 +11,9 @@ import {
   TIPOS_CARROCERIA,
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
-  EQUIPAMENTOS_CARRO,
   ORIGENS_VEICULO,
-  TIPOS_ESTOFO,
+  getTiposEstofo,
+  getEquipamentosCarro,
   MESES,
   MAX_FOTOS_CARRO,
 } from '@/lib/constants';
@@ -291,7 +291,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Nº de mudanças', 'gears', 'number', null, false, 2)}
         {campo('Emissões CO₂ (g/km)', 'co2Emissions', 'number', null, false, 3)}
         {campo('Autonomia (km)', 'maxFuelRange', 'number', null, false, 4)}
-        {campo('Estofos', 'upholstery', 'text', TIPOS_ESTOFO, true)}
+        {campo('Estofos', 'upholstery', 'text', getTiposEstofo(country), true)}
         {campo('Nº de airbags', 'numberOfAirbags', 'number', null, false, 2)}
         {campo('Garantia (meses)', 'warrantyMonths', 'number', null, false, 3)}
         {campo('Consumo urbano', 'consumptionUrban', 'decimal', null, false, 5)}
@@ -324,7 +324,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       <div className="mb-4">
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
         <div className="flex flex-wrap gap-2">
-          {EQUIPAMENTOS_CARRO.map((feature) => (
+          {getEquipamentosCarro(country).map((feature) => (
             <ToggleChip
               key={feature}
               active={features.includes(feature)}

@@ -62,7 +62,7 @@ export type BodyType =
 export type Condition = 'Novo' | 'Usado' | 'Para peças';
 export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
 export type VehicleOrigin = 'Nacional' | 'Importado';
-export type Upholstery = 'Tecido' | 'Couro' | 'Couro sintético' | 'Alcântara' | 'Outro';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Couro' | 'Couro sintético' | 'Alcântara' | 'Outro';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {

@@ -84,7 +84,7 @@ describe('mapAdvertToCarroFormData — real fixture', () => {
 describe('mapAdvertToCarroFormData — parity fields via synthetic params', () => {
   const parityParams = {
     is_imported_car: { value: '0', label: 'Não' },
-    upholstery: { value: 'leather', label: 'Couro' },
+    upholstery: { value: 'leather', label: 'Pele' },
     nr_gears: { value: '6', label: '6' },
     co2_emissions: { value: '126', label: '126 g/km' },
     urban_consumption: { value: '6.1', label: '6,1 l/100km' },
@@ -99,7 +99,7 @@ describe('mapAdvertToCarroFormData — parity fields via synthetic params', () =
     const advert = advertWith({ params: { ...realAdvert().params, ...parityParams } });
     const { dados } = mapAdvertToCarroFormData(advert);
     expect(dados.origin).toBe('Nacional');
-    expect(dados.upholstery).toBe('Couro');
+    expect(dados.upholstery).toBe('Pele');
     expect(dados.gears).toBe('6');
     expect(dados.co2Emissions).toBe('126');
     expect(dados.consumptionUrban).toBe('6.1');

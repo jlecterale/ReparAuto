@@ -12,7 +12,7 @@ import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
-import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import { docCountry, filterByCountry } from '@/lib/country';
@@ -357,7 +357,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                 <div>
                   <span className="block text-xs font-bold text-fg-subtle mb-2">Equipamento</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {EQUIPAMENTOS_CARRO.map((feature) => (
+                    {getEquipamentosCarro(country).map((feature) => (
                       <ToggleChip
                         key={feature}
                         tamanho="sm"
