@@ -19,6 +19,9 @@ import { PartsFinderReel, PartsFinderReelBR, partsFinderScenes, partsFinderScene
 import { RepairFlipReel, RepairFlipReelBR, repairFlipScenes, repairFlipScenesBR } from "./reels/RepairFlipReel";
 import { AudioListingReel, AudioListingReelBR, audioListingScenes, audioListingScenesBR } from "./reels/AudioListingReel";
 import { StandImportReel, standImportScenes } from "./reels/StandImportReel";
+import { LaunchBrazilReel, LaunchBrazilReelBR, launchBrazilScenes, launchBrazilScenesBR } from "./reels/LaunchBrazilReel";
+import { ServiceReel, ServiceReelBR, serviceScenes, serviceScenesBR } from "./reels/ServiceReel";
+
 
 // Six cross-fades join the seven scenes; the length is derived from `theme.ts`.
 const sceneFrames = Object.values(scenes).reduce((a, b) => a + b, 0);
@@ -61,6 +64,8 @@ const REELS: ReadonlyArray<{
   { id: "ReelRepairFlip", component: RepairFlipReel, scenes: repairFlipScenes },
   { id: "ReelAudioListing", component: AudioListingReel, scenes: audioListingScenes },
   { id: "ReelStandImport", component: StandImportReel, scenes: standImportScenes },
+  { id: "ReelLaunchBrazil", component: LaunchBrazilReel, scenes: launchBrazilScenes },
+  { id: "ReelService", component: ServiceReel, scenes: serviceScenes },
 ];
 
 /**
@@ -87,6 +92,8 @@ const REELS_BR: ReadonlyArray<{
   { id: "ReelPartsFinderBR", component: PartsFinderReelBR, scenes: partsFinderScenesBR },
   { id: "ReelRepairFlipBR", component: RepairFlipReelBR, scenes: repairFlipScenesBR },
   { id: "ReelAudioListingBR", component: AudioListingReelBR, scenes: audioListingScenesBR },
+  { id: "ReelLaunchBrazilBR", component: LaunchBrazilReelBR, scenes: launchBrazilScenesBR },
+  { id: "ReelServiceBR", component: ServiceReelBR, scenes: serviceScenesBR },
 ];
 
 export const RemotionRoot: React.FC = () => {

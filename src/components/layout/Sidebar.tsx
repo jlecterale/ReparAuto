@@ -22,6 +22,7 @@ import {
   GooglePlayLogo,
   AppleLogo,
   CaretDown,
+  InstagramLogo,
   type Icon,
 } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
@@ -227,6 +228,27 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
               <StoreLink href={APP_STORE_URL} Icon={AppleLogo} label="App Store" />
             </div>
           </div>
+
+          {country === 'BR' && (
+            <div>
+              <SectionLabel>Siga-nos</SectionLabel>
+              <div className="space-y-1">
+                <a
+                  href="https://www.instagram.com/recargaragebr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold no-underline text-white/65 hover:text-white hover:bg-white/10 transition-all duration-200"
+                >
+                  <InstagramLogo
+                    size={20}
+                    className="shrink-0 text-white/55 group-hover:text-accent-bright transition-colors"
+                  />
+                  Instagram
+                </a>
+              </div>
+            </div>
+          )}
         </nav>
 
         {/* Premium CTA */}
