@@ -37,7 +37,7 @@ describe('mapWebmotorsAdvertToCarroFormData', () => {
     expect(dados.cambio).toBe('Manual');
     expect(dados.cor).toBe('Branco');
     expect(dados.features).toContain('Ar condicionado');
-    expect(dados.features).toContain('Direção assistida');
+    expect(dados.features).toContain('Direção hidráulica/elétrica');
     expect(dados.features).toContain('Teto de abrir');
     expect(dados.descricao).toBe('Carro impecável.\nManual.');
   });

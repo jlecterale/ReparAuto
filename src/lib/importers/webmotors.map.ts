@@ -81,9 +81,9 @@ const UPHOLSTERY_BY_KEY: Record<string, string> = {
 
 const FEATURE_BY_EQUIPMENT_KEY: Record<string, (typeof EQUIPAMENTOS_CARRO)[number]> = {
   arcondicionado: 'Ar condicionado',
-  direcaohidraulica: 'Direção assistida',
-  direcaoassistida: 'Direção assistida',
-  direcaoeletrica: 'Direção assistida',
+  direcaohidraulica: 'Direção hidráulica/elétrica',
+  direcaoassistida: 'Direção hidráulica/elétrica',
+  direcaoeletrica: 'Direção hidráulica/elétrica',
   vidroseletricos: 'Vidros elétricos',
   travaseletricas: 'Fecho centralizado',
   fechocentralizado: 'Fecho centralizado',
@@ -95,8 +95,8 @@ const FEATURE_BY_EQUIPMENT_KEY: Record<string, (typeof EQUIPAMENTOS_CARRO)[numbe
   bluetooth: 'Bluetooth',
   pilotoautomatico: 'Cruise control',
   cruisecontrol: 'Cruise control',
-  bancosdecouro: 'Bancos em pele',
-  bancosempele: 'Bancos em pele',
+  bancosdecouro: 'Bancos de couro',
+  bancosempele: 'Bancos de couro',
   bancosaquecidos: 'Bancos aquecidos',
   tetosolar: 'Teto de abrir',
   tetopanoramico: 'Teto de abrir',
