@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano 24 — Anúncio por Áudio (Web + Mobile)</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind for quick premium styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(34, 197, 94, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #22c55e; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-brand relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🎤 Plano 24 — Inteligência Artificial
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-green-400 via-emerald-200 to-blue-400 bg-clip-text text-transparent font-heading">
+          Anúncio por Áudio (Web + Mobile)
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Gravar ou enviar ficheiro de áudio e extrair automaticamente campos de formulário estruturados com IA Gemini (WAV encoder no cliente, Interactions API no backend).
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Implementado &amp; Entregue</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-green-400">Gemini 3.5</span>
+        <span class="text-xs text-slate-400">Interactions API com Flash</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-300">WAV Client</span>
+        <span class="text-xs text-slate-400">Resample de 16 kHz Mono PCM</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-blue-400">&lt; 1 min</span>
+        <span class="text-xs text-slate-400">Tempo médio de criação de anúncio</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">12 MB</span>
+        <span class="text-xs text-slate-400">Limite de áudio (MP3/WAV/AAC/etc)</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- Contexto -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-green-400 font-extrabold">01.</span> Contexto e o que resolve
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            Criar um anúncio completo exige preencher cerca de 15 campos num ecrã pequeno. Muitos vendedores sabem descrever o veículo de cor ("é um Renault Clio de 2012, gasolina, caixa manual, 180 mil km, cinzento, 5 portas, quero 4500 euros…") mas desistem a meio do formulário devido ao atrito.
+          </p>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Este plano adiciona um assistente inteligente de áudio à criação de anúncios (veículo e peça) na Web e no Mobile, permitindo ao utilizador preencher todos os dados apenas falando, restando apenas o carregamento das fotografias.
+          </p>
+        </section>
+
+        <!-- Arquitetura e Decisões -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-green-400 font-extrabold">02.</span> Porquê Gemini direto e Multimodal?
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Comparação das abordagens tecnológicas possíveis para preenchimento de formulários por voz.</p>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2">Opção</th>
+                  <th class="py-2">Prós</th>
+                  <th class="py-2">Contras</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">Web Speech API (Browser)</td>
+                  <td class="py-3 text-slate-300">Grátis, sem consumo de backend.</td>
+                  <td class="py-3 text-slate-400">Sem suporte no Firefox/WebViews, qualidade irregular. Requer LLM adicional para extração.</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-3 font-semibold text-white">STT Dedicado (Whisper/Google STT)</td>
+                  <td class="py-3 text-slate-300">Transcrição robusta.</td>
+                  <td class="py-3 text-slate-400">Apenas transcreve; exige 2 chamadas de rede (STT + LLM) duplicando integrações e custo.</td>
+                </tr>
+                <tr class="border-b border-slate-900 bg-green-500/5">
+                  <td class="py-3 font-semibold text-green-400">Gemini Multimodal (Interactions API) ✅</td>
+                  <td class="py-3 text-slate-200">Uma única chamada: envia áudio e recebe JSON estruturado, entende PT-PT/PT-BR nativamente, muito rápido.</td>
+                  <td class="py-3 text-slate-400">Exige GEMINI_API_KEY do lado do servidor.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-green-500/5 border border-green-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-green-300">Conversão de áudio:</strong> O Gemini oficialmente suporta WAV, MP3, AIFF, AAC, OGG e FLAC. Visto que o <code>MediaRecorder</code> dos navegadores grava em webm/opus, a Web converte deterministicamente o áudio no cliente para <strong>WAV (16 kHz mono PCM)</strong> usando a Web Audio API antes do envio. No mobile, o <code>expo-audio</code> grava em <code>.m4a</code> (AAC), suportado nativamente.
+            </p>
+          </div>
+        </section>
+
+        <!-- Detalhes do Escopo -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-green-400 font-extrabold">03.</span> Âmbito / Arquitetura
+          </h2>
+          <div class="space-y-6">
+            <div>
+              <h3 class="font-bold text-green-400 text-base mb-2">Servidor / API</h3>
+              <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li><code>app/api/listing-from-audio/route.ts</code>: Rota autenticada via Firebase ID-token para evitar abusos. Chama a <strong>Interactions API</strong> da Google usando o SDK <code>@google/genai</code>.</li>
+                <li><code>src/lib/audioListing.ts</code>: Lógica de domínio TDD contendo esquemas JSON estruturados e sanitização pós-extração (validação de enums de combustível, caixa, limites de portas/quilometragem/preço e mapeamento concelho/distrito).</li>
+                <li>Utiliza a variável de ambiente <code>GEMINI_API_KEY</code>. Se não estiver configurada, a API responde com <code>503</code> e a UI oculta o botão elegantemente.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="font-bold text-emerald-400 text-base mb-2">Web / Cliente</h3>
+              <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li><code>src/lib/audioWav.ts</code>: Encoder WAV puro em JS (downmix mono + resample para 16 kHz).</li>
+                <li><code>src/components/anunciar/AudioAdAssistant.tsx</code>: Componente interativo que permite gravar áudio (limite de 3 min) ou selecionar arquivo físico do computador, com a11y integrada.</li>
+                <li>Integrado no topo do <code>StepDados</code> (formulário de carros) e no <code>PecaForm</code> (formulário de peças).</li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="font-bold text-blue-400 text-base mb-2">Mobile (React Native / Expo)</h3>
+              <ul class="text-xs text-slate-400 space-y-1 list-disc list-inside">
+                <li>Utiliza o pacote <code>expo-audio</code> para gravação local e <code>expo-document-picker</code> para selecionar ficheiro.</li>
+                <li><code>mobile/src/components/anunciar/AudioAdAssistant.tsx</code>: Componente móvel estilizado via NativeWind.</li>
+                <li>⚠️ <strong>Atenção:</strong> Por requerer novos pacotes nativos e permissões do sistema (microfone), este plano **exige uma nova build nativa (.apk / .ipa)** para os testadores de telemóvel.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- Benchmark Concorrencia -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-green-400 font-extrabold">04.</span> Benchmark Competitivo
+          </h2>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>OLX Brasil (2025):</strong> Criação de anúncios preenchidos por IA a partir de **fotografias**, mas o vendedor ainda precisa escrever a descrição e preencher quilometragem/cor à mão.</li>
+            <li><strong>ZAP Imóveis:</strong> Permite fazer a *busca* de imóveis por comandos de voz, mas não a criação de anúncios.</li>
+            <li><strong>Stands (Standvirtual, Webmotors, etc.):</strong> Utilizam pré-preenchimento via base de matrículas/placas ou introdução exata de marca-modelo; nenhum oferece preenchimento contextual por voz.</li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Informações do Plano -->
+        <section class="glass rounded-2xl p-6 glow-brand relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📋 Detalhes do Plano</h3>
+          <table class="w-full text-left text-xs text-slate-400 border-collapse">
+            <tbody>
+              <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">ID</td><td class="py-2 text-right">Plano 24</td></tr>
+              <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Prioridade</td><td class="py-2 text-right text-green-400">ALTA</td></tr>
+              <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Esforço</td><td class="py-2 text-right">~3-4 dias</td></tr>
+              <tr class="border-b border-slate-900"><td class="py-2 font-semibold text-white">Impacto</td><td class="py-2 text-right text-emerald-400">Altíssimo (Atração)</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Casos de Borda -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">⚠️ Casos de Borda &amp; Regras</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Sem áudio / Ruído:</strong> O Gemini retorna JSON vazio e a UI avisa "Não conseguimos extrair informações do áudio. Tente falar novamente".</li>
+            <li><strong>Valores absurdos:</strong> Clamps de sanidade rejeitam carros de ano &lt; 1900 ou quilometragem superior a 2.000.000 km.</li>
+            <li><strong>Sobreposição de dados:</strong> Se o utilizador já digitou dados nos campos, o assistente preenche **apenas os campos vazios**, respeitando o input manual do utilizador.</li>
+            <li><strong>Falta de Permissões:</strong> Caso a permissão do microfone seja negada, o assistente oculta a gravação imediata e mostra apenas o botão de upload de arquivo de áudio.</li>
+          </ul>
+        </section>
+
+        <!-- Commits -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Commits no Roteiro</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li>Extração core (schemas, prompts, sanitizers, encoder WAV) com TDD.</li>
+            <li>Criação da rota <code>/api/listing-from-audio</code> + autenticação de tokens.</li>
+            <li>Assistente de áudio Web (UI e lógica de formulário).</li>
+            <li>Assistente de áudio Mobile (React Native + Expo Audio).</li>
+            <li>Marcação do Plano 24 como entregue.</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 24 — Anúncio por Áudio 🇧🇷 🇵🇹
+    </footer>
+  </div>
+</body>
+</html>

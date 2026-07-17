@@ -26,13 +26,12 @@ export default function ImportStandvirtual() {
   const [mode, setMode] = useState<ImportMode>('single');
   const [attested, setAttested] = useState(false);
 
-  // Standvirtual is Portugal-only: send Brazilian-market visitors who reach
-  // this URL directly back to the listings instead of a dead-end importer.
+  // Standvirtual is Portugal-only, Webmotors is Brazil-only.
   useEffect(() => {
-    if (country === 'BR') router.replace('/app');
+    // No redirect anymore, since we support both PT and BR now.
   }, [country, router]);
 
-  if (loading || country === 'BR') {
+  if (loading) {
     return (
       <div className="max-w-3xl mx-auto flex items-center justify-center py-20">
         <CircleNotch className="animate-spin text-3xl text-accent" />
@@ -45,7 +44,9 @@ export default function ImportStandvirtual() {
       <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-5 sm:p-8 page-enter">
         <div className="flex flex-col items-center justify-center text-center py-16 text-fg-muted">
           <SignIn size={40} className="text-neutral-300 mb-3" />
-          <h2 className="text-xl font-extrabold text-fg-heading mb-1">Importar do Standvirtual</h2>
+          <h2 className="text-xl font-extrabold text-fg-heading mb-1">
+            Importar do {country === 'BR' ? 'Webmotors' : 'Standvirtual'}
+          </h2>
           <p className="text-sm mb-5">Inicie sessão para importar os seus anúncios.</p>
           <Button tipo="primario" onClick={() => router.push('/perfil')}>
             Iniciar sessão
@@ -58,7 +59,9 @@ export default function ImportStandvirtual() {
   return (
     <div className="max-w-3xl mx-auto page-enter">
       <div className="bg-white rounded-2xl shadow-lg p-5 sm:p-8">
-        <h2 className="text-2xl font-extrabold text-fg-heading mb-1">Importar do Standvirtual</h2>
+        <h2 className="text-2xl font-extrabold text-fg-heading mb-1">
+          Importar do {country === 'BR' ? 'Webmotors' : 'Standvirtual'}
+        </h2>
         <p className="text-fg-subtle text-sm mb-5">
           Traga os seus anúncios em minutos — dados, ficha técnica e fotos.
         </p>
@@ -105,7 +108,7 @@ export default function ImportStandvirtual() {
             <Info className="shrink-0 mt-0.5" />
             <span>
               Os contactos do anúncio vêm sempre do seu perfil RecarGarage (o telefone não é lido
-              do Standvirtual). Os anúncios importados ficam pendentes até aprovação, como qualquer
+              do {country === 'BR' ? 'Webmotors' : 'Standvirtual'}). Os anúncios importados ficam pendentes até aprovação, como qualquer
               anúncio novo.
             </span>
           </p>
