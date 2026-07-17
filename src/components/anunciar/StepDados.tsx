@@ -8,10 +8,10 @@ import {
   TIPOS_CARROCERIA,
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
-  EQUIPAMENTOS_CARRO,
-  ORIGENS_VEICULO,
-  TIPOS_ESTOFO,
   MESES,
+  ORIGENS_VEICULO,
+  getTiposEstofo,
+  getEquipamentosCarro,
 } from '@/lib/constants';
 import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
@@ -216,7 +216,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Garantia (meses)', 'warrantyMonths', { type: 'number', placeholder: 'Ex: 12', required: false, maxLength: 3 })}
             {campo('Emissões CO₂ (g/km)', 'co2Emissions', { type: 'number', placeholder: 'Ex: 120', required: false, maxLength: 3 })}
             {campo('Autonomia (km)', 'maxFuelRange', { type: 'number', placeholder: 'Ex: 900', required: false, maxLength: 4 })}
-            {campo('Estofos', 'upholstery', { options: TIPOS_ESTOFO, required: false })}
+            {campo('Estofos', 'upholstery', { options: getTiposEstofo(country), required: false })}
             {campo('Nº de airbags', 'numberOfAirbags', { type: 'number', placeholder: 'Ex: 8', required: false, maxLength: 2 })}
           </div>
 
@@ -248,7 +248,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
             <div className="flex flex-wrap gap-2">
-              {EQUIPAMENTOS_CARRO.map((feature) => (
+              {getEquipamentosCarro(country).map((feature) => (
                 <ToggleChip
                   key={feature}
                   active={dados.features.includes(feature)}

@@ -9,9 +9,7 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { CriarAlertaButton } from '@/components/home/CriarAlertaButton';
 import {
-  COMBUSTIVEIS,
-  CONDICOES_VEICULO,
-  EQUIPAMENTOS_CARRO,
+  getEquipamentosCarro,
   TIPOS_CARROCERIA,
   TIPOS_TRACAO,
 } from '@/lib/constants';
@@ -32,7 +30,6 @@ const COMBUSTIVEL_OPTS = COMBUSTIVEIS.map((c) => ({ value: c, label: c }));
 const CARROCERIA_OPTS = [TODOS, ...TIPOS_CARROCERIA.map((c) => ({ value: c, label: c }))];
 const CONDICAO_OPTS = [TODOS, ...CONDICOES_VEICULO.map((c) => ({ value: c, label: c }))];
 const TRACAO_OPTS = [TODOS, ...TIPOS_TRACAO.map((t) => ({ value: t, label: t }))];
-const EQUIPAMENTO_OPTS = EQUIPAMENTOS_CARRO.map((e) => ({ value: e, label: e }));
 const RAIO_OPTS = [
   { value: '25', label: '25 km' },
   { value: '50', label: '50 km' },
@@ -66,6 +63,7 @@ export function CarFiltersSheet({
   bairroOpts,
 }: CarFiltersSheetProps) {
   const { country } = useCountry();
+  const equipamentoOpts = getEquipamentosCarro(country).map((e) => ({ value: e, label: e }));
   // Market vocabulary: PT says distrito/concelho, BR says estado/cidade.
   const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
   const placeLabel = country === 'BR' ? 'Cidade' : 'Concelho';
@@ -276,7 +274,7 @@ export function CarFiltersSheet({
           </SheetSection>
 
           <SheetSection title="Equipamento">
-            <MultiChipSelect options={EQUIPAMENTO_OPTS} values={f.features} onToggle={toggleFeature} />
+            <MultiChipSelect options={equipamentoOpts} values={f.features} onToggle={toggleFeature} />
           </SheetSection>
         </>
       )}

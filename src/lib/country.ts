@@ -4,7 +4,7 @@
 
 export type Country = 'PT' | 'BR';
 
-export const DEFAULT_COUNTRY: Country = 'PT';
+export const DEFAULT_COUNTRY: Country = 'BR';
 
 export const COUNTRIES: Country[] = ['PT', 'BR'];
 
@@ -24,6 +24,15 @@ export interface CountryInfo {
 export const COUNTRY_INFO: Record<Country, CountryInfo> = {
   PT: { code: 'PT', name: 'Portugal', flag: '🇵🇹', currency: 'EUR', locale: 'pt-PT', phonePrefix: '351' },
   BR: { code: 'BR', name: 'Brasil', flag: '🇧🇷', currency: 'BRL', locale: 'pt-BR', phonePrefix: '55' },
+};
+
+export function getCurrencySymbol(country: Country): string {
+  return COUNTRY_INFO[country].currency === 'BRL' ? 'R$' : '€';
+}
+
+export const QUICK_PRICE_BANDS: Record<Country, { low: number; mid: number; lowcost: number }> = {
+  PT: { low: 500, mid: 1000, lowcost: 2000 },
+  BR: { low: 10000, mid: 15000, lowcost: 20000 },
 };
 
 /**

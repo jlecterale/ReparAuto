@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
-import { filterByCountry } from '@/lib/country';
+import { filterByCountry, QUICK_PRICE_BANDS } from '@/lib/country';
 import { useCountry } from '@/providers/CountryProvider';
 import { matchesCarSpecFilters } from '@/lib/carSpecFilters';
 import type { Carro } from '@/types/carro';
@@ -58,12 +58,14 @@ export default function useCarros(active: boolean = true) {
   const carrosFiltrados = useMemo(() => {
     let cs = [...carros];
 
+    const bands = QUICK_PRICE_BANDS[country];
+
     if (filtroAtivo === 'lowcost') {
-      cs = cs.filter((c) => c.preco <= 2000);
+      cs = cs.filter((c) => c.preco <= bands.lowcost);
     } else if (filtroAtivo === '500') {
-      cs = cs.filter((c) => c.preco <= 500);
+      cs = cs.filter((c) => c.preco <= bands.low);
     } else if (filtroAtivo === '1000') {
-      cs = cs.filter((c) => c.preco <= 1000);
+      cs = cs.filter((c) => c.preco <= bands.mid);
     } else if (filtroAtivo === 'reparar') {
       cs = cs.filter((c) => c.estadoVeiculo === 'manutencao');
     }

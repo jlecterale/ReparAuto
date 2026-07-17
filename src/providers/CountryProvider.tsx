@@ -9,7 +9,7 @@ import {
 } from '@/lib/country';
 
 // GeoIP endpoint used to pre-select the market on the first visit. Free, no
-// key, CORS-enabled; any failure just leaves the default (PT) in place.
+// key, CORS-enabled; any failure just leaves the default (BR) in place.
 const GEOIP_ENDPOINT = 'https://api.country.is/';
 
 export interface CountryContextValue {
@@ -64,7 +64,7 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
       if (!lockedRef.current) setCountryState(stored);
       return;
     }
-    // First visit: pre-select the visitor's market. Only a positive BR match
+    // First visit: pre-select the visitor's market. Only a positive PT match
     // switches away from the default; the result is persisted either way so
     // detection runs once per browser.
     const controller = new AbortController();
@@ -72,7 +72,7 @@ export default function CountryProvider({ children }: { children: ReactNode }) {
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { country?: string } | null) => {
         if (lockedRef.current) return;
-        const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
+        const detected: Country = data?.country === 'PT' ? 'PT' : DEFAULT_COUNTRY;
         setCountryState(detected);
         try {
           window.localStorage.setItem(COUNTRY_STORAGE_KEY, detected);

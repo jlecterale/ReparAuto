@@ -9,8 +9,8 @@ import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
 import { parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull } from '@/lib/utils';
 import { buildPhotoAngles, restoreAngleByPhoto, type SpinAngle } from '@/lib/spin360';
-import { getCoordenadas } from '@/lib/geo';
-import { getActiveCountry } from '@/lib/country';
+import { getCoordenadas, geocodeAddress } from '@/lib/geo';
+import { useCountry } from '@/providers/CountryProvider';
 import { saveAdDraft, loadAdDraft, clearAdDraft, hasCarDraftContent, type AdDraft, type CarAdDraftData } from '@/lib/adDraft';
 import { EMPTY_CARRO_FORM_DATA } from '@/lib/carFormDefaults';
 import pendingUploadFiles, { releasePendingFiles, restoreDraftPhotos, unregisterPendingFile } from '@/lib/pendingUploadFiles';
@@ -36,6 +36,7 @@ export default function Anunciar() {
   const { publicarCarro } = carros;
   const { user } = auth;
   const toast = useToast();
+  const { country } = useCountry();
 
   // Onboarding deep-links here with ?tipo=carro|peca to skip the category step.
   const tipoParam = searchParams.get('tipo');
@@ -168,11 +169,14 @@ export default function Anunciar() {
 
       const { localizacao, localizacaoDistrito, ...dadosLimpos } = dados;
       const carro = await publicarCarro({
+        country,
         ...dadosLimpos,
         local: localizacao,
         distrito: localizacaoDistrito || undefined,
-        bairro: getActiveCountry() === 'BR' ? dados.bairro.trim() || undefined : undefined,
-        coordenadas: localizacao ? getCoordenadas(localizacao, getActiveCountry()) : undefined,
+        bairro: country === 'BR' ? dados.bairro.trim() || undefined : undefined,
+        coordenadas: localizacao
+          ? (getCoordenadas(localizacao, country) ?? await geocodeAddress(localizacao, localizacaoDistrito ?? '', country) ?? undefined)
+          : undefined,
         videoUrl: dados.videoUrl?.trim() || undefined,
         fotos: fotosFinais,
         photoAngles: photoAngles ?? undefined,

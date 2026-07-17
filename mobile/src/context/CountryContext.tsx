@@ -18,7 +18,7 @@ import {
 } from '@/lib/country';
 
 // GeoIP endpoint used to pre-select the market on the first launch. Free, no
-// key; any failure just leaves the default (PT) in place.
+// key; any failure just leaves the default (BR) in place.
 const GEOIP_ENDPOINT = 'https://api.country.is/';
 
 interface CountryContextValue {
@@ -70,20 +70,20 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         markCountryResolved(stored);
         return;
       }
-      // First launch: pre-select the user's market. Only a positive BR match
+      // First launch: pre-select the user's market. Only a positive PT match
       // switches away from the default; the result is persisted either way so
       // detection runs once per device.
       try {
         const res = await fetch(GEOIP_ENDPOINT);
         const data: { country?: string } | null = res.ok ? await res.json() : null;
-        const detected: Country = data?.country === 'BR' ? 'BR' : DEFAULT_COUNTRY;
+        const detected: Country = data?.country === 'PT' ? 'PT' : DEFAULT_COUNTRY;
         if (cancelled) return;
         if (isCountryResolved()) return;
         setCountryState(detected);
         markCountryResolved(detected);
         await AsyncStorage.setItem(COUNTRY_STORAGE_KEY, detected);
       } catch {
-        // Offline or blocked — settle on the current market (default PT);
+        // Offline or blocked — settle on the current market (default BR);
         // detection runs again next launch.
         markCountryResolved(getActiveCountry());
       }

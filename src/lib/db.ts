@@ -1852,7 +1852,7 @@ export async function addAlertSubscription(
   uid: string,
   input: AlertSubscriptionInput,
 ): Promise<AlertSubscription> {
-  const sanitized = sanitizeAlertSubscriptionInput(input);
+  const sanitized = sanitizeAlertSubscriptionInput(input, getActiveCountry());
   if (!sanitized) throw new Error(ALERT_INVALID_ERROR);
 
   const existing = await getDocs(

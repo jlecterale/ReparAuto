@@ -1,6 +1,7 @@
-# 26. Dashboard Profissional & CRM de Clientes
+# 27. Dashboard Profissional & CRM de Clientes
 
 **Prioridade:** ALTA | **Esforço estimado:** ~18–26 dias | **Status:** Proposta para análise
+
 
 > Dá às empresas (stands/revendedores) e oficinas um painel próprio com analytics
 > reais dos seus anúncios (visualizações, cliques, contactos, favoritos ao longo do
@@ -455,7 +456,7 @@ respetivo flag em `PremiumConfig`. Decisão final de pricing → coordenar com p
 9. `feat: privacidade do match` — toggle em `EditarPerfilModal`, notificação e limpeza on
    delete/opt-out.
 10. `feat: navegação` — link "Painel" no Header/Sidebar/Perfil para profissionais.
-11. `docs: marcar plano 26 como shipped` — flip `implemented` em `index.html` (no fim).
+11. `docs: marcar plano 27 como shipped` — flip `implemented` em `index.html` (no fim).
 
 ---
 
@@ -535,4 +536,4 @@ respetivo flag em `PremiumConfig`. Decisão final de pricing → coordenar com p
 
 ---
 
-*Fim do plano 26 — pronto para análise.*
+*Fim do plano 27 — pronto para análise.*

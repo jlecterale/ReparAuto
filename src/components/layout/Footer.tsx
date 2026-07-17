@@ -32,6 +32,16 @@ export default function Footer() {
           )}
           <Link href="/faq" className="hover:text-white transition">Perguntas Frequentes (FAQ)</Link>
           <a href="mailto:suporte@recargarage.com" className="hover:text-white transition">Fale Conosco (suporte@recargarage.com)</a>
+          {country === 'BR' && (
+            <a
+              href="https://www.instagram.com/recargaragebr/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition"
+            >
+              Instagram
+            </a>
+          )}
         </div>
       </div>
     </footer>

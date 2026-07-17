@@ -1,6 +1,6 @@
 import { CheckCircle, Storefront, Star, Lightning, type Icon } from '@phosphor-icons/react';
 import { getAllConcelhos } from '@/lib/geo';
-import type { Country } from '@/lib/country';
+import { type Country, getCurrencySymbol, QUICK_PRICE_BANDS } from '@/lib/country';
 import type { CategoriaIntencao } from '@/types/intencao';
 import type { Condition, Traction, VehicleOrigin, Upholstery } from '@/types/carro';
 
@@ -17,6 +17,7 @@ export {
   MAX_FOTO_SIZE_BYTES,
   TIPOS_CARROCERIA,
   EQUIPAMENTOS_CARRO,
+  getEquipamentosCarro,
 } from '@/lib/listingOptions';
 // Every listing photo is cropped to this aspect ratio (width / height) so cards
 // and galleries render uniformly — 4:3 is the automotive-marketplace standard.
@@ -67,7 +68,13 @@ export const TIPOS_TRACAO: readonly Traction[] = ['Dianteira', 'Traseira', 'Inte
 export const ORIGENS_VEICULO: readonly VehicleOrigin[] = ['Nacional', 'Importado'];
 
 // Upholstery / interior material (Standvirtual "upholstery").
-export const TIPOS_ESTOFO: readonly Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO_PT: readonly Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO_BR: readonly Upholstery[] = ['Tecido', 'Couro', 'Couro sintético', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO = TIPOS_ESTOFO_BR;
+
+export function getTiposEstofo(country: Country): readonly Upholstery[] {
+  return country === 'PT' ? TIPOS_ESTOFO_PT : TIPOS_ESTOFO_BR;
+}
 
 // Month labels for the first-registration selector — index + 1 is the stored value.
 export const MESES = [
@@ -521,3 +528,5 @@ export function getPolicy(tipo: keyof typeof TEXTOS_POLITICAS, country: Country)
   if (country === 'BR' && TEXTOS_POLITICAS_BR[tipo]) return TEXTOS_POLITICAS_BR[tipo]!;
   return TEXTOS_POLITICAS[tipo];
 }
+
+export { getCurrencySymbol, QUICK_PRICE_BANDS };

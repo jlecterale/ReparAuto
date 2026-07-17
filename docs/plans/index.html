@@ -2296,8 +2296,15 @@ const extraPlans = [
     evidence: 'Entregue — carSpec estendido (+TDD), enums VehicleOrigin/Upholstery, TechnicalSheet e detalhe mobile com nova seccao "Condicoes comerciais", JSON-LD Vehicle enriquecido. Matricula e detalhes fiscais de nicho excluidos por privacidade/relevancia.'
   },
   {
-    id: '26', title: 'Dashboard Profissional & CRM de Clientes', priority: 'ALTA', effort: '~18-26 dias',
-    implemented: true, file: '26-dashboard-profissional-crm-clientes.md',
+    id: '26', title: 'Importacao Universal de Anuncios (Qualquer URL)', priority: 'ALTA', effort: '~16-22 dias',
+    implemented: false, file: '26-importacao-universal-anuncios.html',
+    impact: 'Expande o importador para qualquer URL de anuncio em Portugal e Brasil',
+    summary: 'Generaliza o importador do Plano 24 (Standvirtual) para aceitar qualquer URL de anuncio — OLX Portugal, OLX Brasil, Webmotors, Mercado Livre, CustoJusto e qualquer outro portal. Arquitetura de extracao em 4 camadas: parser dedicado → schema.org/JSON-LD → LLM (Gemini/Claude) → revisao manual. Reutiliza Rate Limiter, re-hospedagem de fotos e fluxo de moderacao existentes.',
+    evidence: 'Em investigacao — plano criado; sem implementacao no codigo.'
+  },
+  {
+    id: '27', title: 'Dashboard Profissional & CRM de Clientes', priority: 'ALTA', effort: '~18-26 dias',
+    implemented: true, file: '27-dashboard-profissional-crm-clientes.md',
     impact: 'Prova de valor para profissionais (lock-in) e nova camada de CRM',
     summary: 'Painel /painel gated por tipoConta: KPIs agregados, graficos temporais (camada de buckets diarios por vendedor), tabela de desempenho por anuncio e caixa de leads. CRM de clientes (manual + import CSV). A correspondencia por email a perfis RecarGarage foi removida por privacidade — as empresas nao veem se um cliente tem conta.',
     evidence: 'Entregue — rota /painel, screens/PainelProfissional, components/painel/*, hooks usePainel/useClients, seller_daily + clients (db.ts, firestore.rules). Gráficos em SVG nativo. Removido por privacidade: match por email (rota, badge, discoverableByPros). Diferido: série temporal de favoritos.'

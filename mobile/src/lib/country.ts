@@ -5,7 +5,7 @@
 
 export type Country = 'PT' | 'BR';
 
-export const DEFAULT_COUNTRY: Country = 'PT';
+export const DEFAULT_COUNTRY: Country = 'BR';
 
 export const COUNTRIES: Country[] = ['PT', 'BR'];
 
@@ -81,13 +81,13 @@ export function setActiveCountry(country: Country): void {
   activeCountry = country;
 }
 
-/** The active market as maintained by CountryContext (defaults to PT). */
+/** The active market as maintained by CountryContext (defaults to BR). */
 export function getActiveCountry(): Country {
   return activeCountry;
 }
 
 // One-shot first-launch resolution. A signup racing the async AsyncStorage /
-// GeoIP resolution must not stamp the default (PT) on a Brazilian account and
+// GeoIP resolution must not stamp the default (BR) on a Portuguese account and
 // permanently lock it to the wrong market, so account-binding code awaits
 // this instead of reading the active country synchronously.
 let resolveInitialCountry: ((country: Country) => void) | null = null;

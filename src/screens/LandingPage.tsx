@@ -28,6 +28,7 @@ import {
   UserPlus,
   Target,
   DownloadSimple,
+  InstagramLogo,
 } from '@phosphor-icons/react';
 import Footer from '@/components/layout/Footer';
 import { PLAY_STORE_URL, APP_STORE_URL } from '@/lib/constants';
@@ -844,7 +845,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-fg-muted text-lg max-w-2xl mx-auto mb-10">
                 Disponível na web e no telemóvel. Escolha a sua forma preferida de aceder ao
-                ecossistema automóvel mais completo de Portugal.
+                ecossistema automóvel mais completo {isPT ? 'de Portugal' : 'do Brasil'}.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
@@ -887,6 +888,22 @@ export default function LandingPage() {
                     <span className="block text-base">App Store</span>
                   </div>
                 </a>
+
+                {/* Instagram (BR only) */}
+                {!isPT && (
+                  <a
+                    href="https://www.instagram.com/recargaragebr/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-tr from-amber-500 via-pink-500 to-purple-600 hover:from-amber-400 hover:via-pink-400 hover:to-purple-500 text-white font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5"
+                  >
+                    <InstagramLogo size={24} />
+                    <div className="text-left">
+                      <span className="block text-xs text-white/70 font-semibold">Siga-nos no</span>
+                      <span className="block text-base">Instagram</span>
+                    </div>
+                  </a>
+                )}
               </div>
 
               <p className="text-sm text-fg-subtle">

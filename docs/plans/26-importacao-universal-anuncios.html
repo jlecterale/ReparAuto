@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Importação Universal de Anúncios — ReparAuto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: { 50:'#fff7ed',100:'#ffedd5',500:'#f97316',600:'#ea580c',700:'#c2410c',900:'#7c2d12' },
+            dark: { 800:'#1e293b',900:'#0f172a',950:'#020617' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 12% 18%, rgba(56, 189, 248, 0.07) 0%, transparent 42%),
+        radial-gradient(circle at 88% 82%, rgba(249, 115, 22, 0.06) 0%, transparent 42%);
+    }
+    h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-sky { box-shadow: 0 0 22px rgba(56, 189, 248, 0.15); }
+    .glow-amber { box-shadow: 0 0 20px rgba(250, 204, 21, 0.15); }
+    .glow-violet { box-shadow: 0 0 22px rgba(139, 92, 246, 0.18); }
+    code { font-size: 0.82em; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-sky relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-violet-500/10 border border-violet-500/30 text-violet-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🔌 Investigação — Expansão do Importador de Anúncios (Plano 24)
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-violet-400 via-orange-200 to-orange-400 bg-clip-text text-transparent">
+          Importação Universal de Anúncios (Qualquer URL)
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Depois do Standvirtual, o importador passa a aceitar <strong>qualquer URL de anúncio</strong> — OLX Portugal, OLX Brasil, Webmotors, Mercado Livre, CustoJusto e qualquer outro portal que o vendedor use. Usa uma arquitetura de extração em 4 camadas (parser nativo → schema.org → LLM → revisão manual) para extrair marca, modelo, ano, preço, km e fotos, pré-preencher o formulário e criar o anúncio como pendente no RecarGarage.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-violet-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Qualquer URL · Qualquer Plataforma</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-violet-400">20+ plataformas</span>
+        <span class="text-xs text-slate-400">Cobertura de Portugal e Brasil combinados (OLX, Webmotors, Mercado Livre, CustoJusto, iCarros, Mobiauto…)</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-sky-400">4 camadas</span>
+        <span class="text-xs text-slate-400">Extração progressiva: parser dedicado → JSON-LD schema.org → LLM → preenchimento manual</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-emerald-400">Mesma base</span>
+        <span class="text-xs text-slate-400">Reutiliza Rate Limiter, re-hospedagem de fotos e fluxo de moderação do Plano 24</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">~8-11 d</span>
+        <span class="text-xs text-slate-400">MVP (OLX PT + schema.org + LLM); ~16-22 d cobertura completa</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">01.</span> O que resolve &amp; porquê ALTA prioridade
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            O Plano 24 atacou o Standvirtual (portal dominante em Portugal), mas o mercado é fragmentado: stands e particulares anunciam em 3-5 plataformas diferentes. O OLX Portugal sozinho tem +15.000 anúncios de carros; o OLX Brasil e Webmotors juntos somam centenas de milhares. Um stand que usa OLX + Standvirtual + CustoJusto ainda teria de reescrever 2/3 do inventário à mão. Esta funcionalidade elimina essa barreira para todas as plataformas. O campo <code class="text-violet-400">tipoConta</code> já existe em <code>src/types/usuario.ts</code> — a ferramenta é exclusiva de contas verificadas (profissionais com documentação validada ou particulares com email verificado).
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">📈</span>
+              <h3 class="font-bold text-sky-400 text-sm">Aquisição de oferta</h3>
+              <p class="text-xs text-slate-400 mt-1">Cada plataforma adicional coberta desbloqueia um novo segmento de vendedores que já têm anúncios prontos noutro lado.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🔬</span>
+              <h3 class="font-bold text-orange-400 text-sm">Estratégia em camadas</h3>
+              <p class="text-xs text-slate-400 mt-1">Não tentamos um parser universal frágil. A arquitetura de 4 camadas dá o melhor resultado possível para cada URL, com degradação graciosa.</p>
+            </div>
+            <div class="bg-dark-900/50 border border-slate-800 rounded-xl p-4">
+              <span class="text-2xl block mb-2">🛡️</span>
+              <h3 class="font-bold text-emerald-400 text-sm">Risco distribuído</h3>
+              <p class="text-xs text-slate-400 mt-1">Cada camada é independente. Se uma plataforma muda o HTML, só o parser dedicado dela quebra — as outras camadas continuam a funcionar como fallback.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 - As quatro camadas de extração -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">02.</span> As quatro camadas de extração
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Recomendação: construir as 4 camadas em paralelo, priorizando os parsers dedicados de maior volume (OLX PT → OLX BR → Webmotors).</p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-300 border-collapse min-w-[640px]">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="py-2 pr-3">Camada</th>
+                  <th class="py-2 pr-3">Abordagem</th>
+                  <th class="py-2 pr-3">Cobertura</th>
+                  <th class="py-2 pr-3">Precisão</th>
+                  <th class="py-2 pr-3">Fragilidade</th>
+                  <th class="py-2">Custo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 pr-3 font-semibold text-white">1 — Parser dedicado</td>
+                  <td class="py-2 pr-3">Regex/JSON do HTML da plataforma (como o <code>__NEXT_DATA__</code> do Standvirtual)</td>
+                  <td class="py-2 pr-3">1 plataforma</td>
+                  <td class="py-2 pr-3"><span class="text-emerald-400">Alta (95%+)</span></td>
+                  <td class="py-2 pr-3"><span class="text-amber-400">Média</span> (muda HTML)</td>
+                  <td class="py-2"><span class="text-emerald-400">Baixo</span> (dev)</td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 pr-3 font-semibold text-white">2 — schema.org</td>
+                  <td class="py-2 pr-3">JSON-LD <code>Vehicle</code> ou <code>Product</code> + OpenGraph</td>
+                  <td class="py-2 pr-3">~60% dos portais</td>
+                  <td class="py-2 pr-3"><span class="text-amber-400">Média (70-85%)</span></td>
+                  <td class="py-2 pr-3"><span class="text-emerald-400">Baixa</span> (standard W3C)</td>
+                  <td class="py-2"><span class="text-emerald-400">Zero marginal</span></td>
+                </tr>
+                <tr class="border-b border-slate-900">
+                  <td class="py-2 pr-3 font-semibold text-white">3 — LLM</td>
+                  <td class="py-2 pr-3">Enviar HTML limpo para Gemini/Claude extrair JSON estruturado</td>
+                  <td class="py-2 pr-3">Qualquer URL</td>
+                  <td class="py-2 pr-3"><span class="text-sky-400">Boa (80-90% c/ prompt bom)</span></td>
+                  <td class="py-2 pr-3"><span class="text-emerald-400">Muito baixa</span> (modelo estável)</td>
+                  <td class="py-2">~$0.001-0.01/req</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-3 font-semibold text-white">4 — Revisão manual</td>
+                  <td class="py-2 pr-3">Campos não mapeados ficam vazios; utilizador preenche no wizard</td>
+                  <td class="py-2 pr-3">100%</td>
+                  <td class="py-2 pr-3">N/A (humano)</td>
+                  <td class="py-2 pr-3"><span class="text-emerald-400">Nenhuma</span></td>
+                  <td class="py-2"><span class="text-emerald-400">Zero adicional</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bg-sky-500/5 border border-sky-500/20 rounded-xl p-4 mt-4">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              <strong class="text-sky-300">Fluxo de extração:</strong> O utilizador cola um URL → <code>detectPlatform(url)</code> identifica a plataforma → Tenta Camada 1 (se plataforma conhecida) → Tenta Camada 2 (JSON-LD) → Tenta Camada 3 (LLM, se dados insuficientes) → Camada 4 (wizard pré-preenchido com o que foi extraído). O utilizador vê uma barra de progresso com checkmarks por camada.
+            </p>
+          </div>
+        </section>
+
+        <!-- 03 - Plataformas por país -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">03.</span> Plataformas por país e camada aplicável
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Portugal -->
+            <div>
+              <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><span class="text-emerald-400">🇵🇹</span> Portugal</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] text-slate-300 border-collapse min-w-[280px]">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-slate-400">
+                      <th class="py-2 pr-2">Plataforma</th>
+                      <th class="py-2 pr-2">Camada 1</th>
+                      <th class="py-2 pr-2">Camada 2</th>
+                      <th class="py-2">Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">Standvirtual</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Existente (<code>__NEXT_DATA__</code>)</td>
+                      <td class="py-2 pr-2 text-amber-400">⚠️ Parcial</td>
+                      <td class="py-2">40.000+ anúncios</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">OLX Portugal</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (regex DOM)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Vehicle schema</td>
+                      <td class="py-2">15.000+ carros</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">CustoJusto</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (microdata)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Product schema</td>
+                      <td class="py-2">5.000+ carros</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">AutoScout24 PT</td>
+                      <td class="py-2 pr-2 text-slate-500">⬜ Futuro</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Vehicle schema</td>
+                      <td class="py-2">3.000+ carros</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 pr-2 font-semibold text-white">Facebook Marketplace</td>
+                      <td class="py-2 pr-2 text-rose-400">❌ Bloqueado (login)</td>
+                      <td class="py-2 pr-2 text-rose-400">❌ Não estruturado</td>
+                      <td class="py-2">Elevado mas inacessível</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Brasil -->
+            <div>
+              <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2"><span class="text-sky-400">🇧🇷</span> Brasil</h3>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] text-slate-300 border-collapse min-w-[280px]">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-slate-400">
+                      <th class="py-2 pr-2">Plataforma</th>
+                      <th class="py-2 pr-2">Camada 1</th>
+                      <th class="py-2 pr-2">Camada 2</th>
+                      <th class="py-2">Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">OLX Brasil</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (API Autoupload reversa)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Product schema</td>
+                      <td class="py-2">200.000+ carros</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">Webmotors</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (JSON-LD)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Vehicle schema</td>
+                      <td class="py-2">150.000+ carros</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">Mercado Livre</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (JSON-LD)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Product schema</td>
+                      <td class="py-2">300.000+ veículos</td>
+                    </tr>
+                    <tr class="border-b border-slate-900">
+                      <td class="py-2 pr-2 font-semibold text-white">iCarros</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (JSON-LD)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Vehicle schema</td>
+                      <td class="py-2">80.000+ carros</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2 pr-2 font-semibold text-white">Mobiauto</td>
+                      <td class="py-2 pr-2 text-sky-400">🔨 A construir (JSON-LD)</td>
+                      <td class="py-2 pr-2 text-emerald-400">✅ Vehicle schema</td>
+                      <td class="py-2">40.000+ carros</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 04 - Arquitetura técnica -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">04.</span> Arquitetura técnica
+          </h2>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mb-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
+            src/lib/importers/<br>
+            ├── core/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Infraestrutura partilhada (NOVO)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── html.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># fetchHtml (SSRF-guard, paced, rotativo de UA)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── extractors/<br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── schemaOrg.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Extração de JSON-LD Vehicle/Product</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── openGraph.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># og:title, og:price, og:image, etc.</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── metaTags.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># &lt;meta&gt; tags (description, keywords)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── llm.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Extração via Gemini/Claude (prompt + parse)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── urlDetect.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># detectPlatform(url) → Platform | 'generic'</span><br>
+            │&nbsp;&nbsp;&nbsp;├── urlValidate.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Validação genérica de URL (alcance, protocolo)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── photos.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Re-hospedagem genérica (SSRF por domínio)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── rateLimit.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Rate limiting (reutilizado do Plano 24)</span><br>
+            │&nbsp;&nbsp;&nbsp;└── types.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># NormalizedAdvert, ExtractionResult, Platform</span><br>
+            │<br>
+            ├── platforms/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Parsers dedicados por plataforma (NOVO exceto standvirtual/)</span><br>
+            │&nbsp;&nbsp;&nbsp;├── standvirtual/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Já existe — mover para cá</span><br>
+            │&nbsp;&nbsp;&nbsp;├── olx/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># OLX PT + OLX BR (partilham estrutura)</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── olx.nextdata.ts&nbsp;&nbsp;<span class="text-slate-500"># Extração de JSON embebido / microdata</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── olx.map.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400"># OLX → NormalizedAdvert (TDD)</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── olx.test.ts<br>
+            │&nbsp;&nbsp;&nbsp;├── webmotors/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Webmotors BR</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── webmotors.nextdata.ts<br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── webmotors.map.ts<br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── webmotors.test.ts<br>
+            │&nbsp;&nbsp;&nbsp;├── mercadolivre/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Mercado Livre BR</span><br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── ml.nextdata.ts<br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── ml.map.ts<br>
+            │&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── ml.test.ts<br>
+            │&nbsp;&nbsp;&nbsp;└── custojusto/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># CustoJusto PT</span><br>
+            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── custojusto.nextdata.ts<br>
+            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── custojusto.map.ts<br>
+            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── custojusto.test.ts<br>
+            │<br>
+            ├── map.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-sky-400"># NormalizedAdvert → CarroFormData (TDD)</span><br>
+            │&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># (unifica todos os parsers dedicados + schema.org + LLM)</span><br>
+            ├── client.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># Cliente React (preview + import)</span><br>
+            │<br>
+            └── (mover standvirtual.*.ts para platforms/standvirtual/)<br>
+          </div>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mb-4 font-mono text-[11px] text-slate-300 leading-relaxed overflow-x-auto">
+            app/api/import/<br>
+            ├── preview/route.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST { url } → preview (plataforma agnóstica)</span><br>
+            ├── import/route.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST { url, attestOwnership } → cria anúncio</span><br>
+            ├── inventory/route.ts&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST { url } → descobrir inventário (profissionais)</span><br>
+            └── detect/route.ts&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500"># POST { url } → retorna { platform, supportedTiers }</span><br>
+          </div>
+          <div class="space-y-3 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">1</div>
+              <div><h4 class="font-bold text-white text-sm">Parser genérico em pipeline</h4><p class="text-xs text-slate-400 mt-1"><code>detectPlatform</code> identifica a plataforma → se conhecida, aplica o parser dedicado → extrai <code>NormalizedAdvert</code> → se não, tenta schema.org → extrai o que conseguir → se dados &lt; 50% dos campos obrigatórios, escala para LLM.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">2</div>
+              <div><h4 class="font-bold text-white text-sm">Schema.org como denominador comum</h4><p class="text-xs text-slate-400 mt-1">60%+ dos portais de classificados usam JSON-LD com tipos <code>Vehicle</code> ou <code>Product</code>. Extraímos <code>name</code>, <code>description</code>, <code>offers.price</code>, <code>image</code>, <code>brand.name</code>, <code>model</code>, <code>vehicleModelDate</code>, <code>mileageFromOdometer</code>, <code>fuelType</code>, <code>vehicleTransmission</code>. Muito mais leve e confiável que parsing de HTML.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">3</div>
+              <div><h4 class="font-bold text-white text-sm">LLM como fallback universal</h4><p class="text-xs text-slate-400 mt-1">A Cloud Function (ou Route Handler) envia o HTML limpo (sem scripts, estilos, comentários) para Gemini 2.0 Flash (~$0.00002/1K tokens) com um prompt que pede JSON estruturado. O output é validado contra o schema <code>CarroFormData</code> antes de ser aceite. O HTML é truncado a 64K tokens. Usar o modelo mais barato possível (Gemini Flash ou Claude Haiku).</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">4</div>
+              <div><h4 class="font-bold text-white text-sm">Fotos: whitelist dinâmica de CDNs</h4><p class="text-xs text-slate-400 mt-1">Em vez de um SSRF guard por plataforma (<code>isAllowedPhotoUrl</code> atual), manter uma whitelist de CDNs conhecidos (olxcdn.com, webmotors.com.br, http2.mlstatic.com, etc.) mais um validador genérico que só permite URLs de imagem com extensão conhecida e sem portas. Cada plataforma regista os seus domínios de CDN.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">5</div>
+              <div><h4 class="font-bold text-white text-sm">Reutilização máxima do Plano 24</h4><p class="text-xs text-slate-400 mt-1">O Rate Limiter, a re-hospedagem de fotos, o fluxo de preview→draft→wizard, o badge "Importado", a deteção de duplicados por <code>origemId</code>, o <code>attestOwnership</code> e as notificações de admin — tudo é reutilizado. A interface <code>NormalizedAdvert</code> é partilhada entre todos os parsers.</p></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 05 - NormalizedAdvert -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">05.</span> Interface <code class="text-sky-400">NormalizedAdvert</code> (contrato universal)
+          </h2>
+          <p class="text-slate-400 text-xs mb-4">Todos os parsers (dedicados, schema.org e LLM) produzem esta interface. O <code>map.ts</code> genérico converte para <code>CarroFormData</code>.</p>
+          <div class="bg-dark-900/60 border border-slate-800 rounded-xl p-4 mb-4 font-mono text-[10px] text-slate-300 leading-relaxed overflow-x-auto">
+<span class="text-sky-400">interface</span> <span class="text-white">NormalizedAdvert</span> {<br>
+&nbsp;&nbsp;<span class="text-slate-500">// Identificação da fonte</span><br>
+&nbsp;&nbsp;platform: <span class="text-emerald-400">string</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// 'olx_pt' | 'webmotors' | 'mercadolivre' | ...</span><br>
+&nbsp;&nbsp;sourceUrl: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;externalId: <span class="text-emerald-400">string</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// ID único na plataforma de origem</span><br>
+&nbsp;&nbsp;extractedAt: <span class="text-emerald-400">string</span>;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// ISO timestamp</span><br>
+&nbsp;&nbsp;extractionTier: <span class="text-amber-400">'parser' | 'schemaorg' | 'llm'</span>;<br>
+<br>
+&nbsp;&nbsp;<span class="text-slate-500">// Dados do veículo (todos opcionais — extraímos o que conseguimos)</span><br>
+&nbsp;&nbsp;title?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;brand?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;model?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;version?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;year?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;registrationMonth?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;mileage?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;price?: { amount: <span class="text-emerald-400">number</span>; currency: <span class="text-emerald-400">string</span> };<br>
+&nbsp;&nbsp;fuelType?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;transmission?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;bodyType?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;color?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;doors?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;seats?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;enginePower?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;engineDisplacement?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;traction?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;condition?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;description?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;features?: <span class="text-emerald-400">string[]</span>;<br>
+&nbsp;&nbsp;location?: { city?: <span class="text-emerald-400">string</span>; region?: <span class="text-emerald-400">string</span>; district?: <span class="text-emerald-400">string</span> };<br>
+&nbsp;&nbsp;origin?: <span class="text-emerald-400">string</span>;<br>
+&nbsp;&nbsp;previousOwners?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;warrantyMonths?: <span class="text-emerald-400">number</span>;<br>
+&nbsp;&nbsp;acceptsFinancing?: <span class="text-emerald-400">boolean</span>;<br>
+&nbsp;&nbsp;acceptsExchange?: <span class="text-emerald-400">boolean</span>;<br>
+&nbsp;&nbsp;photos: { url: <span class="text-emerald-400">string</span>; order: <span class="text-emerald-400">number</span> }[];<br>
+<br>
+&nbsp;&nbsp;<span class="text-slate-500">// Metadados de extração</span><br>
+&nbsp;&nbsp;unmappedFields: <span class="text-emerald-400">string[]</span>;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-slate-500">// Campos que existem na origem mas não mapeamos</span><br>
+&nbsp;&nbsp;extractionConfidence: <span class="text-emerald-400">number</span>;&nbsp;<span class="text-slate-500">// 0-1 (parser dedicado ~0.95, schema.org ~0.75, LLM ~0.85)</span><br>
+}<br>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed mt-3">O <code class="text-sky-400">map.ts</code> genérico recebe um <code>NormalizedAdvert</code> e devolve <code>CarroFormData</code> + <code>unmappedFields</code>. Os parsers de plataforma produzem <code>NormalizedAdvert</code>; as camadas 2 e 3 também. Isto significa que <strong>qualquer nova plataforma é só um novo produtor de <code>NormalizedAdvert</code></strong> — o resto do pipeline não muda.</p>
+        </section>
+
+        <!-- 06 - Legal & confiança -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">06.</span> Legal &amp; confiança
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            A expansão para "qualquer URL" amplifica os riscos legais do Plano 24. O framework ético mantém-se: a ferramenta é para importar os <strong>seus próprios</strong> anúncios, não para raspar concorrentes.
+          </p>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-slate-200">Atestação de propriedade reforçada:</strong> O checkbox atual ("Declaro que sou o proprietário legítimo") passa a exigir <strong class="text-amber-300">dupla confirmação</strong> para plataformas onde não temos relação contratual. Texto explícito: "Compreendo que importar anúncios de terceiros viola os Termos de Uso do portal de origem e pode resultar na remoção dos meus anúncios e suspensão da conta."</li>
+            <li><strong class="text-slate-200">ToS por plataforma:</strong> OLX Group (Standvirtual + OLX PT + OLX Brasil) partilha os ToS do Grupo OLX — restringe acesso automatizado. Webmotors e Mercado Livre têm políticas semelhantes. A Camada 1 (parser dedicado) é a mais exposta; as Camadas 2-3 (schema.org + LLM) extraem dados que o próprio portal expõe como metadados públicos para motores de busca (Google, Bing) — o que reduz significativamente o risco.</li>
+            <li><strong class="text-slate-200">RGPD / LGPD:</strong> Telefone nunca é extraído (vem do perfil RecarGarage). Dados pessoais do vendedor (nome, localização exata) são extraídos apenas se já forem públicos no anúncio original. O utilizador é o responsável pelo tratamento — o RecarGarage é um subcontratante que processa dados por instrução do utilizador.</li>
+            <li><strong class="text-slate-200">Direitos de imagem (maior risco):</strong> Tal como no Plano 24, fotos são re-hospedadas com atestação do utilizador. O trilho de auditoria (<code>origemUrl</code> + <code>importadoEm</code> + <code>criadorUid</code>) fica gravado em Firestore. Oferecer opção "Importar sem fotos" para utilizadores cautelosos.</li>
+            <li><strong class="text-slate-200">Robots.txt e rate limiting:</strong> O fetcher respeita <code>robots.txt</code> por domínio (cache de 1 h). O rate limit é por utilizador (20/min, 120/h) independentemente da plataforma — a mesma janela deslizante do Plano 24.</li>
+          </ul>
+        </section>
+
+        <!-- 07 - UX & fluxo do utilizador -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-violet-400 font-extrabold">07.</span> UX &amp; fluxo do utilizador
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            A interface parte do <code class="text-sky-400">SingleImportPanel</code> e <code class="text-sky-400">BatchImportPanel</code> existentes, generalizando-os:
+          </p>
+          <div class="space-y-3 text-sm text-slate-300">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">1</div>
+              <div><p class="text-xs text-slate-400 mt-1">O utilizador cola 1 ou vários URLs na mesma textarea (multilinha).</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">2</div>
+              <div><p class="text-xs text-slate-400 mt-1"><code>detectPlatform</code> corre em cada URL; mostra o ícone da plataforma ao lado.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">3</div>
+              <div><p class="text-xs text-slate-400 mt-1">URLs de plataformas não suportadas por parser dedicado mostram badge "Extração automática" (schema.org + LLM). URLs de plataformas bloqueadas (Facebook, WhatsApp) mostram erro imediato.</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">4</div>
+              <div><p class="text-xs text-slate-400 mt-1">Preview mostra os campos extraídos, com indicador visual de confiança (verde = parser dedicado, amarelo = schema.org, azul = LLM). Campos não extraídos aparecem vazios com placeholder "Preencher manualmente".</p></div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded-full bg-violet-500/10 border border-violet-500 text-violet-400 font-bold flex items-center justify-center shrink-0">5</div>
+              <div><p class="text-xs text-slate-400 mt-1">Fluxo idêntico ao atual: guarda rascunho → redireciona para o wizard → utilizador revê e publica. Batch mode importa em série com pacing.</p></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Benchmark -->
+        <section class="glass rounded-2xl p-6 glow-amber relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none"></div>
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🏁 Benchmark</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong class="text-slate-300">Auto Connect (PT)</strong> — importa do Standvirtual; não cobre OLX nem CustoJusto.</li>
+            <li><strong class="text-slate-300">4Stand / MyStand (PT)</strong> — DMS que empurram stock para portais (sentido contrário: do stand para os portais).</li>
+            <li><strong class="text-slate-300">OLX Brasil Autoupload API</strong> — API pública REST/JSON para publicar anúncios em lote. Sentido contrário ao nosso.</li>
+            <li><strong class="text-slate-300">ChatGPT / Claude</strong> — utilizadores já copiam o texto do anúncio e pedem à IA para "extrair os dados". A Camada 3 automatiza isto.</li>
+            <li><strong class="text-slate-300">Zap+ / DataZap (BR)</strong> — agregadores que aspiram anúncios de múltiplos portais (sentido contrário: leitura, não escrita). Têm parsers para Webmotors, OLX, iCarros — prova de que é tecnicamente viável.</li>
+          </ul>
+          <p class="text-xs text-amber-400 mt-3 leading-relaxed font-semibold">Importante: Nenhum portal oferece "importe os seus anúncios de qualquer site" como funcionalidade self-service. Existe um espaço vazio para ocupar.</p>
+        </section>
+
+        <!-- Escopo -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">📦 Escopo de Mudanças</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-emerald-400 font-bold">Reaproveita (55%)</span><span class="text-slate-400">Rate Limiter · foto re-host · wizard · badge · duplicados · moderação · <code>attestOwnership</code></span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-emerald-500" style="width:55%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-amber-400 font-bold">Adapta (25%)</span><span class="text-slate-400"><code>SingleImportPanel</code> · <code>BatchImportPanel</code> · <code>NormalizedAdvert</code> · <code>OrigemAnuncio</code> · API routes</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-amber-500" style="width:25%"></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-violet-400 font-bold">Novo (20%)</span><span class="text-slate-400">Extratores (schema.org, OG, LLM) · parsers OLX/Webmotors/ML/CustoJusto · <code>detectPlatform</code> · whitelist CDNs</span></div>
+              <div class="h-2 bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-violet-500" style="width:20%"></div></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Riscos -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Casos de Borda</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>Anti-bot (Cloudflare/DataDome):</strong> Plataformas como Webmotors e Mercado Livre usam proteção agressiva. O parser dedicado pode ser bloqueado. Mitigação: Camada 2 (schema.org) extrai dados sem precisar de bypass; Camada 3 (LLM) funciona com HTML parcial. Se tudo falhar, o utilizador ainda pode copiar/colar manualmente.</li>
+            <li><strong>Mudança de HTML:</strong> O parser de uma plataforma pode partir de um dia para o outro. Mitigação: testes de snapshot com fixtures reais; monitorização (quando um parser falha recorrentemente, alerta o time); fallback automático para Camada 2/3.</li>
+            <li><strong>Custos de LLM:</strong> Se 10.000 utilizadores importarem 5 anúncios cada via LLM, são ~$50-250/mês. Mitigação: rate limit generoso (20/dia por utilizador para LLM); cache de respostas do LLM para URLs idênticas (1 h).</li>
+            <li><strong>Qualidade variável:</strong> Anúncios mal escritos (ex.: "vendo carro bom estado tratar com Zé") extraem poucos dados. Mitigação: a Camada 4 (revisão manual) é sempre o fallback final. A UI mostra claramente o que foi extraído vs. o que precisa de ser preenchido.</li>
+            <li><strong>Duplicados cross-plataforma:</strong> Um carro anunciado no OLX e no Standvirtual gera 2 anúncios distintos no RecarGarage. Mitigação: deteção de duplicados por similaridade de título + preço + km + localização (opcional, v2). Na v1, o utilizador é avisado se o <code>origemId</code> já existe.</li>
+            <li><strong>Fotos de baixa qualidade ou marca d'água:</strong> Alguns portais aplicam marcas d'água. Mitigação: não tentamos remover (risco legal); o utilizador pode substituir as fotos no wizard.</li>
+          </ul>
+        </section>
+
+        <!-- Decisões em aberto -->
+        <section class="glass rounded-2xl p-6 bg-rose-500/5 border-rose-500/20">
+          <h3 class="text-rose-400 font-bold text-base flex items-center gap-2 mb-2">🔓 Decisões em Aberto</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-disc list-inside">
+            <li><strong>LLM provider:</strong> Gemini 2.0 Flash (mais barato, já planeado no Plano 4.1) vs Claude Haiku (melhor em extração estruturada). Decidir com teste A/B com 50 anúncios reais.</li>
+            <li><strong>Ordem das plataformas:</strong> OLX PT primeiro (mesmo grupo do Standvirtual, estrutura similar) ou OLX Brasil (maior volume)? Critério: proximidade técnica vs. impacto de mercado.</li>
+            <li><strong>Parser dedicado para OLX PT/BR:</strong> Usar a API Autoupload do OLX Brasil (se aprovados como parceiros) ou parsing do HTML? A API é o caminho correto mas requer aprovação — mesma situação da Via A do Standvirtual.</li>
+            <li><strong>Custo do LLM por utilizador:</strong> Absorver o custo (investimento em aquisição) ou limitar a X importações/mês no plano gratuito? Sugestão: ilimitado para profissionais premium; 5/mês para particulares.</li>
+            <li><strong>Cache de extrações:</strong> Fazer cache dos resultados de schema.org/LLM por URL (1 h)? Reduz custos e latência mas pode servir dados desatualizados. Sugestão: cache de 1 h com invalidação se o utilizador pedir "reatualizar".</li>
+          </ul>
+        </section>
+
+        <!-- Ondas -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Execução em 3 Ondas</h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside">
+            <li><strong class="text-slate-200">Onda 1 (~8-11 d):</strong> Motor genérico + OLX Portugal + schema.org + LLM. Cobre ~80% dos URLs que um utilizador colaria. Infraestrutura core (<code>core/</code>), extratores, LLM, <code>detectPlatform</code>, parser OLX PT, unificação do <code>NormalizedAdvert</code>. Sem batch mode — só 1 anúncio de cada vez (preview → wizard).</li>
+            <li><strong class="text-slate-200">Onda 2 (~5-7 d):</strong> OLX Brasil + Webmotors + Mercado Livre. Parsers dedicados para os 3 maiores portais brasileiros. Batch mode generalizado (reutiliza a lógica do <code>BatchImportPanel</code>). Whitelist de CDNs brasileiros.</li>
+            <li><strong class="text-slate-200">Onda 3 (~3-4 d):</strong> CustoJusto + AutoScout24 + iCarros + Mobiauto. Cobertura de cauda longa. Melhorias de UX (badge de confiança, cache de extrações, preview de qualidade).</li>
+          </ol>
+        </section>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 26 — Importação Universal de Anúncios 🔌 • Verificação: <code>npm test</code> · <code>tsc --noEmit</code> · <code>build</code>
+    </footer>
+  </div>
+</body>
+</html>
