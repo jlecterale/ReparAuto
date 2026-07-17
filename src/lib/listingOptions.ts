@@ -78,4 +78,3 @@ export const EQUIPAMENTOS_CARRO = EQUIPAMENTOS_CARRO_BR;
 export function getEquipamentosCarro(country: Country): readonly string[] {
   return country === 'PT' ? EQUIPAMENTOS_CARRO_PT : EQUIPAMENTOS_CARRO_BR;
 }
-
