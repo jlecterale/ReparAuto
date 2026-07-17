@@ -1,5 +1,6 @@
 import { CLIENT_CSV_HEADERS } from '@/lib/constants';
-import type { ClientInput } from '@/types/client';
+import type { Client, ClientInput } from '@/types/client';
+
 
 export interface ClientsCsvParseResult {
   rows: ClientInput[];
@@ -117,3 +118,195 @@ export function buildClientsCsvTemplate(): string {
   const example = 'João Silva,joao@exemplo.pt,912345678,Rua A 1,Porto,VW,Golf,2018,00-AA-00,Cliente desde 2020';
   return `${header}\n${example}\n`;
 }
+
+export interface ImportMergeResult {
+  toCreate: ClientInput[];
+  toUpdate: { id: string; data: Partial<Client> }[];
+  skippedCount: number;
+}
+
+/**
+ * Processes parsed CSV rows against existing clients based on the chosen strategy:
+ * - 'all': imports everything as new clients, creating duplicates.
+ * - 'skip': ignores any row whose email matches an existing client or is duplicated in the CSV.
+ * - 'merge': merges fields and vehicles for rows matching existing clients by email, and
+ *            combines duplicate rows within the CSV itself into a single client record.
+ */
+export function processClientsImport(
+  csvRows: ClientInput[],
+  existingClients: Client[],
+  strategy: 'skip' | 'merge' | 'all'
+): ImportMergeResult {
+  if (strategy === 'all') {
+    return {
+      toCreate: csvRows,
+      toUpdate: [],
+      skippedCount: 0,
+    };
+  }
+
+  const toCreate: ClientInput[] = [];
+  const toUpdate: { id: string; data: Partial<Client> }[] = [];
+  let skippedCount = 0;
+
+  // Track emails we've already processed in this import batch
+  const processedEmails = new Set<string>();
+  const createdEmailToIdx = new Map<string, number>();
+  const updatedEmailToIdx = new Map<string, number>();
+
+  // Map existing clients by email for fast lookup
+  const existingByEmail = new Map<string, Client>();
+  existingClients.forEach((c) => {
+    if (c.email) {
+      existingByEmail.set(c.email.trim().toLowerCase(), c);
+    }
+  });
+
+  const cleanPlate = (p?: string) => (p || '').replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+
+  for (const row of csvRows) {
+    const email = row.email?.trim().toLowerCase();
+
+    if (!email) {
+      // No email: cannot detect duplicate, always create
+      toCreate.push(row);
+      continue;
+    }
+
+    const hasExisting = existingByEmail.has(email);
+    const hasProcessedInBatch = processedEmails.has(email);
+
+    if (hasExisting || hasProcessedInBatch) {
+      if (strategy === 'skip') {
+        skippedCount++;
+        processedEmails.add(email);
+        continue;
+      }
+
+      if (strategy === 'merge') {
+        if (hasExisting) {
+          const existing = existingByEmail.get(email)!;
+          const existingUpdateIdx = updatedEmailToIdx.get(email);
+
+          if (existingUpdateIdx !== undefined) {
+            // Merge this row into the already pending update
+            const pending = toUpdate[existingUpdateIdx];
+            if (row.nome) pending.data.nome = row.nome;
+            if (row.telefone) pending.data.telefone = row.telefone;
+            if (row.morada) pending.data.morada = row.morada;
+            if (row.distrito) pending.data.distrito = row.distrito;
+            if (row.notas) {
+              pending.data.notas = pending.data.notas
+                ? `${pending.data.notas}\n${row.notas}`
+                : row.notas;
+            }
+
+            if (row.veiculos && row.veiculos.length > 0) {
+              const currentVehicles = pending.data.veiculos || existing.veiculos || [];
+              const merged = [...currentVehicles];
+              row.veiculos.forEach((newV) => {
+                const dupIdx = merged.findIndex(
+                  (v) =>
+                    (v.matricula && newV.matricula && cleanPlate(v.matricula) === cleanPlate(newV.matricula)) ||
+                    (!v.matricula && !newV.matricula && v.marca.toLowerCase() === newV.marca.toLowerCase() && v.modelo.toLowerCase() === newV.modelo.toLowerCase())
+                );
+                if (dupIdx >= 0) {
+                  merged[dupIdx] = {
+                    ...merged[dupIdx],
+                    ...newV,
+                    notas: merged[dupIdx].notas && newV.notas
+                      ? `${merged[dupIdx].notas}\n${newV.notas}`
+                      : (newV.notas || merged[dupIdx].notas),
+                  };
+                } else {
+                  merged.push(newV);
+                }
+              });
+              pending.data.veiculos = merged;
+            }
+          } else {
+            // Create a new pending update
+            const updateData: Partial<Client> = {};
+            if (row.nome && row.nome !== existing.nome) updateData.nome = row.nome;
+            if (row.telefone && row.telefone !== existing.telefone) updateData.telefone = row.telefone;
+            if (row.morada && row.morada !== existing.morada) updateData.morada = row.morada;
+            if (row.distrito && row.distrito !== existing.distrito) updateData.distrito = row.distrito;
+            if (row.notas) {
+              updateData.notas = existing.notas ? `${existing.notas}\n${row.notas}` : row.notas;
+            }
+
+            if (row.veiculos && row.veiculos.length > 0) {
+              const merged = [...(existing.veiculos || [])];
+              row.veiculos.forEach((newV) => {
+                const dupIdx = merged.findIndex(
+                  (v) =>
+                    (v.matricula && newV.matricula && cleanPlate(v.matricula) === cleanPlate(newV.matricula)) ||
+                    (!v.matricula && !newV.matricula && v.marca.toLowerCase() === newV.marca.toLowerCase() && v.modelo.toLowerCase() === newV.modelo.toLowerCase())
+                );
+                if (dupIdx >= 0) {
+                  merged[dupIdx] = {
+                    ...merged[dupIdx],
+                    ...newV,
+                    notas: merged[dupIdx].notas && newV.notas
+                      ? `${merged[dupIdx].notas}\n${newV.notas}`
+                      : (newV.notas || merged[dupIdx].notas),
+                  };
+                } else {
+                  merged.push(newV);
+                }
+              });
+              updateData.veiculos = merged;
+            }
+
+            toUpdate.push({ id: existing.id, data: updateData });
+            updatedEmailToIdx.set(email, toUpdate.length - 1);
+          }
+        } else {
+          // It's a duplicate of a row we already added to `toCreate` in this batch
+          const createIdx = createdEmailToIdx.get(email)!;
+          const pending = toCreate[createIdx];
+
+          if (row.nome) pending.nome = row.nome;
+          if (row.telefone) pending.telefone = row.telefone;
+          if (row.morada) pending.morada = row.morada;
+          if (row.distrito) pending.distrito = row.distrito;
+          if (row.notas) {
+            pending.notas = pending.notas ? `${pending.notas}\n${row.notas}` : row.notas;
+          }
+
+          if (row.veiculos && row.veiculos.length > 0) {
+            const merged = [...(pending.veiculos || [])];
+            row.veiculos.forEach((newV) => {
+              const dupIdx = merged.findIndex(
+                (v) =>
+                  (v.matricula && newV.matricula && cleanPlate(v.matricula) === cleanPlate(newV.matricula)) ||
+                  (!v.matricula && !newV.matricula && v.marca.toLowerCase() === newV.marca.toLowerCase() && v.modelo.toLowerCase() === newV.modelo.toLowerCase())
+              );
+              if (dupIdx >= 0) {
+                merged[dupIdx] = {
+                  ...merged[dupIdx],
+                  ...newV,
+                  notas: merged[dupIdx].notas && newV.notas
+                    ? `${merged[dupIdx].notas}\n${newV.notas}`
+                    : (newV.notas || merged[dupIdx].notas),
+                };
+              } else {
+                merged.push(newV);
+              }
+            });
+            pending.veiculos = merged;
+          }
+        }
+      }
+    } else {
+      // Unique email in batch and database
+      toCreate.push(row);
+      createdEmailToIdx.set(email, toCreate.length - 1);
+    }
+
+    processedEmails.add(email);
+  }
+
+  return { toCreate, toUpdate, skippedCount };
+}
+

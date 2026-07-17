@@ -1,4 +1,7 @@
-import { parseClientsCsv, buildClientsCsvTemplate } from '@/lib/clientCsv';
+import { parseClientsCsv, buildClientsCsvTemplate, processClientsImport } from '@/lib/clientCsv';
+import { Timestamp } from 'firebase/firestore';
+import type { Client, ClientInput } from '@/types/client';
+
 
 // CSV import for the professional CRM: accept the files a workshop is likely to
 // export from Excel/Numbers/Sheets (BOM, ; or , delimiters, quoted fields) and
@@ -126,3 +129,123 @@ describe('buildClientsCsvTemplate', () => {
     expect(rows).toHaveLength(1);
   });
 });
+
+describe('processClientsImport', () => {
+  const dummyTimestamp = Timestamp.now();
+  const existingClients: Client[] = [
+    {
+      id: 'c1',
+      ownerUid: 'owner-1',
+      nome: 'Carlos Santos',
+      email: 'carlos@santos.com',
+      telefone: '912345678',
+      morada: 'Rua A',
+      distrito: 'Porto',
+      veiculos: [{ marca: 'Audi', modelo: 'A4', ano: 2015, matricula: 'AA-11-BB' }],
+      estado: 'ativo',
+      origem: 'manual',
+      criadoEm: dummyTimestamp,
+      atualizadoEm: dummyTimestamp,
+    },
+  ];
+
+  it('strategy "all" creates everything without checking duplicates', () => {
+    const csvRows: ClientInput[] = [
+      { nome: 'Carlos Santos', email: 'carlos@santos.com', estado: 'lead', origem: 'csv' },
+      { nome: 'Carlos Santos', email: 'carlos@santos.com', estado: 'lead', origem: 'csv' },
+    ];
+    const { toCreate, toUpdate, skippedCount } = processClientsImport(csvRows, existingClients, 'all');
+    expect(toCreate).toHaveLength(2);
+    expect(toUpdate).toHaveLength(0);
+    expect(skippedCount).toBe(0);
+  });
+
+  it('strategy "skip" ignores rows matching database emails and internal CSV duplicates', () => {
+    const csvRows: ClientInput[] = [
+      { nome: 'Novo Cliente', email: 'novo@email.com', estado: 'lead', origem: 'csv' },
+      { nome: 'Carlos Santos', email: 'carlos@santos.com', estado: 'lead', origem: 'csv' }, // Db duplicate
+      { nome: 'Novo Cliente Outro', email: 'novo@email.com', estado: 'lead', origem: 'csv' }, // CSV duplicate
+    ];
+    const { toCreate, toUpdate, skippedCount } = processClientsImport(csvRows, existingClients, 'skip');
+    expect(toCreate).toHaveLength(1);
+    expect(toCreate[0].nome).toBe('Novo Cliente');
+    expect(toUpdate).toHaveLength(0);
+    expect(skippedCount).toBe(2);
+  });
+
+  it('strategy "merge" merges CSV rows into DB matches and resolves internal duplicates', () => {
+    const csvRows: ClientInput[] = [
+      // 1. Matches DB: updates phone, address, appends new vehicle, merges notes
+      {
+        nome: 'Carlos Santos Jr',
+        email: 'carlos@santos.com',
+        telefone: '919999999',
+        morada: 'Rua B',
+        veiculos: [{ marca: 'BMW', modelo: '320d', ano: 2018, matricula: 'CC-22-DD' }],
+        estado: 'lead',
+        origem: 'csv',
+        notas: 'Notas adicionais 1',
+      },
+      // 2. Matches DB again: merges notes and merges vehicle with same license plate but updated details
+      {
+        nome: 'Carlos Santos',
+        email: 'carlos@santos.com',
+        veiculos: [{ marca: 'BMW', modelo: '320d LCI', ano: 2019, matricula: 'CC-22-DD', notas: 'Notas do carro' }],
+        estado: 'lead',
+        origem: 'csv',
+        notas: 'Notas adicionais 2',
+      },
+      // 3. New unique client
+      {
+        nome: 'Duarte',
+        email: 'duarte@email.com',
+        estado: 'lead',
+        origem: 'csv',
+      },
+      // 4. Duplicate of unique client in same CSV batch: merges phone and vehicle
+      {
+        nome: 'Duarte Novo',
+        email: 'duarte@email.com',
+        telefone: '933333333',
+        veiculos: [{ marca: 'Opel', modelo: 'Corsa' }],
+        estado: 'lead',
+        origem: 'csv',
+        notas: 'Contacto por telefone',
+      },
+    ];
+
+    const { toCreate, toUpdate, skippedCount } = processClientsImport(csvRows, existingClients, 'merge');
+
+    expect(skippedCount).toBe(0);
+
+    // Should create 1 new client (Duarte, with merged details from duplicate row)
+    expect(toCreate).toHaveLength(1);
+    expect(toCreate[0]).toMatchObject({
+      nome: 'Duarte Novo',
+      email: 'duarte@email.com',
+      telefone: '933333333',
+      notas: 'Contacto por telefone',
+    });
+    expect(toCreate[0].veiculos).toEqual([{ marca: 'Opel', modelo: 'Corsa' }]);
+
+    // Should generate 1 update for Carlos
+    expect(toUpdate).toHaveLength(1);
+    expect(toUpdate[0].id).toBe('c1');
+    expect(toUpdate[0].data.nome).toBe('Carlos Santos'); // from the second row it matched, it resolved back
+    expect(toUpdate[0].data.telefone).toBe('919999999');
+    expect(toUpdate[0].data.morada).toBe('Rua B');
+    expect(toUpdate[0].data.notas).toBe('Notas adicionais 1\nNotas adicionais 2');
+
+    // Vehicles of Carlos should have both Audi (existing) and BMW (merged and updated to 2019/LCI)
+    expect(toUpdate[0].data.veiculos).toHaveLength(2);
+    expect(toUpdate[0].data.veiculos?.[0]).toEqual({ marca: 'Audi', modelo: 'A4', ano: 2015, matricula: 'AA-11-BB' });
+    expect(toUpdate[0].data.veiculos?.[1]).toEqual({
+      marca: 'BMW',
+      modelo: '320d LCI',
+      ano: 2019,
+      matricula: 'CC-22-DD',
+      notas: 'Notas do carro',
+    });
+  });
+});
+

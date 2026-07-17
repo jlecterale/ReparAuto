@@ -86,7 +86,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
       // Daily metric for the seller dashboard; owners previewing their own
       // listing don't count as interest.
       if (carro.criadorUid && carro.criadorUid !== user?.uid) {
-        recordDailyMetric(carro.criadorUid, 'view');
+        recordDailyMetric(carro.criadorUid, 'view', docCountry(carro));
       }
     }
   }, [id, carro, user?.uid]);

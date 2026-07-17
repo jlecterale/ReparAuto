@@ -7,11 +7,13 @@ import {
   getOficinasByCreator,
   getSellerDailyRange,
 } from '@/lib/db';
+import { docCountry } from '@/lib/country';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import type { OficinaMecanico } from '@/types/oficina';
 import type { Usuario } from '@/types/usuario';
 import type { DashboardPeriod, DashboardSummary, MetricPoint } from '@/types/dashboard';
+
 
 interface PainelData {
   carros: Carro[];
@@ -60,7 +62,7 @@ export default function usePainel(user: Usuario | null, period: DashboardPeriod)
         getCarrosByCreator(email),
         getPecasByCreator(email),
         getOficinasByCreator(email),
-        getSellerDailyRange(uid, 180),
+        getSellerDailyRange(uid, 180, docCountry(user || {})),
       ]);
       if (cancelled) return;
       setCarros(c);

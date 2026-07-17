@@ -187,7 +187,7 @@ export default function ClientsTab({ ownerUid }: Props) {
       )}
 
       <ClientFormModal show={formOpen} onClose={() => setFormOpen(false)} client={editing} onSave={handleSave} />
-      <ClientCsvImport show={importOpen} onClose={() => setImportOpen(false)} onImport={importBatch} />
+      <ClientCsvImport show={importOpen} onClose={() => setImportOpen(false)} clients={clients} onImport={importBatch} />
     </div>
   );
 }

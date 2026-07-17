@@ -40,4 +40,16 @@ describe('lisbonDateWindow', () => {
     expect(win).toEqual(['2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25']);
     expect(new Set(win).size).toBe(win.length);
   });
+
+  it('formats an instant in America/Sao_Paulo timezone for Brazil', () => {
+    // 2026-07-01 at 01:30 UTC is still 2026-06-30 at 22:30 in São Paulo (UTC-3)
+    expect(lisbonDateKey(new Date('2026-07-01T01:30:00Z'), 'BR')).toBe('2026-06-30');
+    // 2026-07-01 at 03:30 UTC is 2026-07-01 at 00:30 in São Paulo
+    expect(lisbonDateKey(new Date('2026-07-01T03:30:00Z'), 'BR')).toBe('2026-07-01');
+  });
+
+  it('builds a date window in America/Sao_Paulo timezone for Brazil', () => {
+    const win = lisbonDateWindow(3, new Date('2026-07-01T01:30:00Z'), 'BR');
+    expect(win).toEqual(['2026-06-28', '2026-06-29', '2026-06-30']);
+  });
 });

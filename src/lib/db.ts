@@ -23,7 +23,8 @@ import { ref, deleteObject } from 'firebase/storage';
 import { db, storage } from './firebase';
 import { DB_VERSION, DB_VERSION_KEY } from './constants';
 import { lisbonDateKey, lisbonDateWindow } from './dates';
-import { docCountry, getActiveCountry } from '@/lib/country';
+import { docCountry, getActiveCountry, type Country } from '@/lib/country';
+
 import { contemProfanity } from './profanity';
 import type { Carro, CarroInput, StatusAnuncio } from '@/types/carro';
 import type { Peca, PecaInput, CompatibilityEntry } from '@/types/peca';
@@ -586,10 +587,11 @@ const SELLER_DAILY_COLLECTION = 'seller_daily';
 export async function recordDailyMetric(
   ownerUid: string | undefined | null,
   kind: import('@/types/dashboard').MetricKind,
+  country: Country = getActiveCountry(),
 ): Promise<void> {
   if (!ownerUid) return;
   try {
-    const date = lisbonDateKey();
+    const date = lisbonDateKey(new Date(), country);
     const field = kind === 'view' ? 'views' : 'contacts';
     await setDoc(
       doc(db, SELLER_DAILY_COLLECTION, `${ownerUid}_${date}`),
@@ -609,6 +611,7 @@ export async function recordDailyMetric(
 export async function getSellerDailyRange(
   ownerUid: string,
   days: number,
+  country: Country = getActiveCountry(),
 ): Promise<import('@/types/dashboard').MetricPoint[]> {
   const byDate = new Map<string, { views: number; contacts: number }>();
   try {
@@ -621,8 +624,8 @@ export async function getSellerDailyRange(
   } catch (err) {
     console.error('[DB] Erro ao buscar métricas diárias:', err);
   }
-  // Contiguous, zero-filled calendar window ending today (Lisbon time).
-  return lisbonDateWindow(days).map((key) => {
+  // Contiguous, zero-filled calendar window ending today.
+  return lisbonDateWindow(days, new Date(), country).map((key) => {
     const hit = byDate.get(key);
     return { date: key, views: hit?.views || 0, contacts: hit?.contacts || 0 };
   });
@@ -710,6 +713,70 @@ export async function createClientsBatch(ownerUid: string, list: ClientInput[]):
     return written;
   } catch (err) {
     console.error(`[DB] Erro ao importar clientes (importados: ${written}):`, err);
+    throw err;
+  }
+}
+
+export async function importClientsBatch(
+  ownerUid: string,
+  toCreate: ClientInput[],
+  toUpdate: { id: string; data: Partial<Client> }[]
+): Promise<{ createdCount: number; updatedCount: number }> {
+  if (toCreate.length === 0 && toUpdate.length === 0) {
+    return { createdCount: 0, updatedCount: 0 };
+  }
+
+  let createdCount = 0;
+  let updatedCount = 0;
+
+  try {
+    const totalOps = toCreate.length + toUpdate.length;
+    let opIndex = 0;
+
+    while (opIndex < totalOps) {
+      const batch = writeBatch(db);
+      const chunkSize = Math.min(totalOps - opIndex, MAX_BATCH_WRITES);
+
+      for (let i = 0; i < chunkSize; i++) {
+        const globalIdx = opIndex + i;
+        if (globalIdx < toCreate.length) {
+          // Create
+          const data = toCreate[globalIdx];
+          const ref = doc(collection(db, CLIENTS_COLLECTION));
+          batch.set(
+            ref,
+            cleanUndefined({
+              ...data,
+              ownerUid,
+              criadoEm: Timestamp.now(),
+              atualizadoEm: Timestamp.now(),
+            })
+          );
+          createdCount++;
+        } else {
+          // Update
+          const updateIdx = globalIdx - toCreate.length;
+          const { id, data } = toUpdate[updateIdx];
+          const ref = doc(db, CLIENTS_COLLECTION, id);
+          
+          const cleaned = cleanUndefined(data as Record<string, unknown>);
+          const payload = {
+            ...cleaned,
+            atualizadoEm: Timestamp.now(),
+          };
+          
+          batch.update(ref, payload);
+          updatedCount++;
+        }
+      }
+
+      await batch.commit();
+      opIndex += chunkSize;
+    }
+
+    return { createdCount, updatedCount };
+  } catch (err) {
+    console.error(`[DB] Erro ao importar lote de clientes (criados: ${createdCount}, atualizados: ${updatedCount}):`, err);
     throw err;
   }
 }

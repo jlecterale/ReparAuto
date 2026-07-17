@@ -4,6 +4,8 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, ChatCircle, Heart, ArrowsDownUp, Car, GearSix, Warning } from '@phosphor-icons/react';
 import Badge from '@/components/ui/Badge';
+import { formatarPreco } from '@/lib/utils';
+import { docCountry, type Country } from '@/lib/country';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 
@@ -22,7 +24,9 @@ type Row = {
   mensagens: number;
   favoritos: number;
   href: string;
+  country: Country;
 };
+
 
 type SortKey = 'views' | 'mensagens' | 'favoritos';
 
@@ -53,6 +57,7 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
       mensagens: c.contagemMensagens || 0,
       favoritos: c.contagemFavoritos || 0,
       href: `/detalhes/${c.id}`,
+      country: docCountry(c),
     }));
     const pecaRows: Row[] = pecas.map((p) => ({
       id: p.id,
@@ -64,6 +69,7 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
       mensagens: p.contagemMensagens || 0,
       favoritos: 0,
       href: `/pecas/${p.id}`,
+      country: docCountry(p),
     }));
     return [...carRows, ...pecaRows].sort((a, b) => b[sortKey] - a[sortKey]);
   }, [carros, pecas, sortKey]);
@@ -124,7 +130,7 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
                         <p className="font-semibold text-fg truncate">{r.titulo}</p>
                         <div className="flex items-center gap-2">
                           {r.preco != null && (
-                            <span className="text-xs text-fg-muted">{r.preco.toLocaleString('pt-PT')} €</span>
+                            <span className="text-xs text-fg-muted">{formatarPreco(r.preco, r.country)}</span>
                           )}
                           {stale && (
                             <span

@@ -51,7 +51,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
       incrementCampo('parts', peca.id, 'visualizacoes');
       // Owners previewing their own listing don't count as interest.
       if (peca.criadorUid && peca.criadorUid !== user?.uid) {
-        recordDailyMetric(peca.criadorUid, 'view');
+        recordDailyMetric(peca.criadorUid, 'view', docCountry(peca));
       }
     }
   }, [peca?.id]);

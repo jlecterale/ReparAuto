@@ -5,10 +5,13 @@ import {
   subscribeClients,
   createClient,
   createClientsBatch,
+  importClientsBatch,
   updateClient,
   deleteClient,
 } from '@/lib/db';
+import { processClientsImport } from '@/lib/clientCsv';
 import type { Client, ClientInput } from '@/types/client';
+
 
 export default function useClients(ownerUid: string | null | undefined) {
   const [clients, setClients] = useState<Client[]>([]);
@@ -41,11 +44,19 @@ export default function useClients(ownerUid: string | null | undefined) {
   );
 
   const importBatch = useCallback(
-    async (list: ClientInput[]): Promise<number> => {
+    async (
+      list: ClientInput[],
+      strategy: 'skip' | 'merge' | 'all' = 'skip'
+    ): Promise<{ createdCount: number; updatedCount: number }> => {
       if (!ownerUid) throw new Error('Sem sessão');
-      return createClientsBatch(ownerUid, list);
+      if (strategy === 'all') {
+        const n = await createClientsBatch(ownerUid, list);
+        return { createdCount: n, updatedCount: 0 };
+      }
+      const { toCreate, toUpdate } = processClientsImport(list, clients, strategy);
+      return importClientsBatch(ownerUid, toCreate, toUpdate);
     },
-    [ownerUid],
+    [ownerUid, clients],
   );
 
   const update = useCallback(async (id: string, data: Partial<Client>): Promise<void> => {
