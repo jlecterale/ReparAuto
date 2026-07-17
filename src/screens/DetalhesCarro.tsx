@@ -8,6 +8,7 @@ import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCa
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
 import { pickChangedFields } from '@/lib/changedFields';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
@@ -187,7 +188,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-2xl sm:text-3xl font-extrabold text-accent">
-                {formatarPreco(carro.preco)}
+                {formatarPreco(carro.preco, docCountry(carro))}
               </span>
               {isLowCost && <Badge cor="accent" variante="solid">Low-Cost</Badge>}
             </div>
@@ -209,7 +210,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
             </button>
             <ShareButton
               title={`${carro.marca} ${carro.modelo} - RecarGarage`}
-              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco)}`}
+              text={`${carro.marca} ${carro.modelo} ${carro.anoFabricacao} - ${formatarPreco(carro.preco, docCountry(carro))}`}
             />
             {(carro.criador === user?.email || isAdmin) && (
               <>

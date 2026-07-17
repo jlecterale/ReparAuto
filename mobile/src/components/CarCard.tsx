@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Carro } from '@/types';
 import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { colors } from '@/theme/colors';
 
@@ -33,7 +34,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
         />
         <View className="absolute bottom-2 right-2 rounded-lg bg-primary-900/90 px-3 py-1.5">
           <Text className="text-base font-extrabold text-white">
-            {formatPreco(carro.preco)}
+            {formatPreco(carro.preco, docCountry(carro))}
           </Text>
         </View>
         {carro.estadoVeiculo === 'manutencao' && (
@@ -59,7 +60,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
           <View className="mt-2 flex-row items-center">
             <Ionicons name="location-outline" size={14} color={colors.fg.subtle} />
             <Text className="ml-1 text-sm text-fg-subtle" numberOfLines={1}>
-              {carro.local}
+              {[carro.bairro, carro.local].filter(Boolean).join(', ')}
             </Text>
           </View>
         )}

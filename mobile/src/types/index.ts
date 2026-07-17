@@ -1,6 +1,7 @@
 // Shared domain types — mirror the web app (src/types) so the same Firestore
 // documents deserialize identically on mobile.
 import type { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import type { Country } from '@/lib/country';
 
 export type Timestamp = FirebaseFirestoreTypes.Timestamp;
 
@@ -16,6 +17,8 @@ export interface Usuario {
   distrito?: string;
   codigoPostal: string;
   morada: string;
+  /** Neighbourhood — Brazilian addresses only ("bairro"); unused for PT. */
+  bairro?: string;
   nif: string;
   tipoConta: TipoConta;
   role: Role;
@@ -29,6 +32,8 @@ export interface Usuario {
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   badges?: string[];
+  /** Market the account belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   /** Per-group × per-channel notification preferences — shared with web. */
   notifPrefs?: NotificationPreferences;
   dataCriacao?: Timestamp;
@@ -57,7 +62,7 @@ export type BodyType =
 export type Condition = 'Novo' | 'Usado' | 'Para peças';
 export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
 export type VehicleOrigin = 'Nacional' | 'Importado';
-export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Couro' | 'Couro sintético' | 'Alcântara' | 'Outro';
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
 
 export interface Carro {
@@ -107,6 +112,8 @@ export interface Carro {
   acceptsExchange?: boolean;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   descricao: string;
   videoUrl?: string;
@@ -123,6 +130,8 @@ export interface Carro {
   vendedorEmail?: string;
   rodando?: boolean;
   inspecao?: boolean;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -151,6 +160,8 @@ export interface Peca {
   estado: string;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
   contacto?: string;
   vendedorTelefone?: string;
@@ -161,6 +172,8 @@ export interface Peca {
   criadorUid?: string;
   vendedorNome?: string;
   descricao: string;
+  /** Market the listing belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   dataCriacao: Timestamp;
   dataAprovacao?: Timestamp;
@@ -243,6 +256,8 @@ export interface IntencaoCompra {
   vendedorTelefone?: string;
   vendedorWhatsApp?: string;
   vendedorEmail?: string;
+  /** Market the intent belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusIntencao;
   prioritaria: boolean;
   stats: { visualizacoes: number; visualizacoes7Dias: number; contatos: number; contatos7Dias: number };
@@ -305,19 +320,25 @@ export interface Report {
 // ---------- Verificações ----------
 export type StatusVerificacao = 'pendente' | 'aprovado' | 'rejeitado';
 export type TipoVerificacao = 'identidade' | 'profissional';
-export type TipoDocumento = 'cc' | 'passaporte' | 'residencia';
-
-export const TIPO_DOCUMENTO_LABELS: Record<TipoDocumento, string> = {
-  cc: 'Cartão de Cidadão',
-  passaporte: 'Passaporte',
-  residencia: 'Autorização de Residência',
-};
+// PT documents: cc (Cartão de Cidadão), passaporte, residencia (Título de
+// Residência). BR documents: rg, cnh (personal), cnpj, contrato_social
+// (professional / pessoa jurídica). See src/lib/verificationDocs.ts.
+export type TipoDocumento =
+  | 'cc'
+  | 'passaporte'
+  | 'residencia'
+  | 'rg'
+  | 'cnh'
+  | 'cnpj'
+  | 'contrato_social';
 
 export interface Verification {
   id: string;
   uid: string;
   email: string;
   nome: string;
+  /** Market the request was submitted in (missing on legacy docs = PT). */
+  country?: Country;
   tipo: TipoVerificacao;
   tipoDocumento: TipoDocumento;
   documentoUrl: string;
@@ -329,6 +350,11 @@ export interface Verification {
   resolvidoPor?: string;
   notasAdmin?: string;
 }
+
+export type VerificationInput = Omit<
+  Verification,
+  'id' | 'dataPedido' | 'dataResolucao' | 'resolvidoPor' | 'notasAdmin'
+>;
 
 // ---------- Chat ----------
 export type ListingType = 'carro' | 'peca' | 'intencao';
@@ -475,12 +501,16 @@ export interface Oficina {
   website?: string;
   distrito: string;
   localidade: string;
+  /** Neighbourhood — Brazilian workshops only ("bairro"); unused for PT. */
+  bairro?: string;
   morada: string;
   coordenadas?: { latitude: number; longitude: number };
   especialidades: EspecialidadeOficina[];
   logoUrl?: string;
   videoUrl?: string;
   fotos?: string[];
+  /** Market the workshop belongs to; docs without it are PT (pre-Brazil). */
+  country?: Country;
   status: StatusAnuncio;
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;

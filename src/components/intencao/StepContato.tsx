@@ -1,6 +1,8 @@
 'use client';
 
 import { ChatCircleDots, WhatsappLogo, Chats, type Icon } from '@phosphor-icons/react';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 
 interface StepContatoProps {
   contatoPreferido: 'chat' | 'whatsapp' | 'ambos';
@@ -10,6 +12,7 @@ interface StepContatoProps {
 }
 
 export default function StepContato({ contatoPreferido, mostrarTelefone, descricao, onChange }: StepContatoProps) {
+  const { country } = useCountry();
   return (
     <div className="space-y-4">
       <div>
@@ -48,7 +51,7 @@ export default function StepContato({ contatoPreferido, mostrarTelefone, descric
           onChange={(e) => onChange('mostrarTelefone', e.target.checked)}
           className="rounded text-accent focus:ring-accent"
         />
-        Mostrar meu telefone para vendedores
+        Mostrar meu {term('phoneLabel', country).toLowerCase()} para vendedores
       </label>
 
       <div>

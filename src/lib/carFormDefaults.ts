@@ -40,6 +40,7 @@ export const EMPTY_CARRO_FORM_DATA: CarroFormData = {
   acceptsExchange: false,
   localizacao: '',
   localizacaoDistrito: '',
+  bairro: '',
   preco: '',
   descricao: '',
   videoUrl: '',

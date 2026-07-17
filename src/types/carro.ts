@@ -1,4 +1,5 @@
 import type { Timestamp } from 'firebase/firestore';
+import type { Country } from '@/lib/country';
 import type { PhotoAngles } from '@/lib/spin360';
 
 export type EstadoVeiculo = 'pronto' | 'manutencao';
@@ -17,7 +18,7 @@ export type BodyType =
 export type Condition = 'Novo' | 'Usado' | 'Para peças';
 export type Traction = 'Dianteira' | 'Traseira' | 'Integral (4x4)';
 export type VehicleOrigin = 'Nacional' | 'Importado';
-export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Alcântara' | 'Outro';
+export type Upholstery = 'Tecido' | 'Pele' | 'Pele sintética' | 'Couro' | 'Couro sintético' | 'Alcântara' | 'Outro';
 export type FiltroAtivo = 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer' | null;
 export type SortOrdem = 'crescente' | 'decrescente' | null;
 export type FiltroChip = { label: string; value: string };
@@ -71,7 +72,11 @@ export interface Carro {
   acceptsExchange?: boolean;
   local: string;
   distrito?: string;
+  /** Neighbourhood — Brazilian listings only ("bairro"); unused for PT. */
+  bairro?: string;
   coordenadas?: { lat: number; lng: number };
+  /** Market the listing belongs to. Docs created before the Brazil launch have none — resolve with docCountry() (missing = PT). */
+  country?: Country;
   descricao: string;
   videoUrl?: string;
   estadoVeiculo: EstadoVeiculo;
@@ -112,6 +117,8 @@ export interface Carro {
   /** Canonical source advert URL (audit trail). */
   origemUrl?: string;
   importadoEm?: Timestamp;
+  /** Uid of who ran the import when it wasn't the owner (admin-on-behalf). */
+  importadoPor?: string;
 }
 
 export type CarroInput = Omit<Carro, 'id' | 'dataCriacao'> & { dataCriacao?: Timestamp };
@@ -151,6 +158,8 @@ export interface CarroFormData {
   acceptsExchange: boolean;
   localizacao: string;
   localizacaoDistrito: string;
+  /** BR only — optional neighbourhood typed by the seller. */
+  bairro: string;
   preco: string;
   descricao: string;
   videoUrl: string;

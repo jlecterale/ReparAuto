@@ -11,14 +11,16 @@ import {
   TIPOS_CARROCERIA,
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
-  EQUIPAMENTOS_CARRO,
   ORIGENS_VEICULO,
-  TIPOS_ESTOFO,
+  getTiposEstofo,
+  getEquipamentosCarro,
   MESES,
   MAX_FOTOS_CARRO,
 } from '@/lib/constants';
 import { CAR_PRICE_MAX, validarDadosVeiculo } from '@/lib/carSpec';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { toggleInList, parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull, sanitizeDecimalInput } from '@/lib/utils';
 import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { useApp } from '@/providers/AppProvider';
@@ -40,6 +42,8 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
   const { auth } = useApp();
   const toast = useToast();
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
+  // Editing a specific listing → label by the listing's market.
+  const country = docCountry(carro);
 
   const [form, setForm] = useState({
     marca: carro.marca,
@@ -281,13 +285,13 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Cilindrada (cc)', 'displacement', 'number', null, false, 5)}
         {campo('Tração', 'traction', 'text', TIPOS_TRACAO, true)}
         <div className="col-span-2">{campo('Versão', 'version', 'text', null, false, 60)}</div>
-        {campo('Mês da 1ª matrícula', 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
+        {campo(term('firstRegistrationLabel', country), 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
         {campo('Origem', 'origin', 'text', ORIGENS_VEICULO, true)}
         {campo('Proprietários anteriores', 'previousOwners', 'number', null, false, 2)}
         {campo('Nº de mudanças', 'gears', 'number', null, false, 2)}
         {campo('Emissões CO₂ (g/km)', 'co2Emissions', 'number', null, false, 3)}
         {campo('Autonomia (km)', 'maxFuelRange', 'number', null, false, 4)}
-        {campo('Estofos', 'upholstery', 'text', TIPOS_ESTOFO, true)}
+        {campo('Estofos', 'upholstery', 'text', getTiposEstofo(country), true)}
         {campo('Nº de airbags', 'numberOfAirbags', 'number', null, false, 2)}
         {campo('Garantia (meses)', 'warrantyMonths', 'number', null, false, 3)}
         {campo('Consumo urbano', 'consumptionUrban', 'decimal', null, false, 5)}
@@ -320,7 +324,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
       <div className="mb-4">
         <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
         <div className="flex flex-wrap gap-2">
-          {EQUIPAMENTOS_CARRO.map((feature) => (
+          {getEquipamentosCarro(country).map((feature) => (
             <ToggleChip
               key={feature}
               active={features.includes(feature)}

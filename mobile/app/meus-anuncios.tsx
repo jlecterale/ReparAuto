@@ -235,6 +235,8 @@ export default function MeusAnunciosScreen() {
     );
   }
 
+  const temPendentes = itens.some((item) => item.status === 'pendente');
+
   return (
     <FlatList
       className="flex-1 bg-neutral-50"
@@ -242,6 +244,22 @@ export default function MeusAnunciosScreen() {
       keyExtractor={(item) => `${item.kind}_${item.id}`}
       contentContainerClassName="p-4"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      ListHeaderComponent={
+        temPendentes ? (
+          <View className="mb-3 flex-row items-start rounded-2xl border border-warning-200 bg-warning-50 p-3">
+            <Ionicons
+              name="time-outline"
+              size={20}
+              color={colors.warning[500]}
+              style={{ marginTop: 1 }}
+            />
+            <Text className="ml-2.5 flex-1 text-sm leading-5 text-warning-800">
+              Os itens "Em revisão" só ficam visíveis para os outros utilizadores depois de
+              aprovados pela equipa. Recebe uma notificação com a decisão.
+            </Text>
+          </View>
+        ) : null
+      }
       renderItem={({ item }) => (
         <Pressable
           onPress={() => abrir(item)}

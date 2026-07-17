@@ -44,3 +44,4 @@ next-env.d.ts
 
 # locally generated project dashboard (run `npm run generate:dashboard` on demand)
 docs/dashboard.html
+.playwright-mcp

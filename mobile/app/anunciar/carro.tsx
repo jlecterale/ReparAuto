@@ -10,10 +10,15 @@ import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
+import { LocationSelect } from '@/components/ui/LocationSelect';
 import { PhotoPicker } from '@/components/anunciar/PhotoPicker';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
+import { getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+import { getCurrencySymbol } from '@/lib/country';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type CarDraftData } from '@/lib/draft';
@@ -43,13 +48,13 @@ import {
   parseDecimalPt,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
-  EQUIPAMENTOS_CARRO,
+  getEquipamentosCarro,
   ESTADOS_VEICULO,
   MAX_FOTOS_CARRO,
   MESES,
   ORIGENS_VEICULO,
   TIPOS_CARROCERIA,
-  TIPOS_ESTOFO,
+  getTiposEstofo,
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { colors } from '@/theme/colors';
@@ -66,10 +71,13 @@ export default function AnunciarCarroScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
   const editId = typeof id === 'string' && id ? id : null;
   const { user } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos('carro');
+  // Listings are priced in the active market's currency.
+  const currencySymbol = getCurrencySymbol(country);
 
   const [fotos, setFotos] = useState<string[]>([]);
   const [angleByPhoto, setAngleByPhoto] = useState<Record<string, SpinAngle>>({});
@@ -110,7 +118,9 @@ export default function AnunciarCarroScreen() {
     acceptsExchange: false,
   });
   const [estado, setEstado] = useState<EstadoVeiculo>('pronto');
+  const [distrito, setDistrito] = useState('');
   const [local, setLocal] = useState('');
+  const [bairro, setBairro] = useState('');
   const [descricao, setDescricao] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [telefone, setTelefone] = useState(user?.telefone ?? '');
@@ -128,13 +138,13 @@ export default function AnunciarCarroScreen() {
       seats, condition, power, displacement, traction, features, version, firstRegistrationMonth: firstRegMonth,
       origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
       consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
-      ...comercial, estado, local, descricao, videoUrl, telefone, whatsapp,
+      ...comercial, estado, distrito, local, bairro, descricao, videoUrl, telefone, whatsapp,
     }),
     [fotos, marca, modelo, ano, km, preco, cor, portas, combustivel, cambio, bodyType,
      seats, condition, power, displacement, traction, features, version, firstRegMonth,
      origin, previousOwners, gears, co2Emissions, maxFuelRange, consumptionUrban,
      consumptionExtraUrban, consumptionCombined, upholstery, numberOfAirbags, warrantyMonths,
-     comercial, estado, local, descricao, videoUrl, telefone, whatsapp],
+     comercial, estado, distrito, local, bairro, descricao, videoUrl, telefone, whatsapp],
   );
   // Prefilled contacts don't count as progress worth drafting/guarding.
   const hasDraftContent = !!(marca || modelo || km || preco || descricao || fotos.length);
@@ -177,6 +187,9 @@ export default function AnunciarCarroScreen() {
     });
     setEstado(d.estado ?? 'pronto');
     setLocal(d.local ?? '');
+    setBairro(d.bairro ?? '');
+    // Drafts saved before the picker only carry the city; recover its region.
+    setDistrito(d.distrito ?? (d.local ? getDistritoForConcelho(d.local, country) ?? '' : ''));
     setDescricao(d.descricao ?? '');
     setVideoUrl(d.videoUrl ?? '');
     setTelefone(d.telefone ?? user?.telefone ?? '');
@@ -240,6 +253,9 @@ export default function AnunciarCarroScreen() {
         });
         setEstado(c.estadoVeiculo ?? 'pronto');
         setLocal(c.local ?? '');
+        setBairro(c.bairro ?? '');
+        // Old listings only carry the city; recover its region for the pickers.
+        setDistrito(c.distrito ?? (c.local ? getDistritoForConcelho(c.local, country) ?? '' : ''));
         setDescricao(c.descricao ?? '');
         setVideoUrl(c.videoUrl ?? '');
         setTelefone(c.vendedorTelefone ?? user?.telefone ?? '');
@@ -251,7 +267,7 @@ export default function AnunciarCarroScreen() {
     return () => {
       cancelled = true;
     };
-  }, [editId, user?.telefone]);
+  }, [editId, user?.telefone, country]);
 
   function validar(): string | null {
     if (fotos.length === 0) return 'Adicione pelo menos uma foto.';
@@ -267,7 +283,7 @@ export default function AnunciarCarroScreen() {
       return `Indique os quilómetros (0 a ${CAR_KM_MAX.toLocaleString('pt-PT')}).`;
     const precoNum = Number(preco);
     if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX)
-      return `Indique um preço entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+      return `Indique um preço entre 1 ${currencySymbol} e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} ${currencySymbol}.`;
     if (portas.trim()) {
       const portasNum = Number(portas);
       if (!Number.isInteger(portasNum) || portasNum < CAR_DOORS_MIN || portasNum > CAR_DOORS_MAX)
@@ -315,7 +331,8 @@ export default function AnunciarCarroScreen() {
     if (consumoErro) return consumoErro;
     if (!combustivel) return 'Selecione o combustível.';
     if (!cambio) return 'Selecione a caixa.';
-    if (!local.trim()) return 'Indique a localidade.';
+    if (!distrito.trim() || !local.trim())
+      return `Indique ${term('districtAndMunicipality', country).toLowerCase()}.`;
     if (videoUrl.trim() && !isValidYoutubeUrl(videoUrl))
       return 'O link do vídeo do YouTube é inválido.';
     return null;
@@ -384,6 +401,10 @@ export default function AnunciarCarroScreen() {
         acceptsExchange: comercial.acceptsExchange || undefined,
         estadoVeiculo: estado,
         local: local.trim(),
+        distrito: distrito.trim() || undefined,
+        bairro: country === 'BR' ? bairro.trim() || undefined : undefined,
+        // City-derived coordinates power the radius search (mirrors the web).
+        coordenadas: getCoordenadas(local.trim(), country),
         descricao: descricao.trim(),
         videoUrl: videoUrl.trim() || undefined,
         fotos: urls,
@@ -411,7 +432,7 @@ export default function AnunciarCarroScreen() {
 
       Alert.alert(
         editId ? 'Anúncio atualizado' : 'Anúncio enviado',
-        'O seu anúncio foi submetido e ficará visível após aprovação.',
+        'O seu anúncio foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',
@@ -511,7 +532,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Preço (€) *"
+              label={`Preço (${currencySymbol}) *`}
               value={preco}
               onChangeText={setPreco}
               placeholder="15000"
@@ -598,7 +619,7 @@ export default function AnunciarCarroScreen() {
         />
         <MultiChipSelect
           label="Equipamento / Extras"
-          options={EQUIPAMENTOS_CARRO.map((e) => ({ value: e, label: e }))}
+          options={getEquipamentosCarro(country).map((e) => ({ value: e, label: e }))}
           values={features}
           onToggle={(value) =>
             setFeatures((prev) =>
@@ -631,13 +652,13 @@ export default function AnunciarCarroScreen() {
         </View>
 
         <SelectField
-          label="Mês da 1ª matrícula"
+          label={term('firstRegistrationLabel', country)}
           value={firstRegMonth}
           onChange={setFirstRegMonth}
           options={MESES}
           emptyOption="Indiferente"
           placeholder="Selecionar mês"
-          title="Mês da 1ª matrícula"
+          title={term('firstRegistrationLabel', country)}
         />
         <ChipSelect
           label="Origem"
@@ -671,7 +692,7 @@ export default function AnunciarCarroScreen() {
 
         <ChipSelect
           label="Estofos"
-          options={TIPOS_ESTOFO.map((u) => ({ value: u, label: u }))}
+          options={getTiposEstofo(country).map((u) => ({ value: u, label: u }))}
           value={upholstery}
           onChange={setUpholstery}
         />
@@ -742,7 +763,24 @@ export default function AnunciarCarroScreen() {
           onToggle={(key) => setComercial((prev) => ({ ...prev, [key]: !prev[key] }))}
         />
 
-        <Input label="Localidade *" value={local} onChangeText={setLocal} placeholder="Lisboa" />
+        <LocationSelect
+          distrito={distrito}
+          localidade={local}
+          onChange={(d, c) => {
+            setDistrito(d);
+            setLocal(c);
+            setBairro('');
+          }}
+          required
+        />
+        {country === 'BR' && (
+          <Input
+            label="Bairro (opcional)"
+            value={bairro}
+            onChangeText={setBairro}
+            placeholder="Ex: Bela Vista"
+          />
+        )}
 
         <Input
           label="Descrição"
@@ -768,7 +806,7 @@ export default function AnunciarCarroScreen() {
         <View className="flex-row gap-3">
           <View className="flex-1">
             <Input
-              label="Telefone"
+              label={term('phoneLabel', country)}
               value={telefone}
               onChangeText={setTelefone}
               placeholder="912345678"

@@ -16,6 +16,7 @@ import {
   createUserProfile,
   updateUserProfile,
 } from '@/lib/db';
+import { getActiveCountry } from '@/lib/country';
 import { auth } from '@/lib/firebase';
 import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
@@ -78,7 +79,9 @@ export default function useAuth() {
           let profile = await getUserProfile(firebaseUser.uid);
           if (!profile) {
             await createUserProfile(firebaseUser.uid, base as unknown as Record<string, unknown>);
-            profile = base;
+            // Mirror the country createUserProfile stamps on the new doc so
+            // the account-market lock binds correctly right after signup.
+            profile = { ...base, country: getActiveCountry() };
           }
           setUser({ ...base, ...profile });
         } catch {
@@ -125,8 +128,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // Brand-new account in the active market; stamp it so the account-market
+    // lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const loginGoogle = useCallback(async (): Promise<Usuario> => {
@@ -144,8 +150,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const loginApple = useCallback(async (): Promise<Usuario> => {
@@ -161,8 +170,11 @@ export default function useAuth() {
     } catch {
       // fallback
     }
-    setUser(base);
-    return base;
+    // No doc yet → new account in the active market; stamp it so the
+    // account-market lock doesn't race to PT before onAuthChange re-syncs.
+    const created = { ...base, country: getActiveCountry() };
+    setUser(created);
+    return created;
   }, []);
 
   const logout = useCallback(async (): Promise<void> => {

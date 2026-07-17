@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { Peca } from '@/types';
 import { TIPO_PECA_LABELS } from '@/types';
 import { formatPrecoOpcional } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { colors } from '@/theme/colors';
 
 const BLURHASH = 'L6PZfSjE.AyE_3t7t7R**0o#DgR4';
@@ -56,13 +57,13 @@ function PecaCardBase({ peca, onPress }: PecaCardProps) {
         </Text>
         <View className="mt-auto flex-row items-center justify-between pt-1">
           <Text className="text-base font-extrabold text-accent">
-            {formatPrecoOpcional(peca.preco)}
+            {formatPrecoOpcional(peca.preco, docCountry(peca))}
           </Text>
           {!!peca.local && (
             <View className="flex-row items-center">
               <Ionicons name="location-outline" size={13} color={colors.fg.subtle} />
               <Text className="ml-0.5 text-xs text-fg-subtle" numberOfLines={1}>
-                {peca.local}
+                {[peca.bairro, peca.local].filter(Boolean).join(', ')}
               </Text>
             </View>
           )}

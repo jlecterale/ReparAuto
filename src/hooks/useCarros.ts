@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribeCarros, addCarro, deleteCarro } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
+import { filterByCountry, QUICK_PRICE_BANDS } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import { matchesCarSpecFilters } from '@/lib/carSpecFilters';
 import type { Carro } from '@/types/carro';
 import type { FiltroAtivo, SortOrdem } from '@/types/carro';
@@ -11,7 +13,8 @@ import type { FiltroAtivo, SortOrdem } from '@/types/carro';
 // public car list skip streaming the whole collection. Data from a previous
 // route is kept in state so navigating back doesn't flash empty.
 export default function useCarros(active: boolean = true) {
-  const [carros, setCarrosState] = useState<Carro[]>([]);
+  const { country } = useCountry();
+  const [allCarros, setCarrosState] = useState<Carro[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroAtivo>('qualquer');
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +22,7 @@ export default function useCarros(active: boolean = true) {
   const [advPriceMax, setAdvPriceMax] = useState<number | null>(null);
   const [advDistrito, setAdvDistrito] = useState('');
   const [advConcelho, setAdvConcelho] = useState('');
+  const [advBairro, setAdvBairro] = useState('');
   const [advRaioCentro, setAdvRaioCentro] = useState('');
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
   const [advBodyType, setAdvBodyType] = useState('');
@@ -42,6 +46,11 @@ export default function useCarros(active: boolean = true) {
     return unsub;
   }, [active]);
 
+  // Market isolation (plan 20): only the active country's listings are ever
+  // exposed. The status query stays country-agnostic (no composite index);
+  // legacy docs without a country resolve to PT.
+  const carros = useMemo(() => filterByCountry(allCarros, country), [allCarros, country]);
+
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -49,12 +58,14 @@ export default function useCarros(active: boolean = true) {
   const carrosFiltrados = useMemo(() => {
     let cs = [...carros];
 
+    const bands = QUICK_PRICE_BANDS[country];
+
     if (filtroAtivo === 'lowcost') {
-      cs = cs.filter((c) => c.preco <= 2000);
+      cs = cs.filter((c) => c.preco <= bands.lowcost);
     } else if (filtroAtivo === '500') {
-      cs = cs.filter((c) => c.preco <= 500);
+      cs = cs.filter((c) => c.preco <= bands.low);
     } else if (filtroAtivo === '1000') {
-      cs = cs.filter((c) => c.preco <= 1000);
+      cs = cs.filter((c) => c.preco <= bands.mid);
     } else if (filtroAtivo === 'reparar') {
       cs = cs.filter((c) => c.estadoVeiculo === 'manutencao');
     }
@@ -65,7 +76,8 @@ export default function useCarros(active: boolean = true) {
         (c) =>
           c.marca?.toLowerCase().includes(q) ||
           c.modelo?.toLowerCase().includes(q) ||
-          c.local?.toLowerCase().includes(q)
+          c.local?.toLowerCase().includes(q) ||
+          c.bairro?.toLowerCase().includes(q)
       );
     }
 
@@ -90,19 +102,24 @@ export default function useCarros(active: boolean = true) {
     );
 
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
-      const centro = getCoordenadas(advRaioCentro);
+      // Scoped to the active market: place names collide across markets.
+      const centro = getCoordenadas(advRaioCentro, country);
       if (centro) {
         cs = cs.filter((c) => {
-          const coords = c.coordenadas ?? getCoordenadas(c.local);
+          const coords = c.coordenadas ?? getCoordenadas(c.local, country);
           if (!coords) return false;
           return haversineKm(centro, coords) <= advRaioKm!;
         });
       }
     } else if (advConcelho) {
       cs = cs.filter((c) => c.local?.toLowerCase() === advConcelho.toLowerCase());
+      // Bairro (BR) narrows within the picked city.
+      if (advBairro) {
+        cs = cs.filter((c) => (c.bairro ?? '').toLowerCase() === advBairro.toLowerCase());
+      }
     } else if (advDistrito) {
       cs = cs.filter(
-        (c) => (c.distrito ?? getDistritoForConcelho(c.local)) === advDistrito
+        (c) => (c.distrito ?? getDistritoForConcelho(c.local, country)) === advDistrito
       );
     }
 
@@ -113,7 +130,19 @@ export default function useCarros(active: boolean = true) {
     }
 
     return cs;
-  }, [carros, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
+  }, [carros, country, filtroAtivo, deferredSearchQuery, advPriceMin, advPriceMax, advDistrito, advConcelho, advBairro, advRaioCentro, advRaioKm, advBodyType, advCondition, advCombustivel, advCambio, advSeatsMin, advTraction, advFeatures, sortOrdem]);
+
+  // Like the marca facet on mobile, bairro options come from the loaded
+  // listings so only neighbourhoods that actually have ads are offered
+  // (BR; scoped to the picked city).
+  const bairroOpts = useMemo(() => {
+    if (!advConcelho) return [];
+    const set = new Set<string>();
+    for (const c of carros) {
+      if (c.bairro && c.local?.toLowerCase() === advConcelho.toLowerCase()) set.add(c.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [carros, advConcelho]);
 
   const publicarCarro = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -152,6 +181,9 @@ export default function useCarros(active: boolean = true) {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -185,6 +217,8 @@ export default function useCarros(active: boolean = true) {
     advPriceMax,
     advDistrito,
     advConcelho,
+    advBairro,
+    bairroOpts,
     advRaioCentro,
     advRaioKm,
     advBodyType,

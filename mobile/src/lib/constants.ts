@@ -1,3 +1,4 @@
+import type { Country } from '@/lib/country';
 import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction, Upholstery, VehicleOrigin } from '@/types';
 
 export const COMBUSTIVEIS: Combustivel[] = [
@@ -40,7 +41,13 @@ export const TIPOS_TRACAO: Traction[] = ['Dianteira', 'Traseira', 'Integral (4x4
 export const ORIGENS_VEICULO: VehicleOrigin[] = ['Nacional', 'Importado'];
 
 // Upholstery / interior material (mirrors web `TIPOS_ESTOFO`).
-export const TIPOS_ESTOFO: Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO_PT: Upholstery[] = ['Tecido', 'Pele', 'Pele sintética', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO_BR: Upholstery[] = ['Tecido', 'Couro', 'Couro sintético', 'Alcântara', 'Outro'];
+export const TIPOS_ESTOFO = TIPOS_ESTOFO_BR;
+
+export function getTiposEstofo(country: Country): Upholstery[] {
+  return country === 'PT' ? TIPOS_ESTOFO_PT : TIPOS_ESTOFO_BR;
+}
 
 // Month labels for the first-registration selector — index + 1 is the stored value.
 export const MESES = [
@@ -49,7 +56,7 @@ export const MESES = [
 ];
 
 // Equipment / extras checklist (multi-select) — mirrors web `EQUIPAMENTOS_CARRO`.
-export const EQUIPAMENTOS_CARRO = [
+export const EQUIPAMENTOS_CARRO_PT = [
   'Ar condicionado',
   'Climatização automática',
   'Direção assistida',
@@ -69,6 +76,33 @@ export const EQUIPAMENTOS_CARRO = [
   'Apple CarPlay / Android Auto',
   'Start/Stop',
 ];
+
+export const EQUIPAMENTOS_CARRO_BR = [
+  'Ar condicionado',
+  'Climatização automática',
+  'Direção hidráulica/elétrica',
+  'Vidros elétricos',
+  'Fecho centralizado',
+  'Sensores de estacionamento',
+  'Câmara de marcha-atrás',
+  'GPS / Navegação',
+  'Bluetooth',
+  'Cruise control',
+  'Bancos de couro',
+  'Bancos aquecidos',
+  'Teto de abrir',
+  'Jantes de liga leve',
+  'Faróis LED/Xénon',
+  'Isofix',
+  'Apple CarPlay / Android Auto',
+  'Start/Stop',
+];
+
+export const EQUIPAMENTOS_CARRO = EQUIPAMENTOS_CARRO_BR;
+
+export function getEquipamentosCarro(country: Country): string[] {
+  return country === 'PT' ? EQUIPAMENTOS_CARRO_PT : EQUIPAMENTOS_CARRO_BR;
+}
 
 /** Hard limits mirrored from the web app. */
 export const MAX_FOTOS_CARRO = 20;
@@ -106,7 +140,18 @@ export function maxSeatsForBodyType(bodyType?: string): number {
 }
 export const CAR_POWER_MAX = 2000; // cv
 export const CAR_DISPLACEMENT_MAX = 10_000; // cc
-export const CAR_PRICE_MAX = 10_000_000; // €
+export const CAR_PRICE_MAX = 10_000_000; // market currency (€ / R$)
+
+/**
+ * Quick price-filter bands for the home screen chips ("Até …"), in the
+ * market's currency. Listings are priced in their own market's currency, so
+ * the EUR bands are meaningless in BRL — Brazil gets bands that map to the
+ * same segments (fixer-uppers / cheap usable cars).
+ */
+export const QUICK_PRICE_BANDS: Record<Country, { low: number; mid: number }> = {
+  PT: { low: 1_000, mid: 5_000 },
+  BR: { low: 10_000, mid: 30_000 },
+};
 
 // Bounds for the Standvirtual-parity optional specs — mirror the web `carSpec.ts`.
 export const CAR_GEARS_MAX = 12;
@@ -128,29 +173,8 @@ export function parseDecimalPt(raw: string): number | null {
 /** Firestore collection that is the source of truth for brands/models. */
 export const MARCAS_MODELOS_COLLECTION = 'marcas_modelos';
 
-/** Portuguese districts (matches the web `DISTRITOS`). */
-export const DISTRITOS = [
-  'Aveiro',
-  'Beja',
-  'Braga',
-  'Bragança',
-  'Castelo Branco',
-  'Coimbra',
-  'Évora',
-  'Faro',
-  'Guarda',
-  'Leiria',
-  'Lisboa',
-  'Portalegre',
-  'Porto',
-  'Santarém',
-  'Setúbal',
-  'Viana do Castelo',
-  'Vila Real',
-  'Viseu',
-  'Açores',
-  'Madeira',
-];
+// Regions (PT distritos / BR estados) are country-aware — use
+// `getDistritos(country)` from `@/lib/geo` instead of a static list.
 
 /** Part categories / conditions (match the web constants for filter parity). */
 export const CATEGORIAS_PECAS = [

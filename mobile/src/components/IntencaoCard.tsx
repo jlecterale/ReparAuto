@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import type { IntencaoCompra } from '@/types';
 import { CATEGORIA_INTENCAO_LABELS } from '@/types';
 import { formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
 import { colors } from '@/theme/colors';
 
 interface IntencaoCardProps {
@@ -40,7 +41,7 @@ function IntencaoCardBase({ intencao, onPress }: IntencaoCardProps) {
 
       <View className="mt-2 flex-row flex-wrap items-center gap-x-3 gap-y-1">
         {!!c?.precoMaximo && (
-          <Meta icon="cash-outline" text={`até ${formatPreco(c.precoMaximo)}`} />
+          <Meta icon="cash-outline" text={`até ${formatPreco(c.precoMaximo, docCountry(intencao))}`} />
         )}
         {!!c?.anoMinimo && <Meta icon="calendar-outline" text={`desde ${c.anoMinimo}`} />}
         {!!c?.localizacao?.distrito && (

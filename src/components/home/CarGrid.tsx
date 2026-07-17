@@ -12,9 +12,12 @@ import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
 import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
-import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, EQUIPAMENTOS_CARRO } from '@/lib/constants';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro, getCurrencySymbol, QUICK_PRICE_BANDS } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
+import { docCountry, filterByCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/providers/CountryProvider';
 import type { Carro } from '@/types/carro';
 import type { IntencaoCompra } from '@/types/intencao';
 import type { OficinaMecanico } from '@/types/oficina';
@@ -22,13 +25,6 @@ import type { SearchFilters } from '@/types/busca';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
 
 type TipoGrid = 'carros' | 'intencoes' | 'oficinas';
-
-const quickChips = [
-  { label: 'Todas as Ofertas', value: 'qualquer' },
-  { label: 'Destaques Low-Cost', value: 'lowcost' },
-  { label: 'Até 500€', value: '500' },
-  { label: 'Até 1.000€', value: '1000' },
-] as const;
 
 function FilterSelect({
   label,
@@ -64,7 +60,18 @@ function FilterSelect({
 // realtime subscription is still loading; the live list takes over after.
 export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[] }) {
   const { carros, auth, chat, loginModal } = useApp();
+  const { country } = useCountry();
   const [tipo, setTipo] = useState<TipoGrid>('carros');
+
+  const quickChips = useMemo(() => {
+    const bands = QUICK_PRICE_BANDS[country];
+    return [
+      { label: 'Todas as Ofertas', value: 'qualquer' },
+      { label: 'Destaques Low-Cost', value: 'lowcost' },
+      { label: `Até ${formatarPreco(bands.low, country)}`, value: '500' },
+      { label: `Até ${formatarPreco(bands.mid, country)}`, value: '1000' },
+    ] as const;
+  }, [country]);
   const [intencoesMatch, setIntencoesMatch] = useState<IntencaoCompra[]>([]);
   const [loadingIntencoes, setLoadingIntencoes] = useState(false);
   const [telefonesVisiveis, setTelefonesVisiveis] = useState<Set<string>>(new Set());
@@ -85,6 +92,9 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -124,6 +134,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
     setAdvPriceMax(null);
     setAdvDistrito('');
     setAdvConcelho('');
+    setAdvBairro('');
     setAdvRaioCentro('');
     setAdvRaioKm(null);
     setAdvBodyType('');
@@ -141,6 +152,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   const handleDistritoChange = (d: string) => {
     setAdvDistrito(d);
     setAdvConcelho('');
+    setAdvBairro('');
   };
 
   const handleRaioDistChange = (d: string) => {
@@ -149,27 +161,32 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
   };
 
   const getFiltroLabel = () => {
+    const bands = QUICK_PRICE_BANDS[country];
     switch (filtroAtivo) {
-      case 'lowcost': return 'Destaques Low-Cost (Até 2.000€)';
-      case '500': return 'Até 500€';
-      case '1000': return 'Até 1.000€';
+      case 'lowcost': return `Destaques Low-Cost (Até ${formatarPreco(bands.lowcost, country)})`;
+      case '500': return `Até ${formatarPreco(bands.low, country)}`;
+      case '1000': return `Até ${formatarPreco(bands.mid, country)}`;
       case 'qualquer': return 'Qualquer Valor';
       default: return 'Todos os anúncios';
     }
   };
 
   useEffect(() => {
+    // Market isolation (plan 20): these direct fetches bypass the context
+    // hooks, so they filter by the active country themselves.
     if (tipo === 'intencoes') {
       setLoadingIntencoes(true);
       if (searchQuery) {
-        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined };
+        // country rides along so the match logic compares intents against the
+        // active market, not the PT default of a country-less object.
+        const carroExemplo = { marca: searchQuery, preco: advPriceMax || undefined, local: advDistrito || undefined, country };
         buscarIntencoesMatch(carroExemplo, auth.user?.uid || '')
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       } else {
         getIntencoesAtivas()
-          .then(setIntencoesMatch)
+          .then((list) => setIntencoesMatch(filterByCountry(list, country)))
           .catch(() => setIntencoesMatch([]))
           .finally(() => setLoadingIntencoes(false));
       }
@@ -177,7 +194,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
       setLoadingOficinas(true);
       const unsub = subscribeOficinas(
         (data) => {
-          setOficinas(data);
+          setOficinas(filterByCountry(data, country));
           setLoadingOficinas(false);
         },
         (err) => {
@@ -187,7 +204,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
       );
       return unsub;
     }
-  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid]);
+  }, [tipo, searchQuery, advPriceMax, advDistrito, auth.user?.uid, country]);
 
   const oficinasFiltradas = useMemo(() => {
     const busca = searchQuery.toLowerCase();
@@ -197,10 +214,11 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
         (o.descricao && o.descricao.toLowerCase().includes(busca));
 
       const correspondeDistrito = !advDistrito || o.distrito === advDistrito;
+      const correspondeBairro = !advBairro || (o.bairro ?? '').toLowerCase() === advBairro.toLowerCase();
 
-      return correspondeBusca && correspondeDistrito;
+      return correspondeBusca && correspondeDistrito && correspondeBairro;
     });
-  }, [oficinas, searchQuery, advDistrito]);
+  }, [oficinas, searchQuery, advDistrito, advBairro]);
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-6 lg:items-start">
@@ -305,7 +323,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
             {tipo === 'carros' && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. (€)</label>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Mín. ({getCurrencySymbol(country)})</label>
                   <input
                     type="number" placeholder="Mínimo"
                     value={advPriceMin ?? ''}
@@ -314,7 +332,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. (€)</label>
+                  <label className="block text-xs font-bold text-fg-subtle mb-1">Preço Máx. ({getCurrencySymbol(country)})</label>
                   <input
                     type="number" placeholder="Máximo"
                     value={advPriceMax ?? ''}
@@ -343,7 +361,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                 <div>
                   <span className="block text-xs font-bold text-fg-subtle mb-2">Equipamento</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {EQUIPAMENTOS_CARRO.map((feature) => (
+                    {getEquipamentosCarro(country).map((feature) => (
                       <ToggleChip
                         key={feature}
                         tamanho="sm"
@@ -366,7 +384,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
               </div>
               <label className="flex items-center gap-1.5 text-xs text-fg-muted cursor-pointer select-none mb-2">
                 <input type="checkbox" checked={raioMode}
-                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); } }}
+                  onChange={(e) => { setRaioMode(e.target.checked); if (!e.target.checked) { setAdvRaioCentro(''); setAdvRaioKm(null); setRaioDist(''); } else { setAdvDistrito(''); setAdvConcelho(''); setAdvBairro(''); } }}
                   className="rounded text-accent focus:ring-accent" />
                 Pesquisar por raio
               </label>
@@ -374,27 +392,35 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                 <div className="space-y-2">
                   <select value={advDistrito} onChange={(e) => handleDistritoChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Todos os distritos</option>
+                    <option value="">{term('districtAllOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
-                  <select value={advConcelho} onChange={(e) => setAdvConcelho(e.target.value)}
+                  <select value={advConcelho} onChange={(e) => { setAdvConcelho(e.target.value); setAdvBairro(''); }}
                     disabled={!advDistrito}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!advDistrito ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{advDistrito ? 'Todos os concelhos' : 'Selecione um distrito'}</option>
+                    <option value="">{advDistrito ? term('municipalityAllOption', country) : term('districtSelectOption', country)}</option>
                     {getConcelhos(advDistrito).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
+                  {country === 'BR' && advConcelho && bairroOpts.length > 0 && (
+                    // Only neighbourhoods with active ads are offered (marca-facet pattern).
+                    <select value={advBairro} onChange={(e) => setAdvBairro(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
+                      <option value="">Todos os bairros</option>
+                      {bairroOpts.map((b) => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-2">
                   <select value={raioDist} onChange={(e) => handleRaioDistChange(e.target.value)}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs text-fg focus:outline-none focus:border-accent">
-                    <option value="">Selecionar distrito</option>
+                    <option value="">{term('districtSelectOption', country)}</option>
                     {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                   <select value={advRaioCentro} onChange={(e) => setAdvRaioCentro(e.target.value)}
                     disabled={!raioDist}
                     className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-accent ${!raioDist ? 'bg-slate-100 text-fg-subtle cursor-not-allowed' : 'text-fg'}`}>
-                    <option value="">{raioDist ? 'Selecionar centro' : 'Selecione um distrito'}</option>
+                    <option value="">{raioDist ? 'Selecionar centro' : term('districtSelectOption', country)}</option>
                     {getConcelhos(raioDist).map((c) => <option key={c.nome} value={c.nome}>{c.nome}</option>)}
                   </select>
                   <div className="flex items-center gap-2">
@@ -530,7 +556,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                           </Link>
                           <div className="flex items-center gap-1 text-[11px] text-fg-muted mt-0.5">
                             <MapPin size={12} className="text-slate-400" />
-                            <span className="truncate">{oficina.localidade || ''}, {oficina.distrito || ''}</span>
+                            <span className="truncate">{[oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                           </div>
                         </div>
                       </div>
@@ -574,7 +600,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                 {intencoesMatch.map((intencao) => {
-                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone);
+                  const whatsapp = obterWhatsApp(intencao.vendedorWhatsApp, intencao.vendedorTelefone, docCountry(intencao));
                   const email = intencao.vendedorEmail || '';
                   const temWhatsApp = !!whatsapp;
                   const temTelefone = !!intencao.vendedorTelefone && intencao.mostrarTelefone;
@@ -609,7 +635,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                         ) : (
                           <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>
                         )}
-                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo)}</p>
+                        <p><span className="text-fg-subtle">Orçamento:</span> até {formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))}</p>
                         <p><span className="text-fg-subtle">Local:</span> {intencao.criterios.localizacao.distrito} ({intencao.criterios.localizacao.raio}km)</p>
                       </div>
                     </div>

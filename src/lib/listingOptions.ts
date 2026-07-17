@@ -27,9 +27,11 @@ export const TIPOS_CARROCERIA: readonly BodyType[] = [
   'Pick-up',
 ];
 
+import type { Country } from '@/lib/country';
+
 // Equipment / extras checklist (multi-select). Covers the most searched options
 // across PT + BR marketplaces.
-export const EQUIPAMENTOS_CARRO = [
+export const EQUIPAMENTOS_CARRO_PT = [
   'Ar condicionado',
   'Climatização automática',
   'Direção assistida',
@@ -49,3 +51,30 @@ export const EQUIPAMENTOS_CARRO = [
   'Apple CarPlay / Android Auto',
   'Start/Stop',
 ] as const;
+
+export const EQUIPAMENTOS_CARRO_BR = [
+  'Ar condicionado',
+  'Climatização automática',
+  'Direção hidráulica/elétrica',
+  'Vidros elétricos',
+  'Fecho centralizado',
+  'Sensores de estacionamento',
+  'Câmara de marcha-atrás',
+  'GPS / Navegação',
+  'Bluetooth',
+  'Cruise control',
+  'Bancos de couro',
+  'Bancos aquecidos',
+  'Teto de abrir',
+  'Jantes de liga leve',
+  'Faróis LED/Xénon',
+  'Isofix',
+  'Apple CarPlay / Android Auto',
+  'Start/Stop',
+] as const;
+
+export const EQUIPAMENTOS_CARRO = EQUIPAMENTOS_CARRO_BR;
+
+export function getEquipamentosCarro(country: Country): readonly string[] {
+  return country === 'PT' ? EQUIPAMENTOS_CARRO_PT : EQUIPAMENTOS_CARRO_BR;
+}

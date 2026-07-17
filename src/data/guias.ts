@@ -369,22 +369,30 @@ export const GUIDES: Guide[] = [
     slug: 'importar-anuncios-standvirtual',
     title: 'Como importar os seus anúncios do Standvirtual',
     description:
-      'Traga os seus anúncios do Standvirtual para o RecarGarage em minutos: cole o link de um anúncio ou importe vários de uma vez, com fotos e ficha técnica.',
+      'Traga os seus anúncios do Standvirtual para o RecarGarage: um link, vários de uma vez ou o inventário inteiro do seu stand — com fotos e ficha técnica.',
     category: 'vender',
-    readingMinutes: 4,
-    updatedAt: '2026-07-05',
+    readingMinutes: 5,
+    updatedAt: '2026-07-06',
     intro: [
-      'Se já anuncia no Standvirtual, não precisa de reescrever tudo à mão. O RecarGarage lê o seu anúncio a partir do link público e recria a ficha — marca, modelo, ano, quilómetros, combustível, caixa, preço, descrição e fotos.',
-      'A ferramenta serve tanto particulares como profissionais: basta ter sessão iniciada e o email confirmado. Só deve importar anúncios seus — é pedida uma confirmação de que o anúncio lhe pertence e de que tem direitos sobre as fotografias.',
+      'Se já anuncia no Standvirtual, não precisa de reescrever tudo à mão. O RecarGarage lê o seu anúncio a partir do link público e recria a ficha completa — da marca e quilómetros até aos consumos, equipamento, garantia e fotos.',
+      'Há três formas de importar: um anúncio de cada vez (pré-preenche o formulário), vários links num lote, ou — para stands com conta profissional verificada — o inventário inteiro a partir do endereço da página do stand.',
+      'A ferramenta serve tanto particulares como profissionais: basta ter sessão iniciada e o email confirmado. Só deve importar anúncios seus — é pedida uma confirmação de que os anúncios lhe pertencem e de que tem direitos sobre as fotografias.',
     ],
     sections: [
+      {
+        heading: 'Onde encontrar a ferramenta',
+        bullets: [
+          'Em Anunciar, no cartão "Já anuncia no Standvirtual?".',
+          'No Perfil, no botão "Importar do Standvirtual" junto aos seus carros anunciados.',
+          'Ou diretamente na página /importar depois de iniciar sessão.',
+        ],
+      },
       {
         heading: 'Importar um anúncio (pré-preencher o formulário)',
         paragraphs: [
           'Ideal para quem tem um ou dois carros: o anúncio é lido e o formulário de publicação fica pré-preenchido para rever antes de publicar.',
         ],
         bullets: [
-          'Abra Anunciar (ou Perfil) e escolha "Importar do Standvirtual".',
           'No modo "Importar 1", cole o link do anúncio (termina em "-ID….html") e confirme que o anúncio é seu.',
           'Toque em "Pré-preencher formulário": vai direto ao formulário de anúncio com os dados e fotos carregados.',
           'Reveja os campos assinalados como "a rever" (valores que não foi possível traduzir automaticamente), complete o que faltar e publique.',
@@ -397,16 +405,27 @@ export const GUIDES: Guide[] = [
         ],
         bullets: [
           'Adicione os links um a um, cole vários de uma vez (um por linha) ou arraste um ficheiro .txt/.csv — há modelos para descarregar.',
-          'Contas profissionais com documentação validada podem colar o endereço da página do stand (ex.: omeustand.standvirtual.com) e a lista de anúncios publicados é preenchida automaticamente.',
           'Cada link é validado na hora: inválidos aparecem a vermelho com o motivo, repetidos e já importados são assinalados.',
           'A importação é propositadamente um a um, com uma pequena pausa entre anúncios, para não sobrecarregar o Standvirtual. Pode cancelar os restantes a qualquer momento.',
           'No fim vê o resumo (criados, já existentes, falhados) e cada anúncio criado tem um atalho "Rever".',
         ],
       },
       {
+        heading: 'Importar o inventário inteiro do stand (profissionais verificados)',
+        paragraphs: [
+          'Se tem um stand, não precisa de copiar link a link: cole o endereço da sua página no Standvirtual (ex.: omeustand.standvirtual.com) e a lista de anúncios publicados é preenchida automaticamente.',
+        ],
+        bullets: [
+          'Requisito: conta profissional com documentação validada. Pode pedir a verificação em Perfil → Verificação; assim que for aprovada, a caixa "Importar o stand inteiro" fica ativa no modo "Importar vários".',
+          'A lista respeita o limite de 25 por lote — stands maiores importam em várias rondas; os já importados ficam assinalados e não contam.',
+          'Repetir a importação mais tarde funciona como sincronização: só os anúncios novos do stand são criados, sem duplicar os existentes.',
+        ],
+      },
+      {
         heading: 'O que é importado — e o que não é',
         bullets: [
-          'Importado: marca, modelo, versão na descrição, ano, quilómetros, combustível, caixa, carroçaria, cor, portas, lugares, potência, cilindrada, localização, preço, descrição, equipamento e fotos (re-alojadas no RecarGarage).',
+          'Ficha completa: marca, modelo, versão, ano e mês da 1.ª matrícula, quilómetros, combustível, caixa, carroçaria, cor, portas, lugares, potência, cilindrada, tração, localização, preço e descrição.',
+          'Detalhes adicionais quando o anúncio os tem: origem (nacional/importado), consumos, emissões de CO₂, autonomia, estofos, número de airbags, garantia (meses), aceita financiamento, aceita retoma e equipamento (Bluetooth, GPS, sensores…).',
           'Não importado: o telefone do anúncio de origem — os contactos vêm sempre do seu perfil RecarGarage; atualize-o antes de importar.',
           'Valores que o sistema não reconhece não bloqueiam a importação: o campo fica vazio e é assinalado para rever.',
           'Anúncios importados seguem as regras normais: ficam pendentes até aprovação e mostram o selo "Importado".',
@@ -417,6 +436,7 @@ export const GUIDES: Guide[] = [
         bullets: [
           'Link inválido: confirme que copiou o endereço completo do anúncio (tem de terminar em "-ID….html").',
           '"Já importado": cada anúncio só é importado uma vez — repetir a importação não cria duplicados.',
+          'A caixa "Importar o stand inteiro" não aparece ou está bloqueada: é exclusiva de contas profissionais com documentação validada — peça a verificação no Perfil.',
           'Leitura bloqueada: o Standvirtual pode travar temporariamente leituras automáticas; o que já foi criado fica guardado e pode tentar o resto mais tarde.',
           'Anúncio não encontrado: o anúncio pode ter sido removido ou o link ter expirado.',
         ],

@@ -8,16 +8,18 @@ import {
   TIPOS_CARROCERIA,
   CONDICOES_VEICULO,
   TIPOS_TRACAO,
-  EQUIPAMENTOS_CARRO,
-  ORIGENS_VEICULO,
-  TIPOS_ESTOFO,
   MESES,
+  ORIGENS_VEICULO,
+  getTiposEstofo,
+  getEquipamentosCarro,
 } from '@/lib/constants';
 import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import ToggleChip from '@/components/ui/ToggleChip';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
 import Button from '@/components/ui/Button';
 
@@ -45,6 +47,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   // Maps a field id to its error message (empty/absent = valid).
   const [erros, setErros] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  const { country } = useCountry();
 
   const atualizar = (campo: string, valor: string) => {
     setDados((prev) => ({ ...prev, [campo]: valor }));
@@ -164,10 +167,16 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             onChange={(d, c) => {
               atualizar('localizacaoDistrito', d);
               atualizar('localizacao', c);
+              atualizar('bairro', '');
             }}
             obrigatorio
           />
         </div>
+        {country === 'BR' && (
+          <div className="col-span-2">
+            {campo('Bairro', 'bairro', { placeholder: 'Ex: Bela Vista', required: false, maxLength: 60 })}
+          </div>
+        )}
       </div>
 
       {/* Advanced specs — collapsed by default to keep the core form short */}
@@ -190,7 +199,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Nº de mudanças', 'gears', { type: 'number', placeholder: 'Ex: 6', required: false, maxLength: 2 })}
             {/* Month of first registration — stored as 1–12, labelled by month name. */}
             <div>
-              <label className="block text-xs font-semibold text-fg-subtle mb-1">Mês da 1ª matrícula</label>
+              <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('firstRegistrationLabel', country)}</label>
               <select
                 value={dados.firstRegistrationMonth || ''}
                 onChange={(e) => atualizar('firstRegistrationMonth', e.target.value)}
@@ -207,7 +216,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Garantia (meses)', 'warrantyMonths', { type: 'number', placeholder: 'Ex: 12', required: false, maxLength: 3 })}
             {campo('Emissões CO₂ (g/km)', 'co2Emissions', { type: 'number', placeholder: 'Ex: 120', required: false, maxLength: 3 })}
             {campo('Autonomia (km)', 'maxFuelRange', { type: 'number', placeholder: 'Ex: 900', required: false, maxLength: 4 })}
-            {campo('Estofos', 'upholstery', { options: TIPOS_ESTOFO, required: false })}
+            {campo('Estofos', 'upholstery', { options: getTiposEstofo(country), required: false })}
             {campo('Nº de airbags', 'numberOfAirbags', { type: 'number', placeholder: 'Ex: 8', required: false, maxLength: 2 })}
           </div>
 
@@ -239,7 +248,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
           <div>
             <label className="block text-xs font-semibold text-fg-subtle mb-2">Equipamento / Extras</label>
             <div className="flex flex-wrap gap-2">
-              {EQUIPAMENTOS_CARRO.map((feature) => (
+              {getEquipamentosCarro(country).map((feature) => (
                 <ToggleChip
                   key={feature}
                   active={dados.features.includes(feature)}

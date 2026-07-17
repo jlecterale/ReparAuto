@@ -194,6 +194,19 @@ describe('sanitizeAlertSubscriptionInput — filtro_salvo', () => {
     expect(result?.nome).toBe('BMW Série 3 · Braga · até 25 000 €');
   });
 
+  it('derives a readable name in BRL when country is BR', () => {
+    const result = sanitizeAlertSubscriptionInput(
+      {
+        tipo: 'filtro_salvo',
+        nome: '',
+        ativo: true,
+        filters: { marca: 'BMW', modelo: 'Série 3', concelho: 'São Paulo', precoMax: 25000 },
+      },
+      'BR',
+    );
+    expect(result?.nome).toBe('BMW Série 3 · São Paulo · até R$ 25.000');
+  });
+
   it('falls back to a generic name when the filters give no useful label', () => {
     const result = sanitizeAlertSubscriptionInput({
       tipo: 'filtro_salvo',

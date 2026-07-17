@@ -178,7 +178,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                   <h1 className="text-2xl font-black text-fg-strong tracking-tight">{oficina.nome}</h1>
                   <div className="flex items-center gap-1.5 mt-1.5 text-sm text-fg-subtle">
                     <MapPin size={16} className="text-neutral-400" />
-                    <span>{oficina.morada}, {oficina.localidade}, {oficina.distrito}</span>
+                    <span>{[oficina.morada, oficina.bairro, oficina.localidade, oficina.distrito].filter(Boolean).join(', ')}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <div className="flex items-center text-amber-500">

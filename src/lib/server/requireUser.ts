@@ -1,10 +1,12 @@
 import 'server-only';
-import { getAdminAuth } from '@/lib/firebase.admin';
+import { getAdminAuth, getAdminDb } from '@/lib/firebase.admin';
 
 export interface AuthenticatedUser {
   uid: string;
   email: string;
   emailVerified: boolean;
+  /** Custom `admin` claim on the ID token (one of the rules' isAdmin arms). */
+  hasAdminClaim: boolean;
 }
 
 export type RequireUserResult =
@@ -32,9 +34,22 @@ export async function requireUser(request: Request): Promise<RequireUserResult> 
         uid: decoded.uid,
         email: decoded.email,
         emailVerified: decoded.email_verified === true,
+        hasAdminClaim: decoded.admin === true,
       },
     };
   } catch {
     return { user: null, status: 401, error: 'unauthorized' };
   }
+}
+
+// Mirrors the hardcoded fallback uid in firestore.rules isAdmin().
+const LEGACY_ADMIN_UID = 'N4oCVnsPILZivmlgLo4jC7Bq8GU2';
+
+/** Server-side mirror of firestore.rules isAdmin(): claim, legacy uid or role. */
+export async function isAdminUser(user: AuthenticatedUser): Promise<boolean> {
+  if (user.hasAdminClaim || user.uid === LEGACY_ADMIN_UID) return true;
+  const db = getAdminDb();
+  if (!db) return false;
+  const snap = await db.collection('users').doc(user.uid).get();
+  return snap.exists && (snap.data() as { role?: string }).role === 'admin';
 }

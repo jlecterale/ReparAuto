@@ -17,6 +17,8 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import usePremiumConfig from '@/hooks/usePremiumConfig';
+import { useCountry } from '@/providers/CountryProvider';
+import { getCurrencySymbol } from '@/lib/constants';
 
 interface PlanosPremiumModalProps {
   show: boolean;
@@ -182,6 +184,7 @@ function calcDesconto(precoMensal: number, precoAnual: number): number {
 }
 
 export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModalProps) {
+  const { country } = useCountry();
   const premiumConfig = usePremiumConfig();
   const [tab, setTab] = useState<Tab>('anuncios');
   const [billing, setBilling] = useState<BillingCycle>('anual');
@@ -378,7 +381,7 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
                   {/* Preço original riscado */}
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-lg text-fg-muted line-through font-semibold">
-                      €{(plano.precoMensal! * 12)}
+                      {getCurrencySymbol(country)}{(plano.precoMensal! * 12)}
                     </span>
                     <span className="text-xs font-bold text-white bg-green-500 px-2 py-0.5 rounded-full">
                       -{desconto}%
@@ -386,17 +389,19 @@ export default function PlanosPremiumModal({ show, onClose }: PlanosPremiumModal
                   </div>
                   {/* Preço anual */}
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold text-green-600">€{plano.precoAnual}</span>
+                    <span className="text-3xl font-extrabold text-green-600">{getCurrencySymbol(country)}{plano.precoAnual}</span>
                     <span className="text-sm text-fg-muted font-medium">/ano</span>
                   </div>
                   {/* Equivalente mensal */}
                   <p className="text-xs text-green-600 font-semibold mt-1">
-                    ≈ €{(plano.precoAnual! / 12).toFixed(2)}/mês · Poupa €{(plano.precoMensal! * 12 - plano.precoAnual!)}
+                    ≈ {getCurrencySymbol(country)}{(plano.precoAnual! / 12).toFixed(2)}/mês · Poupa {getCurrencySymbol(country)}{(plano.precoMensal! * 12 - plano.precoAnual!)}
                   </p>
                 </div>
               ) : (
                 <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-3xl font-extrabold text-fg-heading">{plano.preco}</span>
+                  <span className="text-3xl font-extrabold text-fg-heading">
+                    {plano.preco.replace('€', country === 'BR' ? 'R$ ' : '€')}
+                  </span>
                   <span className="text-sm text-fg-muted font-medium">{plano.periodo}</span>
                 </div>
               )}

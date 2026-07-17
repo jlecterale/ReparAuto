@@ -8,8 +8,8 @@
 import marcasModelos from '@/data/marcas-modelos.json';
 // listingOptions/geo (not constants.ts) so the server routes can import this
 // module without dragging icon components into the route bundle.
-import { EQUIPAMENTOS_CARRO, TIPOS_CARROCERIA } from '@/lib/listingOptions';
-import { DISTRITOS, getAllConcelhos, getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
+import { EQUIPAMENTOS_CARRO_PT, EQUIPAMENTOS_CARRO_BR, TIPOS_CARROCERIA } from '@/lib/listingOptions';
+import { getAllConcelhos, getCoordenadas, getDistritoForConcelho, getDistritos } from '@/lib/geo';
 import type { NormalizedAdvert } from '@/lib/importers/standvirtual.nextdata';
 import type { CarroFormData } from '@/types/carro';
 
@@ -113,7 +113,7 @@ const UPHOLSTERY_BY_KEY: Record<string, string> = {
 };
 
 /** Equipment option keys → entries of the EQUIPAMENTOS_CARRO checklist. */
-const FEATURE_BY_EQUIPMENT_KEY: Record<string, (typeof EQUIPAMENTOS_CARRO)[number]> = {
+const FEATURE_BY_EQUIPMENT_KEY: Record<string, (typeof EQUIPAMENTOS_CARRO_PT)[number] | (typeof EQUIPAMENTOS_CARRO_BR)[number]> = {
   air_conditioning: 'Ar condicionado',
   air_conditioning_type: 'Ar condicionado',
   manual_air_conditioning: 'Ar condicionado',
@@ -323,11 +323,12 @@ export function mapAdvertToCarroFormData(advert: NormalizedAdvert): MappedAdvert
   const concelho = matchConcelho(advert.location.concelhoSlug, advert.location.city);
   if (concelho) {
     dados.localizacao = concelho;
-    dados.localizacaoDistrito = getDistritoForConcelho(concelho) ?? '';
+    dados.localizacaoDistrito = getDistritoForConcelho(concelho, 'PT') ?? '';
   } else {
     flag('localizacao');
   }
-  if (!dados.localizacaoDistrito && advert.location.region && DISTRITOS.includes(advert.location.region)) {
+  // Standvirtual only lists Portuguese ads, so every geo lookup here is scoped to PT.
+  if (!dados.localizacaoDistrito && advert.location.region && getDistritos('PT').includes(advert.location.region)) {
     dados.localizacaoDistrito = advert.location.region;
   }
 
@@ -483,7 +484,7 @@ export function buildCarroPayload(dados: Partial<CarroFormData>): Record<string,
     acceptsExchange: dados.acceptsExchange || undefined,
     local: dados.localizacao,
     distrito: dados.localizacaoDistrito || undefined,
-    coordenadas: dados.localizacao ? getCoordenadas(dados.localizacao) : undefined,
+    coordenadas: dados.localizacao ? getCoordenadas(dados.localizacao, 'PT') : undefined,
     descricao: dados.descricao ?? '',
     estadoVeiculo: 'pronto',
     tiposManutencao: [],

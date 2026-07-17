@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { formatarPreco } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 import type { Peca } from '@/types/peca';
 
 interface Props {
@@ -26,7 +27,7 @@ function buildComparison(peca: Peca, similares: Peca[]): Comparison | null {
         label: 'Excelente vs novo',
         color: 'green',
         icon: 'fa-solid fa-arrow-trend-down',
-        detail: `${Math.round((1 - diff) * 100)}% abaixo do preço de catálogo (${formatarPreco(peca.precoNovoReferencia)})`,
+        detail: `${Math.round((1 - diff) * 100)}% abaixo do preço de catálogo (${formatarPreco(peca.precoNovoReferencia, docCountry(peca))})`,
       };
     }
     if (diff <= 0.85) {
@@ -34,14 +35,14 @@ function buildComparison(peca: Peca, similares: Peca[]): Comparison | null {
         label: 'Bom vs novo',
         color: 'amber',
         icon: 'fa-solid fa-tag',
-        detail: `${Math.round((1 - diff) * 100)}% abaixo do preço de catálogo (${formatarPreco(peca.precoNovoReferencia)})`,
+        detail: `${Math.round((1 - diff) * 100)}% abaixo do preço de catálogo (${formatarPreco(peca.precoNovoReferencia, docCountry(peca))})`,
       };
     }
     return {
       label: 'Perto do preço novo',
       color: 'red',
       icon: 'fa-solid fa-circle-exclamation',
-      detail: `Catálogo: ${formatarPreco(peca.precoNovoReferencia)}`,
+      detail: `Catálogo: ${formatarPreco(peca.precoNovoReferencia, docCountry(peca))}`,
     };
   }
 
@@ -65,7 +66,7 @@ function buildComparison(peca: Peca, similares: Peca[]): Comparison | null {
       label: 'Abaixo da média',
       color: 'green',
       icon: 'fa-solid fa-arrow-trend-down',
-      detail: `Média mercado: ${formatarPreco(media)} (${pool.length} anúncios)`,
+      detail: `Média mercado: ${formatarPreco(media, docCountry(peca))} (${pool.length} anúncios)`,
     };
   }
   if (ratio > 1.2) {
@@ -73,14 +74,14 @@ function buildComparison(peca: Peca, similares: Peca[]): Comparison | null {
       label: 'Acima da média',
       color: 'red',
       icon: 'fa-solid fa-arrow-trend-up',
-      detail: `Média mercado: ${formatarPreco(media)} (${pool.length} anúncios)`,
+      detail: `Média mercado: ${formatarPreco(media, docCountry(peca))} (${pool.length} anúncios)`,
     };
   }
   return {
     label: 'Na média',
     color: 'slate',
     icon: 'fa-solid fa-scale-balanced',
-    detail: `Média mercado: ${formatarPreco(media)} (${pool.length} anúncios)`,
+    detail: `Média mercado: ${formatarPreco(media, docCountry(peca))} (${pool.length} anúncios)`,
   };
 }
 

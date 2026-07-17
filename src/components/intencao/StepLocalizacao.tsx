@@ -2,6 +2,8 @@
 
 import dynamic from 'next/dynamic';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
+import { useCountry } from '@/providers/CountryProvider';
+import { term } from '@/lib/terms';
 
 const MapaRaio = dynamic(() => import('./MapaRaio'), { ssr: false });
 
@@ -18,27 +20,33 @@ interface StepLocalizacaoProps {
 
 export default function StepLocalizacao({ criterios, onChange }: StepLocalizacaoProps) {
   const { distritos } = useDistritosConcelhos();
-  const isTodoPortugal = criterios.localizacao.distrito === 'todo_portugal';
+  const { country } = useCountry();
+  const regionLabel = term('districtLabel', country);
+  // The stored sentinel value stays `todo_portugal` in both markets (it means
+  // "whole country" in the matching logic); only the visible label localizes.
+  const isWholeCountry = criterios.localizacao.distrito === 'todo_portugal';
+  const countryFlag = country === 'BR' ? '🇧🇷' : '🇵🇹';
+  const countryName = country === 'BR' ? 'Todo o Brasil' : 'Todo Portugal';
 
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-xs font-bold text-fg-subtle mb-1">Distrito *</label>
+        <label className="block text-xs font-bold text-fg-subtle mb-1">{regionLabel} *</label>
         <select
           value={criterios.localizacao.distrito}
           onChange={(e) => onChange('criterios.localizacao.distrito', e.target.value)}
           className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-accent"
         >
-          <option value="">Selecione o distrito</option>
-          <option value="todo_portugal">🇵🇹 Todo Portugal</option>
+          <option value="">Selecione o {regionLabel.toLowerCase()}</option>
+          <option value="todo_portugal">{countryFlag} {countryName}</option>
           {distritos.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
       </div>
 
-      {isTodoPortugal ? (
+      {isWholeCountry ? (
         <div className="bg-slate-50 rounded-xl p-4 text-center text-sm text-fg-subtle">
-          <p className="font-semibold text-fg-heading mb-1">🇵🇹 Pesquisa em todo o território nacional</p>
-          <p>Serão mostrados resultados de qualquer distrito.</p>
+          <p className="font-semibold text-fg-heading mb-1">{countryFlag} Pesquisa em todo o território nacional</p>
+          <p>Serão mostrados resultados de qualquer {regionLabel.toLowerCase()}.</p>
         </div>
       ) : criterios.localizacao.distrito ? (
         <>
@@ -64,7 +72,7 @@ export default function StepLocalizacao({ criterios, onChange }: StepLocalizacao
           </div>
         </>
       ) : (
-        <p className="text-xs text-fg-subtle italic">Selecione um distrito para ver o mapa.</p>
+        <p className="text-xs text-fg-subtle italic">Selecione um {regionLabel.toLowerCase()} para ver o mapa.</p>
       )}
     </div>
   );

@@ -13,6 +13,8 @@ import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompr
 import type { OficinaFormDraft } from '@/screens/RegistarOficina';
 import type { IntencaoCompra } from '@/types/intencao';
 import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { storage, auth as firebaseAuth } from '@/lib/firebase';
@@ -70,6 +72,7 @@ function DraftCard({ titulo, savedAt, onContinue, onDiscard }: {
 
 export default function ProfileLoggedIn() {
   const { auth } = useApp();
+  const { country } = useCountry();
   const { user, logout, isAdmin, updateProfile, refreshProfile } = auth;
   const router = useRouter();
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -426,14 +429,17 @@ export default function ProfileLoggedIn() {
           <h4 className="font-extrabold text-fg-heading flex items-center gap-2">
             <ListChecks className="text-accent" /> Os Seus Carros Anunciados
           </h4>
-          <Button
-            tipo="secundario"
-            tamanho="sm"
-            icone={<DownloadSimple weight="bold" />}
-            onClick={() => router.push('/importar')}
-          >
-            Importar do Standvirtual
-          </Button>
+          {/* Standvirtual import is Portugal-only (no Brazilian equivalent yet). */}
+          {country === 'PT' && (
+            <Button
+              tipo="secundario"
+              tamanho="sm"
+              icone={<DownloadSimple weight="bold" />}
+              onClick={() => router.push('/importar')}
+            >
+              Importar do Standvirtual
+            </Button>
+          )}
         </div>
 
         {carDraft && (
@@ -480,7 +486,7 @@ export default function ProfileLoggedIn() {
                     <p className="text-xs text-fg-subtle">{carro.km?.toLocaleString('pt-PT')} km</p>
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco)}</span>
+                    <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco, docCountry(carro))}</span>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditCarro(carro); }}
                       className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition"
@@ -546,7 +552,7 @@ export default function ProfileLoggedIn() {
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     {peca.preco != null && (
-                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco)}</span>
+                      <span className="font-extrabold text-accent text-sm">{formatarPreco(peca.preco, docCountry(peca))}</span>
                     )}
                     <button
                       onClick={() => setEditPeca(peca)}
@@ -603,7 +609,7 @@ export default function ProfileLoggedIn() {
                     categoria: intentDraft.data.form.categoria || undefined,
                     criterios: intentDraft.data.form.criterios,
                     descricao: intentDraft.data.form.descricao,
-                  })
+                  }, country)
                 : 'Intenção de compra'
             }
             savedAt={intentDraft.savedAt}
@@ -675,6 +681,7 @@ export default function ProfileLoggedIn() {
             email={user.email}
             nome={user.nome}
             nif={user.nif}
+            tipoConta={user.tipoConta}
             verificado={user.verificado}
             verification={verification}
             loading={verificationLoading}

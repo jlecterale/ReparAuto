@@ -45,6 +45,8 @@ export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
   internal: 'Erro inesperado no servidor. Veja o log do servidor para o detalhe.',
   professional_verification_required:
     'Disponível apenas para contas profissionais com documentação validada (Perfil → Verificação).',
+  forbidden: 'Sem permissão para importar para outra conta.',
+  target_not_found: 'Utilizador de destino não encontrado.',
 };
 
 export function importErrorMessage(code: string): string {
@@ -103,12 +105,16 @@ export async function discoverStandvirtualInventory(
   }
 }
 
-export async function importStandvirtualAdvert(url: string): Promise<ImportAdvertResult> {
+export async function importStandvirtualAdvert(
+  url: string,
+  opts: { targetUid?: string } = {},
+): Promise<ImportAdvertResult> {
   let response: Response;
   try {
     response = await authorizedPost('/api/import/standvirtual/import', {
       url,
       attestOwnership: true,
+      ...(opts.targetUid ? { targetUid: opts.targetUid } : {}),
     });
   } catch (err) {
     // Session lost mid-batch: stop the whole run instead of failing every URL.
@@ -138,8 +144,15 @@ export async function importStandvirtualAdvert(url: string): Promise<ImportAdver
   }
   if (!response.ok || data.error) {
     const code = data.error ?? 'fetch_failed';
-    // Auth/attestation problems affect the whole batch, not just this URL.
-    const fatal = ['unauthorized', 'email_not_verified', 'attestation_required', 'server_unavailable'].includes(code);
+    // Auth/attestation/target problems affect the whole batch, not just this URL.
+    const fatal = [
+      'unauthorized',
+      'email_not_verified',
+      'attestation_required',
+      'server_unavailable',
+      'forbidden',
+      'target_not_found',
+    ].includes(code);
     return { status: 'failed', reason: code, message: importErrorMessage(code), fatal };
   }
 

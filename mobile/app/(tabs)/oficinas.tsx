@@ -32,18 +32,28 @@ export default function OficinasScreen() {
   const [vista, setVista] = useState<Vista>('lista');
 
   const [distrito, setDistrito] = useState('');
+  const [bairro, setBairro] = useState('');
   const [especialidade, setEspecialidade] = useState('');
   const [ordenar, setOrdenar] = useState<Ordenar>('relevancia');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
 
-  const filtersCount = [distrito, especialidade].filter(Boolean).length;
+  const filtersCount = [distrito, bairro, especialidade].filter(Boolean).length;
+
+  // Only neighbourhoods that actually have workshops are offered (BR; mirrors
+  // how car brand options derive from the loaded ads).
+  const bairroOpts = useMemo(() => {
+    const set = new Set<string>();
+    for (const o of oficinas) if (o.bairro) set.add(o.bairro);
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [oficinas]);
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     let os = oficinas.filter((o) => {
-      if (termo && !`${o.nome} ${o.localidade} ${o.distrito}`.toLowerCase().includes(termo)) return false;
+      if (termo && !`${o.nome} ${o.localidade} ${o.distrito} ${o.bairro ?? ''}`.toLowerCase().includes(termo)) return false;
       if (distrito && o.distrito !== distrito) return false;
+      if (bairro && (o.bairro ?? '').toLowerCase() !== bairro.toLowerCase()) return false;
       if (especialidade && !(o.especialidades ?? []).includes(especialidade as never)) return false;
       return true;
     });
@@ -51,10 +61,11 @@ export default function OficinasScreen() {
       os = [...os].sort((a, b) => (b.mediaAvaliacoes ?? 0) - (a.mediaAvaliacoes ?? 0));
     }
     return os;
-  }, [oficinas, busca, distrito, especialidade, ordenar]);
+  }, [oficinas, busca, distrito, bairro, especialidade, ordenar]);
 
   function limparFiltros() {
     setDistrito('');
+    setBairro('');
     setEspecialidade('');
   }
 
@@ -129,6 +140,9 @@ export default function OficinasScreen() {
         onClose={() => setFiltersOpen(false)}
         distrito={distrito}
         setDistrito={setDistrito}
+        bairro={bairro}
+        setBairro={setBairro}
+        bairroOpts={bairroOpts}
         especialidade={especialidade}
         setEspecialidade={setEspecialidade}
         onClear={limparFiltros}

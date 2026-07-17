@@ -3,13 +3,16 @@
 import { useState, useEffect, useCallback, useDeferredValue, useMemo } from 'react';
 import { subscribePecas, addPeca, deletePeca } from '@/lib/db';
 import { getDistritoForConcelho, getCoordenadas, haversineKm } from '@/lib/geo';
+import { filterByCountry } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 import type { Peca, FiltroTipoPeca } from '@/types/peca';
 
 // `active` controls the realtime subscription: routes that never render the
 // public parts list skip streaming the whole collection. Data from a previous
 // route is kept in state so navigating back doesn't flash empty.
 export default function usePecas(active: boolean = true) {
-  const [pecas, setPecasState] = useState<Peca[]>([]);
+  const { country } = useCountry();
+  const [allPecas, setPecasState] = useState<Peca[]>([]);
   const [loading, setLoading] = useState(true);
   const [filtroTipo, setFiltroTipo] = useState<FiltroTipoPeca>('todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +20,7 @@ export default function usePecas(active: boolean = true) {
   const [filtroEstado, setFiltroEstado] = useState('');
   const [advDistrito, setAdvDistrito] = useState('');
   const [advConcelho, setAdvConcelho] = useState('');
+  const [advBairro, setAdvBairro] = useState('');
   const [advRaioCentro, setAdvRaioCentro] = useState('');
   const [advRaioKm, setAdvRaioKm] = useState<number | null>(null);
 
@@ -31,6 +35,9 @@ export default function usePecas(active: boolean = true) {
     );
     return unsub;
   }, [active]);
+
+  // Market isolation (plan 20): legacy docs without a country resolve to PT.
+  const pecas = useMemo(() => filterByCountry(allPecas, country), [allPecas, country]);
 
   // Deferred so typing in the search box stays responsive while the
   // filter pass runs at lower priority.
@@ -51,7 +58,8 @@ export default function usePecas(active: boolean = true) {
           p.descricao.toLowerCase().includes(term) ||
           p.marcaCarro.toLowerCase().includes(term) ||
           (p.modeloCarro?.toLowerCase().includes(term) ?? false) ||
-          p.categoria.toLowerCase().includes(term)
+          p.categoria.toLowerCase().includes(term) ||
+          (p.bairro?.toLowerCase().includes(term) ?? false)
       );
     }
 
@@ -64,24 +72,41 @@ export default function usePecas(active: boolean = true) {
     }
 
     if (advRaioCentro && advRaioKm !== null && advRaioKm > 0) {
-      const centro = getCoordenadas(advRaioCentro);
+      // Scoped to the active market: place names collide across markets.
+      const centro = getCoordenadas(advRaioCentro, country);
       if (centro) {
         lista = lista.filter((p) => {
-          const coords = p.coordenadas ?? getCoordenadas(p.local);
+          const coords = p.coordenadas ?? getCoordenadas(p.local, country);
           if (!coords) return false;
           return haversineKm(centro, coords) <= advRaioKm!;
         });
       }
     } else if (advConcelho) {
       lista = lista.filter((p) => p.local?.toLowerCase() === advConcelho.toLowerCase());
+      // Bairro (BR) narrows within the picked city.
+      if (advBairro) {
+        lista = lista.filter((p) => (p.bairro ?? '').toLowerCase() === advBairro.toLowerCase());
+      }
     } else if (advDistrito) {
       lista = lista.filter(
-        (p) => (p.distrito ?? getDistritoForConcelho(p.local)) === advDistrito
+        (p) => (p.distrito ?? getDistritoForConcelho(p.local, country)) === advDistrito
       );
     }
 
     return lista;
-  }, [pecas, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advRaioCentro, advRaioKm]);
+  }, [pecas, country, filtroTipo, deferredSearchTerm, filtroCategoria, filtroEstado, advDistrito, advConcelho, advBairro, advRaioCentro, advRaioKm]);
+
+  // Like the marca facet on mobile, bairro options come from the loaded
+  // listings so only neighbourhoods that actually have ads are offered
+  // (BR; scoped to the picked city).
+  const bairroOpts = useMemo(() => {
+    if (!advConcelho) return [];
+    const set = new Set<string>();
+    for (const p of pecas) {
+      if (p.bairro && p.local?.toLowerCase() === advConcelho.toLowerCase()) set.add(p.bairro);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'pt'));
+  }, [pecas, advConcelho]);
 
   const publicarPeca = useCallback(
     async (dados: Record<string, unknown>) => {
@@ -120,6 +145,9 @@ export default function usePecas(active: boolean = true) {
     setAdvDistrito,
     advConcelho,
     setAdvConcelho,
+    advBairro,
+    setAdvBairro,
+    bairroOpts,
     advRaioCentro,
     setAdvRaioCentro,
     advRaioKm,
@@ -137,6 +165,8 @@ export default function usePecas(active: boolean = true) {
     filtroEstado,
     advDistrito,
     advConcelho,
+    advBairro,
+    bairroOpts,
     advRaioCentro,
     advRaioKm,
     publicarPeca,

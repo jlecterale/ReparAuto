@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Timestamp } from 'firebase-admin/firestore';
 import { getAdminDb } from '@/lib/firebase.admin';
-import { requireUser } from '@/lib/server/requireUser';
+import { isAdminUser, requireUser } from '@/lib/server/requireUser';
 import { internalErrorResponse } from '@/lib/server/routeError';
 import { checkImportRateLimit, fetchAndMapAdvert } from '@/lib/importers/standvirtual.server';
 import { buildCarroPayload } from '@/lib/importers/standvirtual.map';
@@ -13,8 +13,13 @@ export const dynamic = 'force-dynamic';
 
 interface ImportRequestBody {
   url?: unknown;
-  /** "This listing is mine and I have the rights to the photos." */
+  /**
+   * User flow: "this listing is mine and I have the rights to the photos."
+   * Admin-on-behalf flow: "the client authorized importing their listings."
+   */
   attestOwnership?: unknown;
+  /** Admin only: create the car under this user's account instead of the caller's. */
+  targetUid?: unknown;
 }
 
 async function findExistingImport(uid: string, adId: string): Promise<string | null> {
@@ -87,9 +92,27 @@ async function handleImport(request: Request) {
     return NextResponse.json({ error: 'server_unavailable' }, { status: 503 });
   }
 
+  // Admin-on-behalf (PR #78 discussion): the car is created under the target
+  // client's account; the caller is recorded in importadoPor for audit.
+  const targetUid = typeof body?.targetUid === 'string' && body.targetUid ? body.targetUid : null;
+  let owner = { uid, email };
+  let importadoPor: string | undefined;
+  if (targetUid && targetUid !== uid) {
+    if (!(await isAdminUser(auth.user))) {
+      return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+    }
+    const targetSnap = await db.collection('users').doc(targetUid).get();
+    const target = targetSnap.exists ? (targetSnap.data() as { email?: string }) : null;
+    if (!target?.email) {
+      return NextResponse.json({ error: 'target_not_found' }, { status: 400 });
+    }
+    owner = { uid: targetUid, email: target.email };
+    importadoPor = uid;
+  }
+
   // Idempotency first — a re-run of the same batch must not refetch, and
   // must not burn the user's rate-limit budget.
-  const existingId = await findExistingImport(uid, parsed.adId);
+  const existingId = await findExistingImport(owner.uid, parsed.adId);
   if (existingId) {
     return NextResponse.json({ status: 'duplicate', carId: existingId });
   }
@@ -119,20 +142,20 @@ async function handleImport(request: Request) {
 
   // The canonical advert URL is authoritative for the id (slug redirects).
   if (advert.adId !== parsed.adId) {
-    const canonicalExisting = await findExistingImport(uid, advert.adId);
+    const canonicalExisting = await findExistingImport(owner.uid, advert.adId);
     if (canonicalExisting) {
       return NextResponse.json({ status: 'duplicate', carId: canonicalExisting });
     }
   }
 
   const { fotos, failedCount } = await rehostAdvertPhotos(advert.photos, {
-    uid,
+    uid: owner.uid,
     adId: advert.adId,
   });
 
-  // Contacts always come from the RecarGarage profile — the source advert's
-  // phone is tokenized on purpose and is never reconstructed (RGPD).
-  const profileSnap = await db.collection('users').doc(uid).get();
+  // Contacts always come from the owner's RecarGarage profile — the source
+  // advert's phone is tokenized on purpose and is never reconstructed (RGPD).
+  const profileSnap = await db.collection('users').doc(owner.uid).get();
   const profile = profileSnap.exists ? (profileSnap.data() as { nome?: string; telefone?: string }) : {};
   const telefone = profile.telefone || null;
 
@@ -140,16 +163,17 @@ async function handleImport(request: Request) {
   const docRef = await db.collection('cars').add({
     ...buildCarroPayload(mapped.dados),
     fotos,
-    criador: email,
-    criadorUid: uid,
-    vendedorNome: profile.nome || email.split('@')[0],
+    criador: owner.email,
+    criadorUid: owner.uid,
+    vendedorNome: profile.nome || owner.email.split('@')[0],
     vendedorTelefone: telefone,
     vendedorWhatsApp: telefone,
-    vendedorEmail: email,
+    vendedorEmail: owner.email,
     status: 'pendente',
     origem: 'standvirtual',
     origemId: advert.adId,
     origemUrl: advert.url,
+    ...(importadoPor ? { importadoPor } : {}),
     importadoEm: now,
     dataCriacao: now,
   });

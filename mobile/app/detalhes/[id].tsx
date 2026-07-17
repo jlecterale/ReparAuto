@@ -14,6 +14,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/components/ui/Button';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
 import { Spin360Viewer } from '@/components/ui/Spin360Viewer';
@@ -23,6 +24,8 @@ import { LISTING_PHOTO_ASPECT, MESES } from '@/lib/constants';
 import { logViewListing } from '@/lib/analytics';
 import { getCarroById, registarVisualizacao } from '@/lib/db';
 import { formatKm, formatPreco } from '@/lib/format';
+import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import type { Carro } from '@/types';
@@ -166,11 +169,12 @@ export default function DetalhesCarroScreen() {
         </View>
 
         <View className="p-4">
+          <ListingStatusBanner status={carro.status} isOwner={ehDono} />
           <Text className="text-2xl font-extrabold text-fg-heading">
             {carro.marca} {carro.modelo}
           </Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPreco(carro.preco)}
+            {formatPreco(carro.preco, docCountry(carro))}
           </Text>
 
           {ehDono && (
@@ -190,7 +194,7 @@ export default function DetalhesCarroScreen() {
             {!!carro.version && <Spec icon="card-outline" label="Versão" value={carro.version} />}
             <Spec icon="calendar-outline" label="Ano" value={String(carro.anoFabricacao)} />
             {carro.firstRegistrationMonth != null && (
-              <Spec icon="calendar-number-outline" label="1ª matrícula" value={MESES[carro.firstRegistrationMonth - 1]} />
+              <Spec icon="calendar-number-outline" label={term('firstRegistrationLabel', docCountry(carro))} value={MESES[carro.firstRegistrationMonth - 1]} />
             )}
             <Spec icon="speedometer-outline" label="Quilómetros" value={formatKm(carro.km)} />
             {carro.previousOwners != null && (
@@ -215,7 +219,7 @@ export default function DetalhesCarroScreen() {
             {carro.numberOfAirbags != null && <Spec icon="shield-checkmark-outline" label="Airbags" value={String(carro.numberOfAirbags)} />}
             {carro.warrantyMonths != null && <Spec icon="shield-outline" label="Garantia" value={`${carro.warrantyMonths} meses`} />}
             <Spec icon="color-palette-outline" label="Cor" value={carro.cor} />
-            <Spec icon="location-outline" label="Local" value={carro.local} />
+            <Spec icon="location-outline" label="Local" value={[carro.bairro, carro.local].filter(Boolean).join(', ')} />
           </View>
 
           {comercial.length > 0 && (
