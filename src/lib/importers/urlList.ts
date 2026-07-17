@@ -1,13 +1,16 @@
+import { type Country } from '@/lib/country';
+
 /**
- * Parsing and validation of Standvirtual advert URLs for the import flows
- * (plan 24, wave 1). Pure functions, no I/O — the same validation runs on the
- * client (batch table) and on the server (anti-SSRF gate before any fetch).
+ * Parsing and validation of vehicle advert URLs for the import flows
+ * (plan 24, wave 1 and plan 26 expansion). Pure functions, no I/O — the same
+ * validation runs on the client (batch table) and on the server.
  */
 
 /** Hard cap of adverts per batch — exceeding it warns, never truncates silently. */
 export const MAX_IMPORT_BATCH_SIZE = 25;
 
 const STANDVIRTUAL_HOSTS = new Set(['standvirtual.com', 'www.standvirtual.com']);
+const WEBMOTORS_HOSTS = new Set(['webmotors.com.br', 'www.webmotors.com.br']);
 
 /** Advert pages always end in “…-ID<token>.html”; the token identifies the ad. */
 const AD_ID_PATTERN = /-ID([A-Za-z0-9]+)\.html$/;
@@ -15,7 +18,7 @@ const AD_ID_PATTERN = /-ID([A-Za-z0-9]+)\.html$/;
 export interface ParsedImportUrl {
   /** The input as the user provided it (trimmed). */
   raw: string;
-  /** Canonical https://www.standvirtual.com URL without query/hash. */
+  /** Canonical URL without query/hash. */
   normalizedUrl?: string;
   /** The ID token from the URL — stable across slug changes; used as origemId. */
   adId?: string;
@@ -64,6 +67,49 @@ export function validateStandvirtualUrl(input: string): ParsedImportUrl {
     adId,
     normalizedUrl: `https://www.standvirtual.com${url.pathname}`,
   };
+}
+
+export function validateWebmotorsUrl(input: string): ParsedImportUrl {
+  const raw = input.trim();
+  const invalid = (reason: string): ParsedImportUrl => ({ raw, valid: false, reason });
+  if (!raw) return invalid('URL vazio.');
+
+  const withProtocol = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  let url: URL;
+  try {
+    url = new URL(withProtocol);
+  } catch {
+    return invalid('Não é um URL válido.');
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    return invalid('Não é um URL válido.');
+  }
+  if (!WEBMOTORS_HOSTS.has(url.hostname.toLowerCase())) {
+    return invalid('O URL não é do Webmotors.');
+  }
+  if (!url.pathname.startsWith('/comprar/')) {
+    return invalid('Não parece ser o URL de um anúncio do Webmotors (deve começar com /comprar/).');
+  }
+  const cleanPath = url.pathname.replace(/\/$/, '');
+  const segments = cleanPath.split('/');
+  const adId = segments[segments.length - 1];
+  if (!adId || adId === 'comprar') {
+    return invalid('ID do anúncio não encontrado no URL.');
+  }
+  return {
+    raw,
+    valid: true,
+    adId,
+    normalizedUrl: `https://www.webmotors.com.br${cleanPath}`,
+  };
+}
+
+export function validateImportUrl(input: string, country: Country): ParsedImportUrl {
+  if (country === 'BR') {
+    return validateWebmotorsUrl(input);
+  }
+  return validateStandvirtualUrl(input);
 }
 
 export interface ParsedInventoryUrl {
@@ -118,16 +164,18 @@ export function validateStandvirtualInventoryUrl(input: string): ParsedInventory
 /**
  * Pulls URL-looking tokens out of free text — pasted lists (newline / comma /
  * space separated) and .txt/.csv file contents alike. Tolerant by design:
- * anything that carries a protocol or mentions standvirtual.com is kept (bad
- * ones get flagged by validation later); headers, blanks and other CSV
- * columns are ignored.
+ * anything that carries a protocol or mentions standvirtual.com/webmotors.com.br is kept.
  */
 export function extractUrlsFromText(text: string): string[] {
   const urls: string[] = [];
   for (const token of text.split(/[\s,;"']+/)) {
     const trimmed = token.trim();
     if (!trimmed) continue;
-    if (/^https?:\/\//i.test(trimmed) || /^(www\.)?standvirtual\.com\//i.test(trimmed)) {
+    if (
+      /^https?:\/\//i.test(trimmed) ||
+      /^(www\.)?standvirtual\.com\//i.test(trimmed) ||
+      /^(www\.)?webmotors\.com\.br\//i.test(trimmed)
+    ) {
       urls.push(trimmed);
     }
   }
@@ -135,11 +183,11 @@ export function extractUrlsFromText(text: string): string[] {
 }
 
 /** Validates a list of inputs and drops duplicates (same advert id or same URL). */
-export function buildUrlBatch(inputs: string[]): ParsedImportUrl[] {
+export function buildUrlBatch(inputs: string[], country: Country): ParsedImportUrl[] {
   const seen = new Set<string>();
   const batch: ParsedImportUrl[] = [];
   for (const input of inputs) {
-    const parsed = validateStandvirtualUrl(input);
+    const parsed = validateImportUrl(input, country);
     const key = parsed.adId ?? parsed.raw;
     if (seen.has(key)) continue;
     seen.add(key);

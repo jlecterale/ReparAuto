@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowsClockwise, ArrowsOut, CircleNotch, Heart, Lock, Pencil
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
-import { getCarroPorId as getCarroPorIdDb, incrementCampo, updateCarro, deleteCarro } from '@/lib/db';
+import { getCarroPorId as getCarroPorIdDb, incrementCampo, recordDailyMetric, updateCarro, deleteCarro } from '@/lib/db';
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
 import { pickChangedFields } from '@/lib/changedFields';
 import { formatarPreco, renderDescricao } from '@/lib/utils';
@@ -83,8 +83,13 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
     if (!sessionStorage.getItem(key)) {
       sessionStorage.setItem(key, '1');
       incrementCampo('cars', id, 'visualizacoes');
+      // Daily metric for the seller dashboard; owners previewing their own
+      // listing don't count as interest.
+      if (carro.criadorUid && carro.criadorUid !== user?.uid) {
+        recordDailyMetric(carro.criadorUid, 'view', docCountry(carro));
+      }
     }
-  }, [id, carro]);
+  }, [id, carro, user?.uid]);
 
   const handleSaveCarro = async (id: string, dados: Record<string, unknown>) => {
     // Only a photo change re-queues the ad for approval; other edits keep the

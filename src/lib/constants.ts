@@ -129,6 +129,27 @@ export const BADGES_CONFIANCA: { key: string; label: string; Icon: Icon; cor: st
   { key: 'respostas_rapidas', label: 'Respostas Rápidas', Icon: Lightning, cor: 'text-green-600' },
 ];
 
+// ============ CRM / PAINEL PROFISSIONAL ============
+// Header order used by the client CSV import template and parser.
+export const CLIENT_CSV_HEADERS = [
+  'nome',
+  'email',
+  'telefone',
+  'morada',
+  'distrito',
+  'marca',
+  'modelo',
+  'ano',
+  'matricula',
+  'notas',
+] as const;
+
+export const DASHBOARD_PERIODS: { value: 7 | 30 | 90; label: string }[] = [
+  { value: 7, label: '7 dias' },
+  { value: 30, label: '30 dias' },
+  { value: 90, label: '90 dias' },
+];
+
 // ============ TEXTOS DAS POLÍTICAS ============
 export const TEXTOS_POLITICAS = {
   termos: {

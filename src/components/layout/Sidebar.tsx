@@ -19,6 +19,7 @@ import {
   ListChecks,
   Crown,
   Bell,
+  ChartLineUp,
   GooglePlayLogo,
   AppleLogo,
   CaretDown,
@@ -183,6 +184,10 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
               {isLoggedIn && (
                 <NavLink href="/perfil" Icon={ListChecks} label="Meus Anúncios" />
+              )}
+
+              {isLoggedIn && user?.tipoConta === 'profissional' && (
+                <NavLink href="/painel" Icon={ChartLineUp} label="Painel Profissional" />
               )}
 
               {isLoggedIn && (

@@ -8,7 +8,7 @@ import Badge from '@/components/ui/Badge';
 import ShareButton from '@/components/ui/ShareButton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
-import { getUserByEmail, incrementCampo, countProcurasForPeca } from '@/lib/db';
+import { getUserByEmail, incrementCampo, recordDailyMetric, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
 import { formatCompatibilityEntry } from '@/lib/compatibility';
 import CompatibleVehicles from '@/components/pecas/CompatibleVehicles';
@@ -49,6 +49,10 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
     if (!sessionStorage.getItem(key)) {
       sessionStorage.setItem(key, '1');
       incrementCampo('parts', peca.id, 'visualizacoes');
+      // Owners previewing their own listing don't count as interest.
+      if (peca.criadorUid && peca.criadorUid !== user?.uid) {
+        recordDailyMetric(peca.criadorUid, 'view', docCountry(peca));
+      }
     }
   }, [peca?.id]);
 

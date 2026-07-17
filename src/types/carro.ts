@@ -23,7 +23,7 @@ export type FiltroAtivo = 'lowcost' | '500' | '1000' | 'reparar' | 'qualquer' | 
 export type SortOrdem = 'crescente' | 'decrescente' | null;
 export type FiltroChip = { label: string; value: string };
 export type StatusAnuncio = 'pendente' | 'aprovado' | 'rejeitado';
-export type OrigemAnuncio = 'manual' | 'standvirtual';
+export type OrigemAnuncio = 'manual' | 'standvirtual' | 'webmotors';
 
 export interface Carro {
   id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Bell, BellSlash, ChatCircle, CircleNotch, DownloadSimple, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
+import { ArrowRight, Bell, BellSlash, ChartLineUp, ChatCircle, CircleNotch, DownloadSimple, Eye, GearSix, Heart, IdentificationCard, ListChecks, MagnifyingGlass, MapPin, PencilSimple, PencilSimpleLine, Phone, PlusCircle, SignOut, Star, Storefront, Trash, ShieldCheck, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect, useCallback } from 'react';
 import { useApp } from '@/providers/AppProvider';
 import { getCarrosByCreator, getPecasByCreator, updateCarro, updatePeca, deleteCarro, deletePeca, getIntencoesPorUsuario, eliminarDadosDoUtilizador } from '@/lib/db';
@@ -354,6 +354,14 @@ export default function ProfileLoggedIn() {
         )}
 
         <div className="mt-5 pt-4 border-t border-neutral-100 flex flex-wrap gap-2">
+          {user?.tipoConta === 'profissional' && (
+            <button
+              onClick={() => router.push('/painel')}
+              className="inline-flex items-center gap-1.5 text-xs text-white bg-accent hover:bg-accent-hover font-bold px-4 py-2 rounded-full transition"
+            >
+              <ChartLineUp weight="fill" /> Painel Profissional
+            </button>
+          )}
           <button
             onClick={() => { logout(); router.push('/app'); }}
             className="inline-flex items-center gap-1.5 text-xs text-danger-600 hover:text-white hover:bg-danger-600 font-bold border border-danger-200 px-4 py-2 rounded-full transition"

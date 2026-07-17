@@ -4,9 +4,12 @@ import {
   extractStandvirtualAdId,
   extractUrlsFromText,
   validateStandvirtualUrl,
+  validateWebmotorsUrl,
+  validateImportUrl,
 } from '@/lib/importers/urlList';
 
 const AD_URL = 'https://www.standvirtual.com/carros/anuncio/citroen-c4-cactus-ver-puretech-110-stop-start-eat6-shine-ID8Q0B0W.html';
+const WEBMOTORS_URL = 'https://www.webmotors.com.br/comprar/porsche/911/30-24v-h6-gasolina-carrera-t-cabriolet-manual/2';
 
 describe('extractStandvirtualAdId', () => {
   it('extracts the ID token from an advert URL', () => {
@@ -66,6 +69,35 @@ describe('validateStandvirtualUrl', () => {
   });
 });
 
+describe('validateWebmotorsUrl', () => {
+  it('accepts a valid Webmotors URL', () => {
+    const parsed = validateWebmotorsUrl(WEBMOTORS_URL);
+    expect(parsed.valid).toBe(true);
+    expect(parsed.adId).toBe('2');
+    expect(parsed.normalizedUrl).toBe(WEBMOTORS_URL);
+  });
+
+  it('rejects Webmotors URLs that are not listing pages', () => {
+    const parsed = validateWebmotorsUrl('https://www.webmotors.com.br/carros');
+    expect(parsed.valid).toBe(false);
+    expect(parsed.reason).toBeTruthy();
+  });
+
+  it('rejects lookalike hosts', () => {
+    const parsed = validateWebmotorsUrl('https://evil-webmotors.com.br/comprar/carro/123');
+    expect(parsed.valid).toBe(false);
+  });
+});
+
+describe('validateImportUrl', () => {
+  it('routes validation by country', () => {
+    expect(validateImportUrl(AD_URL, 'PT').valid).toBe(true);
+    expect(validateImportUrl(AD_URL, 'BR').valid).toBe(false);
+    expect(validateImportUrl(WEBMOTORS_URL, 'BR').valid).toBe(true);
+    expect(validateImportUrl(WEBMOTORS_URL, 'PT').valid).toBe(false);
+  });
+});
+
 describe('extractUrlsFromText', () => {
   it('splits URLs separated by newlines, commas and spaces', () => {
     const text = `${AD_URL}\nhttps://www.standvirtual.com/carros/anuncio/a-ID1.html, https://www.standvirtual.com/carros/anuncio/b-ID2.html https://www.standvirtual.com/carros/anuncio/c-ID3.html`;
@@ -85,9 +117,12 @@ describe('extractUrlsFromText', () => {
     ]);
   });
 
-  it('keeps non-URL tokens that mention standvirtual so they can be flagged invalid later', () => {
+  it('keeps non-URL tokens that mention standvirtual/webmotors so they can be flagged invalid later', () => {
     expect(extractUrlsFromText('standvirtual.com/carros/anuncio/x-ID9.html')).toEqual([
       'standvirtual.com/carros/anuncio/x-ID9.html',
+    ]);
+    expect(extractUrlsFromText('webmotors.com.br/comprar/x/y/123')).toEqual([
+      'webmotors.com.br/comprar/x/y/123',
     ]);
   });
 
@@ -104,7 +139,7 @@ describe('buildUrlBatch', () => {
       'http://standvirtual.com/carros/anuncio/citroen-c4-cactus-ver-puretech-110-stop-start-eat6-shine-ID8Q0B0W.html',
       'https://www.standvirtual.com/carros/anuncio/ford-focus-ID8Q0m7m.html',
       'https://www.olx.pt/anuncio/x-ID1.html',
-    ]);
+    ], 'PT');
     expect(batch).toHaveLength(3);
     expect(batch[0].valid).toBe(true);
     expect(batch[0].adId).toBe('8Q0B0W');
@@ -116,7 +151,7 @@ describe('buildUrlBatch', () => {
     const batch = buildUrlBatch([
       'https://www.standvirtual.com/carros/anuncio/b-ID2.html',
       'https://www.standvirtual.com/carros/anuncio/a-ID1.html',
-    ]);
+    ], 'PT');
     expect(batch.map((i) => i.adId)).toEqual(['2', '1']);
   });
 

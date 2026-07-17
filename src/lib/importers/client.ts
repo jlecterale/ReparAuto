@@ -31,11 +31,11 @@ export type ImportAdvertResult =
   | { status: 'failed'; reason: string; message: string; fatal?: boolean };
 
 export const IMPORT_ERROR_MESSAGES: Record<string, string> = {
-  invalid_url: 'O URL não é um anúncio válido do Standvirtual.',
+  invalid_url: 'O URL não é um anúncio válido.',
   not_found: 'Anúncio não encontrado — pode ter sido removido.',
   parse_failed: 'Não foi possível ler o anúncio (formato inesperado).',
-  fetch_failed: 'Falha ao contactar o Standvirtual. Tente novamente.',
-  blocked: 'O Standvirtual bloqueou temporariamente a leitura automática. Tente mais tarde.',
+  fetch_failed: 'Falha ao contactar o portal. Tente novamente.',
+  blocked: 'A importação direta foi bloqueada pelo portal. Utilize o método de colar o HTML abaixo.',
   rate_limited: 'Limite de importações atingido. Aguarde um pouco e tente novamente.',
   email_not_verified: 'Confirme o seu email antes de importar anúncios.',
   attestation_required: 'Confirme que os anúncios são seus antes de importar.',
@@ -66,6 +66,22 @@ async function authorizedPost(path: string, body: unknown): Promise<Response> {
 export async function previewStandvirtualImport(url: string): Promise<ImportPreviewResult> {
   try {
     const response = await authorizedPost('/api/import/standvirtual/preview', { url });
+    const data = (await response.json().catch(() => ({}))) as Partial<ImportPreviewData> & {
+      error?: string;
+    };
+    if (!response.ok || data.error) {
+      const code = data.error ?? 'fetch_failed';
+      return { ok: false, errorCode: code, message: importErrorMessage(code) };
+    }
+    return { ok: true, preview: data as ImportPreviewData };
+  } catch {
+    return { ok: false, errorCode: 'fetch_failed', message: importErrorMessage('fetch_failed') };
+  }
+}
+
+export async function previewWebmotorsImport(url: string, html?: string): Promise<ImportPreviewResult> {
+  try {
+    const response = await authorizedPost('/api/import/webmotors/preview', { url, html });
     const data = (await response.json().catch(() => ({}))) as Partial<ImportPreviewData> & {
       error?: string;
     };
@@ -117,7 +133,6 @@ export async function importStandvirtualAdvert(
       ...(opts.targetUid ? { targetUid: opts.targetUid } : {}),
     });
   } catch (err) {
-    // Session lost mid-batch: stop the whole run instead of failing every URL.
     if (err instanceof Error && err.message === 'unauthorized') {
       return {
         status: 'failed',
@@ -144,7 +159,71 @@ export async function importStandvirtualAdvert(
   }
   if (!response.ok || data.error) {
     const code = data.error ?? 'fetch_failed';
-    // Auth/attestation/target problems affect the whole batch, not just this URL.
+    const fatal = [
+      'unauthorized',
+      'email_not_verified',
+      'attestation_required',
+      'server_unavailable',
+      'forbidden',
+      'target_not_found',
+    ].includes(code);
+    return { status: 'failed', reason: code, message: importErrorMessage(code), fatal };
+  }
+
+  if (data.status === 'created' && data.carId) {
+    return {
+      status: 'created',
+      carId: data.carId,
+      unmappedFields: data.unmappedFields ?? [],
+      failedPhotoCount: data.failedPhotoCount ?? 0,
+    };
+  }
+  if (data.status === 'duplicate') return { status: 'duplicate', carId: data.carId };
+  if (data.status === 'blocked') return { status: 'blocked' };
+  const reason = data.reason ?? 'fetch_failed';
+  return { status: 'failed', reason, message: importErrorMessage(reason) };
+}
+
+export async function importWebmotorsAdvert(
+  url: string,
+  html?: string,
+  opts: { targetUid?: string } = {},
+): Promise<ImportAdvertResult> {
+  let response: Response;
+  try {
+    response = await authorizedPost('/api/import/webmotors/import', {
+      url,
+      html,
+      attestOwnership: true,
+      ...(opts.targetUid ? { targetUid: opts.targetUid } : {}),
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === 'unauthorized') {
+      return {
+        status: 'failed',
+        reason: 'unauthorized',
+        message: importErrorMessage('unauthorized'),
+        fatal: true,
+      };
+    }
+    return { status: 'failed', reason: 'fetch_failed', message: importErrorMessage('fetch_failed') };
+  }
+
+  const data = (await response.json().catch(() => ({}))) as {
+    status?: string;
+    error?: string;
+    carId?: string;
+    reason?: string;
+    unmappedFields?: string[];
+    failedPhotoCount?: number;
+  };
+
+  if (response.status === 429) {
+    const retryAfter = Number(response.headers.get('Retry-After')) || 60;
+    return { status: 'rate_limited', retryAfterSeconds: retryAfter };
+  }
+  if (!response.ok || data.error) {
+    const code = data.error ?? 'fetch_failed';
     const fatal = [
       'unauthorized',
       'email_not_verified',

@@ -318,6 +318,8 @@ export default function EditarPerfilModal({ show, onClose }: EditarPerfilModalPr
           <button
             type="button"
             onClick={() => setNotificacoes(!notificacoes)}
+            aria-pressed={notificacoes}
+            aria-label="Notificações"
             className={`w-12 h-6 rounded-full transition relative ${
               notificacoes ? 'bg-accent' : 'bg-gray-300'
             }`}
