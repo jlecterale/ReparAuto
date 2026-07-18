@@ -39,7 +39,7 @@ export default function PainelProfissional() {
     if (!isLoggedIn || !isPro) router.replace('/perfil');
   }, [authLoading, isLoggedIn, isPro, router]);
 
-  const { carros, pecas, points, summary, loading } = usePainel(isPro ? user : null, period);
+  const { carros, pecas, oficinas, points, summary, loading } = usePainel(isPro ? user : null, period);
 
   if (authLoading || !isLoggedIn || !isPro) {
     return (
@@ -129,7 +129,7 @@ export default function PainelProfissional() {
             <CircleNotch className="animate-spin" size={28} />
           </div>
         ) : (
-          <InventoryPerformanceTable carros={carros} pecas={pecas} />
+          <InventoryPerformanceTable carros={carros} pecas={pecas} oficinas={oficinas} />
         )
       )}
 

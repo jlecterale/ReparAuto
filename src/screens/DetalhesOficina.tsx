@@ -18,7 +18,7 @@ import {
   PencilSimpleLine,
   Trash
 } from '@phosphor-icons/react';
-import { getOficinaPorId, addReview, subscribeReviewsOficina, deleteOficina, updateOficina } from '@/lib/db';
+import { getOficinaPorId, addReview, subscribeReviewsOficina, deleteOficina, updateOficina, incrementCampo, recordDailyMetric } from '@/lib/db';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
@@ -106,6 +106,11 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
         const dados = await getOficinaPorId(id);
         if (dados) {
           setOficina(dados);
+          // Increment views and record daily metrics
+          await incrementCampo('oficinas', id, 'visualizacoes');
+          if (dados.criadorUid) {
+            recordDailyMetric(dados.criadorUid, 'view', dados.country);
+          }
         } else {
           toast?.erro('Oficina não encontrada.');
           router.push('/oficinas');

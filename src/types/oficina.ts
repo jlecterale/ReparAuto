@@ -56,6 +56,8 @@ export interface OficinaMecanico {
   mediaAvaliacoes?: number;
   totalAvaliacoes?: number;
   contagemFavoritos?: number;
+  visualizacoes?: number;
+  contagemMensagens?: number;
   dataCriacao?: Timestamp;
 }
 

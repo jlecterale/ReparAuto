@@ -2,21 +2,23 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, ChatCircle, Heart, ArrowsDownUp, Car, GearSix, Warning } from '@phosphor-icons/react';
+import { Eye, ChatCircle, Heart, ArrowsDownUp, Car, GearSix, Warning, Wrench } from '@phosphor-icons/react';
 import Badge from '@/components/ui/Badge';
 import { formatarPreco } from '@/lib/utils';
 import { docCountry, type Country } from '@/lib/country';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
+import type { OficinaMecanico } from '@/types/oficina';
 
 interface Props {
   carros: Carro[];
   pecas: Peca[];
+  oficinas?: OficinaMecanico[];
 }
 
 type Row = {
   id: string;
-  tipo: 'carro' | 'peca';
+  tipo: 'carro' | 'peca' | 'oficina';
   titulo: string;
   preco?: number;
   status: string;
@@ -42,7 +44,7 @@ const STATUS_LABEL: Record<string, string> = {
   rejeitado: 'Rejeitado',
 };
 
-export default function InventoryPerformanceTable({ carros, pecas }: Props) {
+export default function InventoryPerformanceTable({ carros, pecas, oficinas }: Props) {
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>('views');
 
@@ -71,8 +73,20 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
       href: `/pecas/${p.id}`,
       country: docCountry(p),
     }));
-    return [...carRows, ...pecaRows].sort((a, b) => b[sortKey] - a[sortKey]);
-  }, [carros, pecas, sortKey]);
+    const oficinaRows: Row[] = (oficinas || []).map((o) => ({
+      id: o.id,
+      tipo: 'oficina',
+      titulo: o.nome,
+      preco: undefined,
+      status: o.status,
+      views: o.visualizacoes || 0,
+      mensagens: o.contagemMensagens || 0,
+      favoritos: o.contagemFavoritos || 0,
+      href: `/oficinas/detalhes/${o.id}`,
+      country: o.country || 'PT',
+    }));
+    return [...carRows, ...pecaRows, ...oficinaRows].sort((a, b) => b[sortKey] - a[sortKey]);
+  }, [carros, pecas, oficinas, sortKey]);
 
   const SortButton = ({ k, label }: { k: SortKey; label: React.ReactNode }) => (
     <button
@@ -123,8 +137,10 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
                     <div className="flex items-center gap-2 min-w-0">
                       {r.tipo === 'carro' ? (
                         <Car className="text-fg-subtle shrink-0" />
-                      ) : (
+                      ) : r.tipo === 'peca' ? (
                         <GearSix className="text-fg-subtle shrink-0" />
+                      ) : (
+                        <Wrench className="text-fg-subtle shrink-0" />
                       )}
                       <div className="min-w-0">
                         <p className="font-semibold text-fg truncate">{r.titulo}</p>
@@ -147,7 +163,7 @@ export default function InventoryPerformanceTable({ carros, pecas }: Props) {
                   <td className="px-3 py-3 text-right font-semibold tabular-nums text-fg">{r.views}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums text-fg">{r.mensagens}</td>
                   <td className="px-3 py-3 text-right font-semibold tabular-nums text-fg">
-                    {r.tipo === 'carro' ? r.favoritos : '—'}
+                    {r.tipo === 'carro' || r.tipo === 'oficina' ? r.favoritos : '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Badge cor={STATUS_COR[r.status] || 'gray'} variante="soft">
