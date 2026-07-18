@@ -14,9 +14,11 @@ import {
   User,
   Wrench,
   ChatCircleDots,
-  SignIn
+  SignIn,
+  PencilSimpleLine,
+  Trash
 } from '@phosphor-icons/react';
-import { getOficinaPorId, addReview, subscribeReviewsOficina } from '@/lib/db';
+import { getOficinaPorId, addReview, subscribeReviewsOficina, deleteOficina, updateOficina } from '@/lib/db';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
@@ -26,6 +28,7 @@ import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import UserAvatar from '@/components/ui/UserAvatar';
+import EditarOficinaModal from '@/components/admin/EditarOficinaModal';
 
 // Dynamically import MapViewer to prevent SSR errors
 const MapViewer = dynamic(() => import('@/components/ui/MapViewer'), {
@@ -40,7 +43,7 @@ interface DetalhesOficinaProps {
 export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
   const router = useRouter();
   const { auth, loginModal } = useApp();
-  const { user } = auth;
+  const { user, isAdmin } = auth;
   const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/';
   const toast = useToast();
 
@@ -52,6 +55,50 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
   const [nota, setNota] = useState(5);
   const [comentario, setComentario] = useState('');
   const [enviandoReview, setEnviandoReview] = useState(false);
+
+  // Edit/Delete state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleSaveOficina = async (oficinaId: string, dados: Record<string, any>) => {
+    try {
+      const novoStatus = isAdmin ? oficina?.status : 'pendente';
+      await updateOficina(oficinaId, {
+        ...dados,
+        status: novoStatus,
+      });
+      
+      toast?.sucesso(
+        isAdmin 
+          ? 'Oficina atualizada com sucesso!' 
+          : 'Oficina atualizada com sucesso! A aguardar nova aprovação.'
+      );
+
+      const dadosAtualizados = await getOficinaPorId(oficinaId);
+      if (dadosAtualizados) {
+        setOficina(dadosAtualizados);
+      }
+    } catch (err) {
+      console.error(err);
+      toast?.erro('Erro ao atualizar dados da oficina.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!oficina) return;
+    setDeleting(true);
+    try {
+      await deleteOficina(oficina.id);
+      toast?.sucesso('Oficina eliminada com sucesso.');
+      router.push('/oficinas');
+    } catch (err) {
+      console.error(err);
+      toast?.erro('Erro ao eliminar a oficina.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     async function carregarDados() {
@@ -189,6 +236,25 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                   </div>
                 </div>
               </div>
+
+              {(oficina.criador === user?.email || isAdmin) && (
+                <div className="flex items-center gap-2 sm:self-start">
+                  {oficina.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
+                  {oficina.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
+                  <button
+                    onClick={() => setEditModalOpen(true)}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold border border-blue-200 text-blue-600 hover:bg-blue-50 transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <PencilSimpleLine size={14} /> Editar
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold border border-red-200 text-red-600 hover:bg-red-50 transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash size={14} /> Eliminar
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Specialties */}
@@ -399,6 +465,34 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
           </div>
         </div>
       </div>
+
+      {editModalOpen && (
+        <EditarOficinaModal
+          show={editModalOpen}
+          oficina={oficina}
+          onClose={() => setEditModalOpen(false)}
+          onSave={handleSaveOficina}
+        />
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
+            <h4 className="font-bold text-fg-strong mb-2">Eliminar Oficina</h4>
+            <p className="text-sm text-fg-subtle mb-4">
+              Tem certeza que deseja eliminar a oficina <strong>{oficina.nome}</strong>? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button tipo="secundario" onClick={() => setConfirmDelete(false)} disabled={deleting}>
+                Cancelar
+              </Button>
+              <Button tipo="perigo" icone={<Trash />} onClick={handleDelete} disabled={deleting} carregando={deleting}>
+                Eliminar
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
