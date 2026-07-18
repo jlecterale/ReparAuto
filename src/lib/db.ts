@@ -1542,6 +1542,18 @@ export async function updateOficinaStatus(id: string, status: 'pendente' | 'apro
   }
 }
 
+export async function updateOficina(id: string, dados: Record<string, unknown>): Promise<void> {
+  try {
+    await updateDoc(doc(db, OFICINAS_COLLECTION, id), {
+      ...dados,
+      dataAtualizacao: Timestamp.now(),
+    });
+  } catch (err) {
+    console.error('[DB] Erro ao atualizar oficina:', err);
+    throw err;
+  }
+}
+
 export async function deleteOficina(id: string): Promise<void> {
   try {
     await deleteDoc(doc(db, OFICINAS_COLLECTION, id));
