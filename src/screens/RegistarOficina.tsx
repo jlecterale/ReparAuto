@@ -156,6 +156,7 @@ export default function RegistarOficina() {
     try {
       const novaOficina = await addOficina({
         criador: user.email,
+        criadorUid: user.uid,
         nome,
         descricao,
         responsavel,
@@ -174,6 +175,11 @@ export default function RegistarOficina() {
         mediaAvaliacoes: 5.0,
         totalAvaliacoes: 0,
       });
+
+      if (user.tipoConta !== 'profissional') {
+        await auth.updateProfile({ tipoConta: 'profissional' });
+        await auth.refreshProfile();
+      }
 
       clearAdDraft('oficina');
       setPublicado(true);
