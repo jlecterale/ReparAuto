@@ -97,6 +97,9 @@ export function validateWebmotorsUrl(input: string): ParsedImportUrl {
   if (!adId || adId === 'comprar') {
     return invalid('ID do anúncio não encontrado no URL.');
   }
+  if (!/^\d+$/.test(adId)) {
+    return invalid('O URL deve terminar com o ID numérico do anúncio (ex: .../12345678).');
+  }
   return {
     raw,
     valid: true,
