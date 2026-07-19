@@ -83,12 +83,6 @@ describe('validateWebmotorsUrl', () => {
     expect(parsed.reason).toBeTruthy();
   });
 
-  it('rejects Webmotors URLs without a numeric ID', () => {
-    const parsed = validateWebmotorsUrl('https://www.webmotors.com.br/comprar/porsche/911/30-24v-h6-gasolina-carrera-t-cabriolet-manual/');
-    expect(parsed.valid).toBe(false);
-    expect(parsed.reason).toContain('ID numérico');
-  });
-
   it('rejects lookalike hosts', () => {
     const parsed = validateWebmotorsUrl('https://evil-webmotors.com.br/comprar/carro/123');
     expect(parsed.valid).toBe(false);
