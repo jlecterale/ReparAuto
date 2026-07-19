@@ -47,15 +47,13 @@ export default function StepCategoria({ onSelect }: StepCategoriaProps) {
         ))}
       </div>
 
-      {(country === 'PT' || country === 'BR') && (
+      {country === 'PT' && (
         <Link
           href="/importar"
           className="mt-4 flex items-center justify-center gap-2 p-3 border border-slate-200 bg-slate-50 rounded-xl hover:border-accent hover:bg-orange-50/30 transition text-sm"
         >
           <DownloadSimple className="text-accent" weight="bold" />
-          <span className="font-semibold text-fg">
-            Já anuncia no {country === 'BR' ? 'Webmotors' : 'Standvirtual'}?
-          </span>
+          <span className="font-semibold text-fg">Já anuncia no Standvirtual?</span>
           <span className="text-fg-muted">Importe os seus anúncios automaticamente</span>
         </Link>
       )}

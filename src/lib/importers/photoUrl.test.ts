@@ -7,15 +7,6 @@ describe('isAllowedPhotoUrl', () => {
     ).toBe(true);
     expect(isAllowedPhotoUrl('https://apollo.olxcdn.com/v1/files/abc/image;s=1080x720')).toBe(true);
   });
- 
-  it('accepts Webmotors photos on the Webmotors CDN', () => {
-    expect(
-      isAllowedPhotoUrl('https://img1.webmotors.com.br/fotos/anuncio/abc123_1.jpg'),
-    ).toBe(true);
-    expect(
-      isAllowedPhotoUrl('https://webmotors.com.br/fotos/anuncio/abc123_2.png'),
-    ).toBe(true);
-  });
 
   it('rejects plain http', () => {
     expect(isAllowedPhotoUrl('http://ireland.apollo.olxcdn.com/v1/files/abc/image')).toBe(false);

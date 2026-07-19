@@ -13,10 +13,5 @@ export function isAllowedPhotoUrl(input: string): boolean {
   }
   if (url.protocol !== 'https:' || url.port !== '') return false;
   const host = url.hostname.toLowerCase();
-  return (
-    host === 'olxcdn.com' ||
-    host.endsWith('.olxcdn.com') ||
-    host === 'webmotors.com.br' ||
-    host.endsWith('.webmotors.com.br')
-  );
+  return host === 'olxcdn.com' || host.endsWith('.olxcdn.com');
 }
