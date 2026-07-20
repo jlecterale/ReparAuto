@@ -393,65 +393,38 @@ export default function RegistarOficina() {
               <button
                 type="button"
                 onClick={() => setServiceType('workshop')}
-                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'workshop'
-                    ? 'border-blue-500 bg-blue-50/20 shadow-sm shadow-blue-500/10'
-                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                  serviceType === 'workshop' ? 'bg-blue-500 text-white' : 'bg-neutral-100 text-neutral-500'
-                }`}>
-                  <Wrench size={20} weight={serviceType === 'workshop' ? 'fill' : 'bold'} />
-                </div>
-                <span className="font-extrabold text-sm text-neutral-800">Oficina Mecânica</span>
-                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                  Reparos, revisões periódicas, mecânica geral, elétrica e manutenção preventiva.
-                </span>
+                <Wrench size={16} weight="bold" />
+                <span>{country === 'BR' ? 'Oficina Mecânica' : 'Oficina Mecânica'}</span>
               </button>
-
               <button
                 type="button"
                 onClick={() => setServiceType('tire_repair')}
-                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'tire_repair'
-                    ? 'border-emerald-500 bg-emerald-50/20 shadow-sm shadow-emerald-500/10'
-                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                  serviceType === 'tire_repair' ? 'bg-emerald-500 text-white' : 'bg-neutral-100 text-neutral-500'
-                }`}>
-                  <TireIcon size={20} active={serviceType === 'tire_repair'} />
-                </div>
-                <span className="font-extrabold text-sm text-neutral-800">
-                  {country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}
-                </span>
-                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                  Troca e reparação de pneus, alinhamento, balanceamento e vulcanização.
-                </span>
+                <TireIcon size={16} active={serviceType === 'tire_repair'} />
+                <span>{country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}</span>
               </button>
-
               <button
                 type="button"
                 onClick={() => setServiceType('towing')}
-                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'towing'
-                    ? 'border-orange-500 bg-orange-50/20 shadow-sm shadow-orange-500/10'
-                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
-                  serviceType === 'towing' ? 'bg-orange-500 text-white' : 'bg-neutral-100 text-neutral-500'
-                }`}>
-                  <TowTruckIcon size={20} active={serviceType === 'towing'} />
-                </div>
-                <span className="font-extrabold text-sm text-neutral-800">
-                  {country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}
-                </span>
-                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
-                  Serviços de reboque, auto-socorro 24h e transporte de veículos avariados.
-                </span>
+                <TowTruckIcon size={18} active={serviceType === 'towing'} />
+                <span>{country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}</span>
               </button>
             </div>
           </div>
