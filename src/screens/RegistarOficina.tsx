@@ -391,7 +391,7 @@ export default function RegistarOficina() {
                     : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                ⭕ {country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}
+                🛞 {country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}
               </button>
               <button
                 type="button"
