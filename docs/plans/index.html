@@ -2308,6 +2308,13 @@ const extraPlans = [
     impact: 'Prova de valor para profissionais (lock-in) e nova camada de CRM',
     summary: 'Painel /painel gated por tipoConta: KPIs agregados, graficos temporais (camada de buckets diarios por vendedor), tabela de desempenho por anuncio e caixa de leads. CRM de clientes (manual + import CSV). A correspondencia por email a perfis RecarGarage foi removida por privacidade — as empresas nao veem se um cliente tem conta.',
     evidence: 'Entregue — rota /painel, screens/PainelProfissional, components/painel/*, hooks usePainel/useClients, seller_daily + clients (db.ts, firestore.rules). Gráficos em SVG nativo. Removido por privacidade: match por email (rota, badge, discoverableByPros). Diferido: série temporal de favoritos.'
+  },
+  {
+    id: '28', title: 'Diretório de Serviços com Mapa, Guinchos/Reboques e Borracharias', priority: 'MEDIA', effort: '~10-14 dias',
+    implemented: true, file: '28-servicos-guinchos-borracheiros-mapa.html',
+    impact: 'Expansão de serviços profissionais com mapa interativo, diferenciando oficinas, reboques e borracharias com ícones personalizados e horário de funcionamento/24h.',
+    summary: 'Cadastro e pesquisa unificada de profissionais automotivos (oficinas, guinchos/reboques e borracharias) usando a mesma infraestrutura Firestore. Adiciona uma visualização em mapa Leaflet com pins personalizados (chave combinada, pneu, mini-reboque), campo estruturado de horário de funcionamento (incluindo badge "Aberto Agora" ou "24 Horas" de emergência), e formulários adaptados para Portugal e Brasil.',
+    evidence: 'Entregue — Rotas /guinchos e /borracharias criadas, mapa Leaflet multi-pinos (MapServicos) com pins SVG estilizados por tipo, horário de funcionamento estruturado (getStatusFuncionamento) com testes Jest, e moderação no painel administrativo.'
   }
 ];
 

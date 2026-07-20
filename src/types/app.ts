@@ -83,6 +83,9 @@ export interface PecasContextValue {
 
 export interface OficinasContextValue {
   oficinas: OficinaMecanico[];
+  guinchos: OficinaMecanico[];
+  borracharias: OficinaMecanico[];
+  todosServicos: OficinaMecanico[];
   loading: boolean;
 }
 

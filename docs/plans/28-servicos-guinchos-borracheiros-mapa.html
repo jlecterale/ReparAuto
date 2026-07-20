@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano 28 — Diretório de Serviços com Mapa, Guinchos/Reboques e Borracharias — RecarGarage</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <!-- Tailwind for quick premium styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            outfit: ['Outfit', 'sans-serif'],
+            jakarta: ['Plus Jakarta Sans', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              900: '#7c2d12',
+            },
+            dark: {
+              800: '#1e293b',
+              900: '#0f172a',
+              950: '#020617',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #020617;
+      color: #f1f5f9;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.06) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    }
+    h1, h2, h3, .font-heading {
+      font-family: 'Outfit', sans-serif;
+    }
+    .glass {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glow-brand {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.15);
+    }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #020617; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+  </style>
+</head>
+<body class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <header class="glass rounded-2xl p-6 sm:p-10 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 glow-brand relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="relative z-10">
+        <span class="bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">
+          🚚 Plano 28 — Logística &amp; Serviços Locais
+        </span>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black mt-3 bg-gradient-to-r from-orange-400 via-amber-200 to-yellow-400 bg-clip-text text-transparent font-heading">
+          Diretório de Serviços com Mapa, Guinchos/Reboques e Borracharias
+        </h1>
+        <p class="mt-2 text-slate-400 text-sm sm:text-base max-w-2xl">
+          Disponibilizar um ecossistema completo para pesquisa e registo de profissionais automotivos: Oficinas Gerais, Guinchos (Reboques) e Borracharias (Vulcanizadores). Adiciona um mapa interativo com ícones personalizados para cada tipo de serviço, controlo estruturado de horário de funcionamento e indicador visual de estado aberto/fechado ou emergência 24h.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 bg-dark-900 border border-slate-800 rounded-xl p-3 shrink-0">
+        <div class="w-3 h-3 bg-orange-400 rounded-full animate-ping"></div>
+        <span class="text-xs font-bold text-slate-300">Mapa Leaflet Multimodal</span>
+      </div>
+    </header>
+
+    <!-- Key metrics strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-orange-400">3 Tipos</span>
+        <span class="text-xs text-slate-400">Oficina (🔧) · Borracheiro (⭕) · Guincho (🚚)</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-amber-300">Leaflet</span>
+        <span class="text-xs text-slate-400">Mapa interativo no cliente com SVG customizado</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-yellow-400">Aberto/24H</span>
+        <span class="text-xs text-slate-400">Cálculo de estado em tempo real no popup</span>
+      </div>
+      <div class="glass rounded-xl p-4 text-center">
+        <span class="block text-3xl font-black text-indigo-400">PT &amp; BR</span>
+        <span class="text-xs text-slate-400">Localização e isolamento regional (Distritos vs Estados)</span>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left & Center -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- 01 - Contexto -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">01.</span> Contexto e Requisitos do Utilizador
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            Em caso de avaria mecânica ou necessidade de substituição urgente de peças, os condutores precisam de três serviços principais de proximidade: <strong>Oficinas Mecânicas</strong> (para reparações gerais), <strong>Borracharias/Vulcanizadores</strong> (para problemas de pneus) e <strong>Guinchos/Reboques</strong> (para transporte/resgate).
+          </p>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed mb-4">
+            O objetivo deste plano é unificar estes três tipos de serviços numa única infraestrutura (a coleção <code>services</code> do Firestore), diferenciando a sua apresentação através de:
+          </p>
+          <ul class="text-xs text-slate-400 list-disc list-inside space-y-2 mb-4">
+            <li><strong>Ícones Customizados no Mapa:</strong> Oficinas Gerais com uma chave combinada (🔧), Borracharias/Pneus com um pneu (⭕) e Guinchos com um mini-reboque (🚚).</li>
+            <li><strong>Controlo de Horário de Funcionamento:</strong> Introdução do horário durante o cadastro do estabelecimento e visualização imediata no mapa (informando se está "Aberto Agora", "Fechado" ou se opera "24 Horas" de emergência).</li>
+            <li><strong>Localização Avançada:</strong> Adaptação dos termos entre Portugal ("Reboques", "Vulcanizadores") e Brasil ("Guinchos", "Borracharias").</li>
+          </ul>
+        </section>
+
+        <!-- 02 - Decisões de Dados e Schema -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">02.</span> Desenho de Dados &amp; Modelos
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Reutilizaremos a coleção <code>services</code>. Adicionaremos o campo discriminador <code>serviceType</code> para mapear os tipos de serviços e criaremos a estrutura para horários de funcionamento:
+          </p>
+
+          <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 space-y-4">
+            <div>
+              <h4 class="font-bold text-orange-300 text-xs mb-2">Atualização dos Tipos (<code>src/types/oficina.ts</code>)</h4>
+              <pre class="bg-dark-950 p-3 rounded-lg text-[10px] text-amber-300 overflow-x-auto">
+export type ServiceType = 'workshop' | 'towing' | 'tire_repair';
+
+export interface WorkingHours {
+  is24h: boolean;
+  // Dias da semana estruturados
+  schedule?: {
+    [key in 'seg' | 'ter' | 'qua' | 'qui' | 'sex' | 'sab' | 'dom']?: {
+      closed: boolean;
+      openTime?: string;  // "08:30"
+      closeTime?: string; // "19:00"
+    }
+  };
+  customText?: string; // Fallback ou descrição textual ("Seg-Sex: 8h às 18h")
+}</pre>
+            </div>
+
+            <div>
+              <h4 class="font-bold text-orange-300 text-xs mb-2">Interface Estendida do Documento</h4>
+              <pre class="bg-dark-950 p-3 rounded-lg text-[10px] text-amber-300 overflow-x-auto">
+export interface OficinaMecanico {
+  id: string;
+  serviceType: ServiceType; // Padrão: 'workshop'
+  nome: string;
+  // ... campos básicos ...
+  workingHours: WorkingHours;
+  towingDetails?: {
+    capabilities: ('light' | 'heavy' | 'motorcycle' | 'classic' | 'agricultural')[];
+  };
+  // ... resto dos campos de auditoria, geolocalização e reviews ...
+}</pre>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 - Visualização e Customização do Mapa -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">03.</span> Visualização no Mapa com Ícones &amp; Horários
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed mb-4">
+            Em vez de imagens pesadas, os marcadores do Leaflet serão construídos via <code>L.divIcon</code> contendo estruturas de SVG inline e Tailwind CSS. Isto possibilita pins circulares rápidos, com as cores temáticas e ícones correspondentes:
+          </p>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 text-center">
+              <span class="text-2xl block mb-1">🔧</span>
+              <h4 class="font-bold text-orange-400 text-xs">Oficina Geral</h4>
+              <p class="text-[10px] text-slate-400 mt-1">Fundo Azul/Slate. Ícone de chave combinada. Indica reparação geral.</p>
+            </div>
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 text-center">
+              <span class="text-2xl block mb-1">⭕</span>
+              <h4 class="font-bold text-emerald-400 text-xs">Borracharia / Pneus</h4>
+              <p class="text-[10px] text-slate-400 mt-1">Fundo Verde/Emerald. Ícone de pneu (círculos). Foco em furos e alinhamento.</p>
+            </div>
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 text-center">
+              <span class="text-2xl block mb-1">🚚</span>
+              <h4 class="font-bold text-indigo-400 text-xs">Guincho / Reboque</h4>
+              <p class="text-[10px] text-slate-400 mt-1">Fundo Laranja/Amber. Ícone de mini-reboque/grua. Foco em emergência.</p>
+            </div>
+          </div>
+
+          <div class="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4">
+            <h4 class="font-bold text-orange-300 text-xs mb-2">Cálculo de Aberto / Fechado em Tempo Real</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              No Popup do mapa ou nos cards de resultado, uma função utilitária em JS resolverá o estado instantâneo do negócio com base na hora e dia da máquina do cliente, mostrando:
+              <br>• <span class="text-emerald-400 font-bold">● Aberto Agora</span> (se dentro do horário)
+              <br>• <span class="text-red-400 font-bold">● Fechado</span> (se fora ou marcado como fechado)
+              <br>• <span class="text-orange-400 font-bold">🚨 24 Horas / Emergência</span> (se a flag <code>is24h</code> estiver ativa)
+            </p>
+          </div>
+        </section>
+
+        <!-- 04 - Escopo de Ficheiros -->
+        <section class="glass rounded-2xl p-6 sm:p-8">
+          <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+            <span class="text-orange-400 font-extrabold">04.</span> Escopo de Modificações do Código
+          </h2>
+          <div class="space-y-4 text-xs text-slate-300">
+            <div>
+              <h3 class="font-bold text-orange-400 text-base mb-1">[NEW] Ficheiros a Criar</h3>
+              <ul class="list-disc list-inside space-y-1 text-slate-400">
+                <li><code>src/components/ui/MapServicos.tsx</code>: Componente Leaflet multi-marker que recebe a lista filtrada de serviços e desenha os pins com base em <code>serviceType</code> e horário.</li>
+                <li><code>src/hooks/useServicos.ts</code>: Hook generalizado para ler a coleção <code>services</code> e expor os filtros por tipo de serviço e país de forma separada ou unificada.</li>
+                <li><code>app/guinchos/page.tsx</code>, <code>app/borracharias/page.tsx</code>: Ecrãs de SEO estáticos no Next.js que importam a tela unificada de pesquisa pré-filtrada.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 class="font-bold text-orange-400 text-base mb-1">[MODIFY] Ficheiros a Modificar</h3>
+              <ul class="list-disc list-inside space-y-1 text-slate-400">
+                <li><code>src/lib/terms.ts</code>: Inserir traduções de vulcanizador, borracheiro, reboque, guincho, aberto, fechado.</li>
+                <li><code>src/screens/RegistarOficina.tsx</code>: Integrar campos de seleção do tipo de serviço, check 24h e inputs estruturados de horas de funcionamento por dia da semana.</li>
+                <li><code>src/screens/Oficinas.tsx</code>: Renomear ou estender para <code>ServicosDiretorio.tsx</code>, contendo o switch [Lista / Mapa] e filtros por categorias de serviço (oficina, guincho, borracheiro).</li>
+                <li><code>src/components/ui/MapViewer.tsx</code>: Modificar para renderizar o ícone do pin apropriado em vez do marcador azul padrão do Leaflet no ecrã de detalhes.</li>
+                <li><code>src/screens/Admin.tsx</code>: Distinguir a fila de moderação de estabelecimentos por tipo de serviço.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Right sidebar -->
+      <div class="space-y-8">
+
+        <!-- Localização -->
+        <section class="glass rounded-2xl p-6 glow-brand relative overflow-hidden">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🇧🇷 vs 🇵🇹 Termos e Filtros</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-2 list-none">
+            <li>• <strong>Portugal (PT-PT):</strong> Exibirá "Oficinas Mecânicas", "Vulcanizadores / Pneus" e "Reboques". Filtros usam Distritos e Concelhos.</li>
+            <li>• <strong>Brasil (PT-BR):</strong> Exibirá "Oficinas Mecânicas", "Borracharias" e "Guinchos". Filtros usam Estados, Cidades e Bairros.</li>
+          </ul>
+        </section>
+
+        <!-- Riscos e Solução -->
+        <section class="glass rounded-2xl p-6 bg-amber-500/5 border-amber-500/20">
+          <h3 class="text-amber-500 font-bold text-base flex items-center gap-2 mb-2">⚠️ Riscos &amp; Resoluções</h3>
+          <ul class="text-xs text-slate-400 leading-relaxed space-y-3">
+            <li>
+              <strong class="text-slate-300">Compatibilidade de Ficheiros Antigos:</strong>
+              <p class="mt-1">Serviços registados anteriormente não possuem <code>serviceType</code> nem <code>workingHours</code>. A leitura no frontend tratará <code>undefined</code> definindo <code>serviceType: 'workshop'</code> e <code>is24h: false</code> automaticamente.</p>
+            </li>
+            <li>
+              <strong class="text-slate-300">Fusos Horários das Máquinas:</strong>
+              <p class="mt-1">A verificação de "Aberto Agora" é feita com base no horário do computador do utilizador. Como o site é isolado regionalmente por país, não haverá conflitos significativos de fuso horário.</p>
+            </li>
+          </ul>
+        </section>
+
+        <!-- Sequência de Desenvolvimento -->
+        <section class="glass rounded-2xl p-6">
+          <h3 class="text-white font-bold text-base flex items-center gap-2 mb-3">🚀 Sequência sugerida</h3>
+          <ol class="text-xs text-slate-400 space-y-3 list-decimal list-inside">
+            <li>Inserir enums e termos traduzidos em `oficina.ts` e `terms.ts`.</li>
+            <li>Adicionar UI de Horário de Funcionamento e Seletor de Tipo no formulário de registo.</li>
+            <li>Implementar o utilitário de cálculo de estado de funcionamento ("Aberto agora" / "Fechado" / "24h").</li>
+            <li>Criar o componente de mapa Leaflet (`MapServicos.tsx`) com os 3 SVGs customizados como divIcons.</li>
+            <li>Integrar o interruptor de visualização (Lista / Mapa) na página de pesquisa.</li>
+            <li>Atualizar moderação administrativa e efetuar testes.</li>
+          </ol>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-12 text-center text-xs text-slate-500 border-t border-slate-900 pt-6">
+      RecarGarage © 2026 • Plano 28 — Diretório de Serviços com Mapa, Guinchos/Reboques e Borracharias
+    </footer>
+  </div>
+</body>
+</html>

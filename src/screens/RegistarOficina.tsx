@@ -3,13 +3,53 @@
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
+import { CheckCircle, ArrowLeft, Wrench } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
+
+const TireIcon = ({ size = 20, active = false }: { size?: number, active?: boolean }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ width: size, height: size }} className="text-current" fill="none" stroke="currentColor" strokeWidth={active ? "2" : "1.5"} strokeLinecap="round">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={active ? "2.2" : "1.8"} strokeDasharray="1.5,2.5" />
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1" />
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    <line x1="12" y1="6" x2="12" y2="8" strokeWidth="1" />
+    <line x1="12" y1="16" x2="12" y2="18" strokeWidth="1" />
+    <line x1="6" y1="12" x2="8" y2="12" strokeWidth="1" />
+    <line x1="16" y1="12" x2="18" y2="12" strokeWidth="1" />
+  </svg>
+);
+
+const TowTruckIcon = ({ size = 20, active = false }: { size?: number, active?: boolean }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ width: size, height: size }} className="text-current" fill="none" stroke="currentColor" strokeWidth={active ? "2" : "1.5"} strokeLinecap="round" strokeLinejoin="round">
+    {/* Tow Truck Cab */}
+    <path d="M 2 11 L 5 11 L 7 13 L 7 17 L 2 17 Z" fill="currentColor" />
+    <path d="M 7 15 L 13 15 L 13 17 L 7 17 Z" fill="currentColor" />
+    {/* Windows */}
+    <path d="M 3.5 12 L 5 12 L 6 13.5 L 3.5 13.5 Z" fill="#ffffff" />
+    {/* Wheels of Truck */}
+    <circle cx="4.5" cy="17.5" r="1.5" fill="currentColor" />
+    <circle cx="10.5" cy="17.5" r="1.5" fill="currentColor" />
+
+    {/* Towing Crane Boom */}
+    <line x1="8" y1="15" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" />
+    {/* Cable */}
+    <line x1="15" y1="8" x2="15" y2="11" stroke="currentColor" strokeWidth="1" />
+
+    {/* Tilted Towed Car */}
+    <g transform="translate(15, 11) rotate(-15) translate(-15, -11)">
+      {/* Car Body */}
+      <path d="M 15 11 L 17 9 L 20 9 L 21.5 11 L 23 11 L 23 14 L 15 14 Z" fill="currentColor" />
+      {/* Car Wheels */}
+      <circle cx="17.5" cy="14" r="1.2" fill="currentColor" />
+      <circle cx="21" cy="14" r="1.2" fill="currentColor" />
+    </g>
+  </svg>
+);
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
 import { useAdDraft } from '@/hooks/useAdDraft';
-import { ESPECIALIDADES_LABELS, EspecialidadeOficina } from '@/types/oficina';
+import { ESPECIALIDADES_LABELS, EspecialidadeOficina, ServiceType } from '@/types/oficina';
 import { isValidYoutubeUrl } from '@/lib/utils';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { useCountry } from '@/providers/CountryProvider';
@@ -36,6 +76,19 @@ export interface OficinaFormDraft {
   especialidades: EspecialidadeOficina[];
   logoUrl: string;
   videoUrl: string;
+  serviceType: 'workshop' | 'towing' | 'tire_repair';
+  is24h: boolean;
+  horarioTexto: string;
+  segOpen: string;
+  segClose: string;
+  segClosed: boolean;
+  sabOpen: string;
+  sabClose: string;
+  sabClosed: boolean;
+  domOpen: string;
+  domClose: string;
+  domClosed: boolean;
+  towingCapabilities: string[];
 }
 
 // Dynamically import MapSelector to prevent SSR/window errors
@@ -77,6 +130,21 @@ export default function RegistarOficina() {
   const [logoUrl, setLogoUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
+  // Added service settings
+  const [serviceType, setServiceType] = useState<'workshop' | 'towing' | 'tire_repair'>('workshop');
+  const [is24h, setIs24h] = useState(false);
+  const [horarioTexto, setHorarioTexto] = useState('');
+  const [segOpen, setSegOpen] = useState('08:00');
+  const [segClose, setSegClose] = useState('18:00');
+  const [segClosed, setSegClosed] = useState(false);
+  const [sabOpen, setSabOpen] = useState('08:00');
+  const [sabClose, setSabClose] = useState('13:00');
+  const [sabClosed, setSabClosed] = useState(true);
+  const [domOpen, setDomOpen] = useState('08:00');
+  const [domClose, setDomClose] = useState('13:00');
+  const [domClosed, setDomClosed] = useState(true);
+  const [towingCapabilities, setTowingCapabilities] = useState<string[]>(['light']);
+
   // Remounts the map when a draft restores saved coordinates.
   const [mapKey, setMapKey] = useState(0);
 
@@ -84,9 +152,13 @@ export default function RegistarOficina() {
     () => ({
       nome, descricao, responsavel, telefone, whatsapp, email, website,
       distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl,
+      serviceType, is24h, horarioTexto, segOpen, segClose, segClosed,
+      sabOpen, sabClose, sabClosed, domOpen, domClose, domClosed, towingCapabilities
     }),
     [nome, descricao, responsavel, telefone, whatsapp, email, website,
-     distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl],
+     distrito, localidade, bairro, morada, coordenadas, especialidades, logoUrl, videoUrl,
+     serviceType, is24h, horarioTexto, segOpen, segClose, segClosed,
+     sabOpen, sabClose, sabClosed, domOpen, domClose, domClosed, towingCapabilities],
   );
 
   const applyDraft = (d: OficinaFormDraft) => {
@@ -108,6 +180,19 @@ export default function RegistarOficina() {
     setEspecialidades(d.especialidades ?? []);
     setLogoUrl(d.logoUrl ?? '');
     setVideoUrl(d.videoUrl ?? '');
+    setServiceType(d.serviceType ?? 'workshop');
+    setIs24h(d.is24h ?? false);
+    setHorarioTexto(d.horarioTexto ?? '');
+    setSegOpen(d.segOpen ?? '08:00');
+    setSegClose(d.segClose ?? '18:00');
+    setSegClosed(d.segClosed ?? false);
+    setSabOpen(d.sabOpen ?? '08:00');
+    setSabClose(d.sabClose ?? '13:00');
+    setSabClosed(d.sabClosed ?? true);
+    setDomOpen(d.domOpen ?? '08:00');
+    setDomClose(d.domClose ?? '13:00');
+    setDomClosed(d.domClosed ?? true);
+    setTowingCapabilities(d.towingCapabilities ?? ['light']);
   };
 
   const workshopDraft = useAdDraft<OficinaFormDraft>({
@@ -154,9 +239,28 @@ export default function RegistarOficina() {
     setLoading(true);
 
     try {
+      const workingHours = {
+        is24h,
+        customText: horarioTexto.trim() || null,
+        schedule: is24h ? null : {
+          seg: { closed: segClosed, openTime: segClosed ? null : segOpen, closeTime: segClosed ? null : segClose },
+          ter: { closed: segClosed, openTime: segClosed ? null : segOpen, closeTime: segClosed ? null : segClose },
+          qua: { closed: segClosed, openTime: segClosed ? null : segOpen, closeTime: segClosed ? null : segClose },
+          qui: { closed: segClosed, openTime: segClosed ? null : segOpen, closeTime: segClosed ? null : segClose },
+          sex: { closed: segClosed, openTime: segClosed ? null : segOpen, closeTime: segClosed ? null : segClose },
+          sab: { closed: sabClosed, openTime: sabClosed ? null : sabOpen, closeTime: sabClosed ? null : sabClose },
+          dom: { closed: domClosed, openTime: domClosed ? null : domOpen, closeTime: domClosed ? null : domClose },
+        }
+      };
+
+      const towingDetails = serviceType === 'towing' ? {
+        capabilities: towingCapabilities
+      } : null;
+
       const novaOficina = await addOficina({
         criador: user.email,
         criadorUid: user.uid,
+        serviceType,
         nome,
         descricao,
         responsavel,
@@ -172,6 +276,8 @@ export default function RegistarOficina() {
         especialidades,
         logoUrl: logoUrl || null,
         videoUrl: videoUrl.trim() || null,
+        workingHours,
+        towingDetails,
         mediaAvaliacoes: 5.0,
         totalAvaliacoes: 0,
       });
@@ -183,16 +289,17 @@ export default function RegistarOficina() {
 
       clearAdDraft('oficina');
       setPublicado(true);
-      toast?.sucesso('Oficina registada com sucesso! A aguardar aprovação.');
+      toast?.sucesso('Serviço registado com sucesso! A aguardar aprovação.');
 
       // Notify admins
       const admins = await getAdminUsers();
+      const serviceTypeName = serviceType === 'towing' ? (country === 'BR' ? 'guincho' : 'reboque') : serviceType === 'tire_repair' ? (country === 'BR' ? 'borracharia' : 'vulcanizador') : 'oficina';
       admins.forEach((admin) => {
         criarNotificacao(
           admin.uid,
           'info',
-          'Nova oficina registada',
-          `A oficina "${nome}" foi registada e necessita de aprovação.`,
+          'Novo serviço registado',
+          `O serviço "${nome}" (${serviceTypeName}) foi registado e necessita de aprovação.`,
           `/admin`
         );
       });
@@ -204,21 +311,45 @@ export default function RegistarOficina() {
     }
   };
 
+  const getSuccessTitle = () => {
+    if (serviceType === 'towing') return country === 'BR' ? 'Guincho Registado!' : 'Reboque Registado!';
+    if (serviceType === 'tire_repair') return country === 'BR' ? 'Borracharia Registada!' : 'Vulcanizador Registado!';
+    return 'Oficina Registada!';
+  };
+
+  const getSuccessDesc = () => {
+    if (serviceType === 'towing') return country === 'BR' ? 'Obrigado por registar o seu serviço de guincho.' : 'Obrigado por registar o seu serviço de reboque.';
+    if (serviceType === 'tire_repair') return country === 'BR' ? 'Obrigado por registar a sua borracharia.' : 'Obrigado por registar o seu vulcanizador.';
+    return 'Obrigado por registar a sua oficina.';
+  };
+
+  const getDirectoryName = () => {
+    if (serviceType === 'towing') return country === 'BR' ? 'diretório de Guinchos' : 'diretório de Reboques';
+    if (serviceType === 'tire_repair') return country === 'BR' ? 'diretório de Borracharias' : 'diretório de Vulcanizadores';
+    return 'diretório de Oficinas & Mecânicos';
+  };
+
+  const getRedirectPath = () => {
+    if (serviceType === 'towing') return '/guinchos';
+    if (serviceType === 'tire_repair') return '/borracharias';
+    return '/oficinas';
+  };
+
   if (publicado) {
     return (
       <div className="max-w-2xl mx-auto bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10 page-enter text-center">
         <CheckCircle className="text-green-500 text-6xl mx-auto mb-4" />
-        <h3 className="text-2xl font-black text-fg-strong">Oficina Registada!</h3>
+        <h3 className="text-2xl font-black text-fg-strong">{getSuccessTitle()}</h3>
         <p className="text-fg-subtle text-sm mt-3 leading-relaxed max-w-md mx-auto">
-          Obrigado por registar a sua oficina. O seu perfil foi enviado para revisão e está <strong>pendente de aprovação</strong> pela administração.
+          {getSuccessDesc()} O seu perfil foi enviado para revisão e está <strong>pendente de aprovação</strong> pela administração.
         </p>
         <p className="text-fg-subtle text-xs mt-2">
-          Assim que for aprovada, ficará visível publicamente no diretório de Oficinas & Mecânicos.
+          Assim que for aprovada, ficará visível publicamente no {getDirectoryName()}.
         </p>
         <div className="mt-8 flex gap-3 justify-center">
           <Button
             tipo="primario"
-            onClick={() => router.push('/oficinas')}
+            onClick={() => router.push(getRedirectPath())}
           >
             Ir para o Diretório
           </Button>
@@ -258,10 +389,67 @@ export default function RegistarOficina() {
       </button>
 
       <div className="bg-white border border-neutral-200 rounded-3xl shadow-xl p-6 sm:p-10">
-        <h2 className="text-2xl font-black text-fg-strong tracking-tight">Registar Oficina / Mecânico</h2>
-        <p className="text-fg-subtle text-sm mt-1">Crie o seu perfil profissional focado no mundo automóvel.</p>
+        <h2 className="text-2xl font-black text-fg-strong tracking-tight">
+          {serviceType === 'towing'
+            ? (country === 'BR' ? 'Registar Guincho' : 'Registar Reboque')
+            : serviceType === 'tire_repair'
+            ? (country === 'BR' ? 'Registar Borracharia' : 'Registar Vulcanizador')
+            : 'Registar Oficina / Mecânico'}
+        </h2>
+        <p className="text-fg-subtle text-sm mt-1">
+          {serviceType === 'towing'
+            ? 'Registe o seu serviço de reboque e pronto-socorro para automóveis.'
+            : serviceType === 'tire_repair'
+            ? 'Registe a sua borracharia ou oficina de pneus.'
+            : 'Crie o seu perfil profissional focado no mundo automóvel.'}
+        </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+          {/* Service Type Selection */}
+          <div className="space-y-3">
+            <label className="block text-xs font-bold text-fg-subtle uppercase tracking-wider">
+              {term('selectServiceType', country)} <span className="text-danger-500">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => setServiceType('workshop')}
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                  serviceType === 'workshop'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                }`}
+              >
+                <Wrench size={16} weight="bold" />
+                <span>{country === 'BR' ? 'Oficina Mecânica' : 'Oficina Mecânica'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setServiceType('tire_repair')}
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                  serviceType === 'tire_repair'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                }`}
+              >
+                <TireIcon size={16} active={serviceType === 'tire_repair'} />
+                <span>{country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setServiceType('towing')}
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                  serviceType === 'towing'
+                    ? 'border-accent bg-accent/5 text-accent border-2'
+                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                }`}
+              >
+                <TowTruckIcon size={18} active={serviceType === 'towing'} />
+                <span>{country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}</span>
+              </button>
+            </div>
+          </div>
+
           {/* General Information */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
@@ -341,35 +529,79 @@ export default function RegistarOficina() {
             </div>
           </div>
 
-          {/* Specialties */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
-              Especialidades Automóveis <span className="text-danger-500">*</span>
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {Object.entries(ESPECIALIDADES_LABELS).map(([value, label]) => {
-                const esp = value as EspecialidadeOficina;
-                const isSelected = especialidades.includes(esp);
-                return (
-                  <button
-                    key={esp}
-                    type="button"
-                    onClick={() => handleToggleEspecialidade(esp)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left font-medium transition cursor-pointer ${
-                      isSelected
-                        ? 'border-accent bg-accent/5 text-accent'
-                        : 'border-neutral-200 hover:border-neutral-400 text-fg-strong'
-                    }`}
-                  >
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-accent bg-accent' : 'border-neutral-300'}`}>
-                      {isSelected && <span className="text-[10px] text-white">✓</span>}
-                    </div>
-                    {label}
-                  </button>
-                );
-              })}
+          {/* Specialties / Towing Capabilities */}
+          {serviceType === 'towing' ? (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
+                Tipos de Veículos Suportados <span className="text-danger-500">*</span>
+              </h3>
+              <p className="text-xs text-fg-subtle">Selecione quais os tipos de veículos que o seu guincho/reboque tem capacidade para transportar.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { value: 'light', label: country === 'BR' ? 'Veículos Leves (Passeio)' : 'Veículos Ligeiros' },
+                  { value: 'heavy', label: 'Veículos Pesados (Carga)' },
+                  { value: 'motorcycle', label: country === 'BR' ? 'Motocicletas / Motos' : 'Motociclos / Motos' },
+                  { value: 'classic', label: 'Veículos Clássicos (Plataforma Fechada)' },
+                  { value: 'agricultural', label: 'Veículos Agrícolas / Especiais' },
+                ].map((cap) => {
+                  const isSelected = towingCapabilities.includes(cap.value);
+                  const handleToggleCap = () => {
+                    if (isSelected) {
+                      setTowingCapabilities(towingCapabilities.filter((c) => c !== cap.value));
+                    } else {
+                      setTowingCapabilities([...towingCapabilities, cap.value]);
+                    }
+                  };
+                  return (
+                    <button
+                      key={cap.value}
+                      type="button"
+                      onClick={handleToggleCap}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left font-medium transition cursor-pointer ${
+                        isSelected
+                          ? 'border-accent bg-accent/5 text-accent border-2'
+                          : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-accent bg-accent' : 'border-neutral-300 bg-white'}`}>
+                        {isSelected && <span className="text-[10px] text-white">✓</span>}
+                      </div>
+                      {cap.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
+                Especialidades Automóveis <span className="text-danger-500">*</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {Object.entries(ESPECIALIDADES_LABELS).map(([value, label]) => {
+                  const esp = value as EspecialidadeOficina;
+                  const isSelected = especialidades.includes(esp);
+                  return (
+                    <button
+                      key={esp}
+                      type="button"
+                      onClick={() => handleToggleEspecialidade(esp)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm text-left font-medium transition cursor-pointer ${
+                        isSelected
+                          ? 'border-accent bg-accent/5 text-accent border-2'
+                          : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                      }`}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'border-accent bg-accent' : 'border-neutral-300 bg-white'}`}>
+                        {isSelected && <span className="text-[10px] text-white">✓</span>}
+                      </div>
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Contact Details */}
           <div className="space-y-4">
@@ -431,6 +663,145 @@ export default function RegistarOficina() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Operating Hours */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-fg-subtle uppercase tracking-wider border-b border-neutral-100 pb-2">
+              Horário de Funcionamento
+            </h3>
+            
+            <div className="flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-xl p-4">
+              <input
+                type="checkbox"
+                id="is24h"
+                checked={is24h}
+                onChange={(e) => setIs24h(e.target.checked)}
+                className="w-4 h-4 text-accent border-neutral-300 rounded focus:ring-accent"
+              />
+              <label htmlFor="is24h" className="text-sm font-bold text-fg-strong cursor-pointer select-none">
+                🚨 {country === 'BR' ? 'Serviço de Emergência 24 Horas (Disponibilidade Total)' : 'Serviço de Emergência 24 Horas'}
+              </label>
+            </div>
+
+            {!is24h && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Horário de Segunda a Sexta */}
+                  <div className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-fg">Segunda a Sexta-feira</span>
+                      <label className="flex items-center gap-1.5 text-xs text-fg-subtle cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={segClosed}
+                          onChange={(e) => setSegClosed(e.target.checked)}
+                          className="rounded border-neutral-300 text-accent focus:ring-accent"
+                        />
+                        Fechado
+                      </label>
+                    </div>
+                    {!segClosed && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={segOpen}
+                          onChange={(e) => setSegOpen(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                        <span className="text-xs text-neutral-400">às</span>
+                        <input
+                          type="time"
+                          value={segClose}
+                          onChange={(e) => setSegClose(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Horário de Sábado */}
+                  <div className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-fg">Sábado</span>
+                      <label className="flex items-center gap-1.5 text-xs text-fg-subtle cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={sabClosed}
+                          onChange={(e) => setSabClosed(e.target.checked)}
+                          className="rounded border-neutral-300 text-accent focus:ring-accent"
+                        />
+                        Fechado
+                      </label>
+                    </div>
+                    {!sabClosed && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={sabOpen}
+                          onChange={(e) => setSabOpen(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                        <span className="text-xs text-neutral-400">às</span>
+                        <input
+                          type="time"
+                          value={sabClose}
+                          onChange={(e) => setSabClose(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Horário de Domingo */}
+                  <div className="bg-white border border-neutral-200 rounded-xl p-4 space-y-3 sm:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-fg">Domingo</span>
+                      <label className="flex items-center gap-1.5 text-xs text-fg-subtle cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={domClosed}
+                          onChange={(e) => setDomClosed(e.target.checked)}
+                          className="rounded border-neutral-300 text-accent focus:ring-accent"
+                        />
+                        Fechado
+                      </label>
+                    </div>
+                    {!domClosed && (
+                      <div className="flex items-center gap-2 max-w-sm">
+                        <input
+                          type="time"
+                          value={domOpen}
+                          onChange={(e) => setDomOpen(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                        <span className="text-xs text-neutral-400">às</span>
+                        <input
+                          type="time"
+                          value={domClose}
+                          onChange={(e) => setDomClose(e.target.value)}
+                          className="bg-white border border-neutral-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Horário Texto Adicional */}
+                <div>
+                  <label className="block text-xs font-bold text-fg mb-1.5">
+                    Observações de Horário (Opcional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Fechado para almoço das 12h às 13:30h"
+                    value={horarioTexto}
+                    onChange={(e) => setHorarioTexto(e.target.value)}
+                    className="w-full bg-white border border-neutral-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-accent"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Localization */}
@@ -506,7 +877,11 @@ export default function RegistarOficina() {
               carregando={loading}
               className="w-full justify-center py-3.5 font-bold shadow-lg"
             >
-              Registar Oficina
+              {serviceType === 'towing'
+                ? (country === 'BR' ? 'Registar Guincho' : 'Registar Reboque')
+                : serviceType === 'tire_repair'
+                ? (country === 'BR' ? 'Registar Borracharia' : 'Registar Vulcanizador')
+                : 'Registar Oficina'}
             </Button>
           </div>
         </form>
@@ -514,7 +889,13 @@ export default function RegistarOficina() {
 
       {workshopDraft.prompt && (
         <DraftResumePrompt
-          itemLabel="um registo de oficina"
+          itemLabel={
+            serviceType === 'towing'
+              ? (country === 'BR' ? 'um registo de guincho' : 'um registo de reboque')
+              : serviceType === 'tire_repair'
+              ? (country === 'BR' ? 'um registo de borracharia' : 'um registo de vulcanizador')
+              : 'um registo de oficina'
+          }
           savedAt={workshopDraft.prompt.savedAt}
           onDiscard={workshopDraft.discard}
           onResume={workshopDraft.resume}
