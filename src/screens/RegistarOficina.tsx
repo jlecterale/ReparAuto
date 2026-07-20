@@ -20,8 +20,29 @@ const TireIcon = ({ size = 20, active = false }: { size?: number, active?: boole
 );
 
 const TowTruckIcon = ({ size = 20, active = false }: { size?: number, active?: boolean }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" style={{ width: size, height: size }} className="text-current" fill="currentColor">
-    <path d="M240,112H216v-8a16,16,0,0,0-16-16H152a8,8,0,0,0-8,8v16H40a16,16,0,0,0-16,16v56a16,16,0,0,0,16,16H52.4a28,28,0,0,0,55.2,0h40.8a28,28,0,0,0,55.2,0H240a16,16,0,0,0,16-16V128A16,16,0,0,0,240,112ZM160,104h40v40H160ZM80,212a12,12,0,1,1,12-12A12,12,0,0,1,80,212Zm96,0a12,12,0,1,1,12-12A12,12,0,0,1,176,212Zm64-28H217.6a27.8,27.8,0,0,0-5.2-12h-84.8v-56h64v16a8,8,0,0,0,8,8h40Z" />
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ width: size, height: size }} className="text-current" fill="none" stroke="currentColor" strokeWidth={active ? "2" : "1.5"} strokeLinecap="round" strokeLinejoin="round">
+    {/* Tow Truck Cab */}
+    <path d="M 2 11 L 5 11 L 7 13 L 7 17 L 2 17 Z" fill="currentColor" />
+    <path d="M 7 15 L 13 15 L 13 17 L 7 17 Z" fill="currentColor" />
+    {/* Windows */}
+    <path d="M 3.5 12 L 5 12 L 6 13.5 L 3.5 13.5 Z" fill="#ffffff" />
+    {/* Wheels of Truck */}
+    <circle cx="4.5" cy="17.5" r="1.5" fill="currentColor" />
+    <circle cx="10.5" cy="17.5" r="1.5" fill="currentColor" />
+
+    {/* Towing Crane Boom */}
+    <line x1="8" y1="15" x2="15" y2="8" stroke="currentColor" strokeWidth="1.5" />
+    {/* Cable */}
+    <line x1="15" y1="8" x2="15" y2="11" stroke="currentColor" strokeWidth="1" />
+
+    {/* Tilted Towed Car */}
+    <g transform="translate(15, 11) rotate(-15) translate(-15, -11)">
+      {/* Car Body */}
+      <path d="M 15 11 L 17 9 L 20 9 L 21.5 11 L 23 11 L 23 14 L 15 14 Z" fill="currentColor" />
+      {/* Car Wheels */}
+      <circle cx="17.5" cy="14" r="1.2" fill="currentColor" />
+      <circle cx="21" cy="14" r="1.2" fill="currentColor" />
+    </g>
   </svg>
 );
 import { useToast } from '@/components/ui/Toast';
