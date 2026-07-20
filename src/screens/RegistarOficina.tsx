@@ -3,8 +3,21 @@
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { CheckCircle, ArrowLeft } from '@phosphor-icons/react';
+import { CheckCircle, ArrowLeft, Wrench, Truck } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
+
+const TireIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4 text-current" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+    <circle cx="12" cy="12" r="10.5" stroke="currentColor" strokeWidth="1.2" strokeDasharray="1.5,2.5" />
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1" />
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    <line x1="12" y1="7" x2="12" y2="10" strokeWidth="1" />
+    <line x1="12" y1="14" x2="12" y2="17" stroke-width="1" />
+    <line x1="7" y1="12" x2="10" y2="12" stroke-width="1" />
+    <line x1="14" y1="12" x2="17" y2="12" stroke-width="1" />
+  </svg>
+);
 import { useToast } from '@/components/ui/Toast';
 import { addOficina, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { clearAdDraft, hasWorkshopDraftContent } from '@/lib/adDraft';
@@ -374,35 +387,38 @@ export default function RegistarOficina() {
               <button
                 type="button"
                 onClick={() => setServiceType('workshop')}
-                className={`px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'workshop'
                     ? 'border-accent bg-accent/5 text-accent border-2'
                     : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                🔧 {country === 'BR' ? 'Oficina Mecânica' : 'Oficina Mecânica'}
+                <Wrench size={16} weight="bold" />
+                <span>{country === 'BR' ? 'Oficina Mecânica' : 'Oficina Mecânica'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setServiceType('tire_repair')}
-                className={`px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'tire_repair'
                     ? 'border-accent bg-accent/5 text-accent border-2'
                     : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                🛞 {country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}
+                <TireIcon />
+                <span>{country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}</span>
               </button>
               <button
                 type="button"
                 onClick={() => setServiceType('towing')}
-                className={`px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
                   serviceType === 'towing'
                     ? 'border-accent bg-accent/5 text-accent border-2'
                     : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
                 }`}
               >
-                🚚 {country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}
+                <Truck size={18} weight="bold" />
+                <span>{country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}</span>
               </button>
             </div>
           </div>
