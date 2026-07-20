@@ -1520,13 +1520,15 @@ export async function getOficinaPorId(id: string): Promise<OficinaMecanico | nul
 
 export async function addOficina(dados: Record<string, unknown>): Promise<OficinaMecanico> {
   try {
+    const serviceType = dados.serviceType || 'workshop';
     const docRef = await addDoc(collection(db, OFICINAS_COLLECTION), {
       country: getActiveCountry(),
+      serviceType,
       ...dados,
       status: 'pendente',
       dataCriacao: Timestamp.now(),
     });
-    return { id: docRef.id, country: getActiveCountry(), ...dados, status: 'pendente' } as OficinaMecanico;
+    return { id: docRef.id, country: getActiveCountry(), serviceType, ...dados, status: 'pendente' } as OficinaMecanico;
   } catch (err) {
     console.error('[DB] Erro ao adicionar oficina:', err);
     throw err;

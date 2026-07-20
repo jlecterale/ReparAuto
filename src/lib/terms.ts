@@ -32,6 +32,23 @@ const TERMS = {
   municipalityAllOption: { PT: 'Todos os concelhos', BR: 'Todas as cidades' },
   plateLabel: { PT: 'Matrícula', BR: 'Placa' },
   firstRegistrationLabel: { PT: 'Mês da 1ª matrícula', BR: 'Mês do 1º emplacamento' },
+  towingLabel: { PT: 'Reboques', BR: 'Guinchos' },
+  towingTitle: { PT: 'Reboques & Auto-Socorro', BR: 'Guinchos & Auto-Socorro' },
+  towingDescription: { PT: 'Encontre profissionais de reboque e pronto-socorro rápidos em Portugal.', BR: 'Encontre serviços de guincho e auto-socorro rápidos no Brasil.' },
+  towingRegisterButton: { PT: 'Registar Meu Reboque', BR: 'Registar Meu Guincho' },
+  tireLabel: { PT: 'Vulcanizadores / Pneus', BR: 'Borracharias' },
+  tireTitle: { PT: 'Vulcanizadores & Pneus', BR: 'Borracharias & Borracheiros' },
+  tireDescription: { PT: 'Encontre oficinas de pneus e vulcanizadores perto de si.', BR: 'Encontre borracharias e borracheiros perto de você.' },
+  tireRegisterButton: { PT: 'Registar Meu Vulcanizador', BR: 'Registar Minha Borracharia' },
+  workshopLabel: { PT: 'Oficinas Mecânicas', BR: 'Oficinas Mecânicas' },
+  workshopTitle: { PT: 'Oficinas & Mecânicos', BR: 'Oficinas & Mecânicos' },
+  workshopDescription: { PT: 'Encontre mecânicos e oficinas para o seu carro em Portugal.', BR: 'Encontre mecânicos e oficinas para o seu carro no Brasil.' },
+  workshopRegisterButton: { PT: 'Registar Minha Oficina', BR: 'Registar Minha Oficina' },
+  openNow: { PT: 'Aberto agora', BR: 'Aberto agora' },
+  closed: { PT: 'Fechado', BR: 'Fechado' },
+  emergency24h: { PT: '24 Horas / Emergência', BR: '24 Horas / Emergência' },
+  towingEmergency: { PT: 'Serviço 24 Horas', BR: 'Serviço 24 Horas' },
+  selectServiceType: { PT: 'Tipo de Serviço', BR: 'Tipo de Serviço' },
 } satisfies Record<string, Record<Country, string>>;
 
 export type TermKey = keyof typeof TERMS;

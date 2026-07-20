@@ -16,12 +16,15 @@ import {
   ChatCircleDots,
   SignIn,
   PencilSimpleLine,
-  Trash
+  Trash,
+  Truck,
+  Disc
 } from '@phosphor-icons/react';
 import { getOficinaPorId, addReview, subscribeReviewsOficina, deleteOficina, updateOficina, incrementCampo, recordDailyMetric } from '@/lib/db';
 import YoutubeEmbed from '@/components/ui/YoutubeEmbed';
 import type { OficinaMecanico } from '@/types/oficina';
 import { ESPECIALIDADES_LABELS } from '@/types/oficina';
+import { getStatusFuncionamento } from '@/lib/hours';
 import type { Review } from '@/types/review';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -262,21 +265,49 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
               )}
             </div>
 
-            {/* Specialties */}
-            <div className="py-6 border-b border-neutral-100">
-              <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">Especialidades do Profissional</h2>
-              <div className="flex flex-wrap gap-2">
-                {oficina.especialidades.map((esp) => (
-                  <Badge key={esp} cor="brand" variante="soft" className="text-xs px-3 py-1 font-semibold">
-                    {ESPECIALIDADES_LABELS[esp]}
-                  </Badge>
-                ))}
+            {/* Specialties / Towing Capabilities */}
+            {oficina.serviceType === 'towing' ? (
+              <div className="py-6 border-b border-neutral-100">
+                <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">Tipos de Veículos Suportados</h2>
+                <div className="flex flex-wrap gap-2">
+                  {(oficina.towingDetails?.capabilities || []).map((cap) => {
+                    const labels: Record<string, string> = {
+                      light: 'Veículos Ligeiros (Passeio)',
+                      heavy: 'Veículos Pesados (Carga)',
+                      motorcycle: 'Motociclos / Motos',
+                      classic: 'Veículos Clássicos (Plataforma Fechada)',
+                      agricultural: 'Veículos Agrícolas / Especiais',
+                    };
+                    return (
+                      <Badge key={cap} cor="yellow" variante="soft" className="text-xs px-3 py-1.5 font-bold uppercase tracking-wider">
+                        🚚 {labels[cap] || cap}
+                      </Badge>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="py-6 border-b border-neutral-100">
+                <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">Especialidades do Profissional</h2>
+                <div className="flex flex-wrap gap-2">
+                  {oficina.especialidades.map((esp) => (
+                    <Badge key={esp} cor="brand" variante="soft" className="text-xs px-3 py-1 font-semibold">
+                      {ESPECIALIDADES_LABELS[esp]}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div className="py-6">
-              <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">Sobre a Oficina / Serviços</h2>
+              <h2 className="text-sm font-bold text-fg-subtle uppercase tracking-wider mb-3">
+                {oficina.serviceType === 'towing'
+                  ? 'Sobre o Serviço de Reboque'
+                  : oficina.serviceType === 'tire_repair'
+                  ? 'Sobre a Borracharia / Vulcanizador'
+                  : 'Sobre a Oficina / Serviços'}
+              </h2>
               <p className="text-sm sm:text-base text-fg-subtle leading-relaxed whitespace-pre-wrap">
                 {oficina.descricao}
               </p>
@@ -391,19 +422,23 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 {/* Call */}
                 <a
                   href={`tel:${oficina.telefone}`}
-                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition cursor-pointer"
                 >
                   <Phone size={18} weight="fill" className="text-brand-600" />
-                  Ligar para Oficina
+                  {oficina.serviceType === 'towing'
+                    ? (oficina.country === 'BR' ? 'Ligar para Guincho' : 'Ligar para Reboque')
+                    : oficina.serviceType === 'tire_repair'
+                    ? (oficina.country === 'BR' ? 'Ligar para Borracharia' : 'Ligar para Vulcanizador')
+                    : 'Ligar para Oficina'}
                 </a>
 
                 {/* WhatsApp */}
                 {oficina.whatsapp && (
                   <a
-                    href={`https://wa.me/${oficina.whatsapp}`}
+                    href={`https://wa.me/${oficina.whatsapp.replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow-md shadow-green-500/10"
+                    className="flex items-center justify-center gap-3 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition shadow-md shadow-green-500/10 cursor-pointer"
                   >
                     <WhatsappLogo size={20} weight="fill" />
                     Enviar WhatsApp
@@ -413,7 +448,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                 {/* Email */}
                 <a
                   href={`mailto:${oficina.email}`}
-                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                  className="flex items-center justify-center gap-3 w-full bg-neutral-100 hover:bg-neutral-200 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition cursor-pointer"
                 >
                   <EnvelopeSimple size={18} weight="bold" className="text-neutral-500" />
                   Enviar Email
@@ -425,7 +460,7 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
                     href={oficina.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 w-full border border-neutral-300 hover:bg-neutral-50 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition"
+                    className="flex items-center justify-center gap-3 w-full border border-neutral-300 hover:bg-neutral-50 text-fg-strong font-bold py-3.5 px-4 rounded-xl text-sm transition cursor-pointer"
                   >
                     <Globe size={18} />
                     Visitar Website
@@ -435,13 +470,74 @@ export default function DetalhesOficina({ id }: DetalhesOficinaProps) {
             ) : (
               <button
                 onClick={() => loginModal.openLoginModal(currentPath)}
-                className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-4 px-4 rounded-xl transition text-sm"
+                className="flex items-center justify-center gap-2 w-full bg-slate-100 hover:bg-slate-200 text-fg-muted font-semibold py-4 px-4 rounded-xl transition text-sm cursor-pointer"
               >
                 <SignIn />
                 Faça login para ver os contactos
               </button>
             )}
           </div>
+
+          {/* Horários de Funcionamento Card */}
+          {oficina.workingHours && (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-bold text-fg-strong">Horário</h2>
+                {(() => {
+                  const hoursInfo = getStatusFuncionamento(oficina.workingHours);
+                  return (
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${hoursInfo.colorClass}`}>
+                      {hoursInfo.status === '24h' ? '🚨 24H' : hoursInfo.label}
+                    </span>
+                  );
+                })()}
+              </div>
+
+              {oficina.workingHours.is24h ? (
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  Este profissional disponibiliza um serviço de emergência permanente de 24 horas por dia.
+                </p>
+              ) : (
+                <div className="space-y-2 text-xs">
+                  {(() => {
+                    const formatDaySchedule = (dayName: string, dayKey: string) => {
+                      const daySched = (oficina.workingHours?.schedule as any)?.[dayKey];
+                      if (!daySched || daySched.closed) {
+                        return (
+                          <div className="flex justify-between py-1 border-b border-neutral-50 last:border-b-0">
+                            <span className="text-neutral-500">{dayName}</span>
+                            <span className="font-semibold text-red-500">Fechado</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="flex justify-between py-1 border-b border-neutral-50 last:border-b-0">
+                          <span className="text-neutral-500">{dayName}</span>
+                          <span className="font-semibold text-neutral-700">
+                            {daySched.openTime} - {daySched.closeTime}
+                          </span>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <>
+                        {formatDaySchedule('Segunda a Sexta', 'seg')}
+                        {formatDaySchedule('Sábado', 'sab')}
+                        {formatDaySchedule('Domingo', 'dom')}
+                      </>
+                    );
+                  })()}
+
+                  {oficina.workingHours.customText && (
+                    <p className="text-[11px] text-neutral-500 italic mt-2 leading-relaxed">
+                      * {oficina.workingHours.customText}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Details Metadata Card */}
           <div className="bg-white border border-neutral-200 rounded-3xl p-6 shadow-sm">

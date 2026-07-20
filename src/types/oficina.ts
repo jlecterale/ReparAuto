@@ -1,6 +1,28 @@
 import type { Timestamp } from 'firebase/firestore';
 import type { Country } from '@/lib/country';
 
+export type ServiceType = 'workshop' | 'towing' | 'tire_repair';
+
+export interface DailySchedule {
+  closed: boolean;
+  openTime?: string;  // e.g., "08:30"
+  closeTime?: string; // e.g., "19:00"
+}
+
+export interface WorkingHours {
+  is24h: boolean;
+  schedule?: {
+    seg?: DailySchedule;
+    ter?: DailySchedule;
+    qua?: DailySchedule;
+    qui?: DailySchedule;
+    sex?: DailySchedule;
+    sab?: DailySchedule;
+    dom?: DailySchedule;
+  };
+  customText?: string;
+}
+
 export type EspecialidadeOficina =
   | 'mecanica_convencional'
   | 'preparacao'
@@ -28,6 +50,7 @@ export const ESPECIALIDADES_LABELS: Record<EspecialidadeOficina, string> = {
 
 export interface OficinaMecanico {
   id: string;
+  serviceType?: ServiceType; // Defaults to 'workshop' if not set
   criador: string; // Email do criador da oficina
   criadorUid?: string;
   nome: string;
@@ -49,6 +72,10 @@ export interface OficinaMecanico {
     longitude: number;
   };
   especialidades: EspecialidadeOficina[];
+  workingHours?: WorkingHours;
+  towingDetails?: {
+    capabilities: ('light' | 'heavy' | 'motorcycle' | 'classic' | 'agricultural')[];
+  };
   logoUrl?: string;
   videoUrl?: string;
   fotos?: string[];

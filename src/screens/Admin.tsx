@@ -1178,9 +1178,16 @@ export default function Admin() {
                         <p className="text-xs text-fg-muted mt-1">
                           Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
                         </p>
-                        <p className="text-xs text-fg-muted mt-0.5 font-medium">
-                          Especialidades: {oficina.especialidades.map(e => ESPECIALIDADES_LABELS[e]).join(', ')}
-                        </p>
+                        <div className="flex gap-2 items-center mt-1">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-700">
+                            {oficina.serviceType === 'towing' ? 'Guincho/Reboque' : oficina.serviceType === 'tire_repair' ? 'Borracharia/Vulcanizador' : 'Oficina'}
+                          </span>
+                          <span className="text-xs text-fg-muted">
+                            {oficina.serviceType === 'towing' 
+                              ? `Capacidades: ${(oficina.towingDetails?.capabilities || []).join(', ')}` 
+                              : `Especialidades: ${oficina.especialidades.map(e => ESPECIALIDADES_LABELS[e]).join(', ')}`}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {oficina.status === 'pendente' && (
@@ -1292,19 +1299,24 @@ export default function Admin() {
               {subTabPendentes === 'oficinas' && (
                 <div className="bg-white border border-neutral-200 rounded-2xl p-5">
                   <h3 className="text-sm font-extrabold text-fg-heading mb-4 flex items-center gap-2">
-                    <Wrench className="text-blue-700" /> Oficinas & Mecânicos Pendentes
+                    <Wrench className="text-blue-700" /> Serviços Pendentes de Moderação
                   </h3>
                   {oficinasAdmin.filter(o => o.status === 'pendente').length === 0 ? (
-                    <p className="text-xs text-fg-muted">Nenhuma oficina pendente de moderação.</p>
+                    <p className="text-xs text-fg-muted">Nenhum serviço pendente de moderação.</p>
                   ) : (
                     <div className="space-y-4">
                       {oficinasAdmin.filter(o => o.status === 'pendente').map((oficina) => (
                         <div key={oficina.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-neutral-50 border border-neutral-200 rounded-2xl p-4 gap-4">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-fg-strong truncate">{oficina.nome}</p>
-                            <p className="text-xs text-fg-muted mt-1">
-                              Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
-                            </p>
+                            <div className="flex gap-2 items-center mt-1">
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-200 text-neutral-700">
+                                {oficina.serviceType === 'towing' ? 'Guincho/Reboque' : oficina.serviceType === 'tire_repair' ? 'Borracharia/Vulcanizador' : 'Oficina'}
+                              </span>
+                              <span className="text-xs text-fg-muted">
+                                Responsável: {oficina.responsavel} • Contacto: {oficina.telefone} • Criador: {oficina.criador}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             <Button tipo="verde" tamanho="sm" onClick={() => handleApproveOficina(oficina.id)}>Aprovar</Button>

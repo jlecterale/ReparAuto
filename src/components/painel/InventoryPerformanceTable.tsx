@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, ChatCircle, Heart, ArrowsDownUp, Car, GearSix, Warning, Wrench } from '@phosphor-icons/react';
+import { Eye, ChatCircle, Heart, ArrowsDownUp, Car, GearSix, Warning, Wrench, Truck, Disc } from '@phosphor-icons/react';
 import Badge from '@/components/ui/Badge';
 import { formatarPreco } from '@/lib/utils';
 import { docCountry, type Country } from '@/lib/country';
@@ -82,7 +82,11 @@ export default function InventoryPerformanceTable({ carros, pecas, oficinas }: P
       views: o.visualizacoes || 0,
       mensagens: o.contagemMensagens || 0,
       favoritos: o.contagemFavoritos || 0,
-      href: `/oficinas/detalhes/${o.id}`,
+      href: o.serviceType === 'towing' 
+        ? `/guinchos/detalhes/${o.id}` 
+        : o.serviceType === 'tire_repair' 
+        ? `/borracharias/detalhes/${o.id}` 
+        : `/oficinas/detalhes/${o.id}`,
       country: o.country || 'PT',
     }));
     return [...carRows, ...pecaRows, ...oficinaRows].sort((a, b) => b[sortKey] - a[sortKey]);
@@ -140,7 +144,12 @@ export default function InventoryPerformanceTable({ carros, pecas, oficinas }: P
                       ) : r.tipo === 'peca' ? (
                         <GearSix className="text-fg-subtle shrink-0" />
                       ) : (
-                        <Wrench className="text-fg-subtle shrink-0" />
+                        (() => {
+                          const associated = (oficinas || []).find((o) => o.id === r.id);
+                          if (associated?.serviceType === 'towing') return <Truck className="text-fg-subtle shrink-0" />;
+                          if (associated?.serviceType === 'tire_repair') return <Disc className="text-fg-subtle shrink-0" />;
+                          return <Wrench className="text-fg-subtle shrink-0" />;
+                        })()
                       )}
                       <div className="min-w-0">
                         <p className="font-semibold text-fg truncate">{r.titulo}</p>

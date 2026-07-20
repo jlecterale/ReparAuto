@@ -6,7 +6,7 @@ import useAuth from '@/hooks/useAuth';
 import useCarros from '@/hooks/useCarros';
 import usePecas from '@/hooks/usePecas';
 import useFavoritos from '@/hooks/useFavoritos';
-import useOficinas from '@/hooks/useOficinas';
+import useServicos from '@/hooks/useServicos';
 import { useChat } from '@/hooks/useChat';
 import { useIntencoes } from '@/hooks/useIntencoes';
 import LoginModal from '@/components/auth/LoginModal';
@@ -96,10 +96,14 @@ export default function AppProvider({ children }: { children: ReactNode }) {
   // add the route here if a new screen starts reading carros/pecas data.
   const needsCarros = pathname === '/app' || pathname.startsWith('/favoritos');
   const needsPecas = pathname.startsWith('/pecas') || pathname.startsWith('/favoritos');
-  const needsOficinas = pathname.startsWith('/oficinas') || pathname.startsWith('/favoritos');
+  const needsOficinas =
+    pathname.startsWith('/oficinas') ||
+    pathname.startsWith('/guinchos') ||
+    pathname.startsWith('/borracharias') ||
+    pathname.startsWith('/favoritos');
   const carros = useCarros(needsCarros);
   const pecas = usePecas(needsPecas);
-  const oficinas = useOficinas(needsOficinas);
+  const oficinas = useServicos(needsOficinas);
   const requireLoginParaFavorito = useCallback(() => {
     openLoginModal(undefined, {
       modoInicial: 'registar',
