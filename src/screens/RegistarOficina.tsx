@@ -3,19 +3,25 @@
 import { useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { CheckCircle, ArrowLeft, Wrench, Truck } from '@phosphor-icons/react';
+import { CheckCircle, ArrowLeft, Wrench } from '@phosphor-icons/react';
 import { useApp } from '@/providers/AppProvider';
 
-const TireIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-4 h-4 text-current" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-    <circle cx="12" cy="12" r="10.5" stroke="currentColor" strokeWidth="1.2" strokeDasharray="1.5,2.5" />
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-    <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="1" />
+const TireIcon = ({ size = 20, active = false }: { size?: number, active?: boolean }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{ width: size, height: size }} className="text-current" fill="none" stroke="currentColor" strokeWidth={active ? "2" : "1.5"} strokeLinecap="round">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={active ? "2.2" : "1.8"} strokeDasharray="1.5,2.5" />
+    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
+    <circle cx="12" cy="12" r="4.5" stroke="currentColor" strokeWidth="1" />
     <circle cx="12" cy="12" r="1.5" fill="currentColor" />
-    <line x1="12" y1="7" x2="12" y2="10" strokeWidth="1" />
-    <line x1="12" y1="14" x2="12" y2="17" stroke-width="1" />
-    <line x1="7" y1="12" x2="10" y2="12" stroke-width="1" />
-    <line x1="14" y1="12" x2="17" y2="12" stroke-width="1" />
+    <line x1="12" y1="6" x2="12" y2="8" strokeWidth="1" />
+    <line x1="12" y1="16" x2="12" y2="18" strokeWidth="1" />
+    <line x1="6" y1="12" x2="8" y2="12" strokeWidth="1" />
+    <line x1="16" y1="12" x2="18" y2="12" strokeWidth="1" />
+  </svg>
+);
+
+const TowTruckIcon = ({ size = 20, active = false }: { size?: number, active?: boolean }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" style={{ width: size, height: size }} className="text-current" fill="currentColor">
+    <path d="M240,112H216v-8a16,16,0,0,0-16-16H152a8,8,0,0,0-8,8v16H40a16,16,0,0,0-16,16v56a16,16,0,0,0,16,16H52.4a28,28,0,0,0,55.2,0h40.8a28,28,0,0,0,55.2,0H240a16,16,0,0,0,16-16V128A16,16,0,0,0,240,112ZM160,104h40v40H160ZM80,212a12,12,0,1,1,12-12A12,12,0,0,1,80,212Zm96,0a12,12,0,1,1,12-12A12,12,0,0,1,176,212Zm64-28H217.6a27.8,27.8,0,0,0-5.2-12h-84.8v-56h64v16a8,8,0,0,0,8,8h40Z" />
   </svg>
 );
 import { useToast } from '@/components/ui/Toast';
@@ -387,38 +393,65 @@ export default function RegistarOficina() {
               <button
                 type="button"
                 onClick={() => setServiceType('workshop')}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                   serviceType === 'workshop'
-                    ? 'border-accent bg-accent/5 text-accent border-2'
-                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                    ? 'border-blue-500 bg-blue-50/20 shadow-sm shadow-blue-500/10'
+                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
                 }`}
               >
-                <Wrench size={16} weight="bold" />
-                <span>{country === 'BR' ? 'Oficina Mecânica' : 'Oficina Mecânica'}</span>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                  serviceType === 'workshop' ? 'bg-blue-500 text-white' : 'bg-neutral-100 text-neutral-500'
+                }`}>
+                  <Wrench size={20} weight={serviceType === 'workshop' ? 'fill' : 'bold'} />
+                </div>
+                <span className="font-extrabold text-sm text-neutral-800">Oficina Mecânica</span>
+                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                  Reparos, revisões periódicas, mecânica geral, elétrica e manutenção preventiva.
+                </span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setServiceType('tire_repair')}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                   serviceType === 'tire_repair'
-                    ? 'border-accent bg-accent/5 text-accent border-2'
-                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                    ? 'border-emerald-500 bg-emerald-50/20 shadow-sm shadow-emerald-500/10'
+                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
                 }`}
               >
-                <TireIcon />
-                <span>{country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}</span>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                  serviceType === 'tire_repair' ? 'bg-emerald-500 text-white' : 'bg-neutral-100 text-neutral-500'
+                }`}>
+                  <TireIcon size={20} active={serviceType === 'tire_repair'} />
+                </div>
+                <span className="font-extrabold text-sm text-neutral-800">
+                  {country === 'BR' ? 'Borracharia / Pneus' : 'Vulcanizador / Pneus'}
+                </span>
+                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                  Troca e reparação de pneus, alinhamento, balanceamento e vulcanização.
+                </span>
               </button>
+
               <button
                 type="button"
                 onClick={() => setServiceType('towing')}
-                className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border text-sm font-bold text-center transition cursor-pointer ${
+                className={`flex flex-col items-start p-5 rounded-2xl border-2 text-left transition-all duration-200 cursor-pointer hover:-translate-y-0.5 hover:shadow-md ${
                   serviceType === 'towing'
-                    ? 'border-accent bg-accent/5 text-accent border-2'
-                    : 'border-neutral-200 hover:border-neutral-400 text-fg-strong bg-white'
+                    ? 'border-orange-500 bg-orange-50/20 shadow-sm shadow-orange-500/10'
+                    : 'border-neutral-200 hover:border-neutral-300 bg-white shadow-sm'
                 }`}
               >
-                <Truck size={18} weight="bold" />
-                <span>{country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}</span>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors ${
+                  serviceType === 'towing' ? 'bg-orange-500 text-white' : 'bg-neutral-100 text-neutral-500'
+                }`}>
+                  <TowTruckIcon size={20} active={serviceType === 'towing'} />
+                </div>
+                <span className="font-extrabold text-sm text-neutral-800">
+                  {country === 'BR' ? 'Guincho / Reboque' : 'Reboque / Pronto-Socorro'}
+                </span>
+                <span className="text-xs text-neutral-400 mt-1 leading-relaxed">
+                  Serviços de reboque, auto-socorro 24h e transporte de veículos avariados.
+                </span>
               </button>
             </div>
           </div>
