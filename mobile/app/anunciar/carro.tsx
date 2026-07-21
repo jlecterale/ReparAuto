@@ -19,6 +19,7 @@ import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
 import { getCurrencySymbol } from '@/lib/country';
+import { formatNumero, formatPreco } from '@/lib/format';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
 import { clearAdDraft, type CarDraftData } from '@/lib/draft';
@@ -46,10 +47,12 @@ import {
   carYearMax,
   maxSeatsForBodyType,
   parseDecimalPt,
+  bodyTypeLabel,
   COMBUSTIVEIS,
   CONDICOES_VEICULO,
+  equipmentLabel,
   getEquipamentosCarro,
-  ESTADOS_VEICULO,
+  getEstadosVeiculo,
   MAX_FOTOS_CARRO,
   MESES,
   ORIGENS_VEICULO,
@@ -280,10 +283,12 @@ export default function AnunciarCarroScreen() {
       return `Indique um ano entre ${CAR_YEAR_MIN} e ${anoMax}.`;
     const kmNum = Number(km);
     if (!km.trim() || !Number.isFinite(kmNum) || kmNum < 0 || kmNum > CAR_KM_MAX)
-      return `Indique os quilómetros (0 a ${CAR_KM_MAX.toLocaleString('pt-PT')}).`;
+      return country === 'BR'
+        ? `Informe a quilometragem (0 a ${formatNumero(CAR_KM_MAX, country)}).`
+        : `Indique os quilómetros (0 a ${formatNumero(CAR_KM_MAX, country)}).`;
     const precoNum = Number(preco);
     if (!preco.trim() || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX)
-      return `Indique um preço entre 1 ${currencySymbol} e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} ${currencySymbol}.`;
+      return `Indique um preço entre ${formatPreco(1, country)} e ${formatPreco(CAR_PRICE_MAX, country)}.`;
     if (portas.trim()) {
       const portasNum = Number(portas);
       if (!Number.isInteger(portasNum) || portasNum < CAR_DOORS_MIN || portasNum > CAR_DOORS_MAX)
@@ -303,7 +308,7 @@ export default function AnunciarCarroScreen() {
     if (displacement.trim()) {
       const ccNum = Number(displacement);
       if (!Number.isInteger(ccNum) || ccNum < 1 || ccNum > CAR_DISPLACEMENT_MAX)
-        return `A cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`;
+        return `A cilindrada deve estar entre 1 e ${formatNumero(CAR_DISPLACEMENT_MAX, country)} cc.`;
     }
     // Standvirtual-parity optional specs — only checked once the user fills them.
     const optIntErr = (raw: string, min: number, max: number, label: string): string | null => {
@@ -312,7 +317,7 @@ export default function AnunciarCarroScreen() {
       return Number.isInteger(n) && n >= min && n <= max ? null : `${label} deve estar entre ${min} e ${max}.`;
     };
     const specErro =
-      optIntErr(gears, 1, CAR_GEARS_MAX, 'O nº de mudanças') ??
+      optIntErr(gears, 1, CAR_GEARS_MAX, country === 'BR' ? 'O nº de marchas' : 'O nº de mudanças') ??
       optIntErr(previousOwners, 0, CAR_PREVIOUS_OWNERS_MAX, 'O nº de proprietários') ??
       optIntErr(co2Emissions, 0, CAR_CO2_MAX, 'As emissões de CO₂') ??
       optIntErr(maxFuelRange, 0, CAR_RANGE_MAX, 'A autonomia') ??
@@ -519,7 +524,7 @@ export default function AnunciarCarroScreen() {
           </View>
           <View className="flex-1">
             <Input
-              label="Quilómetros *"
+              label={`${term('mileageLabel', country)} *`}
               value={km}
               onChangeText={setKm}
               placeholder="120000"
@@ -561,14 +566,14 @@ export default function AnunciarCarroScreen() {
           onChange={setCombustivel}
         />
         <ChipSelect
-          label="Caixa *"
+          label={`${term('gearboxLabel', country)} *`}
           options={CAMBIOS.map((c) => ({ value: c, label: c }))}
           value={cambio}
           onChange={setCambio}
         />
         <ChipSelect
           label="Categoria"
-          options={TIPOS_CARROCERIA.map((c) => ({ value: c, label: c }))}
+          options={TIPOS_CARROCERIA.map((c) => ({ value: c, label: bodyTypeLabel(c, country) }))}
           value={bodyType}
           onChange={setBodyType}
         />
@@ -586,7 +591,7 @@ export default function AnunciarCarroScreen() {
           keyboardType="number-pad"
           maxLength={2}
         />
-        <ChipSelect label="Estado" options={ESTADOS_VEICULO} value={estado} onChange={setEstado} />
+        <ChipSelect label="Estado" options={getEstadosVeiculo(country)} value={estado} onChange={setEstado} />
 
         <Text className="mt-2 text-base font-bold text-fg-heading">Mais detalhes (opcional)</Text>
         <View className="flex-row gap-3">
@@ -619,7 +624,7 @@ export default function AnunciarCarroScreen() {
         />
         <MultiChipSelect
           label="Equipamento / Extras"
-          options={getEquipamentosCarro(country).map((e) => ({ value: e, label: e }))}
+          options={getEquipamentosCarro(country).map((e) => ({ value: e, label: equipmentLabel(e, country) }))}
           values={features}
           onToggle={(value) =>
             setFeatures((prev) =>
@@ -691,7 +696,7 @@ export default function AnunciarCarroScreen() {
         </View>
 
         <ChipSelect
-          label="Estofos"
+          label={term('upholsteryLabel', country)}
           options={getTiposEstofo(country).map((u) => ({ value: u, label: u }))}
           value={upholstery}
           onChange={setUpholstery}
@@ -758,7 +763,9 @@ export default function AnunciarCarroScreen() {
 
         <MultiChipSelect
           label="Condições comerciais"
-          options={COMERCIAL_OPTIONS}
+          options={COMERCIAL_OPTIONS.map((o) =>
+            o.value === 'acceptsExchange' && country === 'BR' ? { ...o, label: 'Aceita troca' } : o,
+          )}
           values={(Object.keys(comercial) as CommercialKey[]).filter((k) => comercial[k])}
           onToggle={(key) => setComercial((prev) => ({ ...prev, [key]: !prev[key] }))}
         />
@@ -809,7 +816,7 @@ export default function AnunciarCarroScreen() {
               label={term('phoneLabel', country)}
               value={telefone}
               onChangeText={setTelefone}
-              placeholder="912345678"
+              placeholder={term('phonePlaceholder', country)}
               keyboardType="phone-pad"
             />
           </View>
@@ -818,7 +825,7 @@ export default function AnunciarCarroScreen() {
               label="WhatsApp"
               value={whatsapp}
               onChangeText={setWhatsapp}
-              placeholder="912345678"
+              placeholder={term('phonePlaceholder', country)}
               keyboardType="phone-pad"
             />
           </View>

@@ -86,7 +86,7 @@ export default function RegistarOficinaScreen() {
     submitting: enviando,
     submitted,
     resumeImmediately: retomar === '1',
-    itemLabel: 'um registo de oficina',
+    itemLabel: 'uma oficina',
     onRestore: restoreDraft,
   });
 
@@ -180,7 +180,7 @@ export default function RegistarOficinaScreen() {
 
       Alert.alert(
         editId ? 'Oficina atualizada' : 'Oficina enviada',
-        'O registo foi submetido e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
+        'A oficina foi submetida e ficará visível após aprovação. Pode acompanhar o estado em Perfil → Os meus anúncios.',
         [
           {
             text: 'OK',
@@ -256,10 +256,10 @@ export default function RegistarOficinaScreen() {
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label={`${term('phoneLabel', country)} *`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={`${term('phoneLabel', country)} *`} value={telefone} onChangeText={setTelefone} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
-            <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
           </View>
         </View>
         <Input label="Email *" value={email} onChangeText={setEmail} placeholder="geral@oficina.pt" autoCapitalize="none" keyboardType="email-address" />
@@ -273,7 +273,7 @@ export default function RegistarOficinaScreen() {
           className="mt-2"
         />
         <Text className="text-center text-xs text-fg-subtle">
-          O registo fica visível após aprovação da equipa.
+          A oficina fica visível após aprovação da equipa.
         </Text>
         {!editId && <DraftSavedNote />}
       </ScrollView>

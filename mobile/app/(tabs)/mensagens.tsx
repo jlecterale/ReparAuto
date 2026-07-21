@@ -7,13 +7,16 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { useChat } from '@/context/ChatContext';
+import { useCountry } from '@/context/CountryContext';
 import { formatMessageTime } from '@/lib/format';
+import { term } from '@/lib/terms';
 import type { Conversa } from '@/types';
 import { colors } from '@/theme/colors';
 
 export default function MensagensScreen() {
   const { isLoggedIn } = useAuth();
   const { conversas } = useChat();
+  const { country } = useCountry();
 
   if (!isLoggedIn) {
     return (
@@ -67,7 +70,7 @@ export default function MensagensScreen() {
             <View className="ml-3 flex-1">
               <View className="flex-row items-center justify-between gap-2">
                 <Text className="flex-1 text-base font-bold text-fg-heading" numberOfLines={1}>
-                  {item.outroNome || 'Utilizador'}
+                  {item.outroNome || term('userFallbackName', country)}
                 </Text>
                 <Text className="text-xs text-fg-muted">
                   {formatMessageTime(item.ultimaData)}

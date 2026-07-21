@@ -12,10 +12,13 @@ import { useNotificacoes } from '@/context/NotificacoesContext';
 import { useAdminPendencias } from '@/hooks/useAdminPendencias';
 import { useAlertSubscriptions } from '@/hooks/useAlertSubscriptions';
 import { REQUIRES_RECENT_LOGIN } from '@/lib/auth';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/context/CountryContext';
 import { colors } from '@/theme/colors';
 
 export default function PerfilScreen() {
   const { user, isAdmin, logout, eliminarConta } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const { total: pendenciasAdmin } = useAdminPendencias(isAdmin);
   const { naoLidas } = useNotificacoes();
@@ -100,7 +103,7 @@ export default function PerfilScreen() {
             </View>
           )}
           <Text className="mt-3 text-xl font-extrabold text-fg-heading">
-            {user?.nome ?? 'Utilizador'}
+            {user?.nome ?? term('userFallbackName', country)}
           </Text>
           <Text className="text-fg-muted">{user?.email}</Text>
           {user?.verificado && (

@@ -9,25 +9,25 @@ import { ChipSelect } from '@/components/ui/ChipSelect';
 import { MultiChipSelect } from '@/components/ui/MultiChipSelect';
 import { CriarAlertaButton } from '@/components/home/CriarAlertaButton';
 import {
+  bodyTypeLabel,
+  COMBUSTIVEIS,
+  CONDICOES_VEICULO,
+  equipmentLabel,
   getEquipamentosCarro,
+  getEstadosVeiculo,
   TIPOS_CARROCERIA,
   TIPOS_TRACAO,
 } from '@/lib/constants';
 import { getConcelhos, getDistritos } from '@/lib/geo';
 import { getCurrencySymbol } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { useCountry } from '@/context/CountryContext';
 import type { CarAdvFilters } from '@/hooks/useCarFilters';
 import type { Combustivel } from '@/types';
 import { colors } from '@/theme/colors';
 
 const TODOS = { value: '', label: 'Todos' };
-const ESTADO_OPTS = [
-  TODOS,
-  { value: 'pronto', label: 'Pronto a andar' },
-  { value: 'manutencao', label: 'Para reparar' },
-];
 const COMBUSTIVEL_OPTS = COMBUSTIVEIS.map((c) => ({ value: c, label: c }));
-const CARROCERIA_OPTS = [TODOS, ...TIPOS_CARROCERIA.map((c) => ({ value: c, label: c }))];
 const CONDICAO_OPTS = [TODOS, ...CONDICOES_VEICULO.map((c) => ({ value: c, label: c }))];
 const TRACAO_OPTS = [TODOS, ...TIPOS_TRACAO.map((t) => ({ value: t, label: t }))];
 const RAIO_OPTS = [
@@ -63,7 +63,9 @@ export function CarFiltersSheet({
   bairroOpts,
 }: CarFiltersSheetProps) {
   const { country } = useCountry();
-  const equipamentoOpts = getEquipamentosCarro(country).map((e) => ({ value: e, label: e }));
+  const equipamentoOpts = getEquipamentosCarro(country).map((e) => ({ value: e, label: equipmentLabel(e, country) }));
+  const estadoOpts = [TODOS, ...getEstadosVeiculo(country)];
+  const carroceriaOpts = [TODOS, ...TIPOS_CARROCERIA.map((c) => ({ value: c, label: bodyTypeLabel(c, country) }))];
   // Market vocabulary: PT says distrito/concelho, BR says estado/cidade.
   const regionLabel = country === 'BR' ? 'Estado' : 'Distrito';
   const placeLabel = country === 'BR' ? 'Cidade' : 'Concelho';
@@ -128,7 +130,7 @@ export function CarFiltersSheet({
         />
       </SheetSection>
 
-      <SheetSection title="Quilómetros">
+      <SheetSection title={term('mileageLabel', country)}>
         <RangeRow
           minValue={f.kmMin}
           maxValue={f.kmMax}
@@ -152,11 +154,11 @@ export function CarFiltersSheet({
       </SheetSection>
 
       <SheetSection title="Estado">
-        <ChipSelect options={ESTADO_OPTS} value={f.estado} onChange={(v) => update({ estado: v as CarAdvFilters['estado'] })} />
+        <ChipSelect options={estadoOpts} value={f.estado} onChange={(v) => update({ estado: v as CarAdvFilters['estado'] })} />
       </SheetSection>
 
       <SheetSection title="Categoria">
-        <ChipSelect options={CARROCERIA_OPTS} value={f.bodyType} onChange={(v) => update({ bodyType: v })} />
+        <ChipSelect options={carroceriaOpts} value={f.bodyType} onChange={(v) => update({ bodyType: v })} />
       </SheetSection>
 
       <SheetSection title="Condição">

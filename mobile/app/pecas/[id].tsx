@@ -16,11 +16,12 @@ import { Button } from '@/components/ui/Button';
 import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { OwnerStats } from '@/components/ui/OwnerStats';
 import { PhotoViewer } from '@/components/ui/PhotoViewer';
-import { LISTING_PHOTO_ASPECT } from '@/lib/constants';
+import { LISTING_PHOTO_ASPECT, partCategoryLabel } from '@/lib/constants';
 import { logViewListing } from '@/lib/analytics';
 import { getPecaById, registarVisualizacao } from '@/lib/db';
 import { formatPrecoOpcional } from '@/lib/format';
 import { docCountry } from '@/lib/country';
+import { resolveWhatsAppNumber, whatsAppUrl } from '@/lib/whatsapp';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { TIPO_PECA_LABELS, type Peca } from '@/types';
@@ -70,6 +71,9 @@ export default function DetalhesPecaScreen() {
   }
 
   const tel = peca.vendedorTelefone || peca.contacto;
+  // Listing content speaks its own market's vocabulary/formatting.
+  const market = docCountry(peca);
+  const whatsappNumero = resolveWhatsAppNumber(peca.vendedorWhatsApp, tel, market);
   const ehDono = !!peca.criadorUid && peca.criadorUid === user?.uid;
   const podeMensagem = !!peca.criadorUid && peca.criadorUid !== user?.uid;
 
@@ -132,7 +136,7 @@ export default function DetalhesPecaScreen() {
           </View>
           <Text className="mt-2 text-2xl font-extrabold text-fg-heading">{peca.titulo}</Text>
           <Text className="mt-1 text-3xl font-black text-accent">
-            {formatPrecoOpcional(peca.preco, docCountry(peca))}
+            {formatPrecoOpcional(peca.preco, market)}
           </Text>
 
           {ehDono && (
@@ -147,7 +151,7 @@ export default function DetalhesPecaScreen() {
           )}
 
           <View className="mt-5 flex-row flex-wrap">
-            <Spec icon="pricetag-outline" label="Categoria" value={peca.categoria} />
+            <Spec icon="pricetag-outline" label="Categoria" value={partCategoryLabel(peca.categoria, market)} />
             <Spec icon="car-outline" label="Marca" value={peca.marcaCarro} />
             {!!peca.modeloCarro && (
               <Spec icon="car-sport-outline" label="Modelo" value={peca.modeloCarro} />
@@ -190,13 +194,13 @@ export default function DetalhesPecaScreen() {
             }
           />
         ) : null}
-        {peca.vendedorWhatsApp ? (
+        {whatsappNumero ? (
           <Button
             label="WhatsApp"
             variant="secondary"
             className="flex-1"
             icon={<Ionicons name="logo-whatsapp" size={18} color="#fff" />}
-            onPress={() => Linking.openURL(`https://wa.me/${peca.vendedorWhatsApp}`)}
+            onPress={() => Linking.openURL(whatsAppUrl(whatsappNumero))}
           />
         ) : null}
         {tel ? (

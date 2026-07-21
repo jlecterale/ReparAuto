@@ -4,6 +4,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import type { Peca } from '@/types';
 import { TIPO_PECA_LABELS } from '@/types';
+import { partCategoryLabel } from '@/lib/constants';
 import { formatPrecoOpcional } from '@/lib/format';
 import { docCountry } from '@/lib/country';
 import { colors } from '@/theme/colors';
@@ -53,7 +54,7 @@ function PecaCardBase({ peca, onPress }: PecaCardProps) {
           {peca.titulo}
         </Text>
         <Text className="text-sm text-fg-muted" numberOfLines={1}>
-          {[peca.categoria, peca.marcaCarro].filter(Boolean).join(' · ')}
+          {[partCategoryLabel(peca.categoria, docCountry(peca)), peca.marcaCarro].filter(Boolean).join(' · ')}
         </Text>
         <View className="mt-auto flex-row items-center justify-between pt-1">
           <Text className="text-base font-extrabold text-accent">

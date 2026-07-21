@@ -14,8 +14,9 @@ export function formatPreco(preco: number, country: Country = 'PT'): string {
   }).format(preco);
 }
 
-export function formatKm(km: number): string {
-  return `${new Intl.NumberFormat('pt-PT').format(km)} km`;
+/** Mileage in the market's digit grouping ("150 000 km" PT, "150.000 km" BR). */
+export function formatKm(km: number, country: Country = 'PT'): string {
+  return `${formatNumero(km, country)} km`;
 }
 
 /**
@@ -29,8 +30,8 @@ export function formatarCodigoPostal(cp: string, country: Country = 'PT'): strin
   return `${digits.slice(0, prefixLength)}-${digits.slice(prefixLength, prefixLength + 3)}`;
 }
 
-export function formatNumero(n: number): string {
-  return new Intl.NumberFormat('pt-PT').format(n);
+export function formatNumero(n: number, country: Country = 'PT'): string {
+  return new Intl.NumberFormat(COUNTRY_INFO[country].locale).format(n);
 }
 
 /** Parts may have no price (e.g. "procura" listings) → "Sob consulta". */

@@ -108,7 +108,7 @@ export default function MeusAnunciosScreen() {
         ? [draftItem('carro', `${carDraft.data.marca} ${carDraft.data.modelo}`.trim() || 'Anúncio de carro')]
         : []),
       ...(partDraft ? [draftItem('peca', partDraft.data.titulo || 'Anúncio de peça')] : []),
-      ...(workshopDraft ? [draftItem('oficina', workshopDraft.data.nome || 'Registo de oficina')] : []),
+      ...(workshopDraft ? [draftItem('oficina', workshopDraft.data.nome || 'Oficina')] : []),
       ...(intentDraft ? [draftItem('intencao', intentDraft.data.titulo || 'Procura')] : []),
       ...carros.map((c) => ({
         kind: 'carro' as const,
@@ -254,8 +254,8 @@ export default function MeusAnunciosScreen() {
               style={{ marginTop: 1 }}
             />
             <Text className="ml-2.5 flex-1 text-sm leading-5 text-warning-800">
-              Os itens "Em revisão" só ficam visíveis para os outros utilizadores depois de
-              aprovados pela equipa. Recebe uma notificação com a decisão.
+              Os itens "Em revisão" só ficam visíveis para as outras pessoas depois de
+              aprovados pela equipa. Receberá uma notificação com a decisão.
             </Text>
           </View>
         ) : null
