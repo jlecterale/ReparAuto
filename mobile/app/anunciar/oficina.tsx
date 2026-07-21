@@ -262,7 +262,7 @@ export default function RegistarOficinaScreen() {
             <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
           </View>
         </View>
-        <Input label="Email *" value={email} onChangeText={setEmail} placeholder="geral@oficina.pt" autoCapitalize="none" keyboardType="email-address" />
+        <Input label="Email *" value={email} onChangeText={setEmail} placeholder={term('workshopEmailPlaceholder', country)} autoCapitalize="none" keyboardType="email-address" />
         <Input label="Website" value={website} onChangeText={setWebsite} placeholder="https://…" autoCapitalize="none" keyboardType="url" />
         <Input label="Vídeo do YouTube" value={videoUrl} onChangeText={setVideoUrl} placeholder="https://www.youtube.com/watch?v=…" autoCapitalize="none" keyboardType="url" />
 

@@ -8,10 +8,13 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LogoMark } from '@/components/ui/Logo';
 import { enviarEmailReset } from '@/lib/auth';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { colors } from '@/theme/colors';
 
 export default function RecuperarScreen() {
+  const { country } = useCountry();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -88,7 +91,7 @@ export default function RecuperarScreen() {
                 label="Email"
                 value={email}
                 onChangeText={setEmail}
-                placeholder="o.seu@email.pt"
+                placeholder={term('emailPlaceholder', country)}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoComplete="email"

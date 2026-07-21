@@ -23,6 +23,8 @@ const TERMS = {
     PT: 'Indique um NIF válido (9 dígitos).',
     BR: 'Informe um CPF ou CNPJ válido.',
   },
+  emailPlaceholder: { PT: 'o.seu@email.pt', BR: 'seu@email.com.br' },
+  workshopEmailPlaceholder: { PT: 'geral@oficina.pt', BR: 'contato@oficina.com.br' },
   addressLabel: { PT: 'Morada', BR: 'Endereço' },
   addressPlaceholder: { PT: 'Rua, número, andar…', BR: 'Rua, número…' },
   districtLabel: { PT: 'Distrito', BR: 'Estado' },

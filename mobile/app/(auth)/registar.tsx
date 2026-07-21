@@ -11,6 +11,7 @@ import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { useOnboarding } from '@/context/OnboardingContext';
 import { COUNTRIES, COUNTRY_INFO, type Country } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { colors } from '@/theme/colors';
 
 export default function RegistarScreen() {
@@ -150,7 +151,7 @@ export default function RegistarScreen() {
               label="Email"
               value={email}
               onChangeText={setEmail}
-              placeholder="o.seu@email.pt"
+              placeholder={term('emailPlaceholder', selectedCountry)}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"

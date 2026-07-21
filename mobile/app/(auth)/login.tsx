@@ -10,12 +10,15 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LogoMark } from '@/components/ui/Logo';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { statusCodes } from '@/lib/auth';
+import { term } from '@/lib/terms';
 import { colors } from '@/theme/colors';
 
 export default function LoginScreen() {
   const { login, loginGoogle, loginApple, appleDisponivel } = useAuth();
+  const { country } = useCountry();
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -121,7 +124,7 @@ export default function LoginScreen() {
               label="Email"
               value={email}
               onChangeText={setEmail}
-              placeholder="o.seu@email.pt"
+              placeholder={term('emailPlaceholder', country)}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
