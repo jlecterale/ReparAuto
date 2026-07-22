@@ -78,3 +78,48 @@ export const EQUIPAMENTOS_CARRO = EQUIPAMENTOS_CARRO_BR;
 export function getEquipamentosCarro(country: Country): readonly string[] {
   return country === 'PT' ? EQUIPAMENTOS_CARRO_PT : EQUIPAMENTOS_CARRO_BR;
 }
+
+// Display labels for stored enum values. The stored values are canonical
+// (pt-PT era, shared across markets and with the mobile app — renaming them is
+// a data-schema change); only the label shown to the user varies by market.
+// Kept in sync with the mobile `src/lib/constants.ts`.
+const BODY_TYPE_LABELS_BR: Partial<Record<BodyType, string>> = {
+  Citadino: 'Hatch',
+  Sedan: 'Sedã',
+  Carrinha: 'Perua / SW',
+  Monovolume: 'Minivan',
+  Coupé: 'Cupê',
+  Cabrio: 'Conversível',
+  'Pick-up': 'Picape',
+};
+
+export function bodyTypeLabel(value: string, country: Country): string {
+  return (country === 'BR' && BODY_TYPE_LABELS_BR[value as BodyType]) || value;
+}
+
+// The BR value list above keeps the PT-era stored values for filter parity;
+// these are the pt-BR names shown for them.
+const EQUIPMENT_LABELS_BR: Record<string, string> = {
+  'Direção assistida': 'Direção hidráulica/elétrica',
+  'Fecho centralizado': 'Trava elétrica',
+  'Câmara de marcha-atrás': 'Câmera de ré',
+  'Bancos em pele': 'Bancos de couro',
+  'Teto de abrir': 'Teto solar',
+  'Jantes de liga leve': 'Rodas de liga leve',
+  'Faróis LED/Xénon': 'Faróis LED/Xenon',
+};
+
+export function equipmentLabel(value: string, country: Country): string {
+  return (country === 'BR' && EQUIPMENT_LABELS_BR[value]) || value;
+}
+
+const PART_CATEGORY_LABELS_BR: Record<string, string> = {
+  'Carroçaria e Chaparia': 'Carroceria e Lataria',
+  'Iluminação e Óticas': 'Iluminação e Faróis',
+  'Suspensão e Travões': 'Suspensão e Freios',
+  'Eletrónica e Sensores': 'Eletrônica e Sensores',
+};
+
+export function partCategoryLabel(value: string, country: Country): string {
+  return (country === 'BR' && PART_CATEGORY_LABELS_BR[value]) || value;
+}

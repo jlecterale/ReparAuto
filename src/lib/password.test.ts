@@ -1,4 +1,4 @@
-import { validatePassword, PASSWORD_RULES } from '@/lib/utils';
+import { validatePassword, PASSWORD_RULES, getPasswordRules } from '@/lib/utils';
 
 // Registration password policy (PR #28): at least 8 chars, one uppercase letter,
 // one digit and one symbol. validatePassword returns the first failing rule's
@@ -35,6 +35,27 @@ describe('validatePassword', () => {
   it('reports the length rule first when several rules fail', () => {
     // "ab1" fails length, uppercase and symbol — length wins.
     expect(validatePassword('ab1')).toBe('A palavra-passe deve ter pelo menos 8 caracteres.');
+  });
+});
+
+// Brazilian accounts see "senha" instead of the pt-PT "palavra-passe" in every
+// policy message; the rules themselves are identical across markets.
+describe('validatePassword (Brazilian market)', () => {
+  it('speaks pt-BR in the error messages', () => {
+    expect(validatePassword('Ab1!', 'BR')).toBe('A senha deve ter pelo menos 8 caracteres.');
+    expect(validatePassword('abcdef1!', 'BR')).toBe(
+      'A senha deve conter pelo menos uma letra maiúscula.',
+    );
+    expect(validatePassword('Abcdefg!', 'BR')).toBe('A senha deve conter pelo menos um número.');
+    expect(validatePassword('Abcdefg1', 'BR')).toBe('A senha deve conter pelo menos um símbolo.');
+  });
+
+  it('applies the same rules as the Portuguese market', () => {
+    expect(validatePassword('Abcdef1!', 'BR')).toBeNull();
+    const ptRules = getPasswordRules('PT');
+    const brRules = getPasswordRules('BR');
+    expect(brRules.map((r) => r.label)).toEqual(ptRules.map((r) => r.label));
+    expect(brRules.every((rule) => rule.test('Abcdef1!'))).toBe(true);
   });
 });
 
