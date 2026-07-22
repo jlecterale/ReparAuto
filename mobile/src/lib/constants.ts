@@ -17,6 +17,15 @@ export const ESTADOS_VEICULO: { value: EstadoVeiculo; label: string }[] = [
   { value: 'manutencao', label: 'Para reparar' },
 ];
 
+export function getEstadosVeiculo(country: Country): { value: EstadoVeiculo; label: string }[] {
+  return country === 'BR'
+    ? [
+        { value: 'pronto', label: 'Pronto para rodar' },
+        { value: 'manutencao', label: 'Para reparar' },
+      ]
+    : ESTADOS_VEICULO;
+}
+
 // Body type / category (carroçaria) — mirrors the web `TIPOS_CARROCERIA`. A
 // single Portuguese enum serves both the PT and BR markets.
 export const TIPOS_CARROCERIA: BodyType[] = [
@@ -30,6 +39,23 @@ export const TIPOS_CARROCERIA: BodyType[] = [
   'Cabrio',
   'Pick-up',
 ];
+
+// Display labels for stored enum values. The values above are canonical and
+// shared with the web and both markets (renaming them is a data-schema change);
+// only the label shown to the user varies by market.
+const BODY_TYPE_LABELS_BR: Partial<Record<BodyType, string>> = {
+  Citadino: 'Hatch',
+  Sedan: 'Sedã',
+  Carrinha: 'Perua / SW',
+  Monovolume: 'Minivan',
+  Coupé: 'Cupê',
+  Cabrio: 'Conversível',
+  'Pick-up': 'Picape',
+};
+
+export function bodyTypeLabel(value: string, country: Country): string {
+  return (country === 'BR' && BODY_TYPE_LABELS_BR[value as BodyType]) || value;
+}
 
 // Vehicle condition — "Para peças" bridges the car and parts marketplaces.
 export const CONDICOES_VEICULO: Condition[] = ['Novo', 'Usado', 'Para peças'];
@@ -102,6 +128,22 @@ export const EQUIPAMENTOS_CARRO = EQUIPAMENTOS_CARRO_BR;
 
 export function getEquipamentosCarro(country: Country): string[] {
   return country === 'PT' ? EQUIPAMENTOS_CARRO_PT : EQUIPAMENTOS_CARRO_BR;
+}
+
+// The BR value list above keeps the PT-era stored values for parity with the
+// web filters; these are the pt-BR names shown for them.
+const EQUIPMENT_LABELS_BR: Record<string, string> = {
+  'Direção assistida': 'Direção hidráulica/elétrica',
+  'Fecho centralizado': 'Trava elétrica',
+  'Câmara de marcha-atrás': 'Câmera de ré',
+  'Bancos em pele': 'Bancos de couro',
+  'Teto de abrir': 'Teto solar',
+  'Jantes de liga leve': 'Rodas de liga leve',
+  'Faróis LED/Xénon': 'Faróis LED/Xenon',
+};
+
+export function equipmentLabel(value: string, country: Country): string {
+  return (country === 'BR' && EQUIPMENT_LABELS_BR[value]) || value;
 }
 
 /** Hard limits mirrored from the web app. */
@@ -194,3 +236,14 @@ export const ESTADOS_PECA = [
   'Reconstruído / Recondicionado',
   'Indiferente (Procura)',
 ];
+
+const PART_CATEGORY_LABELS_BR: Record<string, string> = {
+  'Carroçaria e Chaparia': 'Carroceria e Lataria',
+  'Iluminação e Óticas': 'Iluminação e Faróis',
+  'Suspensão e Travões': 'Suspensão e Freios',
+  'Eletrónica e Sensores': 'Eletrônica e Sensores',
+};
+
+export function partCategoryLabel(value: string, country: Country): string {
+  return (country === 'BR' && PART_CATEGORY_LABELS_BR[value]) || value;
+}

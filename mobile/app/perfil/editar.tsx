@@ -121,7 +121,7 @@ export default function EditarPerfilScreen() {
               <Ionicons name="lock-closed" size={16} color={colors.neutral[400]} />
             </View>
             <Text className="mt-1 text-xs text-fg-subtle">
-              O tipo de conta é definido no registo e não pode ser alterado.
+              O tipo de conta é definido na criação da conta e não pode ser alterado.
             </Text>
           </View>
         ) : (

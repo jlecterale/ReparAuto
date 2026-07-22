@@ -1,5 +1,7 @@
 import {
   formatarPreco,
+  formatarNumero,
+  formatarKm,
   validarTelefone,
   validarCodigoPostal,
   formatarCodigoPostal,
@@ -126,6 +128,35 @@ describe('obterWhatsApp', () => {
   it('returns null for numbers that cannot receive WhatsApp links', () => {
     expect(obterWhatsApp(null, '1133334444', 'BR')).toBeNull();
     expect(obterWhatsApp(null, null, 'BR')).toBeNull();
+  });
+
+  // Sellers type local numbers in the WhatsApp field too — wa.me rejects them
+  // without a dialing code, so the explicit field is normalized like the phone.
+  it('normalizes the explicit WhatsApp field with the market dialing code', () => {
+    expect(obterWhatsApp('(11) 98765-4321', null, 'BR')).toBe('5511987654321');
+    expect(obterWhatsApp('912 345 678', null, 'PT')).toBe('351912345678');
+  });
+
+  it('passes through explicit numbers that already carry a foreign dialing code', () => {
+    expect(obterWhatsApp('447700900123', null, 'BR')).toBe('447700900123');
+  });
+
+  it('hides the button for an unusable explicit number instead of linking it raw', () => {
+    expect(obterWhatsApp('abc', null, 'BR')).toBeNull();
+    expect(obterWhatsApp('   ', '11987654321', 'BR')).toBe('5511987654321');
+  });
+});
+
+describe('formatarNumero / formatarKm', () => {
+  it('groups digits with the market locale', () => {
+    expect(formatarNumero(150000, 'BR')).toBe('150.000');
+    // pt-PT groups with a (non-breaking) space, never a dot.
+    expect(formatarNumero(150000, 'PT').replace(/[\u00A0\u202F]/g, ' ')).toBe('150 000');
+  });
+
+  it('appends the km unit', () => {
+    expect(formatarKm(150000, 'BR')).toBe('150.000 km');
+    expect(formatarKm(0, 'BR')).toBe('0 km');
   });
 });
 

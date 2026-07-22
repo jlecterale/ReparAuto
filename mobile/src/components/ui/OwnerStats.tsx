@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCountry } from '@/context/CountryContext';
 import { formatNumero } from '@/lib/format';
 import { colors } from '@/theme/colors';
 
@@ -24,6 +25,7 @@ export function OwnerStats({
   contagemFavoritos,
   variant = 'compact',
 }: OwnerStatsProps) {
+  const { country } = useCountry();
   const stats: StatDef[] = [
     { icon: 'eye-outline', label: 'Visualizações', value: visualizacoes ?? 0 },
     { icon: 'chatbubble-ellipses-outline', label: 'Mensagens', value: contagemMensagens ?? 0 },
@@ -42,7 +44,7 @@ export function OwnerStats({
           >
             <Ionicons name={s.icon} size={20} color={colors.primary[600]} />
             <Text className="mt-1 text-lg font-extrabold text-fg-heading">
-              {formatNumero(s.value)}
+              {formatNumero(s.value, country)}
             </Text>
             <Text className="text-xs text-fg-subtle">{s.label}</Text>
           </View>
@@ -56,7 +58,7 @@ export function OwnerStats({
       {stats.map((s) => (
         <View key={s.label} className="flex-row items-center">
           <Ionicons name={s.icon} size={13} color={colors.fg.subtle} />
-          <Text className="ml-1 text-xs text-fg-subtle">{formatNumero(s.value)}</Text>
+          <Text className="ml-1 text-xs text-fg-subtle">{formatNumero(s.value, country)}</Text>
         </View>
       ))}
     </View>

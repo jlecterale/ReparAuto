@@ -32,6 +32,14 @@ const TERMS = {
   municipalityAllOption: { PT: 'Todos os concelhos', BR: 'Todas as cidades' },
   plateLabel: { PT: 'Matrícula', BR: 'Placa' },
   firstRegistrationLabel: { PT: 'Mês da 1ª matrícula', BR: 'Mês do 1º emplacamento' },
+  mileageLabel: { PT: 'Quilómetros', BR: 'Quilometragem' },
+  gearsLabel: { PT: 'Mudanças', BR: 'Marchas' },
+  upholsteryLabel: { PT: 'Estofos', BR: 'Estofamento' },
+  userFallbackName: { PT: 'Utilizador', BR: 'Usuário' },
+  exchangeLabel: { PT: 'Aceita retoma', BR: 'Aceita troca' },
+  passwordLabel: { PT: 'Palavra-passe', BR: 'Senha' },
+  passwordNoun: { PT: 'palavra-passe', BR: 'senha' },
+  forgotPasswordLink: { PT: 'Esqueceu-se da palavra-passe?', BR: 'Esqueceu a senha?' },
 } satisfies Record<string, Record<Country, string>>;
 
 export type TermKey = keyof typeof TERMS;

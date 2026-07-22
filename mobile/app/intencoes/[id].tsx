@@ -85,7 +85,7 @@ export default function IntencaoDetailScreen() {
           <Spec
             icon="speedometer-outline"
             label="Km máx."
-            value={c?.quilometragemMaxima ? formatKm(c.quilometragemMaxima) : '—'}
+            value={c?.quilometragemMaxima ? formatKm(c.quilometragemMaxima, docCountry(intencao)) : '—'}
           />
           <Spec
             icon="location-outline"

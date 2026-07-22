@@ -231,7 +231,7 @@ export default function CriarIntencaoScreen() {
 
         <ChipSelect label="Como prefere ser contactado" options={CONTACTO} value={contato} onChange={setContato} />
         {contato !== 'chat' && (
-          <Input label={`${term('phoneLabel', country)} / WhatsApp`} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+          <Input label={`${term('phoneLabel', country)} / WhatsApp`} value={telefone} onChangeText={setTelefone} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
         )}
 
         <Button

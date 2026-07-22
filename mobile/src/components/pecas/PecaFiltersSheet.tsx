@@ -6,11 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { ChipSelect } from '@/components/ui/ChipSelect';
 import { SelectField } from '@/components/ui/SelectField';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
-import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, partCategoryLabel } from '@/lib/constants';
 import { getDistritos } from '@/lib/geo';
 import { useCountry } from '@/context/CountryContext';
 
-const CATEGORIA_OPTS = [{ value: '', label: 'Todas' }, ...CATEGORIAS_PECAS.map((c) => ({ value: c, label: c }))];
 const ESTADO_OPTS = [{ value: '', label: 'Todos' }, ...ESTADOS_PECA.map((e) => ({ value: e, label: e }))];
 
 interface PecaFiltersSheetProps {
@@ -57,6 +56,7 @@ export function PecaFiltersSheet({
   const { marcas, getModelos, loading: marcasLoading } = useMarcasModelos();
   const modelos = useMemo(() => getModelos(marca), [getModelos, marca]);
   const distritoOpts = [{ value: '', label: 'Todos' }, ...getDistritos(country).map((d) => ({ value: d, label: d }))];
+  const categoriaOpts = [{ value: '', label: 'Todas' }, ...CATEGORIAS_PECAS.map((c) => ({ value: c, label: partCategoryLabel(c, country) }))];
   return (
     <BottomSheet
       visible={visible}
@@ -97,9 +97,10 @@ export function PecaFiltersSheet({
       </SheetSection>
 
       <SheetSection title="Categoria">
-        <ChipSelect options={CATEGORIA_OPTS} value={categoria} onChange={setCategoria} />
+        <ChipSelect options={categoriaOpts} value={categoria} onChange={setCategoria} />
       </SheetSection>
-      <SheetSection title="Estado">
+      {/* "da peça" disambiguates from the BR region section ("Estado") below. */}
+      <SheetSection title={country === 'BR' ? 'Estado da peça' : 'Estado'}>
         <ChipSelect options={ESTADO_OPTS} value={estado} onChange={setEstado} />
       </SheetSection>
       <SheetSection title={country === 'BR' ? 'Estado' : 'Distrito'}>

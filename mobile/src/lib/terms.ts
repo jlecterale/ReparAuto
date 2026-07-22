@@ -23,6 +23,8 @@ const TERMS = {
     PT: 'Indique um NIF válido (9 dígitos).',
     BR: 'Informe um CPF ou CNPJ válido.',
   },
+  emailPlaceholder: { PT: 'o.seu@email.pt', BR: 'seu@email.com.br' },
+  workshopEmailPlaceholder: { PT: 'geral@oficina.pt', BR: 'contato@oficina.com.br' },
   addressLabel: { PT: 'Morada', BR: 'Endereço' },
   addressPlaceholder: { PT: 'Rua, número, andar…', BR: 'Rua, número…' },
   districtLabel: { PT: 'Distrito', BR: 'Estado' },
@@ -33,6 +35,15 @@ const TERMS = {
   municipalityAllOption: { PT: 'Todos os concelhos', BR: 'Todas as cidades' },
   plateLabel: { PT: 'Matrícula', BR: 'Placa' },
   firstRegistrationLabel: { PT: 'Mês da 1ª matrícula', BR: 'Mês do 1º emplacamento' },
+  mileageLabel: { PT: 'Quilómetros', BR: 'Quilometragem' },
+  gearboxLabel: { PT: 'Caixa', BR: 'Câmbio' },
+  gearsLabel: { PT: 'Mudanças', BR: 'Marchas' },
+  upholsteryLabel: { PT: 'Estofos', BR: 'Estofamento' },
+  userFallbackName: { PT: 'Utilizador', BR: 'Usuário' },
+  exchangeLabel: { PT: 'Aceita retoma', BR: 'Aceita troca' },
+  passwordLabel: { PT: 'Palavra-passe', BR: 'Senha' },
+  passwordNoun: { PT: 'palavra-passe', BR: 'senha' },
+  forgotPasswordLink: { PT: 'Esqueceu-se da palavra-passe?', BR: 'Esqueceu a senha?' },
 } satisfies Record<string, Record<Country, string>>;
 
 export type TermKey = keyof typeof TERMS;

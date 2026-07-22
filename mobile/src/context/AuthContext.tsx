@@ -28,7 +28,8 @@ import {
   getUserProfile,
   updateUserProfile,
 } from '@/lib/db';
-import { getBindingCountry, type Country } from '@/lib/country';
+import { getActiveCountry, getBindingCountry, type Country } from '@/lib/country';
+import { term } from '@/lib/terms';
 import type { Usuario, Role, TipoConta } from '@/types';
 
 const DEFAULT_ROLE: Role = 'user';
@@ -44,7 +45,7 @@ configureGoogleSignIn(WEB_CLIENT_ID || undefined);
 function criarUsuarioBase(fb: FirebaseAuthTypes.User): Usuario {
   return {
     uid: fb.uid,
-    nome: fb.displayName || fb.email?.split('@')[0] || 'Utilizador',
+    nome: fb.displayName || fb.email?.split('@')[0] || term('userFallbackName', getActiveCountry()),
     email: fb.email ?? '',
     telefone: '',
     localidade: '',

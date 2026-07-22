@@ -17,6 +17,7 @@ import {
   updateUserProfile,
 } from '@/lib/db';
 import { getActiveCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { auth } from '@/lib/firebase';
 import { reportConversion, CONVERSION_LABELS } from '@/lib/gtag';
 import type { Usuario, Role, TipoConta } from '@/types/usuario';
@@ -27,7 +28,7 @@ const DEFAULT_TIPO_CONTA: TipoConta = 'particular';
 function criarUsuarioBase(firebaseUser: User): Usuario {
   return {
     uid: firebaseUser.uid,
-    nome: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Utilizador',
+    nome: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || term('userFallbackName', getActiveCountry()),
     email: firebaseUser.email!,
     telefone: '',
     localidade: '',

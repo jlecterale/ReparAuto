@@ -5,6 +5,9 @@
 // Without these a listing could carry absurd specs (year 99999, 500 doors,
 // unbounded mileage/price).
 
+import { COUNTRY_INFO, type Country } from '@/lib/country';
+import { term } from '@/lib/terms';
+
 export const CAR_YEAR_MIN = 1900;
 /** Upper year bound: the next model year (dealers list the coming year early). */
 export const carYearMax = () => new Date().getFullYear() + 1;
@@ -75,9 +78,10 @@ export function validarDadosVeiculo(dados: {
   consumptionUrban?: string;
   consumptionExtraUrban?: string;
   consumptionCombined?: string;
-}): Record<string, string> {
+}, country: Country = 'PT'): Record<string, string> {
   const erros: Record<string, string> = {};
   const yearMax = carYearMax();
+  const locale = COUNTRY_INFO[country].locale;
 
   if (!dados.marca?.trim()) erros.marca = REQUIRED;
   if (!dados.modelo?.trim()) erros.modelo = REQUIRED;
@@ -101,7 +105,7 @@ export function validarDadosVeiculo(dados: {
   } else {
     const n = Number(dados.km);
     if (!Number.isFinite(n) || n < 0 || n > CAR_KM_MAX) {
-      erros.km = `Quilometragem deve estar entre 0 e ${CAR_KM_MAX.toLocaleString('pt-PT')}.`;
+      erros.km = `Quilometragem deve estar entre 0 e ${CAR_KM_MAX.toLocaleString(locale)}.`;
     }
   }
 
@@ -129,10 +133,10 @@ export function validarDadosVeiculo(dados: {
   const seatsMax = maxSeatsForBodyType(dados.bodyType);
   validarOpcional('seats', dados.seats, CAR_SEATS_MIN, seatsMax, `Lugares deve estar entre ${CAR_SEATS_MIN} e ${seatsMax}.`);
   validarOpcional('power', dados.power, 1, CAR_POWER_MAX, `Potência deve estar entre 1 e ${CAR_POWER_MAX} cv.`);
-  validarOpcional('displacement', dados.displacement, 1, CAR_DISPLACEMENT_MAX, `Cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString('pt-PT')} cc.`);
+  validarOpcional('displacement', dados.displacement, 1, CAR_DISPLACEMENT_MAX, `Cilindrada deve estar entre 1 e ${CAR_DISPLACEMENT_MAX.toLocaleString(locale)} cc.`);
 
   // Standvirtual-parity optional specs — same "validate only when filled" rule.
-  validarOpcional('gears', dados.gears, 1, CAR_GEARS_MAX, `Mudanças deve estar entre 1 e ${CAR_GEARS_MAX}.`);
+  validarOpcional('gears', dados.gears, 1, CAR_GEARS_MAX, `${term('gearsLabel', country)} deve estar entre 1 e ${CAR_GEARS_MAX}.`);
   validarOpcional('previousOwners', dados.previousOwners, 0, CAR_PREVIOUS_OWNERS_MAX, `Proprietários deve estar entre 0 e ${CAR_PREVIOUS_OWNERS_MAX}.`);
   validarOpcional('co2Emissions', dados.co2Emissions, 0, CAR_CO2_MAX, `Emissões de CO₂ deve estar entre 0 e ${CAR_CO2_MAX} g/km.`);
   validarOpcional('maxFuelRange', dados.maxFuelRange, 0, CAR_RANGE_MAX, `Autonomia deve estar entre 0 e ${CAR_RANGE_MAX} km.`);

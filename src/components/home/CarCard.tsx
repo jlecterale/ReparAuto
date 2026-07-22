@@ -3,7 +3,7 @@
 import { Car, Heart, MapPin, User, Wrench } from '@phosphor-icons/react';
 import { memo } from 'react';
 import Link from 'next/link';
-import { formatarPreco, renderFoto } from '@/lib/utils';
+import { formatarKm, formatarPreco, renderFoto } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
 import { useApp } from '@/providers/AppProvider';
 import LazyImage from '@/components/ui/LazyImage';
@@ -71,7 +71,7 @@ function CarCard({ carro }: { carro: Carro }) {
         <div className="flex items-center gap-2 text-xs text-fg-subtle mb-2">
           <span>{carro.anoFabricacao}</span>
           <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-          <span>{carro.km?.toLocaleString('pt-PT')} km</span>
+          <span>{formatarKm(carro.km ?? 0, docCountry(carro))}</span>
           <span className="w-1 h-1 rounded-full bg-slate-300"></span>
           <span>{carro.combustivel}</span>
         </div>

@@ -6,6 +6,7 @@ import { useApp } from '@/providers/AppProvider';
 import { pecaCompatibleWithCar } from '@/lib/compatibility';
 import { formatarPreco } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
+import { partCategoryLabel } from '@/lib/constants';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
 import type { Peca } from '@/types/peca';
@@ -64,7 +65,7 @@ export default function CompatibleParts({ carro, onSelect, limit = 12 }: Props) 
                 )}
               </div>
               <div className="flex items-center gap-2 mb-1">
-                <Badge cor="blue">{p.categoria}</Badge>
+                <Badge cor="blue">{partCategoryLabel(p.categoria, docCountry(p))}</Badge>
                 <span className="text-[11px] text-slate-500">{p.estado}</span>
               </div>
               <p className="text-[11px] text-slate-500 mt-auto">

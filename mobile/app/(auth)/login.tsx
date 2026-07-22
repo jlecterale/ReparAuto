@@ -10,12 +10,16 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LogoMark } from '@/components/ui/Logo';
 import { useAuth } from '@/context/AuthContext';
+import { useCountry } from '@/context/CountryContext';
 import { useToast } from '@/context/ToastContext';
 import { statusCodes } from '@/lib/auth';
+import { term } from '@/lib/terms';
 import { colors } from '@/theme/colors';
 
 export default function LoginScreen() {
   const { login, loginGoogle, loginApple, appleDisponivel } = useAuth();
+  const { country } = useCountry();
+  const passwordNoun = term('passwordNoun', country);
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,7 +49,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      showToast('Preencha o email e a palavra-passe.', 'error');
+      showToast(`Preencha o email e a ${passwordNoun}.`, 'error');
       return;
     }
     setLoading(true);
@@ -121,13 +125,13 @@ export default function LoginScreen() {
               label="Email"
               value={email}
               onChangeText={setEmail}
-              placeholder="o.seu@email.pt"
+              placeholder={term('emailPlaceholder', country)}
               autoCapitalize="none"
               keyboardType="email-address"
               autoComplete="email"
             />
             <Input
-              label="Palavra-passe"
+              label={term('passwordLabel', country)}
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
@@ -141,7 +145,7 @@ export default function LoginScreen() {
               className="-mt-1 self-end"
             >
               <Text className="text-sm font-semibold text-primary-700">
-                Esqueceu-se da palavra-passe?
+                {term('forgotPasswordLink', country)}
               </Text>
             </Pressable>
 

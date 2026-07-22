@@ -18,6 +18,9 @@ export {
   TIPOS_CARROCERIA,
   EQUIPAMENTOS_CARRO,
   getEquipamentosCarro,
+  bodyTypeLabel,
+  equipmentLabel,
+  partCategoryLabel,
 } from '@/lib/listingOptions';
 // Every listing photo is cropped to this aspect ratio (width / height) so cards
 // and galleries render uniformly — 4:3 is the automotive-marketplace standard.

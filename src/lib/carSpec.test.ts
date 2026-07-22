@@ -61,6 +61,11 @@ describe('validarDadosVeiculo', () => {
     expect(validarDadosVeiculo({ ...valido, km: String(CAR_KM_MAX + 1) }).km).toBeTruthy();
   });
 
+  it('formats range bounds with the market locale in error messages', () => {
+    // Brazilian sellers read "999.999", not the pt-PT "999 999".
+    expect(validarDadosVeiculo({ ...valido, km: String(CAR_KM_MAX + 1) }, 'BR').km).toContain('999.999');
+  });
+
   it('accepts mileage at exactly the cap', () => {
     expect(validarDadosVeiculo({ ...valido, km: String(CAR_KM_MAX) }).km).toBeUndefined();
   });

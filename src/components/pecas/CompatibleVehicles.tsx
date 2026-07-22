@@ -4,8 +4,8 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/providers/AppProvider';
 import { carMatchesPeca } from '@/lib/compatibility';
-import { formatarPreco } from '@/lib/utils';
-import { docCountry } from '@/lib/country';
+import { formatarKm, formatarPreco } from '@/lib/utils';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
 import type { Peca } from '@/types/peca';
 
 interface Props {
@@ -42,7 +42,7 @@ export default function CompatibleVehicles({ peca, limit = 8 }: Props) {
                 {c.marca} {c.modelo}
               </p>
               <p className="text-[11px] text-slate-500">
-                {c.anoFabricacao} · {c.km?.toLocaleString('pt-PT')} km · {c.local || 'Portugal'}
+                {c.anoFabricacao} · {formatarKm(c.km ?? 0, docCountry(c))} · {c.local || COUNTRY_INFO[docCountry(c)].name}
               </p>
             </div>
             <span className="text-xs font-extrabold text-accent whitespace-nowrap">

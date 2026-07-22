@@ -1,4 +1,5 @@
 import { COUNTRY_INFO, type Country } from '@/lib/country';
+import { term } from '@/lib/terms';
 
 // Formats a listing price in the currency of the listing's own market —
 // pass the doc's resolved country (docCountry), not the viewer's.
@@ -7,6 +8,16 @@ export function formatarPreco(valor: number | string | null | undefined, country
   const value = valor == null || isNaN(Number(valor)) ? 0 : Number(valor);
   const formatted = value.toLocaleString(locale);
   return country === 'BR' ? `R$ ${formatted}` : `${formatted} €`;
+}
+
+// Digit grouping follows the market of the listing being shown ("150 000" PT,
+// "150.000" BR) — like prices, mileage is an attribute of the listing.
+export function formatarNumero(n: number, country: Country = 'PT'): string {
+  return n.toLocaleString(COUNTRY_INFO[country].locale);
+}
+
+export function formatarKm(km: number, country: Country = 'PT'): string {
+  return `${formatarNumero(km, country)} km`;
 }
 
 export function gerarId(): number {
@@ -227,33 +238,40 @@ export interface PasswordRule {
   test: (password: string) => boolean;
 }
 
-export const PASSWORD_RULES: PasswordRule[] = [
-  {
-    label: 'Mínimo 8 caracteres',
-    message: 'A palavra-passe deve ter pelo menos 8 caracteres.',
-    test: (p) => p.length >= 8,
-  },
-  {
-    label: 'Uma letra maiúscula',
-    message: 'A palavra-passe deve conter pelo menos uma letra maiúscula.',
-    test: (p) => /[A-Z]/.test(p),
-  },
-  {
-    label: 'Um número',
-    message: 'A palavra-passe deve conter pelo menos um número.',
-    test: (p) => /\d/.test(p),
-  },
-  {
-    label: 'Um símbolo (!@#$...)',
-    message: 'A palavra-passe deve conter pelo menos um símbolo.',
-    test: (p) => /[^A-Za-z0-9]/.test(p),
-  },
-];
+// Rules are identical across markets; only the noun in the message changes
+// ("palavra-passe" PT / "senha" BR).
+export function getPasswordRules(country: Country = 'PT'): PasswordRule[] {
+  const noun = term('passwordNoun', country);
+  return [
+    {
+      label: 'Mínimo 8 caracteres',
+      message: `A ${noun} deve ter pelo menos 8 caracteres.`,
+      test: (p) => p.length >= 8,
+    },
+    {
+      label: 'Uma letra maiúscula',
+      message: `A ${noun} deve conter pelo menos uma letra maiúscula.`,
+      test: (p) => /[A-Z]/.test(p),
+    },
+    {
+      label: 'Um número',
+      message: `A ${noun} deve conter pelo menos um número.`,
+      test: (p) => /\d/.test(p),
+    },
+    {
+      label: 'Um símbolo (!@#$...)',
+      message: `A ${noun} deve conter pelo menos um símbolo.`,
+      test: (p) => /[^A-Za-z0-9]/.test(p),
+    },
+  ];
+}
+
+export const PASSWORD_RULES: PasswordRule[] = getPasswordRules('PT');
 
 // Returns the first failing rule's user-facing message, or null when the
 // password satisfies every rule. Order is fixed so the message is deterministic.
-export function validatePassword(password: string): string | null {
-  const failing = PASSWORD_RULES.find((rule) => !rule.test(password));
+export function validatePassword(password: string, country: Country = 'PT'): string | null {
+  const failing = getPasswordRules(country).find((rule) => !rule.test(password));
   return failing ? failing.message : null;
 }
 
@@ -261,19 +279,32 @@ export function dataAtualISO(): string {
   return new Date().toISOString();
 }
 
+// Resolves the wa.me-ready number for a listing: prefers the explicit WhatsApp
+// field, falls back to the phone, and prepends the market's dialing code when
+// missing — sellers type local numbers ("912345678", "11987654321"), which
+// wa.me rejects without the prefix. Returns null when no usable number exists
+// (the WhatsApp button should then be hidden). Mirrors the mobile
+// `resolveWhatsAppNumber`.
 export function obterWhatsApp(whatsapp?: string | null, telefone?: string | null, country: Country = 'PT'): string | null {
-  if (whatsapp && whatsapp.trim()) return whatsapp.trim();
-  if (!telefone) return null;
-  const digits = telefone.replace(/[\s().+-]/g, '');
-  if (country === 'BR') {
-    // Only mobiles (DDD + 9xxxxxxxx) receive WhatsApp links.
-    if (/^[1-9][0-9]9\d{8}$/.test(digits)) return '55' + digits;
-    if (/^55[1-9][0-9]9\d{8}$/.test(digits)) return digits;
+  const normalize = (raw: string): string | null => {
+    const digits = raw.replace(/[\s().+-]/g, '');
+    if (country === 'BR') {
+      // Only mobiles (DDD + 9xxxxxxxx) receive WhatsApp links.
+      if (/^[1-9][0-9]9\d{8}$/.test(digits)) return '55' + digits;
+      if (/^55[1-9][0-9]9\d{8}$/.test(digits)) return digits;
+    } else {
+      if (/^9\d{8}$/.test(digits)) return '351' + digits;
+      if (/^3519\d{8}$/.test(digits)) return digits;
+    }
     return null;
+  };
+  if (whatsapp?.trim()) {
+    const digits = whatsapp.replace(/[\s().+-]/g, '');
+    // Not in the market's local format but long enough to already carry a
+    // dialing code (e.g. a foreign number) — pass it through.
+    return normalize(whatsapp) ?? (/^\d{10,15}$/.test(digits) ? digits : null);
   }
-  if (/^9\d{8}$/.test(digits)) return '351' + digits;
-  if (/^3519\d{8}$/.test(digits)) return digits;
-  return null;
+  return telefone?.trim() ? normalize(telefone) : null;
 }
 
 export function gerarLinkWhatsApp(numero: string, tituloAnuncio: string): string {

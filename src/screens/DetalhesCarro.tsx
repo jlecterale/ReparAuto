@@ -7,8 +7,8 @@ import { useApp } from '@/providers/AppProvider';
 import { getCarroPorId as getCarroPorIdDb, incrementCampo, recordDailyMetric, updateCarro, deleteCarro } from '@/lib/db';
 import { statusAfterOwnerEdit } from '@/lib/listingModeration';
 import { pickChangedFields } from '@/lib/changedFields';
-import { formatarPreco, renderDescricao } from '@/lib/utils';
-import { docCountry } from '@/lib/country';
+import { formatarKm, formatarPreco, renderDescricao } from '@/lib/utils';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
 import { getSpinAngles, getSpinFrames } from '@/lib/spin360';
 import TechnicalSheet from '@/components/detalhes/TechnicalSheet';
 import ContactSection from '@/components/detalhes/ContactSection';
@@ -189,7 +189,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
               {carro.marca} {carro.modelo}
             </h1>
             <p className="text-fg-subtle text-sm mt-1">
-              {carro.anoFabricacao} • {carro.km?.toLocaleString('pt-PT')} km • {carro.local || 'Portugal'}
+              {carro.anoFabricacao} • {formatarKm(carro.km ?? 0, docCountry(carro))} • {carro.local || COUNTRY_INFO[docCountry(carro)].name}
             </p>
             <div className="flex items-center gap-2 mt-2">
               <span className="text-2xl sm:text-3xl font-extrabold text-accent">
@@ -316,6 +316,7 @@ export default function DetalhesCarro({ initialCarro }: { initialCarro?: Seriali
 
         <FinanciamentoSeguroWidget
           carroPreco={carro.preco}
+          country={docCountry(carro)}
           carroId={carro.id}
           carroTitulo={`${carro.marca} ${carro.modelo}`}
           defaultNome={user?.nome}

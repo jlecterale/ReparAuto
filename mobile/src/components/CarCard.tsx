@@ -53,7 +53,7 @@ function CarCardBase({ carro, onPress }: CarCardProps) {
         </Text>
         <View className="mt-2 flex-row flex-wrap items-center gap-x-3 gap-y-1">
           <Meta icon="calendar-outline" text={String(carro.anoFabricacao)} />
-          <Meta icon="speedometer-outline" text={formatKm(carro.km)} />
+          <Meta icon="speedometer-outline" text={formatKm(carro.km, docCountry(carro))} />
           <Meta icon="water-outline" text={carro.combustivel} />
         </View>
         {!!carro.local && (

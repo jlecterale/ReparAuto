@@ -4,14 +4,14 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import type { Oficina } from '@/types';
+import { useCountry } from '@/context/CountryContext';
+import type { Country } from '@/lib/country';
 import { colors } from '@/theme/colors';
 
-// Centred on mainland Portugal by default.
-const REGIAO_PT: Region = {
-  latitude: 39.6,
-  longitude: -8.0,
-  latitudeDelta: 4.5,
-  longitudeDelta: 4.5,
+// Default map region per market: mainland Portugal / Brazil.
+const REGIAO_INICIAL: Record<Country, Region> = {
+  PT: { latitude: 39.6, longitude: -8.0, latitudeDelta: 4.5, longitudeDelta: 4.5 },
+  BR: { latitude: -14.2, longitude: -53.2, latitudeDelta: 40, longitudeDelta: 40 },
 };
 
 interface OficinasMapaProps {
@@ -20,6 +20,7 @@ interface OficinasMapaProps {
 }
 
 export function OficinasMapa({ oficinas, onSelect }: OficinasMapaProps) {
+  const { country } = useCountry();
   const mapRef = useRef<MapView>(null);
   const [locating, setLocating] = useState(false);
 
@@ -54,7 +55,7 @@ export function OficinasMapa({ oficinas, onSelect }: OficinasMapaProps) {
 
   return (
     <View className="flex-1">
-      <MapView ref={mapRef} style={{ flex: 1 }} initialRegion={REGIAO_PT}>
+      <MapView ref={mapRef} style={{ flex: 1 }} initialRegion={REGIAO_INICIAL[country]}>
         {comCoords.map((o) => (
           <Marker
             key={o.id}

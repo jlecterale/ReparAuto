@@ -9,7 +9,10 @@ import Input from '@/components/ui/Input';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
 import { enviarEmailReset } from '@/lib/auth';
-import { validatePassword, PASSWORD_RULES } from '@/lib/utils';
+import { validatePassword, getPasswordRules } from '@/lib/utils';
+import { term } from '@/lib/terms';
+import type { Country } from '@/lib/country';
+import { useCountry } from '@/providers/CountryProvider';
 
 interface LoginModalProps {
   show: boolean;
@@ -22,6 +25,8 @@ interface LoginModalProps {
 export default function LoginModal({ show, onClose, onSuccess, modoInicial, contexto }: LoginModalProps) {
   const { auth } = useApp();
   const { login, registar, loginGoogle, loginApple } = auth;
+  const { country } = useCountry();
+  const noun = term('passwordNoun', country);
   const toast = useToast();
 
   const [modo, setModo] = useState<'login' | 'registar' | 'reset'>(modoInicial ?? 'login');
@@ -50,7 +55,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
     setErro('');
 
     if (!email.trim() || !password.trim()) {
-      setErro('Preencha o email e a palavra-passe.');
+      setErro(`Preencha o email e a ${noun}.`);
       return;
     }
     if (modo === 'registar' && !nome.trim()) {
@@ -58,7 +63,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       return;
     }
     if (modo === 'registar') {
-      const passwordError = validatePassword(password);
+      const passwordError = validatePassword(password, country);
       if (passwordError) {
         setErro(passwordError);
         return;
@@ -80,7 +85,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       onClose();
       onSuccess?.();
     } catch (err: any) {
-      const msg = traduzirErroFirebase(err.code);
+      const msg = traduzirErroFirebase(err.code, country);
       setErro(msg);
     } finally {
       setLoading(false);
@@ -90,7 +95,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
   const handleReset = async () => {
     setErro('');
     if (!email.trim()) {
-      setErro('Introduza o seu email para recuperar a palavra-passe.');
+      setErro(`Introduza o seu email para recuperar a ${noun}.`);
       return;
     }
     setLoading(true);
@@ -99,7 +104,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       setEmailSent(true);
       toast?.sucesso('Email de recuperação enviado! Verifique a sua caixa de entrada.');
     } catch (err: any) {
-      const msg = traduzirErroFirebase(err.code);
+      const msg = traduzirErroFirebase(err.code, country);
       setErro(msg);
     } finally {
       setLoading(false);
@@ -115,7 +120,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       onClose();
       onSuccess?.();
     } catch (err: any) {
-      const msg = traduzirErroFirebase(err.code);
+      const msg = traduzirErroFirebase(err.code, country);
       setErro(msg);
     } finally {
       setLoading(false);
@@ -131,7 +136,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
       onClose();
       onSuccess?.();
     } catch (err: any) {
-      const msg = traduzirErroFirebase(err.code);
+      const msg = traduzirErroFirebase(err.code, country);
       setErro(msg);
     } finally {
       setLoading(false);
@@ -139,7 +144,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
   };
 
   return (
-    <Modal show={show} onClose={onClose} titulo={modo === 'reset' ? 'Recuperar Palavra-passe' : modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
+    <Modal show={show} onClose={onClose} titulo={modo === 'reset' ? `Recuperar ${term('passwordLabel', country)}` : modo === 'login' ? 'Entrar na Plataforma' : 'Criar Conta'} tamanho="sm">
       <div className="space-y-4">
         {contexto && modo !== 'reset' && (
           <div className="flex items-start gap-2.5 rounded-xl bg-accent/10 border border-accent/20 p-3 text-sm text-fg">
@@ -215,7 +220,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
         {modo !== 'reset' && (
           <>
             <Input
-              label="Palavra-passe"
+              label={term('passwordLabel', country)}
               name="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete={modo === 'login' ? 'current-password' : 'new-password'}
@@ -228,7 +233,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="p-1.5 rounded-lg text-fg-subtle hover:text-fg hover:bg-neutral-100 transition"
-                  aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
+                  aria-label={`${showPassword ? 'Ocultar' : 'Mostrar'} ${noun}`}
                 >
                   {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                 </button>
@@ -237,7 +242,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
 
             {modo === 'registar' && password.length > 0 && (
               <div className="-mt-2 space-y-1">
-                {PASSWORD_RULES.map((rule) => {
+                {getPasswordRules(country).map((rule) => {
                   const valid = rule.test(password);
                   return (
                     <div key={rule.label} className="flex items-center gap-1.5">
@@ -262,7 +267,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
                   onClick={() => { setModo('reset'); setErro(''); setEmailSent(false); }}
                   className="text-accent hover:underline font-medium"
                 >
-                  Esqueceu-se da palavra-passe?
+                  {term('forgotPasswordLink', country)}
                 </button>
               </p>
             )}
@@ -298,7 +303,7 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
             tamanho="lg"
             blocoCompleto
             carregando={loading}
-            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && validatePassword(password) !== null)}
+            disabled={loading || !email.trim() || !password.trim() || (modo === 'registar' && validatePassword(password, country) !== null)}
             onClick={handleSubmit}
           >
             {modo === 'login' ? 'Entrar' : 'Criar Conta'}
@@ -336,13 +341,14 @@ export default function LoginModal({ show, onClose, onSuccess, modoInicial, cont
   );
 }
 
-function traduzirErroFirebase(code: string): string {
+function traduzirErroFirebase(code: string, country: Country): string {
+  const noun = term('passwordNoun', country);
   const erros: Record<string, string> = {
-    'auth/user-not-found': 'Utilizador não encontrado.',
-    'auth/wrong-password': 'Palavra-passe incorreta.',
-    'auth/invalid-credential': 'Email ou palavra-passe inválidos.',
+    'auth/user-not-found': `${term('userFallbackName', country)} não encontrado.`,
+    'auth/wrong-password': `${term('passwordLabel', country)} incorreta.`,
+    'auth/invalid-credential': `Email ou ${noun} inválidos.`,
     'auth/email-already-in-use': 'Este email já está registado.',
-    'auth/weak-password': 'A palavra-passe é muito fraca.',
+    'auth/weak-password': `A ${noun} é muito fraca.`,
     'auth/invalid-email': 'O formato do email é inválido.',
     'auth/popup-closed-by-user': 'Janela de autenticação foi fechada.',
     'auth/cancelled-popup-request': 'Autenticação cancelada.',

@@ -12,6 +12,8 @@ import {
   ORIGENS_VEICULO,
   getTiposEstofo,
   getEquipamentosCarro,
+  bodyTypeLabel,
+  equipmentLabel,
 } from '@/lib/constants';
 import { validarDadosVeiculo } from '@/lib/carSpec';
 import { toggleInList, sanitizeDecimalInput } from '@/lib/utils';
@@ -41,6 +43,8 @@ interface CampoOptions {
   maxLength?: number;
   /** Decimal numeric field (e.g. l/100 km): allows digits + a single separator. */
   decimal?: boolean;
+  /** Display label for a stored option value (market vocabulary); value stays canonical. */
+  optionLabel?: (value: string) => string;
 }
 
 export default function StepDados({ dados, setDados, onNext, onBack }: StepDadosProps) {
@@ -63,7 +67,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   };
 
   const validar = () => {
-    const novosErros = validarDadosVeiculo(dados);
+    const novosErros = validarDadosVeiculo(dados, country);
     setErros(novosErros);
     if (Object.keys(novosErros).length === 0) {
       onNext();
@@ -73,14 +77,14 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
   // Validate a single field on blur so range errors surface as soon as the user
   // leaves the field, not only when they press "Continuar".
   const validarCampo = (campoId: string) => {
-    const todos = validarDadosVeiculo(dados);
+    const todos = validarDadosVeiculo(dados, country);
     setErros((prev) => ({ ...prev, [campoId]: todos[campoId] ?? '' }));
   };
 
   const campo = (
     label: string,
     campoId: keyof CarroFormData,
-    { type = 'text', placeholder = '', options, required = true, emptyOption = true, maxLength, decimal = false }: CampoOptions = {},
+    { type = 'text', placeholder = '', options, required = true, emptyOption = true, maxLength, decimal = false, optionLabel }: CampoOptions = {},
   ) => {
     const numeric = type === 'number' || decimal;
     return (
@@ -96,7 +100,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         >
           {!required && emptyOption && <option value="">Indiferente</option>}
           {options.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>{optionLabel ? optionLabel(opt) : opt}</option>
           ))}
         </select>
       ) : (
@@ -152,13 +156,13 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
         </div>
         {campo('Ano de Fabricação', 'anoFabricacao', { type: 'number', placeholder: 'Ex: 2007', maxLength: 4 })}
         {campo('Ano Modelo', 'anoModelo', { type: 'number', placeholder: 'Ex: 2008', maxLength: 4 })}
-        {campo('Quilómetros', 'km', { type: 'number', placeholder: 'Ex: 210000', maxLength: 6 })}
+        {campo(term('mileageLabel', country), 'km', { type: 'number', placeholder: 'Ex: 210000', maxLength: 6 })}
         {campo('Cor', 'cor', { placeholder: 'Ex: Cinzento', maxLength: 30 })}
         {campo('Combustível', 'combustivel', { options: TIPOS_COMBUSTIVEL })}
         {campo('Câmbio', 'cambio', { options: TIPOS_CAMBIO })}
         {campo('Nº Portas', 'portas', { type: 'number', placeholder: 'Ex: 5', maxLength: 1 })}
         {campo('Lugares', 'seats', { type: 'number', placeholder: 'Ex: 5', required: false, maxLength: 2 })}
-        {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false })}
+        {campo('Categoria', 'bodyType', { options: TIPOS_CARROCERIA, required: false, optionLabel: (v) => bodyTypeLabel(v, country) })}
         {campo('Condição', 'condition', { options: CONDICOES_VEICULO, required: false, emptyOption: false })}
         <div className="col-span-2">
           <SeletorLocalizacao
@@ -196,7 +200,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Potência (cv)', 'power', { type: 'number', placeholder: 'Ex: 90', required: false, maxLength: 4 })}
             {campo('Cilindrada (cc)', 'displacement', { type: 'number', placeholder: 'Ex: 1500', required: false, maxLength: 5 })}
             {campo('Tração', 'traction', { options: TIPOS_TRACAO, required: false })}
-            {campo('Nº de mudanças', 'gears', { type: 'number', placeholder: 'Ex: 6', required: false, maxLength: 2 })}
+            {campo(`Nº de ${term('gearsLabel', country).toLowerCase()}`, 'gears', { type: 'number', placeholder: 'Ex: 6', required: false, maxLength: 2 })}
             {/* Month of first registration — stored as 1–12, labelled by month name. */}
             <div>
               <label className="block text-xs font-semibold text-fg-subtle mb-1">{term('firstRegistrationLabel', country)}</label>
@@ -216,7 +220,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
             {campo('Garantia (meses)', 'warrantyMonths', { type: 'number', placeholder: 'Ex: 12', required: false, maxLength: 3 })}
             {campo('Emissões CO₂ (g/km)', 'co2Emissions', { type: 'number', placeholder: 'Ex: 120', required: false, maxLength: 3 })}
             {campo('Autonomia (km)', 'maxFuelRange', { type: 'number', placeholder: 'Ex: 900', required: false, maxLength: 4 })}
-            {campo('Estofos', 'upholstery', { options: getTiposEstofo(country), required: false })}
+            {campo(term('upholsteryLabel', country), 'upholstery', { options: getTiposEstofo(country), required: false })}
             {campo('Nº de airbags', 'numberOfAirbags', { type: 'number', placeholder: 'Ex: 8', required: false, maxLength: 2 })}
           </div>
 
@@ -237,11 +241,13 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
               <ToggleChip active={dados.acceptsFinancing} onClick={() => toggleBoolean('acceptsFinancing')}>
                 Aceita financiamento
               </ToggleChip>
-              <ToggleChip active={dados.vatDeductible} onClick={() => toggleBoolean('vatDeductible')}>
-                IVA dedutível
-              </ToggleChip>
+              {country === 'PT' && (
+                <ToggleChip active={dados.vatDeductible} onClick={() => toggleBoolean('vatDeductible')}>
+                  IVA dedutível
+                </ToggleChip>
+              )}
               <ToggleChip active={dados.acceptsExchange} onClick={() => toggleBoolean('acceptsExchange')}>
-                Aceita retoma
+                {term('exchangeLabel', country)}
               </ToggleChip>
             </div>
           </div>
@@ -254,7 +260,7 @@ export default function StepDados({ dados, setDados, onNext, onBack }: StepDados
                   active={dados.features.includes(feature)}
                   onClick={() => toggleFeature(feature)}
                 >
-                  {feature}
+                  {equipmentLabel(feature, country)}
                 </ToggleChip>
               ))}
             </div>

@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPecaPorIdServer, getPecasServer } from '@/lib/db.server';
 import Pecas from '@/screens/Pecas';
-import { renderFoto } from '@/lib/utils';
+import { formatarPreco, renderFoto } from '@/lib/utils';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
+import { partCategoryLabel } from '@/lib/listingOptions';
 
 export const revalidate = 60;
 
@@ -25,9 +27,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Peça não encontrada · RecarGarage', robots: { index: false, follow: false } };
   }
 
-  const preco = typeof peca.preco === 'number' ? ` · ${peca.preco.toLocaleString('pt-PT')}€` : '';
+  const country = docCountry(peca);
+  const preco = typeof peca.preco === 'number' ? ` · ${formatarPreco(peca.preco, country)}` : '';
   const title = `${peca.titulo}${preco}`;
-  const description = `${peca.titulo} — ${peca.categoria}, ${peca.estado}, em ${peca.local || 'Portugal'}. Anúncio no RecarGarage.`;
+  const description = `${peca.titulo} — ${partCategoryLabel(peca.categoria, country)}, ${peca.estado}, em ${peca.local || COUNTRY_INFO[country].name}. Anúncio no RecarGarage.`;
 
   // Share with the part's own photo; fall back to the branded OG image.
   const fotoData = peca.foto ? renderFoto(peca.foto) : null;

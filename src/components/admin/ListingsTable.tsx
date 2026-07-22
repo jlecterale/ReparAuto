@@ -6,7 +6,7 @@ import { Funnel, PencilSimpleLine, Check, X, Trash, Lightning, ArrowSquareOut } 
 import type { Carro, StatusAnuncio } from '@/types/carro';
 import type { Peca } from '@/types/peca';
 import { Timestamp } from 'firebase/firestore';
-import { formatarPreco, formatarData } from '@/lib/utils';
+import { formatarKm, formatarPreco, formatarData } from '@/lib/utils';
 import { COUNTRIES, COUNTRY_INFO, docCountry, filterByCountry, type Country } from '@/lib/country';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -226,7 +226,7 @@ export default function ListingsTable({ carros, pecas, defaultTab = 'carros', st
                         )}
                       </div>
                       <p className="text-[11px] font-normal text-fg-subtle mt-0.5">
-                        {c.anoFabricacao} • {c.km.toLocaleString('pt-PT')} km • {c.combustivel} • {c.cambio}
+                        {c.anoFabricacao} • {formatarKm(c.km, docCountry(c))} • {c.combustivel} • {c.cambio}
                       </p>
                     </td>
                     <td className="py-3 pr-4 font-bold text-accent">{formatarPreco(c.preco, docCountry(c))}</td>

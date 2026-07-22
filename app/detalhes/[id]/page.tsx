@@ -4,7 +4,8 @@ import Script from 'next/script';
 import { getCarroPorIdServer, getCarrosServer } from '@/lib/db.server';
 import { serializeCarro } from '@/lib/serializeCarro';
 import DetalhesCarro from '@/screens/DetalhesCarro';
-import { renderFoto } from '@/lib/utils';
+import { formatarKm, formatarPreco, renderFoto } from '@/lib/utils';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
 
 export const revalidate = 60;
 
@@ -27,8 +28,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!carro || carro.status !== 'aprovado') {
     return { title: 'Anúncio não encontrado', robots: { index: false, follow: false } };
   }
-  const title = `${carro.marca} ${carro.modelo} ${carro.anoFabricacao} · ${carro.preco.toLocaleString('pt-PT')}€`;
-  const description = `${carro.marca} ${carro.modelo} de ${carro.anoFabricacao}, ${(carro.km || 0).toLocaleString('pt-PT')} km, ${carro.combustivel}, ${carro.cambio}, em ${carro.local || 'Portugal'}. ${carro.estadoVeiculo === 'manutencao' ? 'Precisa de manutenção. ' : ''}Anúncio no RecarGarage.`;
+  const country = docCountry(carro);
+  const title = `${carro.marca} ${carro.modelo} ${carro.anoFabricacao} · ${formatarPreco(carro.preco, country)}`;
+  const description = `${carro.marca} ${carro.modelo} de ${carro.anoFabricacao}, ${formatarKm(carro.km || 0, country)}, ${carro.combustivel}, ${carro.cambio}, em ${carro.local || COUNTRY_INFO[country].name}. ${carro.estadoVeiculo === 'manutencao' ? 'Precisa de manutenção. ' : ''}Anúncio no RecarGarage.`;
 
   const fotoData = carro.fotos?.[0] ? renderFoto(carro.fotos[0]) : null;
   const images = fotoData?.type === 'img' ? [fotoData.src] : [`${SITE_URL}/opengraph-image`];
@@ -109,7 +111,7 @@ export default async function Page({ params }: PageProps) {
     offers: {
       '@type': 'Offer',
       price: carro.preco,
-      priceCurrency: 'EUR',
+      priceCurrency: COUNTRY_INFO[docCountry(carro)].currency,
       availability: 'https://schema.org/InStock',
       itemCondition,
       url: `${SITE_URL}/detalhes/${id}`,

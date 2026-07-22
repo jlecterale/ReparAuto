@@ -145,7 +145,7 @@ export const REQUIRES_RECENT_LOGIN = 'auth/requires-recent-login';
  */
 export async function deleteAccount(): Promise<void> {
   const current = auth.currentUser;
-  if (!current) throw new Error('Nenhum utilizador autenticado.');
+  if (!current) throw new Error('Nenhuma sessão ativa.');
   await current.delete();
 }
 

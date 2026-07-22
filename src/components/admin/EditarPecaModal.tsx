@@ -5,11 +5,12 @@ import { Info } from '@phosphor-icons/react';
 import Modal from '@/components/ui/Modal';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
-import { CATEGORIAS_PECAS } from '@/lib/constants';
+import { CATEGORIAS_PECAS, partCategoryLabel } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import SeletorMarcaModelo from '@/components/ui/SeletorMarcaModelo';
 import FotosEditor from '@/components/anunciar/FotosEditor';
 import { uploadFileToStorage } from '@/lib/upload';
+import { docCountry } from '@/lib/country';
 import type { Peca, TipoPeca } from '@/types/peca';
 
 interface EditarPecaModalProps {
@@ -21,6 +22,8 @@ interface EditarPecaModalProps {
 
 export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarPecaModalProps) {
   const { auth } = useApp();
+  // Labels follow the listing's market, not the admin's.
+  const country = docCountry(peca);
   const pendingFilesRef = useRef<Map<string, File>>(new Map());
 
   const [form, setForm] = useState({
@@ -131,7 +134,7 @@ export default function EditarPecaModal({ show, onClose, peca, onSave }: EditarP
               className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
             >
               {CATEGORIAS_PECAS.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{partCategoryLabel(cat, country)}</option>
               ))}
             </select>
           </div>

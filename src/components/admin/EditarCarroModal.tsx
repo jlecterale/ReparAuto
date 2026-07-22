@@ -16,12 +16,15 @@ import {
   getEquipamentosCarro,
   MESES,
   MAX_FOTOS_CARRO,
+  bodyTypeLabel,
+  equipmentLabel,
+  getCurrencySymbol,
 } from '@/lib/constants';
 import { CAR_PRICE_MAX, validarDadosVeiculo } from '@/lib/carSpec';
 import { getDistritoForConcelho, getCoordenadas } from '@/lib/geo';
 import { docCountry } from '@/lib/country';
 import { term } from '@/lib/terms';
-import { toggleInList, parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull, sanitizeDecimalInput } from '@/lib/utils';
+import { formatarPreco, toggleInList, parsePositiveInt, parseNonNegativeInt, parseDecimalOrNull, sanitizeDecimalInput } from '@/lib/utils';
 import { buildPhotoAngles, toAngleByPhoto, type SpinAngle } from '@/lib/spin360';
 import { useApp } from '@/providers/AppProvider';
 import { useToast } from '@/components/ui/Toast';
@@ -109,10 +112,10 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
 
   // Full error map: vehicle specs + price (validarDadosVeiculo doesn't cover price).
   const computarErros = () => {
-    const todos = validarDadosVeiculo(form);
+    const todos = validarDadosVeiculo(form, country);
     const precoNum = Number(form.preco);
     if (!form.preco || !Number.isFinite(precoNum) || precoNum <= 0 || precoNum > CAR_PRICE_MAX) {
-      todos.preco = `O preço deve estar entre 1 € e ${CAR_PRICE_MAX.toLocaleString('pt-PT')} €.`;
+      todos.preco = `O preço deve estar entre ${formatarPreco(1, country)} e ${formatarPreco(CAR_PRICE_MAX, country)}.`;
     }
     return todos;
   };
@@ -218,6 +221,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
     options: readonly string[] | null = null,
     allowEmpty = false,
     maxLength?: number,
+    optionLabel?: (value: string) => string,
   ) => {
     const decimal = type === 'decimal';
     const numeric = type === 'number' || decimal;
@@ -232,7 +236,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         >
           {allowEmpty && <option value="">—</option>}
           {options.map((opt) => (
-            <option key={opt} value={opt}>{opt}</option>
+            <option key={opt} value={opt}>{optionLabel ? optionLabel(opt) : opt}</option>
           ))}
         </select>
       ) : (
@@ -272,13 +276,13 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo('Modelo', 'modelo')}
         {campo('Ano Fabricação', 'anoFabricacao', 'number', null, false, 4)}
         {campo('Ano Modelo', 'anoModelo', 'number', null, false, 4)}
-        {campo('Preço (€)', 'preco', 'number', null, false, 8)}
-        {campo('Quilómetros', 'km', 'number', null, false, 6)}
+        {campo(`Preço (${getCurrencySymbol(country)})`, 'preco', 'number', null, false, 8)}
+        {campo(term('mileageLabel', country), 'km', 'number', null, false, 6)}
         {campo('Combustível', 'combustivel', 'text', TIPOS_COMBUSTIVEL)}
         {campo('Câmbio', 'cambio', 'text', TIPOS_CAMBIO)}
         {campo('Cor', 'cor', 'text', null, false, 30)}
         {campo('Nº Portas', 'portas', 'number', null, false, 1)}
-        {campo('Categoria', 'bodyType', 'text', TIPOS_CARROCERIA, true)}
+        {campo('Categoria', 'bodyType', 'text', TIPOS_CARROCERIA, true, undefined, (v) => bodyTypeLabel(v, country))}
         {campo('Condição', 'condition', 'text', CONDICOES_VEICULO)}
         {campo('Lugares', 'seats', 'number', null, false, 2)}
         {campo('Potência (cv)', 'power', 'number', null, false, 4)}
@@ -288,10 +292,10 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
         {campo(term('firstRegistrationLabel', country), 'firstRegistrationMonth', 'text', MESES.map((_, i) => String(i + 1)), true)}
         {campo('Origem', 'origin', 'text', ORIGENS_VEICULO, true)}
         {campo('Proprietários anteriores', 'previousOwners', 'number', null, false, 2)}
-        {campo('Nº de mudanças', 'gears', 'number', null, false, 2)}
+        {campo(`Nº de ${term('gearsLabel', country).toLowerCase()}`, 'gears', 'number', null, false, 2)}
         {campo('Emissões CO₂ (g/km)', 'co2Emissions', 'number', null, false, 3)}
         {campo('Autonomia (km)', 'maxFuelRange', 'number', null, false, 4)}
-        {campo('Estofos', 'upholstery', 'text', getTiposEstofo(country), true)}
+        {campo(term('upholsteryLabel', country), 'upholstery', 'text', getTiposEstofo(country), true)}
         {campo('Nº de airbags', 'numberOfAirbags', 'number', null, false, 2)}
         {campo('Garantia (meses)', 'warrantyMonths', 'number', null, false, 3)}
         {campo('Consumo urbano', 'consumptionUrban', 'decimal', null, false, 5)}
@@ -312,11 +316,13 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
           <ToggleChip active={comercial.acceptsFinancing} onClick={() => toggleComercial('acceptsFinancing')}>
             Aceita financiamento
           </ToggleChip>
-          <ToggleChip active={comercial.vatDeductible} onClick={() => toggleComercial('vatDeductible')}>
-            IVA dedutível
-          </ToggleChip>
+          {country === 'PT' && (
+            <ToggleChip active={comercial.vatDeductible} onClick={() => toggleComercial('vatDeductible')}>
+              IVA dedutível
+            </ToggleChip>
+          )}
           <ToggleChip active={comercial.acceptsExchange} onClick={() => toggleComercial('acceptsExchange')}>
-            Aceita retoma
+            {term('exchangeLabel', country)}
           </ToggleChip>
         </div>
       </div>
@@ -330,7 +336,7 @@ export default function EditarCarroModal({ show, onClose, carro, onSave }: Edita
               active={features.includes(feature)}
               onClick={() => toggleFeature(feature)}
             >
-              {feature}
+              {equipmentLabel(feature, country)}
             </ToggleChip>
           ))}
         </div>

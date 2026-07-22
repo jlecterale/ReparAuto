@@ -135,7 +135,10 @@ export default function AnunciarPecaScreen() {
 
   function validar(): string | null {
     if (!titulo.trim()) return 'Indique um título.';
-    if (!categoria.trim()) return 'Indique a categoria (ex.: Motor, Travões).';
+    if (!categoria.trim())
+      return country === 'BR'
+        ? 'Informe a categoria (ex.: Motor, Freios).'
+        : 'Indique a categoria (ex.: Motor, Travões).';
     if (!marca.trim()) return 'Indique a marca do carro.';
     if (precisaPreco && (!preco.trim() || Number.isNaN(Number(preco))))
       return 'Indique um preço válido.';
@@ -302,10 +305,10 @@ export default function AnunciarPecaScreen() {
         <Text className="mt-2 text-base font-bold text-fg-heading">Contacto</Text>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label={term('phoneLabel', country)} value={telefone} onChangeText={setTelefone} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label={term('phoneLabel', country)} value={telefone} onChangeText={setTelefone} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
           </View>
           <View className="flex-1">
-            <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder="912345678" keyboardType="phone-pad" />
+            <Input label="WhatsApp" value={whatsapp} onChangeText={setWhatsapp} placeholder={term('phonePlaceholder', country)} keyboardType="phone-pad" />
           </View>
         </View>
 

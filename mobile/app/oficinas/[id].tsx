@@ -17,6 +17,8 @@ import { ListingStatusBanner } from '@/components/ui/ListingStatusBanner';
 import { StarRating } from '@/components/ui/StarRating';
 import { VideoPreview } from '@/components/ui/VideoPreview';
 import { getOficinaById } from '@/lib/db';
+import { docCountry } from '@/lib/country';
+import { resolveWhatsAppNumber, whatsAppUrl } from '@/lib/whatsapp';
 import { subscribeReviews } from '@/lib/trust';
 import { useAuth } from '@/context/AuthContext';
 import { useRequireAuth } from '@/hooks/useRequireAuth';
@@ -79,6 +81,7 @@ export default function DetalhesOficinaScreen() {
       ? `${oficina.coordenadas.latitude},${oficina.coordenadas.longitude}`
       : morada,
   )}`;
+  const whatsappNumero = resolveWhatsAppNumber(oficina.whatsapp, oficina.telefone, docCountry(oficina));
 
   return (
     <View className="flex-1 bg-neutral-50">
@@ -161,7 +164,7 @@ export default function DetalhesOficinaScreen() {
             <Pressable
               onPress={() => Linking.openURL(mapaUrl)}
               accessibilityRole="button"
-              accessibilityLabel="Abrir morada no Google Maps"
+              accessibilityLabel="Abrir localização no Google Maps"
               className="mt-5 flex-row items-start active:opacity-60"
             >
               <Ionicons name="location-outline" size={18} color={colors.primary[600]} />
@@ -213,13 +216,13 @@ export default function DetalhesOficinaScreen() {
         className="absolute bottom-0 left-0 right-0 flex-row gap-3 border-t border-neutral-200 bg-white px-4 pt-3"
         style={{ paddingBottom: Math.max(insets.bottom, 12) }}
       >
-        {oficina.whatsapp ? (
+        {whatsappNumero ? (
           <Button
             label="WhatsApp"
             variant="secondary"
             className="flex-1"
             icon={<Ionicons name="logo-whatsapp" size={18} color="#fff" />}
-            onPress={() => Linking.openURL(`https://wa.me/${oficina.whatsapp}`)}
+            onPress={() => Linking.openURL(whatsAppUrl(whatsappNumero))}
           />
         ) : null}
         {oficina.telefone ? (

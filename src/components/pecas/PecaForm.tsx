@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { GearSix, Car, MagnifyingGlass, IdentificationCard, PlusCircle, PencilSimple, UploadSimple, X, type Icon } from '@phosphor-icons/react';
-import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB } from '@/lib/constants';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, LISTING_PHOTO_ASPECT, MAX_FOTO_SIZE_BYTES, MAX_FOTO_SIZE_MB, partCategoryLabel } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import { getAdminUsers, criarNotificacao } from '@/lib/db';
 import { uploadFileToStorage } from '@/lib/upload';
@@ -311,7 +311,7 @@ export default function PecaForm({ onSuccess, onCancel, draft }: PecaFormProps) 
             className="w-full border border-gray-300 rounded-xl p-2.5 text-sm focus:outline-none focus:border-accent"
           >
             {CATEGORIAS_PECAS.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>{partCategoryLabel(cat, country)}</option>
             ))}
           </select>
         </div>
