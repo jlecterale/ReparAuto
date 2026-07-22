@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useCountry } from '@/context/CountryContext';
+import { term } from '@/lib/terms';
 import { colors } from '@/theme/colors';
 
 interface InputProps extends TextInputProps {
@@ -13,6 +15,7 @@ export function Input({ label, error, className = '', secureTextEntry, ...props 
   // Password fields get an eye toggle to reveal what was typed (mirrors the
   // web LoginModal). `secureTextEntry` is the caller's intent; `hidden` is the
   // user's current choice.
+  const { country } = useCountry();
   const [hidden, setHidden] = useState(true);
   const isPassword = !!secureTextEntry;
 
@@ -35,7 +38,7 @@ export function Input({ label, error, className = '', secureTextEntry, ...props 
             onPress={() => setHidden((v) => !v)}
             hitSlop={8}
             accessibilityRole="button"
-            accessibilityLabel={hidden ? 'Mostrar palavra-passe' : 'Ocultar palavra-passe'}
+            accessibilityLabel={`${hidden ? 'Mostrar' : 'Ocultar'} ${term('passwordNoun', country)}`}
             className="absolute bottom-0 right-0 top-0 justify-center px-4"
           >
             <Ionicons

@@ -18,7 +18,7 @@ import { term } from '@/lib/terms';
 import { useToast } from '@/context/ToastContext';
 import { useMarcasModelos } from '@/hooks/useMarcasModelos';
 import { getCoordenadas, getDistritoForConcelho } from '@/lib/geo';
-import { getCurrencySymbol } from '@/lib/country';
+import { getCurrencySymbol, type Country } from '@/lib/country';
 import { formatNumero, formatPreco } from '@/lib/format';
 import { addCarro, getCarroById, updateCarro, uploadFotoIfLocal } from '@/lib/db';
 import { trackPositiveAction } from '@/lib/appReview';
@@ -64,11 +64,16 @@ import { colors } from '@/theme/colors';
 import type { BodyType, Cambio, Combustivel, Condition, EstadoVeiculo, Traction, Upholstery, VehicleOrigin } from '@/types';
 
 type CommercialKey = 'acceptsFinancing' | 'vatDeductible' | 'acceptsExchange';
-const COMERCIAL_OPTIONS: { value: CommercialKey; label: string }[] = [
-  { value: 'acceptsFinancing', label: 'Aceita financiamento' },
-  { value: 'vatDeductible', label: 'IVA dedutível' },
-  { value: 'acceptsExchange', label: 'Aceita retoma' },
-];
+
+// VAT deduction (IVA dedutível) is a Portuguese-market concept — Brazilian
+// sellers never see the toggle (the stored flag stays untouched on edits).
+function getComercialOptions(country: Country): { value: CommercialKey; label: string }[] {
+  return [
+    { value: 'acceptsFinancing', label: 'Aceita financiamento' },
+    ...(country === 'PT' ? [{ value: 'vatDeductible' as const, label: 'IVA dedutível' }] : []),
+    { value: 'acceptsExchange', label: term('exchangeLabel', country) },
+  ];
+}
 
 export default function AnunciarCarroScreen() {
   const { id, retomar } = useLocalSearchParams<{ id?: string; retomar?: string }>();
@@ -763,9 +768,7 @@ export default function AnunciarCarroScreen() {
 
         <MultiChipSelect
           label="Condições comerciais"
-          options={COMERCIAL_OPTIONS.map((o) =>
-            o.value === 'acceptsExchange' && country === 'BR' ? { ...o, label: 'Aceita troca' } : o,
-          )}
+          options={getComercialOptions(country)}
           values={(Object.keys(comercial) as CommercialKey[]).filter((k) => comercial[k])}
           onToggle={(key) => setComercial((prev) => ({ ...prev, [key]: !prev[key] }))}
         />

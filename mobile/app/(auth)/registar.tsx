@@ -25,6 +25,7 @@ export default function RegistarScreen() {
   // async first-launch resolution.
   const [pickedCountry, setPickedCountry] = useState<Country | null>(null);
   const selectedCountry = pickedCountry ?? country;
+  const passwordNoun = term('passwordNoun', selectedCountry);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,19 +55,19 @@ export default function RegistarScreen() {
       return;
     }
     if (password.length < 8) {
-      showToast('A palavra-passe deve ter pelo menos 8 caracteres.', 'error');
+      showToast(`A ${passwordNoun} deve ter pelo menos 8 caracteres.`, 'error');
       return;
     }
     if (!/[A-Z]/.test(password)) {
-      showToast('A palavra-passe deve conter pelo menos uma letra maiúscula.', 'error');
+      showToast(`A ${passwordNoun} deve conter pelo menos uma letra maiúscula.`, 'error');
       return;
     }
     if (!/\d/.test(password)) {
-      showToast('A palavra-passe deve conter pelo menos um número.', 'error');
+      showToast(`A ${passwordNoun} deve conter pelo menos um número.`, 'error');
       return;
     }
     if (!/[^A-Za-z0-9]/.test(password)) {
-      showToast('A palavra-passe deve conter pelo menos um símbolo.', 'error');
+      showToast(`A ${passwordNoun} deve conter pelo menos um símbolo.`, 'error');
       return;
     }
     setLoading(true);
@@ -157,7 +158,7 @@ export default function RegistarScreen() {
               autoComplete="email"
             />
             <Input
-              label="Palavra-passe"
+              label={term('passwordLabel', selectedCountry)}
               value={password}
               onChangeText={setPassword}
               placeholder="Mínimo 8 caracteres"

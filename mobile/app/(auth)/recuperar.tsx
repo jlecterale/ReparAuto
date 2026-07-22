@@ -15,6 +15,7 @@ import { colors } from '@/theme/colors';
 
 export default function RecuperarScreen() {
   const { country } = useCountry();
+  const passwordNoun = term('passwordNoun', country);
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export default function RecuperarScreen() {
   async function handleEnviar() {
     const value = email.trim();
     if (!value) {
-      showToast('Introduza o seu email para recuperar a palavra-passe.', 'error');
+      showToast(`Introduza o seu email para recuperar a ${passwordNoun}.`, 'error');
       return;
     }
     setLoading(true);
@@ -61,11 +62,10 @@ export default function RecuperarScreen() {
           <View className="mb-8 items-center">
             <LogoMark size={64} />
             <Text className="mt-4 text-2xl font-extrabold text-primary-900">
-              Recuperar palavra-passe
+              {`Recuperar ${passwordNoun}`}
             </Text>
             <Text className="mt-1 text-center text-base text-fg-muted">
-              Indique o email da sua conta e enviamos-lhe um link para definir
-              uma nova palavra-passe.
+              {`Indique o email da sua conta e enviamos-lhe um link para definir uma nova ${passwordNoun}.`}
             </Text>
           </View>
 

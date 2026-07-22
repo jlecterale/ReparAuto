@@ -19,6 +19,7 @@ import { colors } from '@/theme/colors';
 export default function LoginScreen() {
   const { login, loginGoogle, loginApple, appleDisponivel } = useAuth();
   const { country } = useCountry();
+  const passwordNoun = term('passwordNoun', country);
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,7 +49,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      showToast('Preencha o email e a palavra-passe.', 'error');
+      showToast(`Preencha o email e a ${passwordNoun}.`, 'error');
       return;
     }
     setLoading(true);
@@ -130,7 +131,7 @@ export default function LoginScreen() {
               autoComplete="email"
             />
             <Input
-              label="Palavra-passe"
+              label={term('passwordLabel', country)}
               value={password}
               onChangeText={setPassword}
               placeholder="••••••••"
@@ -144,7 +145,7 @@ export default function LoginScreen() {
               className="-mt-1 self-end"
             >
               <Text className="text-sm font-semibold text-primary-700">
-                Esqueceu-se da palavra-passe?
+                {term('forgotPasswordLink', country)}
               </Text>
             </Pressable>
 

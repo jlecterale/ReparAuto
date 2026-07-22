@@ -88,8 +88,9 @@ export default function DetalhesCarroScreen() {
   const lp100 = (v: number) => `${String(v).replace('.', ',')} l/100km`;
   const comercial = [
     carro.acceptsFinancing && 'Aceita financiamento',
-    carro.vatDeductible && 'IVA dedutível',
-    carro.acceptsExchange && (market === 'BR' ? 'Aceita troca' : 'Aceita retoma'),
+    // VAT deduction is a PT-market concept — never badge it on a BR listing.
+    market === 'PT' && carro.vatDeductible && 'IVA dedutível',
+    carro.acceptsExchange && term('exchangeLabel', market),
   ].filter(Boolean) as string[];
   const whatsappNumero = resolveWhatsAppNumber(carro.vendedorWhatsApp, carro.vendedorTelefone, market);
 
