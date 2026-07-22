@@ -3,7 +3,7 @@
 import { Circle, MagnifyingGlass, MapPin, SlidersHorizontal, X } from '@phosphor-icons/react';
 import { useState } from 'react';
 import { useApp } from '@/providers/AppProvider';
-import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, partCategoryLabel } from '@/lib/constants';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
@@ -129,7 +129,7 @@ export default function PecasFilter({ total }: { total: number }) {
             >
               <option value="">Todas as Categorias</option>
               {CATEGORIAS_PECAS.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>{partCategoryLabel(cat, country)}</option>
               ))}
             </select>
           </div>

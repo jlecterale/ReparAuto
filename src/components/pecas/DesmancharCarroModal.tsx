@@ -5,7 +5,7 @@ import Modal from '@/components/ui/Modal';
 import CompatibilitySelector from '@/components/pecas/CompatibilitySelector';
 import SeletorLocalizacao from '@/components/ui/SeletorLocalizacao';
 import { useApp } from '@/providers/AppProvider';
-import { CATEGORIAS_PECAS, ESTADOS_PECA } from '@/lib/constants';
+import { CATEGORIAS_PECAS, ESTADOS_PECA, partCategoryLabel } from '@/lib/constants';
 import { addPecasBatch, getAdminUsers, criarNotificacao } from '@/lib/db';
 import { getCoordenadas } from '@/lib/geo';
 import { getActiveCountry } from '@/lib/country';
@@ -291,7 +291,7 @@ export default function DesmancharCarroModal({ show, onClose }: Props) {
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:border-accent"
                     >
                       {CATEGORIAS_PECAS.map((c) => (
-                        <option key={c} value={c}>{c}</option>
+                        <option key={c} value={c}>{partCategoryLabel(c, getActiveCountry())}</option>
                       ))}
                     </select>
                     <select

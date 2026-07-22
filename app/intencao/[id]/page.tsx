@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getIntencaoPorIdServer } from '@/lib/db.server';
 import DetalhesIntencao from '@/screens/DetalhesIntencao';
+import { formatarPreco } from '@/lib/utils';
+import { docCountry } from '@/lib/country';
 
 // The page body is client-rendered; only generateMetadata reads Firestore,
 // so a short ISR window beats re-fetching on every request.
@@ -25,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Intenção não encontrada', robots: { index: false, follow: false } };
   }
   const title = intencao.titulo;
-  const description = `${intencao.criterios.marca} ${intencao.criterios.modelo} • Ano ${intencao.criterios.anoMinimo}${intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'} • Orçamento até ${intencao.criterios.precoMaximo.toLocaleString('pt-PT')}€ • ${intencao.criterios.combustivel.join(', ')} • ${intencao.criterios.localizacao.distrito}`;
+  const description = `${intencao.criterios.marca} ${intencao.criterios.modelo} • Ano ${intencao.criterios.anoMinimo}${intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'} • Orçamento até ${formatarPreco(intencao.criterios.precoMaximo, docCountry(intencao))} • ${intencao.criterios.combustivel.join(', ')} • ${intencao.criterios.localizacao.distrito}`;
 
   return {
     title,

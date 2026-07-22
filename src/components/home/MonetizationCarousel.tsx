@@ -18,7 +18,7 @@ import useSwipe from '@/hooks/useSwipe';
 import { useApp } from '@/providers/AppProvider';
 import { subscribeBanners } from '@/lib/db';
 import type { Banner } from '@/types/banner';
-import { formatarPreco, renderFoto } from '@/lib/utils';
+import { formatarKm, formatarPreco, renderFoto } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
 
 const DISMISS_KEY = 'monetization_carousel_dismissed';
@@ -137,7 +137,7 @@ export default function MonetizationCarousel() {
       return {
         id: `carro-${c.id}`,
         title: `${c.marca} ${c.modelo} • ${formatarPreco(c.preco, docCountry(c))}`,
-        description: `Ano ${c.anoFabricacao} • ${c.km.toLocaleString('pt-PT')} km • ${c.combustivel} • ${c.local}. ${c.descricao}`,
+        description: `Ano ${c.anoFabricacao} • ${formatarKm(c.km, docCountry(c))} • ${c.combustivel} • ${c.local}. ${c.descricao}`,
         badge: 'Destaque Turbo',
         badgeCor: 'accent',
         price: formatarPreco(c.preco, docCountry(c)),

@@ -4,6 +4,7 @@ import { GearSix, Car, MagnifyingGlass, MapPin, Heart, type Icon } from '@phosph
 import { memo } from 'react';
 import { formatarPreco, renderFoto } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
+import { partCategoryLabel } from '@/lib/constants';
 import { useApp } from '@/providers/AppProvider';
 import Badge from '@/components/ui/Badge';
 import LazyImage from '@/components/ui/LazyImage';
@@ -78,7 +79,7 @@ function PecasCard({ peca, onDetalhes }: { peca: Peca; onDetalhes: (peca: Peca) 
 
         <div className="text-xs text-fg-muted space-y-1 mb-3">
           <p>
-            <span className="font-semibold text-fg">Categoria:</span> {peca.categoria}
+            <span className="font-semibold text-fg">Categoria:</span> {partCategoryLabel(peca.categoria, docCountry(peca))}
           </p>
           <p>
             <span className="font-semibold text-fg">Marca:</span> {peca.marcaCarro}

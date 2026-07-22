@@ -12,8 +12,9 @@ import type { PecaFormDraft } from '@/components/pecas/PecaForm';
 import type { IntencaoFormDraft } from '@/components/intencao/CriarIntencaoCompra';
 import type { OficinaFormDraft } from '@/screens/RegistarOficina';
 import type { IntencaoCompra } from '@/types/intencao';
-import { formatarPreco, gerarTituloIntencao } from '@/lib/utils';
+import { formatarKm, formatarPreco, gerarTituloIntencao } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
+import { term } from '@/lib/terms';
 import { useCountry } from '@/providers/CountryProvider';
 import { useRouter } from 'next/navigation';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
@@ -308,7 +309,7 @@ export default function ProfileLoggedIn() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-extrabold text-fg-heading text-xl">{user?.nome || 'Utilizador'}</h3>
+                <h3 className="font-extrabold text-fg-heading text-xl">{user?.nome || term('userFallbackName', country)}</h3>
                 {user?.tipoConta === 'profissional' && (
                   <Badge cor="brand" className="!text-[10px]">
                     <Storefront /> Profissional
@@ -491,7 +492,7 @@ export default function ProfileLoggedIn() {
                       {carro.status === 'pendente' && <Badge cor="yellow">Pendente</Badge>}
                       {carro.status === 'rejeitado' && <Badge cor="red">Rejeitado</Badge>}
                     </div>
-                    <p className="text-xs text-fg-subtle">{carro.km?.toLocaleString('pt-PT')} km</p>
+                    <p className="text-xs text-fg-subtle">{formatarKm(carro.km ?? 0, docCountry(carro))}</p>
                   </div>
                   <div className="flex items-center gap-2 ml-2 flex-shrink-0">
                     <span className="font-extrabold text-accent text-sm">{formatarPreco(carro.preco, docCountry(carro))}</span>

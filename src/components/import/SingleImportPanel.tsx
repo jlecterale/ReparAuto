@@ -48,7 +48,7 @@ export default function SingleImportPanel({ attested }: { attested: boolean }) {
       { uid: user?.uid ?? null },
     );
     if (preview.unmappedFields.length > 0) {
-      toast?.info(`Campos a rever no formulário: ${describeUnmappedFields(preview.unmappedFields)}.`);
+      toast?.info(`Campos a rever no formulário: ${describeUnmappedFields(preview.unmappedFields, country)}.`);
     } else {
       toast?.sucesso('Anúncio importado — reveja e publique.');
     }

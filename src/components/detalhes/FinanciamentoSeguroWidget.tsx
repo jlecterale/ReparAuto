@@ -5,10 +5,14 @@ import { Coins, ShieldCheck, Calculator, ArrowRight, CheckCircle } from '@phosph
 import Button from '@/components/ui/Button';
 import { useToast } from '@/components/ui/Toast';
 import { criarLeadParceria } from '@/lib/db';
+import { formatarPreco } from '@/lib/utils';
+import type { Country } from '@/lib/country';
 import usePremiumConfig from '@/hooks/usePremiumConfig';
 
 interface FinanciamentoSeguroWidgetProps {
   carroPreco: number;
+  /** Market of the listing — drives the currency shown in the simulation. */
+  country?: Country;
   carroId?: string;
   carroTitulo?: string;
   defaultNome?: string;
@@ -18,6 +22,7 @@ interface FinanciamentoSeguroWidgetProps {
 
 export default function FinanciamentoSeguroWidget({
   carroPreco,
+  country = 'PT',
   carroId,
   carroTitulo,
   defaultNome = '',
@@ -257,14 +262,14 @@ export default function FinanciamentoSeguroWidget({
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
                 <div>
                   <span className="text-xs text-fg-subtle block">Prestação Mensal Estimada</span>
-                  <span className="text-2xl font-black text-accent">{prestacaoMensal}€ <span className="text-xs font-normal text-fg-muted">/mês</span></span>
+                  <span className="text-2xl font-black text-accent">{formatarPreco(prestacaoMensal, country)} <span className="text-xs font-normal text-fg-muted">/mês</span></span>
                 </div>
                 <Calculator size={32} className="text-slate-300" />
               </div>
 
               <div>
                 <label className="text-xs font-bold text-fg-muted block mb-1">
-                  Valor de Entrada: {entrada.toLocaleString('pt-PT')}€
+                  Valor de Entrada: {formatarPreco(entrada, country)}
                 </label>
                 <input
                   type="range"
@@ -276,8 +281,8 @@ export default function FinanciamentoSeguroWidget({
                   className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent"
                 />
                 <div className="flex justify-between text-[10px] text-fg-subtle mt-1">
-                  <span>0€ (Sem entrada)</span>
-                  <span>Max: {(Math.round(carroPreco * 0.8)).toLocaleString('pt-PT')}€</span>
+                  <span>{formatarPreco(0, country)} (Sem entrada)</span>
+                  <span>Max: {formatarPreco(Math.round(carroPreco * 0.8), country)}</span>
                 </div>
               </div>
 
@@ -345,7 +350,7 @@ export default function FinanciamentoSeguroWidget({
               <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
                 <div>
                   <span className="text-xs text-fg-subtle block">Seguro Estimado</span>
-                  <span className="text-2xl font-black text-primary-600">~{precoSeguroEstimado}€ <span className="text-xs font-normal text-fg-muted">/ano</span></span>
+                  <span className="text-2xl font-black text-primary-600">~{formatarPreco(precoSeguroEstimado, country)} <span className="text-xs font-normal text-fg-muted">/ano</span></span>
                 </div>
                 <ShieldCheck size={32} className="text-slate-300" />
               </div>

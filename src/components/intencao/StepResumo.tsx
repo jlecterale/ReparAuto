@@ -1,6 +1,6 @@
 'use client';
 
-import { formatarPreco } from '@/lib/utils';
+import { formatarKm, formatarPreco } from '@/lib/utils';
 import { CATEGORIAS_INTENCAO } from '@/lib/constants';
 import { useCountry } from '@/providers/CountryProvider';
 
@@ -47,7 +47,7 @@ export default function StepResumo({ form, aceiteTermos, onToggleTermos }: StepR
           <>
             <Detail label="Combustível" value={c.combustivel?.join(', ')} />
             <Detail label="Transmissão" value={c.tipoTransmissao?.join(', ')} />
-            <Detail label="Km máximo" value={c.quilometragemMaxima ? `${c.quilometragemMaxima.toLocaleString('pt-PT')} km` : ''} />
+            <Detail label="Km máximo" value={c.quilometragemMaxima ? formatarKm(c.quilometragemMaxima, country) : ''} />
           </>
         )}
         <Detail label="Localização" value={

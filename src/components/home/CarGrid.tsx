@@ -11,8 +11,8 @@ import { useApp } from '@/providers/AppProvider';
 import { useDistritosConcelhos } from '@/hooks/useDistritosConcelhos';
 import CarCard from './CarCard';
 import { CarCardSkeleton } from '@/components/ui/Skeleton';
-import { formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
-import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro, getCurrencySymbol, QUICK_PRICE_BANDS } from '@/lib/constants';
+import { formatarKm, formatarPreco, obterWhatsApp, toggleInList } from '@/lib/utils';
+import { TIPOS_CARROCERIA, CONDICOES_VEICULO, TIPOS_COMBUSTIVEL, TIPOS_CAMBIO, TIPOS_TRACAO, getEquipamentosCarro, getCurrencySymbol, QUICK_PRICE_BANDS, bodyTypeLabel, equipmentLabel } from '@/lib/constants';
 import ToggleChip from '@/components/ui/ToggleChip';
 import { buscarIntencoesMatch, getIntencoesAtivas, subscribeOficinas } from '@/lib/db';
 import { docCountry, filterByCountry } from '@/lib/country';
@@ -32,12 +32,15 @@ function FilterSelect({
   onChange,
   options,
   anyLabel,
+  format,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
   anyLabel: string;
+  /** Display label for a stored option value (market vocabulary). */
+  format?: (v: string) => string;
 }) {
   return (
     <div>
@@ -49,7 +52,7 @@ function FilterSelect({
       >
         <option value="">{anyLabel}</option>
         {options.map((opt) => (
-          <option key={opt} value={opt}>{opt}</option>
+          <option key={opt} value={opt}>{format ? format(opt) : opt}</option>
         ))}
       </select>
     </div>
@@ -301,7 +304,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
           {/* Category & condition — common filters, always visible */}
           {tipo === 'carros' && (
             <div className="grid grid-cols-2 gap-3">
-              <FilterSelect label="Categoria" value={advBodyType} onChange={setAdvBodyType} options={TIPOS_CARROCERIA} anyLabel="Todas" />
+              <FilterSelect label="Categoria" value={advBodyType} onChange={setAdvBodyType} options={TIPOS_CARROCERIA} anyLabel="Todas" format={(v) => bodyTypeLabel(v, country)} />
               <FilterSelect label="Condição" value={advCondition} onChange={setAdvCondition} options={CONDICOES_VEICULO} anyLabel="Qualquer" />
             </div>
           )}
@@ -368,7 +371,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                         active={advFeatures.includes(feature)}
                         onClick={() => toggleFeature(feature)}
                       >
-                        {feature}
+                        {equipmentLabel(feature, country)}
                       </ToggleChip>
                     ))}
                   </div>
@@ -630,7 +633,7 @@ export default function CarGrid({ initialCarros = [] }: { initialCarros?: Carro[
                           <>
                             <p><span className="text-fg-subtle">Ano:</span> {intencao.criterios.anoMinimo}{intencao.criterios.anoMaximo ? `–${intencao.criterios.anoMaximo}` : '+'}</p>
                             <p><span className="text-fg-subtle">Combustível:</span> {intencao.criterios.combustivel.join(', ')}</p>
-                            <p><span className="text-fg-subtle">Km máx:</span> {intencao.criterios.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
+                            <p><span className="text-fg-subtle">Km máx:</span> {formatarKm(intencao.criterios.quilometragemMaxima, docCountry(intencao))}</p>
                           </>
                         ) : (
                           <p className="italic text-fg-muted text-xs mb-1">{intencao.descricao?.slice(0, 120)}</p>

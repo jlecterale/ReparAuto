@@ -8,6 +8,7 @@ import Badge from '@/components/ui/Badge';
 import ShareButton from '@/components/ui/ShareButton';
 import { formatarPreco, obterWhatsApp } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
+import { partCategoryLabel } from '@/lib/constants';
 import { getUserByEmail, incrementCampo, recordDailyMetric, countProcurasForPeca } from '@/lib/db';
 import { useApp } from '@/providers/AppProvider';
 import { formatCompatibilityEntry } from '@/lib/compatibility';
@@ -117,7 +118,7 @@ export default function DetalhesPecaModal({ show, onClose, peca }: DetalhesPecaM
         <div className="grid grid-cols-2 gap-3 text-sm bg-slate-50 rounded-xl p-4">
           <div>
             <span className="text-xs font-semibold text-fg-subtle">Categoria</span>
-            <p className="font-semibold text-fg-heading">{peca.categoria}</p>
+            <p className="font-semibold text-fg-heading">{partCategoryLabel(peca.categoria, docCountry(peca))}</p>
           </div>
           <div>
             <span className="text-xs font-semibold text-fg-subtle">Estado</span>

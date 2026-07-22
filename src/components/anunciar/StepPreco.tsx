@@ -4,7 +4,7 @@ import { IdentificationCard, Invoice, RoadHorizon, YoutubeLogo } from '@phosphor
 import { useState } from 'react';
 import { TIPOS_MANUTENCAO } from '@/lib/constants';
 import { CAR_PRICE_MAX } from '@/lib/carSpec';
-import { isValidYoutubeUrl } from '@/lib/utils';
+import { formatarPreco, isValidYoutubeUrl } from '@/lib/utils';
 import { useCountry } from '@/providers/CountryProvider';
 import { term } from '@/lib/terms';
 import type { CarroFormData } from '@/types/carro';
@@ -101,7 +101,7 @@ export default function StepPreco({ dados, setDados, onBack, onPublicar, carrega
         />
         {erros.preco && (
           <span className="text-xs text-red-500 mt-1 block">
-            O preço deve estar entre 1 € e {CAR_PRICE_MAX.toLocaleString('pt-PT')} €.
+            O preço deve estar entre {formatarPreco(1, country)} e {formatarPreco(CAR_PRICE_MAX, country)}.
           </span>
         )}
         <p className="text-xs text-fg-subtle mt-1">{getSugestaoPreco(dados.preco)}</p>

@@ -1,7 +1,7 @@
 import { ClipboardText, Invoice, Phone, RoadHorizon, User } from '@phosphor-icons/react';
-import { formatarPreco } from '@/lib/utils';
-import { MESES } from '@/lib/constants';
-import { docCountry } from '@/lib/country';
+import { formatarKm, formatarNumero } from '@/lib/utils';
+import { MESES, bodyTypeLabel, equipmentLabel } from '@/lib/constants';
+import { COUNTRY_INFO, docCountry } from '@/lib/country';
 import { term } from '@/lib/terms';
 import Badge from '@/components/ui/Badge';
 import type { Carro } from '@/types/carro';
@@ -12,28 +12,28 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
   // Spec sheet of a specific listing → label by the listing's market, not the viewer's.
   const country = docCountry(carro);
 
-  const consumo = (l?: number) => (l != null ? `${l.toLocaleString('pt-PT')} l/100 km` : undefined);
+  const consumo = (l?: number) => (l != null ? `${formatarNumero(l, country)} l/100 km` : undefined);
 
   const specs = [
     { label: 'Marca', value: carro.marca },
     { label: 'Modelo', value: carro.modelo },
     { label: 'Versão', value: carro.version },
-    { label: 'Categoria', value: carro.bodyType },
+    { label: 'Categoria', value: carro.bodyType ? bodyTypeLabel(carro.bodyType, country) : carro.bodyType },
     { label: 'Condição', value: carro.condition },
     { label: 'Origem', value: carro.origin },
     { label: 'Ano de Fabricação', value: carro.anoFabricacao },
     { label: term('firstRegistrationLabel', country), value: carro.firstRegistrationMonth ? MESES[carro.firstRegistrationMonth - 1] : undefined },
     { label: 'Ano Modelo', value: carro.anoModelo || '-' },
-    { label: 'Quilómetros', value: carro.km ? `${carro.km.toLocaleString('pt-PT')} km` : '-' },
+    { label: term('mileageLabel', country), value: carro.km ? formatarKm(carro.km, country) : '-' },
     { label: 'Proprietários anteriores', value: carro.previousOwners != null ? String(carro.previousOwners) : undefined },
     { label: 'Combustível', value: carro.combustivel },
     { label: 'Câmbio', value: carro.cambio },
-    { label: 'Nº de mudanças', value: carro.gears },
+    { label: `Nº de ${term('gearsLabel', country).toLowerCase()}`, value: carro.gears },
     { label: 'Tração', value: carro.traction },
     { label: 'Cor', value: carro.cor },
     { label: 'Nº Portas', value: carro.portas },
     { label: 'Lugares', value: carro.seats },
-    { label: 'Estofos', value: carro.upholstery },
+    { label: term('upholsteryLabel', country), value: carro.upholstery },
     { label: 'Nº de airbags', value: carro.numberOfAirbags },
     { label: 'Potência', value: carro.power ? `${carro.power} cv` : undefined },
     { label: 'Cilindrada', value: carro.displacement ? `${carro.displacement} cc` : undefined },
@@ -43,13 +43,13 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
     { label: 'Consumo extra-urbano', value: consumo(carro.consumptionExtraUrban) },
     { label: 'Consumo combinado', value: consumo(carro.consumptionCombined) },
     { label: 'Garantia', value: carro.warrantyMonths != null ? `${carro.warrantyMonths} meses` : undefined },
-    { label: 'Localização', value: [carro.bairro, carro.local].filter(Boolean).join(', ') || 'Portugal' },
+    { label: 'Localização', value: [carro.bairro, carro.local].filter(Boolean).join(', ') || COUNTRY_INFO[country].name },
   ].filter((s) => s.value !== undefined && s.value !== null && s.value !== '');
 
   const comercial = [
     carro.acceptsFinancing && 'Aceita financiamento',
-    carro.vatDeductible && 'IVA dedutível',
-    carro.acceptsExchange && 'Aceita retoma',
+    country === 'PT' && carro.vatDeductible && 'IVA dedutível',
+    carro.acceptsExchange && term('exchangeLabel', country),
   ].filter(Boolean) as string[];
 
   return (
@@ -71,7 +71,7 @@ export default function TechnicalSheet({ carro }: { carro: Carro | null }) {
           <span className="text-xs font-semibold text-fg-subtle block mb-2">Equipamento & Extras</span>
           <div className="flex flex-wrap gap-1.5">
             {carro.features.map((f) => (
-              <Badge key={f} cor="blue">{f}</Badge>
+              <Badge key={f} cor="blue">{equipmentLabel(f, country)}</Badge>
             ))}
           </div>
         </div>

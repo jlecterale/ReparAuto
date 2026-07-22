@@ -15,7 +15,9 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Alert from '@/components/ui/Alert';
 import { verifyResetCode, confirmNewPassword } from '@/lib/auth';
-import { PASSWORD_RULES, validatePassword } from '@/lib/utils';
+import { getPasswordRules, validatePassword } from '@/lib/utils';
+import { term } from '@/lib/terms';
+import { useCountry } from '@/providers/CountryProvider';
 
 // Firebase's stock hosted handler. Every mode this screen doesn't implement
 // (verifyEmail, recoverEmail, …) is forwarded there so pointing the email
@@ -25,6 +27,8 @@ const DEFAULT_HANDLER_URL = 'https://reparauto-site.firebaseapp.com/__/auth/acti
 type Stage = 'verifying' | 'form' | 'saving' | 'done' | 'invalid';
 
 export default function AuthAction() {
+  const { country } = useCountry();
+  const noun = term('passwordNoun', country);
   const searchParams = useSearchParams();
   const mode = searchParams.get('mode');
   const oobCode = searchParams.get('oobCode') || '';
@@ -61,7 +65,7 @@ export default function AuthAction() {
     // whose identity is not guaranteed stable across renders.
   }, [isReset, oobCode, queryString]);
 
-  const passwordError = validatePassword(password);
+  const passwordError = validatePassword(password, country);
 
   const handleSubmit = async () => {
     if (passwordError) return;
@@ -71,7 +75,7 @@ export default function AuthAction() {
       await confirmNewPassword(oobCode, password);
       setStage('done');
     } catch {
-      setErro('Não foi possível alterar a palavra-passe. Tente novamente.');
+      setErro(`Não foi possível alterar a ${noun}. Tente novamente.`);
       setStage('form');
     }
   };
@@ -81,7 +85,7 @@ export default function AuthAction() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 sm:p-8">
         <div className="flex items-center gap-2 mb-1 text-fg-strong">
           <LockKey size={22} className="text-accent" />
-          <h1 className="text-xl font-black tracking-tight">Definir nova palavra-passe</h1>
+          <h1 className="text-xl font-black tracking-tight">{`Definir nova ${noun}`}</h1>
         </div>
 
         {!isReset && (
@@ -107,8 +111,7 @@ export default function AuthAction() {
         {isReset && stage === 'done' && (
           <div className="mt-4 space-y-4">
             <Alert tipo="sucesso" icone={<CheckCircle />}>
-              Palavra-passe alterada com sucesso! Já pode entrar com a nova
-              palavra-passe.
+              {`${term('passwordLabel', country)} alterada com sucesso! Já pode entrar com a nova ${noun}.`}
             </Alert>
             <Link href="/" className="text-sm font-semibold text-accent hover:underline">
               Ir para o login
@@ -119,11 +122,11 @@ export default function AuthAction() {
         {isReset && (stage === 'form' || stage === 'saving') && (
           <div className="mt-4 space-y-4">
             <p className="text-sm text-fg-muted">
-              Escolha uma nova palavra-passe para <strong>{accountEmail}</strong>.
+              Escolha uma nova {noun} para <strong>{accountEmail}</strong>.
             </p>
 
             <Input
-              label="Nova palavra-passe"
+              label={`Nova ${noun}`}
               name="new-password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="new-password"
@@ -138,7 +141,7 @@ export default function AuthAction() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="p-1.5 rounded-lg text-fg-subtle hover:text-fg hover:bg-neutral-100 transition"
-                  aria-label={showPassword ? 'Ocultar palavra-passe' : 'Mostrar palavra-passe'}
+                  aria-label={`${showPassword ? 'Ocultar' : 'Mostrar'} ${noun}`}
                 >
                   {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
                 </button>
@@ -147,7 +150,7 @@ export default function AuthAction() {
 
             {password.length > 0 && (
               <div className="-mt-2 space-y-1">
-                {PASSWORD_RULES.map((rule) => {
+                {getPasswordRules(country).map((rule) => {
                   const valid = rule.test(password);
                   return (
                     <div key={rule.label} className="flex items-center gap-1.5">
@@ -179,7 +182,7 @@ export default function AuthAction() {
               disabled={stage === 'saving' || passwordError !== null}
               onClick={handleSubmit}
             >
-              Guardar nova palavra-passe
+              {`Guardar nova ${noun}`}
             </Button>
           </div>
         )}

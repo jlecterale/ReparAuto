@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useApp } from '@/providers/AppProvider';
 import { getIntencaoCompra, getUserByEmail } from '@/lib/db';
-import { formatarPreco, formatarData, obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
+import { formatarKm, formatarPreco, formatarData, obterWhatsApp, gerarLinkWhatsApp } from '@/lib/utils';
 import { docCountry } from '@/lib/country';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -127,7 +127,7 @@ export default function DetalhesIntencao() {
             </div>
             <div>
               <span className="text-xs font-semibold text-fg-subtle flex items-center gap-1"><Speedometer /> Km máx</span>
-              <p className="font-semibold text-fg-heading">{c.quilometragemMaxima.toLocaleString('pt-PT')} km</p>
+              <p className="font-semibold text-fg-heading">{formatarKm(c.quilometragemMaxima, docCountry(intencao))}</p>
             </div>
             <div>
               <span className="text-xs font-semibold text-fg-subtle flex items-center gap-1"><MapPin /> Localização</span>
