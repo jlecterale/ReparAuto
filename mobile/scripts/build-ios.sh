@@ -13,6 +13,14 @@
 # If you add/remove/upgrade a native dependency, run `pod install` (in ios/)
 # or a full `npx expo prebuild --platform ios` separately before archiving.
 #
+# Before archiving it also guards node_modules: this is an npm-only project, and
+# installing with pnpm (or a mixed npm+pnpm tree) leaves two copies of
+# react-native-css-interop installed — NativeWind then registers styles in one
+# instance while components read from the other, so every `className` silently
+# renders unstyled on iOS (Android happens to resolve consistently). When that
+# state is detected the script rebuilds node_modules with `npm ci` and forces a
+# `pod install` (the Pods would otherwise point at now-deleted .pnpm paths).
+#
 # Env vars (read from .env if present):
 #   APPLE_TEAM_ID    Apple Developer Team ID. Defaults to DLB2RYLUDX.
 #   ASC_KEY_ID       App Store Connect API Key ID. Required for upload/release.
@@ -84,13 +92,53 @@ EOF
 
 ACTION="${1:-release}"
 
+# Set when ensure_npm_node_modules reinstalls, so prebuild_step knows to force a
+# pod install (the reinstall changes on-disk module paths the Pods reference).
+NODE_MODULES_REINSTALLED=0
+
+# Guard against a pnpm / mixed-package-manager node_modules, which silently
+# breaks NativeWind styling on iOS (see the header comment). This project is
+# npm-only (package-lock.json committed, no pnpm-lock.yaml). A healthy npm tree
+# has exactly one react-native-css-interop and no .pnpm store, so this is a fast
+# no-op on normal repeat archives.
+ensure_npm_node_modules() {
+  if command -v pnpm >/dev/null 2>&1 && [[ "${npm_config_user_agent:-}" == pnpm/* ]]; then
+    echo "==> Refusing to build under pnpm: this is an npm-only project." >&2
+    echo "    Run the release with npm (e.g. \`npm run release:ios\`)." >&2
+    exit 1
+  fi
+
+  local css_interop_copies=0
+  if [[ -d node_modules ]]; then
+    css_interop_copies="$(find node_modules -type d -name react-native-css-interop 2>/dev/null | wc -l | tr -d ' ')"
+  fi
+
+  if [[ ! -d node_modules ]]; then
+    echo "==> node_modules missing — installing with npm ci."
+  elif [[ -d node_modules/.pnpm ]]; then
+    echo "==> node_modules was installed with pnpm (found node_modules/.pnpm)."
+    echo "    pnpm breaks iOS NativeWind styling — rebuilding with npm ci."
+  elif [[ "$css_interop_copies" -gt 1 ]]; then
+    echo "==> Found $css_interop_copies copies of react-native-css-interop (mixed npm/pnpm tree)."
+    echo "    This breaks iOS NativeWind styling — rebuilding with npm ci."
+  else
+    return 0  # healthy npm install — nothing to do
+  fi
+
+  rm -rf node_modules
+  npm ci
+  NODE_MODULES_REINSTALLED=1
+}
+
 prebuild_step() {
+  ensure_npm_node_modules
   echo "==> npx expo prebuild --platform ios (sync app.config.ts → ios/)"
   # --no-install skips `pod install`; we run it ourselves below only when the
-  # Pods are missing, so repeat archives stay fast.
+  # Pods are missing or node_modules was just reinstalled, so repeat archives
+  # stay fast.
   npx expo prebuild --platform ios --no-install
-  if [[ ! -d ios/Pods ]]; then
-    echo "==> pod install (first prebuild / Pods missing)"
+  if [[ ! -d ios/Pods || "$NODE_MODULES_REINSTALLED" == "1" ]]; then
+    echo "==> pod install (Pods missing or node_modules reinstalled)"
     ( cd ios && pod install )
   fi
 }
