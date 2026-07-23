@@ -21,8 +21,12 @@
 # state is detected the script rebuilds node_modules with `npm ci` and forces a
 # `pod install` (the Pods would otherwise point at now-deleted .pnpm paths).
 #
+# After archiving it rewrites BuildMachineOSBuild when the machine runs a beta
+# macOS — see strip_beta_build_machine_os below for why (ITMS-90111).
+#
 # Env vars (read from .env if present):
-#   APPLE_TEAM_ID    Apple Developer Team ID. Defaults to DLB2RYLUDX.
+#   APPLE_TEAM_ID       Apple Developer Team ID. Defaults to DLB2RYLUDX.
+#   PUBLIC_MACOS_BUILD  Public macOS build string used by the ITMS-90111 workaround.
 #   ASC_KEY_ID       App Store Connect API Key ID. Required for upload/release.
 #   ASC_ISSUER_ID    App Store Connect Issuer ID. Required for upload/release.
 #   ASC_KEY_PATH     Optional. Defaults to ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
@@ -158,6 +162,43 @@ archive_step() {
     DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
     CODE_SIGN_STYLE=Automatic \
     archive
+  strip_beta_build_machine_os
+}
+
+# Xcode stamps the machine's macOS build into BuildMachineOSBuild in every
+# bundled Info.plist. When that build is a beta seed, App Store Connect rejects
+# the upload with ITMS-90111 ("Unsupported SDK or Xcode version") even though
+# Xcode and the iOS SDK are the current public releases. Rewriting the key in
+# the archive — before `-exportArchive`, which re-signs everything — makes the
+# binary acceptable without downgrading macOS.
+#
+# Override the substituted value with PUBLIC_MACOS_BUILD when a newer macOS
+# ships; it only has to be a real, publicly released build string.
+PUBLIC_MACOS_BUILD="${PUBLIC_MACOS_BUILD:-25F84}"  # macOS 26.5.2
+
+# Apple seed builds carry a 4+ digit number starting with 5 after the letter
+# (26A5378n), while public builds are short (25F84). Anything else is public.
+is_beta_macos_build() {
+  [[ "$1" =~ ^[0-9]+[A-Z]5[0-9]{3,}[a-z]?$ ]]
+}
+
+strip_beta_build_machine_os() {
+  local machine_build
+  machine_build="$(sw_vers -buildVersion)"
+  if ! is_beta_macos_build "$machine_build"; then
+    return 0
+  fi
+
+  echo "==> Building on a beta macOS ($machine_build) — rewriting"
+  echo "    BuildMachineOSBuild to $PUBLIC_MACOS_BUILD to avoid ITMS-90111."
+  local plist patched=0
+  while IFS= read -r plist; do
+    if /usr/libexec/PlistBuddy -c "Set :BuildMachineOSBuild $PUBLIC_MACOS_BUILD" \
+        "$plist" >/dev/null 2>&1; then
+      patched=$((patched + 1))
+    fi
+  done < <(find "$ARCHIVE_PATH/Products" -name Info.plist)
+  echo "    Patched $patched Info.plist file(s)."
 }
 
 export_step() {
